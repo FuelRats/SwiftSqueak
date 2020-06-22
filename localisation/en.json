@@ -1,0 +1,178 @@
+{
+  "whoami.notloggedin": "You are not logged in to NickServ, so I don't know why you're asking me.",
+  "whoami.nodata": "You are logged in as user %{account} but I couldn't find IRC services data for this account.",
+  "whoami.noaccount": "You are logged in as user %{account} but I couldn't find a Fuel Rats API account linked to you.",
+  "whoami.response": "You are logged in as user %{account} and have Fuel Rats User ID %{userId}. Rats: %{rats}.",
+  "whois.notfound": "Could not check account status for %{nick} as they were not found in the users list.",
+  "whois.notloggedin": "Could not check account status for %{nick} as they are not logged in to NickServ.",
+  "whois.nodata": "%{nick} is logged in to NickServ as %{account} but I could not find any IRC services data for their account.",
+  "whois.noaccount": "%{nick} is logged in to NickServ as %{account} but I could not find a Fuel Rats account linked to their nick.",
+  "whois.response": "%{nick} is logged in as user %{account} and have Fuel Rats User ID %{userId}. Rats: %{rats}.",
+  
+  "systemsearch.noresults": "No results were found for this system.",
+  "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
+  "systemsearch.error": "An error occured performing a system search.",
+  "landmark.noresults": "%{system} was not found in the galaxy database.",
+  "landmark.response": "%{system} is %{distance}ly from %{landmark}.",
+  
+  "board.synced": "Successfully synced board with %{api}. %{downstreamNew} new rescues were synced from the server and %{upstreamNew} new local rescues were synced to the API. %{downstreamChange} server-side changes were found and synced and %{upstreamChange} local changes were synced to the server. %{conflicts} case ID conflicts occured.",
+  "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
+  
+  "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId})",
+  "board.announce.notindb": "%{signal} - CMDR %{client} - Reported System: %{system} (not in galaxy database) - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId})",
+  "board.announce.landmark": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId})",
+  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId}).",
+  
+  "board.signal.nosystem": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case #%{caseId}.",
+  "board.signal.notindb": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (not in galaxy database) case #%{caseId}.",
+  "board.signal.landmark": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) case #%{caseId}.",
+  "board.signal.permit": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %(permit) case #%{caseId}.",
+  "board.signal.exists": "CMDR %{client} belongs to existing %{platform} case #%{caseId} in %{system}.",
+  
+  "board.casenotfound": "Could not find a case ID or client name matching \"%{caseIdentifier}\".",
+  "board.platformset": "Platform for case #%{caseId} (%{client}) set to: %{platform}.",
+  "board.toggleactive": "Status of case #%{caseId} (%{client}) set to: %{status}.",
+  "board.nopermission": "You do not have permission to perform this command.",
+  
+  "board.syschange.notindb": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (Not in galaxy database).",
+  "board.syschange.landmark": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}).",
+  "board.syschange.permit": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}) %{permit}.",
+  
+  "board.clientchange": "Client name for case #%{caseId} (%{oldClient}) has been changed to: %{client}.",
+  "board.nickchange": "Client nick for case #%{caseId} (%{client}) has been changed to %{nick}.",
+  "board.codered.active": "CODE RED! %{client} (#%{caseId}) is on emergency oxygen!",
+  "board.codered.attention": "%{rats}; this is your case!",
+  "board.codered.no": "Case #%{caseId} (%{client}) is no longer CR.",
+  "board.titleset": "Title for case #%{clientId} (%{client}) has been set to \"Operation %{title}\".",
+  "board.caseopened": "Case #%{caseId} opened for %{client} with \"%{message}\".",
+  
+  "board.grab.noclient": "Could not find the client for case %{caseId} in the channel.",
+  "board.grab.nomessage": "Could not find any messages by %{client} in the channel.",
+  "board.grab.notcreated": "Could not find an existing case for %{client} and could not create one from the contents of this message.",
+  "board.grab.updated": "Updated case #%{clientId} with \"%{text}\".",
+  
+  "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
+  "board.assign.go": "%{client}: Please add the following rat(s) to your friends list: %{rats}.",
+  "board.assign.gocr": "%{client}: Please REMAIN at the main menu and add the following rat(s) to your friends list: %{rats}",
+  "board.assign.unidentified": "WARNING: Could not find a %{platform} account associated with these rats: %{rats}.",
+  "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
+  "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",
+  
+  "board.sub.invalidindex": "Cannot substitute index %{index} into the case as it is not a valid index.",
+  "board.sub.outofbounds": "Cannot substitute index %{index} of case #%{caseId} as it is out of bounds.",
+  "board.sub.updated": "Updated line %{index} of case #%{caseId} with \"%{contents}\".",
+  
+  "board.list.cases": "%{count} cases found, %{cases}",
+  "board.list.none": "No matching cases found.  %{flags}",
+  "board.list.case.default": "[%{caseId}] %{client} (%{platform}) %{assigned}",
+  "board.list.inactivecase.default": "[%{caseId}] %{client} (%{platform}) %{cr} (Inactive) %{assigned}",
+  "board.list.case.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
+  "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
+  
+  "board.quote.title": "Case #%{caseId} (%{client}) in %{system} (%{platform}) %{cr} opened %{created}, last updated %{updated} %{id}",
+  "board.quote.operation": "\"Operation %{title}\" (Case #%{caseId}) (%{client}) in %{system} (%{platform}) %{cr} opened %{created}, last updated %{updated} %{id}",
+  
+  "board.quote.quote": "[%{index}] %{author} (%{time}): %{message}",
+  "board.quote.noassigned": "No rats are assigned to this case.",
+  "board.quote.assigned": "Assigned rats: %{rats}",
+  
+  "board.close.notfound": "Unable to close case #%{caseId} to \"%{firstLimpet}\", no rat was found.",
+  "board.close.notassigned": "Unable to close case #%{caseId} to \"%{firstLimpet}\" as they are not assigned to the case.",
+  "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
+  "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
+  "board.close.success": "Successfully closed case #%{caseId}.",
+  "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
+  
+  "board.trash.success": "Successfully added case #%{caseId} to the trash.",
+  "board.trash.error": "Failed to add case #%{caseId} to the trash due to an error in the rescue server.",
+  
+  "board.title.set": "Title for case #%{caseId} set to \"%{title}\".",
+  
+  "board.pwl.generated": "Paperwork link for case #%{caseId} is: %{link}",
+  
+  "board.quiet.unknown": "Unfortunately I do not know when the last case was.",
+  "board.quiet.recent": "The last case was %{timespan} ago.",
+  "board.quiet.notrecent": "The last case was %{timespan} ago. Time to summon a case?",
+  "board.quiet.quiet": "Wow, the last signal was so long ago... %{timespan} ago to be exact! Orangey approves!",
+  
+  "board.notprepped": "WARNING: Client for case #%{caseId} has NOT been !prep-ed!",
+  
+  "version.message": "MechaSqueak version %{version}, up %{uptime}, since %{startup}.",
+  "sysstats.message": "The systems database as of %{date} ago contains %{systems} star systems, with %{stars} stars and %{bodies} stellar bodies.",
+  "sysstats.error": "I was unable to request statistics information from the Systems API due to an error.",
+  
+  "rescue.closed.invalid": "Could not list recently closed cases, !closed takes an optional number between 1 and 10.",
+  "rescue.closed.error": "Failed to look up recently closed cases due to an error in the rescue server.",
+  "rescue.closed.list": "Listing the %{count} most recently closed rescues:",
+  "rescue.closed.entry": "%{index}: Client %{client} (%{platform}) in %{system} (%{id})",
+  
+  "rescue.delete.invalid": "Could not delete rescue %{id} as it is not a valid rescue ID.",
+  "rescue.delete.active": "Could not delete rescue %{id} as it is currently open on the board as case #%{caseId}.",
+  "rescue.delete.success": "Successfully deleted rescue %{id}.",
+  "rescue.delete.failure": "Failed to delete rescue %{id} due to an error in the rescue server.",
+  
+  "rescue.trashlist.list": "Listing %{count} rescues added to the trash list:",
+  "rescue.trashlist.entry": "[%{id}] %{client} (%{platform}), Reason: %{reason}",
+  "rescue.trashlist.entrycr": "[%{id}] %{client} (%{platform}) \u00034CR\u0003, Reason: %{reason}",
+  "rescue.trashlist.error": "Failed to fetch the rescue trash list due to an error in the rescue server.",
+  "rescue.trashlist.empty": "There are currently no rescues in the trashlist.",
+  
+  "rescue.restore.invalid": "Could not restore rescue \"%{id}\" as it is not a valid rescue ID.",
+  "rescue.restore.nottrash": "Could not restore rescue \"%{id}\" as it is not currently marked as trash.",
+  "rescue.restore.restored": "Successfully restored rescue \"%{id}\". Use !reopen to add it to the board.",
+  "rescue.restore.error": "Failed to restore rescue \"%{id}\" due to an error in the rescue server.",
+  
+  "rescue.unfiled.list": "Listing %{count} incomplete paperwork cases:",
+  "rescue.unfiled.entry": "Rescue of %{client} in %{system} (%{platform}) Link: %{link}",
+  "rescue.unfiled.empty": "There are currently no rescues with incomplete paperwork.",
+  "rescue.unfiled.error": "Encountered a server error when retrieving the list of unfiled paperwork.",
+  
+  "rescue.quoteid.title": "Rescue %{id} (%{client}) in %{system} (%{platform}) opened %{created}, last updated %{updated}",
+  "rescue.quoteid.quote": "[%{index}] %{author} (%{time}): %{message}",
+  "rescue.quoteid.invalid": "Could not quote rescue \"%{id}\" as it is not a valid rescue ID.",
+  "rescue.quoteid.error": "Could not quote rescue \"%{id}\" as an error was encountered when retreiving it from the rescue server.",
+  
+  "rescue.reopen.failure": "Could not reopen rescue %{id} due to an error from the server.",
+  "rescue.reopen.success": "Rescue %{id} has been re-opened as case #{caseId}.",
+  "rescue.reopen.invalid": "Could not reopen rescue \"%{id}\" as it is not a valid rescue ID.",
+  "rescue.reopen.error": "Could not reopen rescue \"%{id}\" due to an error from the rescue server.",
+  "rescue.reopen.exists": "Could not reopen rescue \"%{id}\" as it is already currently on the board as case #%{caseId}.",
+  "rescue.reopen.opened": "Rescue \"%{id}\" has been re-opened and added to the board as case #%{caseId}.",
+  
+  "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
+  "shorten.error": "Was unable to shorten URL due to a request error.",
+  "shorten.shortened": "URL has been shortened to: %{url} - Title: %{title}",
+  
+  "tweetcase.noplatform": "Could not generate a case tweet for case #%{caseId} as no platform is set.",
+  "tweetcase.missingsystem": "Could not generate a case tweet for case #%{caseId} as no system is set.",
+  "tweetcase.nosystem": "%{platform} rats needed for a rescue! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
+  "tweetcase.nosystemcr": "%{platform} rats needed for a CODE RED rescue! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
+  "tweetcase.system": "%{platform} rats needed for a rescue %{systemDescription}! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
+  "tweetcase.systemcr": "%{platform} rats needed for a CODE RED rescue %{systemDescription}! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
+  "tweetcase.success": "Successfully sent tweet for case #%{caseId}.",
+  "tweetcase.failure": "Encountered an error in posting a tweet for case #%{caseId}.",
+  
+  "autocorrect.correction": "\u0002\u000304Autocorrect\u0003\u0002 \"%{system}\" is probably \"%{correction}\".",
+  
+  "facts.invalidargument": "Invalid argument given to !facts command, !facts accepts add, set, info, and del.",
+  "facts.set.syntax": "Invalid arguments, syntax: !facts add/set <name>[-language code] <message>.",
+  "facts.set.error": "Encountered an error saving !%{fact}.",
+  "facts.set.updated": "Successfully updated !%{fact} (%{locale} locale) with the new message: \"%{message}\".",
+  "facts.set.created": "Successfully created new fact !%{fact} (%{locale} locale) with the new message: \"%{message}\".",
+  "facts.set.nopermission": "You lack the required permission to update facts.",
+  "facts.del.syntax": "Invalid arguments, syntax: !facts del <name>[-language code].",
+  "facts.del.nopermission": "You lack the required permission to delete facts.",
+  "facts.del.error": "Encountered an error trying to delete !%{fact}",
+  "facts.del.success": "%{fact} has been successfully deleted!",
+  "facts.del.notfound": "Could not delete !%{fact} as it does not currently exist.",
+  "facts.list.error": "I was unable to retrieve the list of facts due to an error.",
+  "facts.list.heading": "Listing %{count} stored %{locale} facts: ",
+  "facts.list.none": "No facts were found for %{locale} locale.",
+  "facts.info.syntax": "Invalid arguments, syntax: !facts info <name>[-language code].",
+  "facts.info.notfound": "Could not find a %{locale} locale command named \"%{fact}\".",
+  "facts.info.error": "Encountered an error looking up information for fact !%{fact}",
+  "facts.info.message": "Info for !%{fact} (%{locale} locale): Created at %{created}, last updated by %{author} at %{updated}. Contents: \"%{excerpt}\"",
+  
+  "say.sending": "Sending message \"%{contents}\" to %{target}",
+  "me.sending": "Emoting \"%{contents}\" to %{target}"
+}

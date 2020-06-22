@@ -1,0 +1,174 @@
+/*
+ Copyright 2020 The Fuel Rats Mischief
+
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ disclaimer in the documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+ products derived from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import Foundation
+import IRCKit
+
+protocol IRCBotModule {
+    var name: String { get }
+
+    init (_ moduleManager: IRCBotModuleManager)
+
+    var commands: [IRCBotCommandDeclaration] { get }
+}
+
+enum AllowedCommandDestination {
+    case Channel
+    case PrivateMessage
+    case All
+}
+
+struct IRCBotCommandDeclaration {
+    let commands: [String]
+    let minimumParameters: Int
+    let maximumParameters: Int?
+    let permission: AccountPermission?
+    let lastParameterIsContinous: Bool
+    let allowedDestinations: AllowedCommandDestination
+
+    let onCommand: (IRCBotCommand, IRCPrivateMessage) -> Void
+
+    init (
+        commands: [String],
+        minParameters: Int,
+        onCommand: @escaping (IRCBotCommand, IRCPrivateMessage) -> Void,
+        maxParameters: Int? = nil,
+        lastParameterIsContinous: Bool = false,
+        permission: AccountPermission? = nil,
+        allowedDestinations: AllowedCommandDestination = .All) {
+
+        self.commands = commands
+        self.minimumParameters = minParameters
+        self.maximumParameters = maxParameters
+        self.lastParameterIsContinous = lastParameterIsContinous
+        self.permission = permission
+        self.onCommand = onCommand
+        self.allowedDestinations = allowedDestinations
+    }
+}
+
+class IRCBotModuleManager {
+    private var channelMessageObserver: NotificationToken?
+    private var privateMessageObserver: NotificationToken?
+    private var registeredModules: [IRCBotModule] = []
+
+    init () {
+        self.channelMessageObserver = NotificationCenter.default.addObserver(
+            descriptor: IRCChannelMessageNotification(),
+            using: onChannelMessage(channelMessage:)
+        )
+        self.privateMessageObserver = NotificationCenter.default.addObserver(
+            descriptor: IRCPrivateMessageNotification(),
+            using: onPrivateMessage(privateMessage:)
+        )
+    }
+
+    func register (module: IRCBotModule) {
+        self.registeredModules.append(module)
+    }
+
+    func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
+        guard let ircBotCommand = IRCBotCommand(from: channelMessage) else {
+            return
+        }
+
+        handleIncomingCommand(ircBotCommand: ircBotCommand, fromMessage: channelMessage)
+    }
+
+    func onPrivateMessage (privateMessage: IRCPrivateMessageNotification.Payload) {
+        guard let ircBotCommand = IRCBotCommand(from: privateMessage) else {
+            return
+        }
+
+        handleIncomingCommand(ircBotCommand: ircBotCommand, fromMessage: privateMessage)
+    }
+
+    func handleIncomingCommand (ircBotCommand: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+        var ircBotCommand = ircBotCommand
+
+        guard message.raw.messageTags["batch"] == nil else {
+            // Do not interpret commands from playback of old messages
+            return
+        }
+
+        guard let command = self.registeredModules.compactMap({ (botModule) -> IRCBotCommandDeclaration? in
+            return botModule.commands.filter({
+                $0.commands.contains(ircBotCommand.command)
+            }).first
+        }).first else {
+            return
+        }
+
+        if message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
+            message.reply(message: "!\(ircBotCommand.command) command can only be used in a public channel")
+            return
+        }
+
+        if message.destination.isPrivateMessage == false && command.allowedDestinations == .PrivateMessage {
+             message.reply(message: "!\(ircBotCommand.command) command can only be used in private message")
+             return
+        }
+
+        guard command.minimumParameters <= ircBotCommand.parameters.count else {
+            message.reply(message: "!\(ircBotCommand.command) command was given too few parameters")
+            return
+        }
+
+        if
+            let maxParameters = command.maximumParameters,
+            command.lastParameterIsContinous == true,
+            ircBotCommand.parameters.count > 1
+        {
+            var parameters: [String] = []
+            var paramIndex = 0
+
+            while paramIndex < maxParameters && paramIndex < ircBotCommand.parameters.count {
+                if paramIndex == maxParameters - 1 {
+                    let remainderComponents = ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex]
+                    let remainder = remainderComponents.joined(separator: " ")
+                    parameters.append(remainder)
+                    break
+                } else {
+                    parameters.append(ircBotCommand.parameters[paramIndex])
+                }
+                paramIndex += 1
+            }
+            ircBotCommand.parameters = Array(parameters)
+        }
+
+        if let maxParameters = command.maximumParameters, ircBotCommand.parameters.count > maxParameters {
+            message.reply(message: "!\(ircBotCommand.command) command was given too many parameters")
+            return
+        }
+
+        if let permission = command.permission {
+            guard message.user.hasPermission(permission: permission) else {
+                message.reply(key: "board.nopermission", fromCommand: ircBotCommand)
+                return
+            }
+        }
+
+        command.onCommand(ircBotCommand, message)
+    }
+}

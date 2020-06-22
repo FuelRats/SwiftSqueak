@@ -1,0 +1,169 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "async-http-client",
+        "repositoryURL": "https://github.com/swift-server/async-http-client.git",
+        "state": {
+          "branch": null,
+          "revision": "e2636a4c24e646d3e480fc666da0c090818beb09",
+          "version": "1.1.0"
+        }
+      },
+      {
+        "package": "CircuitBreaker",
+        "repositoryURL": "https://github.com/IBM-Swift/CircuitBreaker.git",
+        "state": {
+          "branch": null,
+          "revision": "e9345aa721ca4da428777f2e953b9ad534017675",
+          "version": "5.0.3"
+        }
+      },
+      {
+        "package": "CryptoSwift",
+        "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
+        "state": {
+          "branch": null,
+          "revision": "39f08ac5269361a50c08ce1e2f41989bfc4b1ec8",
+          "version": "1.3.1"
+        }
+      },
+      {
+        "package": "JSONAPI",
+        "repositoryURL": "https://github.com/mattpolzin/JSONAPI.git",
+        "state": {
+          "branch": null,
+          "revision": "6ab4237c97e27ab0b5e3e1fe34738fa031a8dab9",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "KituraContracts",
+        "repositoryURL": "https://github.com/IBM-Swift/KituraContracts.git",
+        "state": {
+          "branch": null,
+          "revision": "a30e2fb79e926672776a05ec6b919c239870a221",
+          "version": "1.2.1"
+        }
+      },
+      {
+        "package": "Lingo",
+        "repositoryURL": "https://github.com/miroslavkovac/Lingo.git",
+        "state": {
+          "branch": null,
+          "revision": "f21f388b04239641b3e88d14f21762125faa9857",
+          "version": "3.0.5"
+        }
+      },
+      {
+        "package": "LoggerAPI",
+        "repositoryURL": "https://github.com/IBM-Swift/LoggerAPI.git",
+        "state": {
+          "branch": null,
+          "revision": "3357dd9526cdf9436fa63bb792b669e6efdc43da",
+          "version": "1.9.0"
+        }
+      },
+      {
+        "package": "Poly",
+        "repositoryURL": "https://github.com/mattpolzin/Poly.git",
+        "state": {
+          "branch": null,
+          "revision": "0c9c08204142babc480938d704a23513d11420e5",
+          "version": "2.3.1"
+        }
+      },
+      {
+        "package": "Regex",
+        "repositoryURL": "https://github.com/crossroadlabs/Regex.git",
+        "state": {
+          "branch": null,
+          "revision": "166728756082a9cac6e4aed3ebbce8e41cb3a945",
+          "version": "1.2.0"
+        }
+      },
+      {
+        "package": "SwiftKuery",
+        "repositoryURL": "https://github.com/IBM-Swift/Swift-Kuery.git",
+        "state": {
+          "branch": null,
+          "revision": "d8e7cba51c6ca75de23b0229f584b536492ce23e",
+          "version": "3.0.1"
+        }
+      },
+      {
+        "package": "SwiftKueryORM",
+        "repositoryURL": "https://github.com/IBM-Swift/Swift-Kuery-ORM.git",
+        "state": {
+          "branch": null,
+          "revision": "2c8638e787f4f48e4dd98cb162b87d08b5001d61",
+          "version": "0.6.1"
+        }
+      },
+      {
+        "package": "SwiftKueryPostgreSQL",
+        "repositoryURL": "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git",
+        "state": {
+          "branch": null,
+          "revision": "b0d44d2521f82cda1da800560a03a9c807f0e784",
+          "version": "2.1.1"
+        }
+      },
+      {
+        "package": "swift-log",
+        "repositoryURL": "https://github.com/apple/swift-log.git",
+        "state": {
+          "branch": null,
+          "revision": "74d7b91ceebc85daf387ebb206003f78813f71aa",
+          "version": "1.2.0"
+        }
+      },
+      {
+        "package": "swift-nio",
+        "repositoryURL": "https://github.com/apple/swift-nio.git",
+        "state": {
+          "branch": null,
+          "revision": "16ab4d657e1ad4e77bd5f8b94af8538561643053",
+          "version": "2.14.0"
+        }
+      },
+      {
+        "package": "swift-nio-extras",
+        "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
+        "state": {
+          "branch": null,
+          "revision": "b4dbfacff47fb8d0f9e0a422d8d37935a9f10570",
+          "version": "1.4.0"
+        }
+      },
+      {
+        "package": "swift-nio-ssl",
+        "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
+        "state": {
+          "branch": null,
+          "revision": "af46d9b58fafbb76f9b01177568d435a1b024f99",
+          "version": "2.6.2"
+        }
+      },
+      {
+        "package": "SwiftyRequest",
+        "repositoryURL": "https://github.com/IBM-Swift/SwiftyRequest.git",
+        "state": {
+          "branch": null,
+          "revision": "34cf8de7c3920220392d557c8c84b9f06c8c3978",
+          "version": "3.1.0"
+        }
+      },
+      {
+        "package": "TypeDecoder",
+        "repositoryURL": "https://github.com/IBM-Swift/TypeDecoder.git",
+        "state": {
+          "branch": null,
+          "revision": "a5978582981f7151594bdaf5fe0d3cd9b1d2d0c0",
+          "version": "1.3.4"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

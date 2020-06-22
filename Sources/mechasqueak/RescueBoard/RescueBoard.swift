@@ -1,0 +1,287 @@
+/*
+ Copyright 2020 The Fuel Rats Mischief
+
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ disclaimer in the documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+ products derived from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import Foundation
+import SwiftyRequest
+import NIO
+import IRCKit
+
+class RescueBoard {
+    var rescues: [LocalRescue] = []
+    private var isSynced = true
+    var syncTimer: RepeatedTask?
+    private let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+    private let distanceFormatter: NumberFormatter
+    var lastSignalReceived: Date?
+    var prepTimers: [UUID: Scheduled<()>?] = [:]
+
+    init () {
+        self.distanceFormatter = NumberFormatter()
+        self.distanceFormatter.numberStyle = .decimal
+        self.distanceFormatter.groupingSize = 3
+        self.distanceFormatter.maximumFractionDigits = 1
+        self.distanceFormatter.roundingMode = .halfUp
+    }
+
+    var synced: Bool {
+        get {
+            return self.isSynced
+        }
+
+        set {
+            if newValue == false {
+                guard self.isSynced == true && self.syncTimer == nil else {
+                    return
+                }
+                mecha.accounts.lookupServiceAvailable = false
+
+                if let channel = mecha.rescueChannel, configuration.general.drillMode == false {
+                    channel.send(key: "board.syncfailed")
+                }
+
+                self.syncTimer = group.next().scheduleRepeatedTask(
+                    initialDelay: .seconds(30),
+                    delay: .seconds(30), { _ in
+                    self.syncBoard()
+                })
+                self.isSynced = false
+
+            } else {
+                guard self.isSynced == false else {
+                    return
+                }
+
+                mecha.accounts.lookupServiceAvailable = true
+                self.isSynced = true
+                if let timer = self.syncTimer {
+                    timer.cancel()
+                }
+                self.syncTimer = nil
+            }
+        }
+    }
+
+    func findRescue (withCaseIdentifier caseIdentifier: String) -> LocalRescue? {
+        var caseIdentifier = caseIdentifier
+        if caseIdentifier.starts(with: "#") {
+            caseIdentifier = String(caseIdentifier.suffix(
+                from: caseIdentifier.index(caseIdentifier.startIndex, offsetBy: 1)
+            ))
+        }
+
+        if let caseIdNumber = Int(caseIdentifier) {
+            return self.rescues.first(where: {
+                $0.commandIdentifier == caseIdNumber
+            })
+        }
+
+        return self.rescues.first(where: {
+            $0.client?.lowercased() == caseIdentifier.lowercased()
+                || $0.clientNick?.lowercased() == caseIdentifier.lowercased()
+        })
+    }
+
+    func add (rescue: LocalRescue, fromMessage message: IRCPrivateMessage, manual: Bool = false) {
+        if let existingRescue = self.rescues.first(where: {
+            $0.client == rescue.client || ($0.clientNick != nil && $0.clientNick == rescue.clientNick)
+        }) {
+            message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
+                "client": existingRescue.client!,
+                "system": existingRescue.system!,
+                "caseId": existingRescue.commandIdentifier!,
+                "platform": rescue.platform?.ircRepresentable ?? "unknown"
+            ]))
+            return
+        }
+
+        rescue.commandIdentifier = self.getAvailableIdentifier()
+        self.lastSignalReceived = Date()
+
+        if rescue.codeRed == false && configuration.general.drillMode == false {
+            prepTimers[rescue.id] = group.next().scheduleTask(in: .seconds(180), {
+                if rescue.codeRed == false || rescue.status == .Inactive {
+                    message.reply(message: lingo.localize("board.notprepped", locale: "en-GB", interpolations: [
+                        "caseId": rescue.commandIdentifier!
+                    ]))
+                }
+            })
+        }
+
+        self.rescues.append(rescue)
+        rescue.createUpstream(fromBoard: self)
+
+        let oxygenStatus = rescue.codeRed ? "NOT OK" : "OK"
+        let caseId = String(rescue.commandIdentifier!)
+
+        let announceType = manual ? "signal" : "announce"
+
+        guard let system = rescue.system else {
+            message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
+                "signal": configuration.general.signal.uppercased(),
+                "client": rescue.client ?? "unknown",
+                "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                "oxygen": oxygenStatus,
+                "caseId": caseId
+            ]))
+            return
+        }
+
+        SystemsAPI.performSearchAndLandmarkCheck(
+            forSystem: system,
+            onComplete: { searchResult, landmarkResult, correction in
+            guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
+                message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
+                    "signal": configuration.general.signal.uppercased(),
+                    "client": rescue.client ?? "unknown",
+                    "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                    "oxygen": oxygenStatus,
+                    "caseId": caseId,
+                    "system": rescue.system ?? "none"
+                ]))
+
+                if let correction = correction {
+                    message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
+                        "system": system,
+                        "correction": correction
+                    ]))
+                }
+                return
+            }
+
+            let distance = self.distanceFormatter.string(from: NSNumber(value: landmarkResult.distance))!
+
+            let format = searchResult.permitRequired ? "board.\(announceType).permit" : "board.\(announceType).landmark"
+
+            message.reply(message: lingo.localize(format, locale: "en", interpolations: [
+                "signal": configuration.general.signal.uppercased(),
+                "client": rescue.client ?? "unknown",
+                "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                "oxygen": oxygenStatus,
+                "caseId": caseId,
+                "system": rescue.system ?? "none",
+                "distance": distance,
+                "landmark": landmarkResult.name,
+                "permit": searchResult.permitText ?? ""
+            ]))
+        })
+    }
+
+    func syncBoard () {
+        FuelRatsAPI.getOpenRescues(complete: { rescueDocument in
+            self.merge(rescueDocument: rescueDocument)
+        }, error: { error in
+            print(error)
+            self.synced = false
+        })
+    }
+
+    func getAvailableIdentifier () -> Int {
+        var identifier = 0
+        while (rescues.first(where: { $0.commandIdentifier == identifier }) != nil) {
+            identifier += 1
+        }
+
+        return identifier
+    }
+
+    func checkSynced () {
+        self.synced = self.rescues.contains(where: {
+            $0.synced == false
+        }) == false
+    }
+
+    func merge (rescueDocument: RescueSearchDocument) {
+        let apiRescues = rescueDocument.convertToLocalRescues(onBoard: self)
+
+        var pendingUpstreamUpdate: [LocalRescue] = []
+        var pendingDownstream: [LocalRescue] = []
+
+        let pendingUpstreamNew = self.rescues.filter({ localRescue in
+            return apiRescues.contains(where: { apiRescue in
+                apiRescue.id == localRescue.id
+            }) == false
+        })
+
+        let novelRescues = apiRescues.filter({ apiRescue in
+            return self.rescues.contains(where: { localRescue in
+                localRescue.id == apiRescue.id
+            }) == false
+        })
+
+        pendingDownstream.append(contentsOf: novelRescues)
+
+        let updatedDownstreamRescues = apiRescues.filter({ apiRescue in
+            let matchingLocal = self.rescues.first(where: { localRescue in
+                localRescue.id == apiRescue.id
+            })
+
+            return matchingLocal != nil && matchingLocal!.updatedAt < apiRescue.updatedAt
+        })
+
+        pendingDownstream.append(contentsOf: updatedDownstreamRescues)
+
+        var requiredIdChange = 0
+
+        for novelRescue in pendingDownstream {
+            if novelRescue.hasConflictingId(inBoard: self) {
+                novelRescue.commandIdentifier = self.getAvailableIdentifier()
+                requiredIdChange += 1
+                pendingUpstreamUpdate.append(novelRescue)
+            }
+
+            self.rescues.removeAll(where: {
+                $0.id == novelRescue.id
+            })
+
+            if self.lastSignalReceived == nil || novelRescue.createdAt > self.lastSignalReceived! {
+                self.lastSignalReceived = novelRescue.createdAt
+            }
+
+            self.rescues.append(novelRescue)
+        }
+
+        for rescue in pendingUpstreamNew {
+            rescue.createUpstream(fromBoard: self)
+        }
+
+        for rescue in pendingUpstreamUpdate {
+            rescue.syncUpstream(fromBoard: self)
+        }
+
+        if let rescueChannel = mecha.rescueChannel, configuration.general.drillMode == false {
+            rescueChannel.send(key: "board.synced", map: [
+                "api": configuration.api.url,
+                "downstreamNew": novelRescues.count,
+                "downstreamChange": updatedDownstreamRescues.count,
+                "upstreamNew": pendingUpstreamNew.count,
+                "upstreamChange": pendingUpstreamUpdate.count,
+                "conflicts": requiredIdChange
+            ])
+        }
+
+        if pendingUpstreamUpdate.count == 0 {
+            self.synced = true
+        }
+    }
+}
