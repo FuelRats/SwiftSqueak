@@ -27,41 +27,21 @@ import IRCKit
 
 class SystemSearch: IRCBotModule {
     var name: String = "SystemSearch"
-    private let formatter: NumberFormatter
 
     var commands: [IRCBotCommandDeclaration] {
-        return [
-            IRCBotCommandDeclaration(
-                commands: ["search"],
-                minParameters: 1,
-                onCommand: didReceiveSystemSearchCommand(command:),
-                maxParameters: 1,
-                lastParameterIsContinous: true,
-                permission: nil
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["landmark"],
-                minParameters: 1,
-                onCommand: didReceiveLandmarkCommand(command:),
-                maxParameters: 1,
-                lastParameterIsContinous: true,
-                permission: nil
-            )
-        ]
+        return []
     }
 
     required init(_ moduleManager: IRCBotModuleManager) {
-        self.formatter = NumberFormatter()
-        self.formatter.numberStyle = .decimal
-        self.formatter.groupingSize = 3
-        self.formatter.maximumFractionDigits = 1
-        self.formatter.roundingMode = .halfUp
-
         moduleManager.register(module: self)
     }
 
-    func didReceiveSystemSearchCommand(command: IRCBotCommand) {
+    @BotCommand(
+        ["search"],
+        parameters: 1...1,
+        lastParameterIsContinous: true
+    )
+    var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
 
         SystemsAPI.performSearch(forSystem: system, onComplete: { searchResults in
@@ -91,7 +71,12 @@ class SystemSearch: IRCBotModule {
         })
     }
 
-    func didReceiveLandmarkCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["landmark"],
+        parameters: 1...1,
+        lastParameterIsContinous: true
+    )
+    var didReceiveLandmarkCommand = { command in
         let system = command.parameters.joined(separator: " ")
 
         SystemsAPI.performLandmarkCheck(forSystem: system, onComplete: { result in
@@ -106,7 +91,7 @@ class SystemSearch: IRCBotModule {
 
             command.message.reply(key: "landmark.response", fromCommand: command, map: [
                 "system": result.meta.name,
-                "distance": self.formatter.string(from: NSNumber(value: landmark.distance))!,
+                "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
                 "landmark": landmark.name
             ])
         }, onError: { _ in
