@@ -32,10 +32,6 @@ class GeneralCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    var commands: [IRCBotCommandDeclaration] {
-       return []
-    }
-
     @BotCommand(
         ["sysstats", "syscount", "systems"],
         parameters: 0...0,

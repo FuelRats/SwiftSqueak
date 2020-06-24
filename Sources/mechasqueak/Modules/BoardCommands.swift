@@ -30,211 +30,6 @@ class BoardCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     internal let distanceFormatter: NumberFormatter
 
-    var commands: [IRCBotCommandDeclaration] {
-        return [
-            IRCBotCommandDeclaration(
-                commands: ["sync", "refreshboard", "reindex", "resetboard", "forcerestartboard",
-                           "forcerefreshboard", "frb", "fbr", "boardrefresh"],
-                minParameters: 0,
-                onCommand: didReceiveSyncCommand(command:),
-                maxParameters: 0,
-                permission: .RescueWrite,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["list"],
-                minParameters: 0,
-                onCommand: didReceiveListCommand(command:),
-                maxParameters: 1,
-                permission: .RescueRead
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["clear", "close"],
-                minParameters: 1,
-                onCommand: didReceiveCloseCommand(command:),
-                maxParameters: 2,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["active", "inactive", "activate", "deactivate"],
-                minParameters: 1,
-                onCommand: didReceiveToggleCaseActiveCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["cr", "codered", "casered"],
-                minParameters: 1,
-                onCommand: didReceiveCodeRedToggleCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["grab"],
-                minParameters: 1,
-                onCommand: didReceiveGrabCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["quote"],
-                minParameters: 1,
-                onCommand: didReceiveQuoteCommand(command:),
-                maxParameters: 1,
-                permission: .RescueRead,
-                allowedDestinations: .PrivateMessage
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["inject"],
-                minParameters: 1,
-                onCommand: didReceiveInjectCommand(command:),
-                maxParameters: 2,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["sub"],
-                minParameters: 3,
-                onCommand: didReceiveSubstituteCommand(command:),
-                maxParameters: 3,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["system", "sys", "loc", "location"],
-                minParameters: 2,
-                onCommand: didReceiveSystemChangeCommand(command:),
-                maxParameters: 2,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["title", "operation"],
-                minParameters: 2,
-                onCommand: didReceiveSetTitleCommand(command:),
-                maxParameters: 2,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["cmdr", "client", "commander"],
-                minParameters: 2,
-                onCommand: didReceiveClientChangeCommand(command:),
-                maxParameters: 2,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["assign", "go"],
-                minParameters: 2,
-                onCommand: didReceiveAssignCommand(command:),
-                maxParameters: nil,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["unassign", "deassign", "rm", "remove", "standdown"],
-                minParameters: 2,
-                onCommand: didReceiveUnassignCommand(command:),
-                maxParameters: nil,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["nick", "ircnick", "nickname"],
-                minParameters: 2,
-                onCommand: didReceiveClientNickChangeCommand(command:),
-                maxParameters: 2,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["md", "trash", "purge", "mdadd"],
-                minParameters: 2,
-                onCommand: didReceiveTrashCommand(command:),
-                maxParameters: 2,
-                lastParameterIsContinous: true,
-                permission: .RescueWriteOwn
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["pwl", "paperwork"],
-                minParameters: 1,
-                onCommand: didReceivePaperworkLinkCommand(command:),
-                maxParameters: 1,
-                permission: .RescueRead
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["quiet"],
-                minParameters: 0,
-                onCommand: didReceiveQuietcommand(command:),
-                maxParameters: 0,
-                permission: .RescueRead
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["prep"],
-                minParameters: 0,
-                onCommand: didReceivePrepCommand(command:),
-                maxParameters: 1,
-                permission: nil
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["xb"],
-                minParameters: 1,
-                onCommand: didReceiveXboxPlatformCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["pc"],
-                minParameters: 1,
-                onCommand: didReceivePCPlatformCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["ps"],
-                minParameters: 1,
-                onCommand: didReceivePS4PlatformCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn,
-                allowedDestinations: .Channel
-            )
-        ]
-    }
-
     required init(_ moduleManager: IRCBotModuleManager) {
         self.distanceFormatter = NumberFormatter()
         self.distanceFormatter.numberStyle = .decimal
@@ -249,11 +44,23 @@ class BoardCommands: IRCBotModule {
         )
     }
 
-    func didReceiveSyncCommand(command: IRCBotCommand) {
+    @BotCommand(
+        ["sync", "refreshboard", "reindex", "resetboard", "forcerestartboard",
+                   "forcerefreshboard", "frb", "fbr", "boardrefresh"],
+        parameters: 0...0,
+        permission: .RescueWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSyncCommand = { command in
         mecha.rescueBoard.syncBoard()
     }
 
-    func didReceiveListCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["list"],
+        parameters: 0...1,
+        permission: .RescueRead
+    )
+    var didReceiveListCommand = { command in
         var arguments: [ListCommandArgument] = []
         if command.parameters.count > 0 && command.parameters[0].starts(with: "-") {
             var args = command.parameters[0]
@@ -320,9 +127,15 @@ class BoardCommands: IRCBotModule {
         ])
     }
 
-    func didReceiveCloseCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["clear", "close"],
+        parameters: 1...2,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveCloseCommand = { command in
         let message = command.message
-        guard let rescue = self.assertGetRescueId(command: command) else {
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -402,8 +215,14 @@ class BoardCommands: IRCBotModule {
         })
     }
 
-    func didReceiveTrashCommand (command: IRCBotCommand) {
-        guard let rescue = self.assertGetRescueId(command: command) else {
+    @BotCommand(
+        ["md", "trash", "purge", "mdadd"],
+        parameters: 2...2,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn
+    )
+    var didReceiveTrashCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -427,8 +246,13 @@ class BoardCommands: IRCBotModule {
         })
     }
 
-    func didReceivePaperworkLinkCommand (command: IRCBotCommand) {
-        guard let rescue = self.assertGetRescueId(command: command) else {
+    @BotCommand(
+        ["pwl", "paperwork"],
+        parameters: 1...1,
+        permission: .RescueRead
+    )
+    var didReceivePaperworkLinkCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -442,7 +266,12 @@ class BoardCommands: IRCBotModule {
         })
     }
 
-    func didReceiveQuietcommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["quiet"],
+        parameters: 0...0,
+        permission: .RescueRead
+    )
+    var didReceiveQuietCommand = { command in
         guard let lastSignalDate = mecha.rescueBoard.lastSignalReceived else {
             command.message.reply(key: "board.quiet.unknown", fromCommand: command)
             return
@@ -476,7 +305,11 @@ class BoardCommands: IRCBotModule {
         ])
     }
 
-    func didReceivePrepCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["prep"],
+        parameters: 0...
+    )
+    var didReceivePrepCommand = { command in
         let nick = command.parameters[0]
 
         guard let rescue = mecha.rescueBoard.rescues.first(where: {
@@ -500,10 +333,6 @@ class BoardCommands: IRCBotModule {
         }
 
         return rescue
-    }
-
-    func assertGetRescueId (command: IRCBotCommand) -> LocalRescue? {
-        BoardCommands.assertGetRescueId(command: command)
     }
 
     func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {

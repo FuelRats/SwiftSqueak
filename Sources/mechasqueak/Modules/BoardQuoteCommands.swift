@@ -25,9 +25,20 @@
 import Foundation
 import IRCKit
 
-extension BoardCommands {
-    func didReceiveQuoteCommand (command: IRCBotCommand) {
-        guard let rescue = self.assertGetRescueId(command: command) else {
+class BoardQuoteCommands: IRCBotModule {
+    var name: String = "Case Quote Commands"
+    required init(_ moduleManager: IRCBotModuleManager) {
+        moduleManager.register(module: self)
+    }
+
+    @BotCommand(
+        ["quote"],
+        parameters: 1...1,
+        permission: .RescueRead,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveQuoteCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -63,7 +74,13 @@ extension BoardCommands {
         }
     }
 
-    func didReceiveGrabCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["grab"],
+        parameters: 1...1,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveGrabCommand = { command in
         let message = command.message
         let clientParam = command.parameters[0]
 
@@ -119,7 +136,14 @@ extension BoardCommands {
         }
     }
 
-    func didReceiveInjectCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["inject"],
+        parameters: 1...2,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveInjectCommand = { command in
         let message = command.message
         let clientParam = command.parameters[0]
 
@@ -165,10 +189,17 @@ extension BoardCommands {
         }
     }
 
-    func didReceiveSubstituteCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["sub"],
+        parameters: 3...3,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSubstituteCommand = { command in
         let message = command.message
 
-        guard let rescue = self.assertGetRescueId(command: command) else {
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 

@@ -29,8 +29,6 @@ protocol IRCBotModule {
     var name: String { get }
 
     init (_ moduleManager: IRCBotModuleManager)
-
-    var commands: [IRCBotCommandDeclaration] { get }
 }
 
 enum AllowedCommandDestination {
@@ -43,10 +41,10 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
 
-    init (
+    init <T: EvaluableRange> (
         wrappedValue value: @escaping BotCommandFunction,
         _ commands: [String],
-        parameters: ClosedRange<Int>,
+        parameters: T,
         lastParameterIsContinous: Bool = false,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All
@@ -55,9 +53,9 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
 
         let declaration = IRCBotCommandDeclaration(
             commands: commands,
-            minParameters: parameters.lowerBound,
+            minParameters: parameters.lower as? Int ?? 0,
             onCommand: self.wrappedValue,
-            maxParameters: parameters.upperBound,
+            maxParameters: parameters.upper as? Int,
             lastParameterIsContinous: lastParameterIsContinous,
             permission: permission,
             allowedDestinations: allowedDestinations
@@ -144,20 +142,10 @@ class IRCBotModuleManager {
             // Do not interpret commands from playback of old messages
             return
         }
-
-        var checkCommand = MechaSqueak.commands.first(where: {
+        
+        guard let command = MechaSqueak.commands.first(where: {
             $0.commands.contains(ircBotCommand.command)
-        })
-
-        if checkCommand == nil {
-            checkCommand = self.registeredModules.compactMap({ (botModule) -> IRCBotCommandDeclaration? in
-                return botModule.commands.filter({
-                    $0.commands.contains(ircBotCommand.command)
-                }).first
-            }).first
-        }
-
-        guard let command = checkCommand else {
+        }) else {
             return
         }
 

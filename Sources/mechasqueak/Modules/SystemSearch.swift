@@ -28,10 +28,6 @@ import IRCKit
 class SystemSearch: IRCBotModule {
     var name: String = "SystemSearch"
 
-    var commands: [IRCBotCommandDeclaration] {
-        return []
-    }
-
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }

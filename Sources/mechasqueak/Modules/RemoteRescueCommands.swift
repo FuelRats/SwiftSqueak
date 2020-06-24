@@ -29,73 +29,16 @@ class RemoteRescueCommands: IRCBotModule {
     var name: String = "Remote Rescue Commands"
     private var channelMessageObserver: NotificationToken?
 
-    var commands: [IRCBotCommandDeclaration] {
-        return [
-            IRCBotCommandDeclaration(
-                commands: ["closed", "recent"],
-                minParameters: 0,
-                onCommand: didReceiveRecentlyClosedCommand(command:),
-                maxParameters: 1,
-                permission: .RescueRead
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["delete"],
-                minParameters: 1,
-                onCommand: didReceiveDeleteCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWrite
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["mdlist", "trashlist", "purgelist", "listtrash"],
-                minParameters: 0,
-                onCommand: didReceiveListTrashCommand(command:),
-                maxParameters: 0,
-                permission: .RescueRead,
-                allowedDestinations: .PrivateMessage
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["mdremove", "restore", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
-                minParameters: 1,
-                onCommand: didReceiveRestoreTrashCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWrite
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["pwn", "unfiled", "paperworkneeded", "needspaperwork", "npw"],
-                minParameters: 0,
-                onCommand: didReceiveUnfiledListCommand(command:),
-                maxParameters: 0,
-                permission: .RescueRead,
-                allowedDestinations: .PrivateMessage
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["quoteid"],
-                minParameters: 1,
-                onCommand: didReceiveQuoteRemoteCommand(command:),
-                maxParameters: 1,
-                permission: .RescueRead
-            ),
-
-            IRCBotCommandDeclaration(
-                commands: ["reopen"],
-                minParameters: 1,
-                onCommand: didReceiveReopenCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWrite
-            )
-        ]
-    }
-
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }
 
-    func didReceiveRecentlyClosedCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["closed", "recent"],
+        parameters: 0...1,
+        permission: .RescueRead
+    )
+    var didReceiveRecentlyClosedCommand = { command in
         var closeCount = 3
         if command.parameters.count > 0 {
             guard let count = Int(command.parameters[0]) else {
@@ -135,7 +78,12 @@ class RemoteRescueCommands: IRCBotModule {
         })
     }
 
-    func didReceiveDeleteCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["delete"],
+        parameters: 1...1,
+        permission: .RescueWrite
+    )
+    var didReceiveDeleteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
             command.message.reply(key: "rescue.delete.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
@@ -168,7 +116,13 @@ class RemoteRescueCommands: IRCBotModule {
         })
     }
 
-    func didReceiveListTrashCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["mdlist", "trashlist", "purgelist", "listtrash"],
+        parameters: 0...0,
+        permission: .RescueRead,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveListTrashcommand = { command in
         FuelRatsAPI.getRescuesInTrash(complete: { results in
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
@@ -195,7 +149,12 @@ class RemoteRescueCommands: IRCBotModule {
         })
     }
 
-    func didReceiveRestoreTrashCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["mdremove", "restore", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
+        parameters: 1...1,
+        permission: .RescueWrite
+    )
+    var didReceiveRestoreTrashCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
             command.message.reply(key: "rescue.restore.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
@@ -232,7 +191,13 @@ class RemoteRescueCommands: IRCBotModule {
         })
     }
 
-    func didReceiveUnfiledListCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["pwn", "unfiled", "paperworkneeded", "needspaperwork", "npw"],
+        parameters: 0...0,
+        permission: .RescueRead,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveUnfiledListCommand = { command in
         FuelRatsAPI.getUnfiledRescues(complete: { results in
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
@@ -257,7 +222,12 @@ class RemoteRescueCommands: IRCBotModule {
         })
     }
 
-    func didReceiveQuoteRemoteCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["quoteid"],
+        parameters: 1...1,
+        permission: .RescueRead
+    )
+    var didReceiveQuoteRemoteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
             command.message.reply(key: "rescue.quoteid.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
@@ -292,7 +262,12 @@ class RemoteRescueCommands: IRCBotModule {
         })
     }
 
-    func didReceiveReopenCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["reopen"],
+        parameters: 1...1,
+        permission: .RescueWrite
+    )
+    var didReceiveReopenCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
             command.message.reply(key: "rescue.reopen.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]

@@ -55,10 +55,6 @@ class ShortenURLCommands: IRCBotModule {
         })
     }
 
-    var commands: [IRCBotCommandDeclaration] {
-        return []
-    }
-
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }

@@ -25,12 +25,23 @@
 import Foundation
 import IRCKit
 
-extension BoardCommands {
-    func didReceiveAssignCommand (command: IRCBotCommand) {
+class BoardAssignCommands: IRCBotModule {
+    var name: String = "Assign Commands"
+    required init(_ moduleManager: IRCBotModuleManager) {
+        moduleManager.register(module: self)
+    }
+
+    @BotCommand(
+        ["assign", "go"],
+        parameters: 2...,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveAssignCommand = { command in
         let message = command.message
 
         // Find case by rescue ID or client name
-        guard let rescue = self.assertGetRescueId(command: command) else {
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -78,10 +89,16 @@ extension BoardCommands {
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
 
-    func didReceiveUnassignCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["unassign", "deassign", "rm", "remove", "standdown"],
+        parameters: 2...,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveUnassignCommand = { command in
         let message = command.message
 
-        guard let rescue = self.assertGetRescueId(command: command) else {
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 

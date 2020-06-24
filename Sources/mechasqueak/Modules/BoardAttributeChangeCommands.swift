@@ -25,131 +25,178 @@
 import Foundation
 import IRCKit
 
-extension BoardCommands {
-    func didReceiveToggleCaseActiveCommand (command: IRCBotCommand) {
-           guard let rescue = self.assertGetRescueId(command: command) else {
-               return
-           }
+class BoardAttributeCommands: IRCBotModule {
+    var name: String = "Case Attribute Change Commands"
+    required init(_ moduleManager: IRCBotModuleManager) {
+        moduleManager.register(module: self)
+    }
 
-           if rescue.status == .Inactive {
-               rescue.status = .Open
-           } else {
-               rescue.status = .Inactive
-           }
+    @BotCommand(
+        ["active", "inactive", "activate", "deactivate"],
+        parameters: 1...1,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveToggleCaseActiveCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
 
-           command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
-               "status": String(describing: rescue.status),
-               "caseId": rescue.commandIdentifier!,
-               "client": rescue.client!
-           ])
+        if rescue.status == .Inactive {
+            rescue.status = .Open
+        } else {
+            rescue.status = .Inactive
+        }
 
-           rescue.syncUpstream(fromBoard: mecha.rescueBoard)
-       }
+        command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
+            "status": String(describing: rescue.status),
+            "caseId": rescue.commandIdentifier!,
+            "client": rescue.client!
+        ])
 
-       func didReceiveSystemChangeCommand (command: IRCBotCommand) {
-           guard let rescue = self.assertGetRescueId(command: command) else {
-               return
-           }
+        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+    }
 
-           let system = command.parameters[1]
+    @BotCommand(
+        ["system", "sys", "loc", "location"],
+        parameters: 2...2,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSystemChangeCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
 
-           rescue.system = system.uppercased()
+        let system = command.parameters[1]
 
-           SystemsAPI.performSearchAndLandmarkCheck(
+        rescue.system = system.uppercased()
+
+        SystemsAPI.performSearchAndLandmarkCheck(
             forSystem: system,
             onComplete: { searchResult, landmarkResult, _ in
-               guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
-                   command.message.reply(key: "board.syschange.notindb", fromCommand: command, map: [
-                       "caseId": rescue.commandIdentifier!,
-                       "client": rescue.client!,
-                       "system": system
-                   ])
-                   return
-               }
+                guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
+                    command.message.reply(key: "board.syschange.notindb", fromCommand: command, map: [
+                        "caseId": rescue.commandIdentifier!,
+                        "client": rescue.client!,
+                        "system": system
+                    ])
+                    return
+                }
 
-               let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
+                let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
 
-               let distance = self.distanceFormatter.string(from: NSNumber(value: landmarkResult.distance))!
-               command.message.reply(key: format, fromCommand: command, map: [
-                   "caseId": rescue.commandIdentifier!,
-                   "client": rescue.client!,
-                   "system": system,
-                   "distance": distance,
-                   "landmark": landmarkResult.name,
-                   "permit": searchResult.permitText ?? ""
-               ])
-           })
-           rescue.syncUpstream(fromBoard: mecha.rescueBoard)
-       }
+                let distance = NumberFormatter.englishFormatter().string(
+                    from: NSNumber(value: landmarkResult.distance)
+                )!
+                command.message.reply(key: format, fromCommand: command, map: [
+                    "caseId": rescue.commandIdentifier!,
+                    "client": rescue.client!,
+                    "system": system,
+                    "distance": distance,
+                    "landmark": landmarkResult.name,
+                    "permit": searchResult.permitText ?? ""
+                ])
+            })
+        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+    }
 
-       func didReceiveClientChangeCommand (command: IRCBotCommand) {
-           guard let rescue = self.assertGetRescueId(command: command) else {
-               return
-           }
+    @BotCommand(
+        ["cmdr", "client", "commander"],
+        parameters: 2...2,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveClientChangeCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
 
-           let oldClient = rescue.client!
-           let client = command.parameters[1]
-           rescue.client = client
+        let oldClient = rescue.client!
+        let client = command.parameters[1]
+        rescue.client = client
 
-           command.message.reply(key: "board.clientchange", fromCommand: command, map: [
-               "caseId": rescue.commandIdentifier!,
-               "oldClient": oldClient,
-               "client": client
-           ])
+        command.message.reply(key: "board.clientchange", fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier!,
+            "oldClient": oldClient,
+            "client": client
+        ])
 
-           rescue.syncUpstream(fromBoard: mecha.rescueBoard)
-       }
+        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+    }
 
-       func didReceiveClientNickChangeCommand (command: IRCBotCommand) {
-           guard let rescue = self.assertGetRescueId(command: command) else {
-               return
-           }
+    @BotCommand(
+        ["nick", "ircnick", "nickname"],
+        parameters: 2...2,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveClientNickChangeCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
 
-           let nick = command.parameters[1]
-           rescue.clientNick = nick
+        let nick = command.parameters[1]
+        rescue.clientNick = nick
 
-           command.message.reply(key: "board.nickchange", fromCommand: command, map: [
-               "caseId": rescue.commandIdentifier!,
-               "client": rescue.client!,
-               "nick": nick
-           ])
+        command.message.reply(key: "board.nickchange", fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier!,
+            "client": rescue.client!,
+            "nick": nick
+        ])
 
-           rescue.syncUpstream(fromBoard: mecha.rescueBoard)
-       }
+        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+    }
 
-       func didReceiveCodeRedToggleCommand (command: IRCBotCommand) {
-           guard let rescue = self.assertGetRescueId(command: command) else {
-               return
-           }
+    @BotCommand(
+        ["cr", "codered", "casered"],
+        parameters: 1...1,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveCodeRedToggleCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
 
-           if rescue.codeRed == true {
-               rescue.codeRed = false
-               command.message.reply(key: "board.codered.no", fromCommand: command, map: [
-                   "caseId": rescue.commandIdentifier!,
-                   "client": rescue.client!
-               ])
-           } else {
-               rescue.codeRed = true
-               command.message.reply(key: "board.codered.active", fromCommand: command, map: [
-                   "caseId": rescue.commandIdentifier!,
-                   "client": rescue.client!
-               ])
+        if rescue.codeRed == true {
+            rescue.codeRed = false
+            command.message.reply(key: "board.codered.no", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier!,
+                "client": rescue.client!
+            ])
+        } else {
+            rescue.codeRed = true
+            command.message.reply(key: "board.codered.active", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier!,
+                "client": rescue.client!
+            ])
 
-               if rescue.rats.count > 0 {
-                   let rats = rescue.rats.map({
-                       $0.attributes.name.value
-                   }).joined(separator: ", ")
+            if rescue.rats.count > 0 {
+                let rats = rescue.rats.map({
+                    $0.attributes.name.value
+                }).joined(separator: ", ")
 
-                   command.message.reply(key: "board.codered.attention", fromCommand: command, map: [
-                       "rats": rats
-                   ])
-               }
-           }
-           rescue.syncUpstream(fromBoard: mecha.rescueBoard)
-       }
+                command.message.reply(key: "board.codered.attention", fromCommand: command, map: [
+                    "rats": rats
+                ])
+            }
+        }
+        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+    }
 
-    func didReceiveSetTitleCommand (command: IRCBotCommand) {
-        guard let rescue = self.assertGetRescueId(command: command) else {
+    @BotCommand(
+        ["title", "operation"],
+        parameters: 2...2,
+        lastParameterIsContinous: true,
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSetTitleCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 

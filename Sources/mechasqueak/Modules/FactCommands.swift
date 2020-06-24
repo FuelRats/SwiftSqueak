@@ -32,19 +32,6 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
 
-    var commands: [IRCBotCommandDeclaration] {
-        return [
-            IRCBotCommandDeclaration(
-                commands: ["fact", "facts"],
-                minParameters: 0,
-                onCommand: didReceiveFactCommand(command:),
-                maxParameters: 3,
-                lastParameterIsContinous: true,
-                permission: nil
-            )
-        ]
-    }
-
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
         let name = factComponents[0]
@@ -52,7 +39,12 @@ class FactCommands: IRCBotModule {
         return (name, locale)
     }
 
-    func didReceiveFactCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["fact", "facts"],
+        parameters: 0...3,
+        lastParameterIsContinous: true
+    )
+    var didReceiveFactCommand = { command in
         if command.parameters.count == 0 {
             didReceiveFactListCommand(command: command)
             return
@@ -77,7 +69,7 @@ class FactCommands: IRCBotModule {
         }
     }
 
-    func didReceiveFactListCommand (command: IRCBotCommand) {
+    static func didReceiveFactListCommand (command: IRCBotCommand) {
         let query = FactListQuery(language: command.locale.identifier)
         Fact.findAll(using: Database.default, matching: query, { facts, _ in
 
@@ -106,7 +98,7 @@ class FactCommands: IRCBotModule {
         })
     }
 
-    func didReceiveFactInfoCommand (command: IRCBotCommand) {
+    static func didReceiveFactInfoCommand (command: IRCBotCommand) {
         guard command.parameters.count == 2 else {
             command.message.reply(key: "facts.info.syntax", fromCommand: command)
             return
@@ -143,7 +135,7 @@ class FactCommands: IRCBotModule {
         })
     }
 
-    func didReceiveFactSetCommand (command: IRCBotCommand) {
+    static func didReceiveFactSetCommand (command: IRCBotCommand) {
         let message = command.message
 
         guard command.parameters.count == 3 else {
@@ -220,7 +212,7 @@ class FactCommands: IRCBotModule {
         })
     }
 
-    func didReceiveFactDeleteCommand (command: IRCBotCommand) {
+    static func didReceiveFactDeleteCommand (command: IRCBotCommand) {
         let message = command.message
 
         guard command.parameters.count == 2 else {
