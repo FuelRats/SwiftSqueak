@@ -30,22 +30,20 @@ class TweetCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
 
     var commands: [IRCBotCommandDeclaration] {
-        return [
-            IRCBotCommandDeclaration(
-                commands: ["tweetcase", "tweetc"],
-                minParameters: 1,
-                onCommand: didReceiveTweetCaseCommand(command:),
-                maxParameters: 1,
-                permission: .RescueWriteOwn
-            )
-        ]
+        return []
     }
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }
 
-    func didReceiveTweetCaseCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["tweetcase", "tweetc"],
+        minParameters: 1,
+        maxParameters: 1,
+        permission: .RescueWriteOwn
+    )
+    var didReceiveTweetCaseCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
@@ -93,7 +91,7 @@ class TweetCommands: IRCBotModule {
         })
     }
 
-    func generateSystemDescription (system: String, complete: @escaping (String?) -> Void) {
+    static func generateSystemDescription (system: String, complete: @escaping (String?) -> Void) {
         SystemsAPI.performSearchAndLandmarkCheck(
                 forSystem: system, onComplete: { _, landmarkResult, _ in
                 guard let result = landmarkResult else {
