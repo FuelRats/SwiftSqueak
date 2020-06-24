@@ -33,59 +33,16 @@ class GeneralCommands: IRCBotModule {
     }
 
     var commands: [IRCBotCommandDeclaration] {
-       return [
-           IRCBotCommandDeclaration(
-               commands: ["version", "uptime"],
-               minParameters: 0,
-               onCommand: didReceiveVersionCommand(command:),
-               maxParameters: 0,
-               permission: nil
-           ),
-
-           IRCBotCommandDeclaration(
-               commands: ["sysstats", "syscount", "systems"],
-               minParameters: 0,
-               onCommand: didReceiveSystemStatisticsCommand(command:),
-               maxParameters: 0,
-               permission: nil
-           ),
-
-           IRCBotCommandDeclaration(
-               commands: ["whoami"],
-               minParameters: 0,
-               onCommand: didReceiveWhoAmICommand(command:),
-               maxParameters: 0
-           ),
-
-           IRCBotCommandDeclaration(
-               commands: ["whois", "who", "ratid", "id"],
-               minParameters: 1,
-               onCommand: didReceiveWhoIsCommand(command:),
-               maxParameters: 1,
-               permission: .RatRead
-           ),
-
-           IRCBotCommandDeclaration(
-               commands: ["msg", "say"],
-               minParameters: 2,
-               onCommand: didReceiveSayCommand(command:),
-               maxParameters: 2,
-               lastParameterIsContinous: true,
-               permission: .UserWrite
-           ),
-
-           IRCBotCommandDeclaration(
-               commands: ["me", "action", "emote"],
-               minParameters: 2,
-               onCommand: didReceiveMeCommand(command:),
-               maxParameters: 2,
-               lastParameterIsContinous: true,
-               permission: .UserWrite
-           )
-       ]
+       return []
     }
 
-    func didReceiveSystemStatisticsCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["sysstats", "syscount", "systems"],
+        minParameters: 0,
+        maxParameters: 0,
+        permission: nil
+    )
+    var didReceiveSystemStatisticsCommand = { command in
         SystemsAPI.performStatisticsQuery(onComplete: { results in
             let result = results.data[0]
             guard let date = try? Double(value: result.id) else {
@@ -111,7 +68,13 @@ class GeneralCommands: IRCBotModule {
         })
     }
 
-    func didReceiveVersionCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["version", "uptime"],
+        minParameters: 0,
+        maxParameters: 0,
+        permission: nil
+    )
+    var didReceiveVersionCommand = { command in
         let timespan = Date().timeIntervalSince(mecha.startupTime)
 
         let formatter = DateComponentsFormatter()
@@ -126,7 +89,12 @@ class GeneralCommands: IRCBotModule {
         ])
     }
 
-    func didReceiveWhoAmICommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["whoami"],
+        minParameters: 0,
+        maxParameters: 0
+    )
+    var didReceiveWhoAmICommand = { command in
         let message = command.message
         let user = message.user
         guard let account = user.account else {
@@ -161,7 +129,13 @@ class GeneralCommands: IRCBotModule {
         ])
     }
 
-    func didReceiveWhoIsCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["whois", "who", "ratid", "id"],
+        minParameters: 1,
+        maxParameters: 1,
+        permission: .RatRead
+    )
+    var didReceiveWhoIsCommand = { command in
         let message = command.message
         let nick = command.parameters[0]
 
@@ -209,7 +183,14 @@ class GeneralCommands: IRCBotModule {
         ])
     }
 
-    func didReceiveSayCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["msg", "say"],
+        minParameters: 2,
+        maxParameters: 2,
+        lastParameterIsContinous: true,
+        permission: .UserWrite
+    )
+    var didReceiveSayCommand = { command in
         command.message.reply(key: "say.sending", fromCommand: command, map: [
             "target": command.parameters[0],
             "contents": command.parameters[1]
@@ -217,7 +198,14 @@ class GeneralCommands: IRCBotModule {
         command.message.client.sendMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
     }
 
-    func didReceiveMeCommand (command: IRCBotCommand) {
+    @BotCommand(
+        ["me", "action", "emote"],
+        minParameters: 2,
+        maxParameters: 2,
+        lastParameterIsContinous: true,
+        permission: .UserWrite
+    )
+    var didReceiveMeCommand = { command in
         command.message.reply(key: "me.sending", fromCommand: command, map: [
             "target": command.parameters[0],
             "contents": command.parameters[1]
