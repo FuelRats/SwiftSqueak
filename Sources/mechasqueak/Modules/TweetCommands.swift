@@ -39,8 +39,7 @@ class TweetCommands: IRCBotModule {
 
     @BotCommand(
         ["tweetcase", "tweetc"],
-        minParameters: 1,
-        maxParameters: 1,
+        parameters: 1...1,
         permission: .RescueWriteOwn
     )
     var didReceiveTweetCaseCommand = { command in

@@ -46,18 +46,18 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
     init (
         wrappedValue value: @escaping BotCommandFunction,
         _ commands: [String],
-        minParameters: Int = 0,
-        maxParameters: Int? = nil,
+        parameters: ClosedRange<Int>,
         lastParameterIsContinous: Bool = false,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All
     ) {
         self.wrappedValue = value
+
         let declaration = IRCBotCommandDeclaration(
             commands: commands,
-            minParameters: minParameters,
+            minParameters: parameters.lowerBound,
             onCommand: self.wrappedValue,
-            maxParameters: maxParameters,
+            maxParameters: parameters.upperBound,
             lastParameterIsContinous: lastParameterIsContinous,
             permission: permission,
             allowedDestinations: allowedDestinations

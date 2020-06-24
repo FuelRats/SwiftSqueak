@@ -31,8 +31,7 @@ class ShortenURLCommands: IRCBotModule {
 
     @BotCommand(
         ["shorten", "short", "shortener"],
-        minParameters: 1,
-        maxParameters: 2,
+        parameters: 1...2,
         permission: .RescueWriteOwn
     )
     var didReceiveShortenURLCommand = { (command: IRCBotCommand) in

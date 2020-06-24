@@ -38,8 +38,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["sysstats", "syscount", "systems"],
-        minParameters: 0,
-        maxParameters: 0,
+        parameters: 0...0,
         permission: nil
     )
     var didReceiveSystemStatisticsCommand = { command in
@@ -70,8 +69,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["version", "uptime"],
-        minParameters: 0,
-        maxParameters: 0,
+        parameters: 0...0,
         permission: nil
     )
     var didReceiveVersionCommand = { command in
@@ -91,8 +89,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["whoami"],
-        minParameters: 0,
-        maxParameters: 0
+        parameters: 0...0
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -131,8 +128,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["whois", "who", "ratid", "id"],
-        minParameters: 1,
-        maxParameters: 1,
+        parameters: 1...1,
         permission: .RatRead
     )
     var didReceiveWhoIsCommand = { command in
@@ -185,8 +181,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["msg", "say"],
-        minParameters: 2,
-        maxParameters: 2,
+        parameters: 2...2,
         lastParameterIsContinous: true,
         permission: .UserWrite
     )
@@ -200,8 +195,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["me", "action", "emote"],
-        minParameters: 2,
-        maxParameters: 2,
+        parameters: 2...2,
         lastParameterIsContinous: true,
         permission: .UserWrite
     )
