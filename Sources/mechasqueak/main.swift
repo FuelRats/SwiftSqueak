@@ -47,6 +47,7 @@ func loadConfiguration () -> MechaConfiguration {
 let configuration = loadConfiguration()
 
 class MechaSqueak {
+    static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
     let accounts: NicknameLookupManager
     let commands: [IRCBotModule]

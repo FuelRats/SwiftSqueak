@@ -26,13 +26,13 @@ import Foundation
 import IRCKit
 
 extension BoardCommands {
-    func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand, message: IRCPrivateMessage) {
-        guard let rescue = self.assertGetRescueId(command: command, fromMessage: message) else {
+    func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand) {
+        guard let rescue = self.assertGetRescueId(command: command) else {
             return
         }
 
         rescue.platform = platform
-        message.reply(key: "board.platformset", fromCommand: command, map: [
+        command.message.reply(key: "board.platformset", fromCommand: command, map: [
             "platform": rescue.platform!.ircRepresentable,
             "caseId": rescue.commandIdentifier!,
             "client": rescue.client!
@@ -40,15 +40,15 @@ extension BoardCommands {
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
 
-    func didReceiveXboxPlatformCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
-        self.platformChangeCommand(platform: .Xbox, command: command, message: message)
+    func didReceiveXboxPlatformCommand (command: IRCBotCommand) {
+        self.platformChangeCommand(platform: .Xbox, command: command)
     }
 
-    func didReceivePCPlatformCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
-        self.platformChangeCommand(platform: .PC, command: command, message: message)
+    func didReceivePCPlatformCommand (command: IRCBotCommand) {
+        self.platformChangeCommand(platform: .PC, command: command)
     }
 
-    func didReceivePS4PlatformCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
-        self.platformChangeCommand(platform: .PS4, command: command, message: message)
+    func didReceivePS4PlatformCommand (command: IRCBotCommand) {
+        self.platformChangeCommand(platform: .PS4, command: command)
     }
 }

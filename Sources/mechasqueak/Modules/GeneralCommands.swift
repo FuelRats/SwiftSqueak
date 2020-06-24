@@ -37,7 +37,7 @@ class GeneralCommands: IRCBotModule {
            IRCBotCommandDeclaration(
                commands: ["version", "uptime"],
                minParameters: 0,
-               onCommand: didReceiveVersionCommand(command:message:),
+               onCommand: didReceiveVersionCommand(command:),
                maxParameters: 0,
                permission: nil
            ),
@@ -45,7 +45,7 @@ class GeneralCommands: IRCBotModule {
            IRCBotCommandDeclaration(
                commands: ["sysstats", "syscount", "systems"],
                minParameters: 0,
-               onCommand: didReceiveSystemStatisticsCommand(command:message:),
+               onCommand: didReceiveSystemStatisticsCommand(command:),
                maxParameters: 0,
                permission: nil
            ),
@@ -53,14 +53,14 @@ class GeneralCommands: IRCBotModule {
            IRCBotCommandDeclaration(
                commands: ["whoami"],
                minParameters: 0,
-               onCommand: didReceiveWhoAmICommand(command:message:),
+               onCommand: didReceiveWhoAmICommand(command:),
                maxParameters: 0
            ),
 
            IRCBotCommandDeclaration(
                commands: ["whois", "who", "ratid", "id"],
                minParameters: 1,
-               onCommand: didReceiveWhoIsCommand(command:message:),
+               onCommand: didReceiveWhoIsCommand(command:),
                maxParameters: 1,
                permission: .RatRead
            ),
@@ -68,7 +68,7 @@ class GeneralCommands: IRCBotModule {
            IRCBotCommandDeclaration(
                commands: ["msg", "say"],
                minParameters: 2,
-               onCommand: didReceiveSayCommand(command:message:),
+               onCommand: didReceiveSayCommand(command:),
                maxParameters: 2,
                lastParameterIsContinous: true,
                permission: .UserWrite
@@ -77,7 +77,7 @@ class GeneralCommands: IRCBotModule {
            IRCBotCommandDeclaration(
                commands: ["me", "action", "emote"],
                minParameters: 2,
-               onCommand: didReceiveMeCommand(command:message:),
+               onCommand: didReceiveMeCommand(command:),
                maxParameters: 2,
                lastParameterIsContinous: true,
                permission: .UserWrite
@@ -85,7 +85,7 @@ class GeneralCommands: IRCBotModule {
        ]
     }
 
-    func didReceiveSystemStatisticsCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveSystemStatisticsCommand (command: IRCBotCommand) {
         SystemsAPI.performStatisticsQuery(onComplete: { results in
             let result = results.data[0]
             guard let date = try? Double(value: result.id) else {
@@ -100,18 +100,18 @@ class GeneralCommands: IRCBotModule {
 
             let updatedTimespan = Date().timeIntervalSince(Date(timeIntervalSince1970: date))
 
-            message.reply(key: "sysstats.message", fromCommand: command, map: [
+            command.message.reply(key: "sysstats.message", fromCommand: command, map: [
                 "date": timespanFormatter.string(from: updatedTimespan)!,
                 "systems": numberFormatter.string(from: result.attributes.syscount)!,
                 "stars": numberFormatter.string(from: result.attributes.starcount)!,
                 "bodies": numberFormatter.string(from: result.attributes.bodycount)!
             ])
         }, onError: { _ in
-            message.reply(key: "sysstats.error", fromCommand: command)
+            command.message.reply(key: "sysstats.error", fromCommand: command)
         })
     }
 
-    func didReceiveVersionCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveVersionCommand (command: IRCBotCommand) {
         let timespan = Date().timeIntervalSince(mecha.startupTime)
 
         let formatter = DateComponentsFormatter()
@@ -119,22 +119,23 @@ class GeneralCommands: IRCBotModule {
         formatter.maximumUnitCount = 2
         formatter.unitsStyle = .full
 
-        message.reply(key: "version.message", fromCommand: command, map: [
+        command.message.reply(key: "version.message", fromCommand: command, map: [
             "version": mecha.version,
             "uptime": formatter.string(from: timespan)!,
             "startup": mecha.startupTime.description
         ])
     }
 
-    func didReceiveWhoAmICommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveWhoAmICommand (command: IRCBotCommand) {
+        let message = command.message
         let user = message.user
         guard let account = user.account else {
-            message.reply(key: "whoami.notloggedin", fromCommand: command)
+            command.message.reply(key: "whoami.notloggedin", fromCommand: command)
             return
         }
 
         guard let associatedNickname = user.associatedAPIData else {
-            message.reply(key: "whoami.nodata", fromCommand: command, map: [
+            command.message.reply(key: "whoami.nodata", fromCommand: command, map: [
                 "account": account
             ])
             return
@@ -143,7 +144,7 @@ class GeneralCommands: IRCBotModule {
         guard let apiUser = associatedNickname.body.includes![User.self].first(where: {
             return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user.id.rawValue
         }) else {
-            message.reply(key: "whoami.noaccount", fromCommand: command, map: [
+            command.message.reply(key: "whoami.noaccount", fromCommand: command, map: [
                 "account": account
             ])
             return
@@ -153,32 +154,33 @@ class GeneralCommands: IRCBotModule {
             "\($0.attributes.name.value) (\($0.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
 
-        message.reply(key: "whoami.response", fromCommand: command, map: [
+        command.message.reply(key: "whoami.response", fromCommand: command, map: [
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats
         ])
     }
 
-    func didReceiveWhoIsCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveWhoIsCommand (command: IRCBotCommand) {
+        let message = command.message
         let nick = command.parameters[0]
 
         guard let user = message.destination.member(named: nick) else {
-            message.reply(key: "whois.notfound", fromCommand: command, map: [
+            command.message.reply(key: "whois.notfound", fromCommand: command, map: [
                 "nick": nick
             ])
             return
         }
 
         guard let account = user.account else {
-            message.reply(key: "whois.notloggedin", fromCommand: command, map: [
+            command.message.reply(key: "whois.notloggedin", fromCommand: command, map: [
                 "nick": nick
             ])
             return
         }
 
         guard let associatedNickname = user.associatedAPIData else {
-            message.reply(key: "whois.nodata", fromCommand: command, map: [
+            command.message.reply(key: "whois.nodata", fromCommand: command, map: [
                 "nick": nick,
                 "account": account
             ])
@@ -188,7 +190,7 @@ class GeneralCommands: IRCBotModule {
         guard let apiUser = associatedNickname.body.includes![User.self].first(where: {
             return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user.id.rawValue
         }) else {
-            message.reply(key: "whois.noaccount", fromCommand: command, map: [
+            command.message.reply(key: "whois.noaccount", fromCommand: command, map: [
                 "nick": nick,
                 "account": account
             ])
@@ -199,7 +201,7 @@ class GeneralCommands: IRCBotModule {
             "\($0.attributes.name.value) (\($0.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
 
-        message.reply(key: "whois.response", fromCommand: command, map: [
+        command.message.reply(key: "whois.response", fromCommand: command, map: [
             "nick": nick,
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
@@ -207,19 +209,19 @@ class GeneralCommands: IRCBotModule {
         ])
     }
 
-    func didReceiveSayCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
-        message.reply(key: "say.sending", fromCommand: command, map: [
+    func didReceiveSayCommand (command: IRCBotCommand) {
+        command.message.reply(key: "say.sending", fromCommand: command, map: [
             "target": command.parameters[0],
             "contents": command.parameters[1]
         ])
-        message.client.sendMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
+        command.message.client.sendMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
     }
 
-    func didReceiveMeCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
-        message.reply(key: "me.sending", fromCommand: command, map: [
+    func didReceiveMeCommand (command: IRCBotCommand) {
+        command.message.reply(key: "me.sending", fromCommand: command, map: [
             "target": command.parameters[0],
             "contents": command.parameters[1]
         ])
-        message.client.sendActionMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
+        command.message.client.sendActionMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
     }
 }

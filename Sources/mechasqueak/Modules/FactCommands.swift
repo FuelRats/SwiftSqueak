@@ -30,13 +30,14 @@ import IRCKit
 class FactCommands: IRCBotModule {
     var name: String = "Fact Commands"
     private var channelMessageObserver: NotificationToken?
+    private var factsDelimitingCache = Set<String>()
 
     var commands: [IRCBotCommandDeclaration] {
         return [
             IRCBotCommandDeclaration(
                 commands: ["fact", "facts"],
                 minParameters: 0,
-                onCommand: didReceiveFactCommand(command:fromMessage:),
+                onCommand: didReceiveFactCommand(command:),
                 maxParameters: 3,
                 lastParameterIsContinous: true,
                 permission: nil
@@ -51,9 +52,9 @@ class FactCommands: IRCBotModule {
         return (name, locale)
     }
 
-    func didReceiveFactCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveFactCommand (command: IRCBotCommand) {
         if command.parameters.count == 0 {
-            didReceiveFactListCommand(command: command, fromMessage: message)
+            didReceiveFactListCommand(command: command)
             return
         }
 
@@ -61,32 +62,32 @@ class FactCommands: IRCBotModule {
 
         switch modifier {
             case "add", "set":
-                didReceiveFactSetCommand(command: command, fromMessage: message)
+                didReceiveFactSetCommand(command: command)
 
             case "info":
-                didReceiveFactInfoCommand(command: command, fromMessage: message)
+                didReceiveFactInfoCommand(command: command)
 
             case "del":
-                didReceiveFactDeleteCommand(command: command, fromMessage: message)
+                didReceiveFactDeleteCommand(command: command)
 
             default:
-                message.reply(key: "facts.invalidargument", fromCommand: command, map: [
+                command.message.reply(key: "facts.invalidargument", fromCommand: command, map: [
                     "argument": modifier
                 ])
         }
     }
 
-    func didReceiveFactListCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveFactListCommand (command: IRCBotCommand) {
         let query = FactListQuery(language: command.locale.identifier)
         Fact.findAll(using: Database.default, matching: query, { facts, _ in
 
             guard let facts = facts else {
-                message.reply(key: "facts.list.error", fromCommand: command)
+                command.message.reply(key: "facts.list.error", fromCommand: command)
                 return
             }
 
             guard facts.count > 0 else {
-                message.reply(key: "facts.list.none", fromCommand: command, map: [
+                command.message.reply(key: "facts.list.none", fromCommand: command, map: [
                     "locale": command.locale.englishDescription
                 ])
                 return
@@ -101,13 +102,13 @@ class FactCommands: IRCBotModule {
                 "locale": command.locale.englishDescription
             ])
 
-            message.reply(list: factStrings, separator: ", ", heading: heading)
+            command.message.reply(list: factStrings, separator: ", ", heading: heading)
         })
     }
 
-    func didReceiveFactInfoCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveFactInfoCommand (command: IRCBotCommand) {
         guard command.parameters.count == 2 else {
-            message.reply(key: "facts.info.syntax", fromCommand: command)
+            command.message.reply(key: "facts.info.syntax", fromCommand: command)
             return
         }
 
@@ -115,7 +116,7 @@ class FactCommands: IRCBotModule {
 
         Fact.get(name: name, forLocale: locale, onComplete: { fact in
             guard let fact = fact else {
-                message.reply(key: "facts.info.notfound", fromCommand: command, map: [
+                command.message.reply(key: "facts.info.notfound", fromCommand: command, map: [
                     "fact": name,
                     "locale": command.locale.englishDescription
                 ])
@@ -127,7 +128,7 @@ class FactCommands: IRCBotModule {
                 excerpt = "\(excerpt.prefix(98)).."
             }
 
-            message.reply(key: "facts.info.message", fromCommand: command, map: [
+            command.message.reply(key: "facts.info.message", fromCommand: command, map: [
                 "fact": name,
                 "locale": command.locale.englishDescription,
                 "created": fact.createdAt,
@@ -136,20 +137,22 @@ class FactCommands: IRCBotModule {
                 "excerpt": excerpt
             ])
         }, onError: { _ in
-            message.reply(key: "facts.info.error", fromCommand: command, map: [
+            command.message.reply(key: "facts.info.error", fromCommand: command, map: [
                 "fact": command.parameters[1].lowercased()
             ])
         })
     }
 
-    func didReceiveFactSetCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveFactSetCommand (command: IRCBotCommand) {
+        let message = command.message
+
         guard command.parameters.count == 3 else {
-            message.reply(key: "facts.set.syntax", fromCommand: command)
+            command.message.reply(key: "facts.set.syntax", fromCommand: command)
             return
         }
 
         guard message.user.hasPermission(permission: .UserWrite) else {
-            message.reply(key: "facts.set.nopermission", fromCommand: command)
+            command.message.reply(key: "facts.set.nopermission", fromCommand: command)
             return
         }
 
@@ -172,13 +175,13 @@ class FactCommands: IRCBotModule {
 
                 fact.update(id: fact.id!, { (_, error) in
                     guard error == nil else {
-                        message.reply(key: "facts.set.error", fromCommand: command, map: [
+                        command.message.reply(key: "facts.set.error", fromCommand: command, map: [
                             "fact": command.parameters[1].lowercased()
                         ])
                         return
                     }
 
-                    message.reply(key: "facts.set.updated", fromCommand: command, map: [
+                    command.message.reply(key: "facts.set.updated", fromCommand: command, map: [
                         "fact": command.parameters[1].lowercased(),
                         "locale": locale.englishDescription,
                         "message": excerpt
@@ -198,33 +201,35 @@ class FactCommands: IRCBotModule {
 
             fact.save({ (_, error) in
                 guard error == nil else {
-                    message.reply(key: "facts.set.error", fromCommand: command, map: [
+                    command.message.reply(key: "facts.set.error", fromCommand: command, map: [
                         "fact": command.parameters[1].lowercased()
                     ])
                     return
                 }
 
-                message.reply(key: "facts.set.created", fromCommand: command, map: [
+                command.message.reply(key: "facts.set.created", fromCommand: command, map: [
                     "fact": command.parameters[1].lowercased(),
                     "locale": locale.englishDescription,
                     "message": excerpt
                 ])
             })
         }, onError: { _ in
-            message.reply(key: "facts.set.error", fromCommand: command, map: [
+            command.message.reply(key: "facts.set.error", fromCommand: command, map: [
                 "fact": command.parameters[1].lowercased()
             ])
         })
     }
 
-    func didReceiveFactDeleteCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveFactDeleteCommand (command: IRCBotCommand) {
+        let message = command.message
+
         guard command.parameters.count == 2 else {
-            message.reply(key: "facts.del.syntax", fromCommand: command)
+            command.message.reply(key: "facts.del.syntax", fromCommand: command)
             return
         }
 
         guard message.user.hasPermission(permission: .UserWrite) else {
-            message.reply(key: "facts.del.nopermission", fromCommand: command)
+            command.message.reply(key: "facts.del.nopermission", fromCommand: command)
             return
         }
 
@@ -232,7 +237,7 @@ class FactCommands: IRCBotModule {
 
         Fact.get(name: name, forLocale: locale, onComplete: { fact in
             guard fact != nil else {
-                message.reply(key: "facts.del.notfound", fromCommand: command, map: [
+                command.message.reply(key: "facts.del.notfound", fromCommand: command, map: [
                     "fact": command.parameters[1].lowercased()
                 ])
                 return
@@ -242,18 +247,18 @@ class FactCommands: IRCBotModule {
 
             Fact.deleteAll(using: Database.default, matching: query, { error in
                 guard error == nil else {
-                    message.reply(key: "facts.del.error", fromCommand: command, map: [
+                    command.message.reply(key: "facts.del.error", fromCommand: command, map: [
                         "fact": command.parameters[1].lowercased()
                     ])
                     return
                 }
 
-                message.reply(key: "facts.del.success", fromCommand: command, map: [
+                command.message.reply(key: "facts.del.success", fromCommand: command, map: [
                     "fact": command.parameters[1].lowercased()
                 ])
             })
         }, onError: { _ in
-            message.reply(key: "facts.del.error", fromCommand: command, map: [
+            command.message.reply(key: "facts.del.error", fromCommand: command, map: [
                 "fact": command.parameters[1].lowercased()
             ])
         })
@@ -264,12 +269,38 @@ class FactCommands: IRCBotModule {
             return
         }
 
+        let factHash = hashFact(command: command)
+
+        guard self.factsDelimitingCache.contains(factHash) == false else {
+            return
+        }
+
+        self.factsDelimitingCache.insert(factHash)
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(5), execute: {
+            self.factsDelimitingCache.remove(factHash)
+        })
+
         Fact.get(name: command.command, forLocale: command.locale, onComplete: { fact in
             guard let fact = fact else {
                 return
             }
-            message.reply(message: fact.message)
+
+            if command.parameters.count > 0 {
+                let target = command.parameters.joined(separator: " ")
+                command.message.reply(message: "\(target): \(fact.message)")
+            } else {
+                command.message.reply(message: fact.message)
+            }
         })
+    }
+
+    func hashFact (command: IRCBotCommand) -> String {
+        var string = command.command
+        for param in command.parameters {
+            string += param.lowercased()
+        }
+
+        return string.sha256()
     }
 
     required init(_ moduleManager: IRCBotModuleManager) {

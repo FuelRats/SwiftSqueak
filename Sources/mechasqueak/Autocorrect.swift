@@ -1,9 +1,26 @@
-//
-//  Autocorrect.swift
-//  mechasqueak
-//
-//  Created by Alex Sørlie Glomsaas on 2020-03-31.
-//
+/*
+ Copyright 2020 The Fuel Rats Mischief
+
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ disclaimer in the documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+ products derived from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 import Foundation
 import Regex
@@ -27,21 +44,23 @@ class Autocorrect {
     static func check (system: String, search: SystemsAPISearchDocument) -> String? {
         let system = system.uppercased()
 
+        // If the system name is less than 3 words, it is probably a special named system not a procedural one
         if system.split(separator: " ").count < 3 {
-            // Likely a misspelled special named system, use closest match in database
+            /* Non-procedural systems are likely to exist in the Systems API, so we will suggest the one that is
+             closest in edit distance */
             if search.data[0].distance ?? Int.max < 2 {
                 return search.data[0].name
             }
         }
 
         guard system.contains(" SECTOR ") else {
-            // Not a sector system, not much we can do
+            // Not a special system, and not a sector system, nothing we can do with this input
             return nil
         }
 
         let components = system.components(separatedBy: " SECTOR ")
         guard components.count == 2 else {
-            // This system name is completely botched, abandon all hope
+            // Only the sector itself was entered nothing after it, there is nothing we can do here, exit
             return nil
         }
 
@@ -64,11 +83,16 @@ class Autocorrect {
             // If the last part of the system name looks correct, return it with corrected sector name
             return "\(sector) SECTOR \(fragments.joined(separator: " "))"
         }
+
+        /* This section of procedural system names do never contain digits, if there are one, replace them with letters
+         that are commonly mistaken for these numbers. */
         if fragments[0].rangeOfCharacter(from: .decimalDigits) != nil {
             fragments[0] = Autocorrect.performNumberSubstitution(value: fragments[0])
         }
         var secondFragment = fragments[1]
         if secondFragment.first!.isNumber {
+            /*  The first character of the second fragment of a procedural system name is never a letter.
+             If it is a letter in the input, replace it with numbers that are commonly mistaken for numbers.  */
             secondFragment = secondFragment.replacingCharacters(
                 in: ...secondFragment.startIndex,
                 with: Autocorrect.performNumberSubstitution(value: String(secondFragment.first!))
@@ -76,10 +100,13 @@ class Autocorrect {
         }
 
         let correctedSystem = "\(sector) \(fragments.joined(separator: " "))"
+
+        // Check that our corrected name now passes the check for valid procedural system
         if proceduralSystemExpression.findFirst(in: correctedSystem) != nil {
             return correctedSystem
         }
 
+        // We were not able to correct this
         return nil
     }
 

@@ -39,6 +39,34 @@ enum AllowedCommandDestination {
     case All
 }
 
+typealias BotCommandFunction = (IRCBotCommand) -> Void
+@propertyWrapper struct BotCommand {
+    var wrappedValue: BotCommandFunction
+
+    init (
+        wrappedValue value: @escaping BotCommandFunction,
+        _ commands: [String],
+        minParameters: Int = 0,
+        maxParameters: Int? = nil,
+        lastParameterIsContinous: Bool = false,
+        permission: AccountPermission? = nil,
+        allowedDestinations: AllowedCommandDestination = .All
+    ) {
+        self.wrappedValue = value
+        let declaration = IRCBotCommandDeclaration(
+            commands: commands,
+            minParameters: minParameters,
+            onCommand: self.wrappedValue,
+            maxParameters: maxParameters,
+            lastParameterIsContinous: lastParameterIsContinous,
+            permission: permission,
+            allowedDestinations: allowedDestinations
+        )
+
+        MechaSqueak.commands.append(declaration)
+    }
+}
+
 struct IRCBotCommandDeclaration {
     let commands: [String]
     let minimumParameters: Int
@@ -47,12 +75,12 @@ struct IRCBotCommandDeclaration {
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
 
-    let onCommand: (IRCBotCommand, IRCPrivateMessage) -> Void
+    var onCommand: BotCommandFunction?
 
     init (
         commands: [String],
         minParameters: Int,
-        onCommand: @escaping (IRCBotCommand, IRCPrivateMessage) -> Void,
+        onCommand: BotCommandFunction?,
         maxParameters: Int? = nil,
         lastParameterIsContinous: Bool = false,
         permission: AccountPermission? = nil,
@@ -88,12 +116,16 @@ class IRCBotModuleManager {
         self.registeredModules.append(module)
     }
 
+    func register (command: IRCBotCommandDeclaration) {
+        MechaSqueak.commands.append(command)
+    }
+
     func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
         guard let ircBotCommand = IRCBotCommand(from: channelMessage) else {
             return
         }
 
-        handleIncomingCommand(ircBotCommand: ircBotCommand, fromMessage: channelMessage)
+        handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
     func onPrivateMessage (privateMessage: IRCPrivateMessageNotification.Payload) {
@@ -101,22 +133,31 @@ class IRCBotModuleManager {
             return
         }
 
-        handleIncomingCommand(ircBotCommand: ircBotCommand, fromMessage: privateMessage)
+        handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
-    func handleIncomingCommand (ircBotCommand: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func handleIncomingCommand (ircBotCommand: IRCBotCommand) {
         var ircBotCommand = ircBotCommand
+        let message = ircBotCommand.message
 
         guard message.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
             return
         }
 
-        guard let command = self.registeredModules.compactMap({ (botModule) -> IRCBotCommandDeclaration? in
-            return botModule.commands.filter({
-                $0.commands.contains(ircBotCommand.command)
+        var checkCommand = MechaSqueak.commands.first(where: {
+            $0.commands.contains(ircBotCommand.command)
+        })
+
+        if checkCommand == nil {
+            checkCommand = self.registeredModules.compactMap({ (botModule) -> IRCBotCommandDeclaration? in
+                return botModule.commands.filter({
+                    $0.commands.contains(ircBotCommand.command)
+                }).first
             }).first
-        }).first else {
+        }
+
+        guard let command = checkCommand else {
             return
         }
 
@@ -169,6 +210,6 @@ class IRCBotModuleManager {
             }
         }
 
-        command.onCommand(ircBotCommand, message)
+        command.onCommand?(ircBotCommand)
     }
 }

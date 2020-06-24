@@ -29,40 +29,38 @@ class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
     private var channelMessageObserver: NotificationToken?
 
-    var commands: [IRCBotCommandDeclaration] {
-        return [
-            IRCBotCommandDeclaration(
-                commands: ["shorten", "short", "shortener"],
-                minParameters: 1,
-                onCommand: didReceiveShortenURLCommand(command:fromMessage:),
-                maxParameters: 2,
-                permission: .RescueWriteOwn
-            )
-        ]
-    }
-
-    required init(_ moduleManager: IRCBotModuleManager) {
-        moduleManager.register(module: self)
-    }
-
-    func didReceiveShortenURLCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    @BotCommand(
+        ["shorten", "short", "shortener"],
+        minParameters: 1,
+        maxParameters: 2,
+        permission: .RescueWriteOwn
+    )
+    var didReceiveShortenURLCommand = { (command: IRCBotCommand) in
         var keyword: String?
         if command.parameters.count > 1 {
             keyword = command.parameters[1].lowercased()
         }
 
         guard let url = URL(string: command.parameters[0]) else {
-            message.reply(key: "shorten.invalidurl", fromCommand: command)
+            command.message.reply(key: "shorten.invalidurl", fromCommand: command)
             return
         }
 
         URLShortener.shorten(url: url, keyword: keyword, complete: { response in
-            message.reply(key: "shorten.shortened", fromCommand: command, map: [
+            command.message.reply(key: "shorten.shortened", fromCommand: command, map: [
                 "url": response.shorturl,
                 "title": response.title
             ])
         }, error: { _ in
-            message.reply(key: "shorten.error", fromCommand: command)
+            command.message.reply(key: "shorten.error", fromCommand: command)
         })
+    }
+
+    var commands: [IRCBotCommandDeclaration] {
+        return []
+    }
+
+    required init(_ moduleManager: IRCBotModuleManager) {
+        moduleManager.register(module: self)
     }
 }

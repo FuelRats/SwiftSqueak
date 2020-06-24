@@ -26,14 +26,14 @@ import Foundation
 import IRCKit
 
 extension BoardCommands {
-    func didReceiveQuoteCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
-        guard let rescue = self.assertGetRescueId(command: command, fromMessage: message) else {
+    func didReceiveQuoteCommand (command: IRCBotCommand) {
+        guard let rescue = self.assertGetRescueId(command: command) else {
             return
         }
 
         let format = rescue.title != nil ? "board.quote.operation" : "board.quote.title"
 
-        message.reply(key: format, fromCommand: command, map: [
+        command.message.reply(key: format, fromCommand: command, map: [
             "title": rescue.title ?? "",
             "caseId": rescue.commandIdentifier!,
             "client": rescue.client ?? "unknown client",
@@ -46,15 +46,15 @@ extension BoardCommands {
         ])
 
         if rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 {
-            message.reply(key: "board.quote.noassigned", fromCommand: command)
+            command.message.reply(key: "board.quote.noassigned", fromCommand: command)
         } else {
-            message.reply(key: "board.quote.assigned", fromCommand: command, map: [
+            command.message.reply(key: "board.quote.assigned", fromCommand: command, map: [
                 "rats": rescue.assignList!
             ])
         }
 
         for (index, quote) in rescue.quotes.enumerated() {
-            message.reply(key: "board.quote.quote", fromCommand: command, map: [
+            command.message.reply(key: "board.quote.quote", fromCommand: command, map: [
                 "index": index,
                 "author": quote.lastAuthor,
                 "time": quote.updatedAt,
@@ -63,21 +63,22 @@ extension BoardCommands {
         }
     }
 
-    func didReceiveGrabCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveGrabCommand (command: IRCBotCommand) {
+        let message = command.message
         let clientParam = command.parameters[0]
 
         var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam)
         let clientNick = rescue?.clientNick ?? clientParam
 
         guard let clientUser = message.destination.member(named: clientNick) else {
-            message.reply(key: "board.grab.noclient", fromCommand: command, map: [
+            command.message.reply(key: "board.grab.noclient", fromCommand: command, map: [
                 "caseId": clientParam
             ])
             return
         }
 
         guard let lastMessage = clientUser.lastMessage else {
-            message.reply(key: "board.grab.nomessage", fromCommand: command, map: [
+            command.message.reply(key: "board.grab.nomessage", fromCommand: command, map: [
                 "client": clientUser.nickname
             ])
             return
@@ -95,7 +96,7 @@ extension BoardCommands {
                 ))
                 mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, manual: true)
             } else {
-                message.reply(key: "board.grab.notcreated", fromCommand: command, map: [
+                command.message.reply(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": clientUser.nickname
                 ])
                 return
@@ -109,7 +110,7 @@ extension BoardCommands {
                 lastAuthor: clientUser.nickname
             ))
 
-            message.reply(key: "board.grab.updated", fromCommand: command, map: [
+            command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
                 "clientId": rescue!.commandIdentifier!,
                 "text": lastMessage
             ])
@@ -118,7 +119,8 @@ extension BoardCommands {
         }
     }
 
-    func didReceiveInjectCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveInjectCommand (command: IRCBotCommand) {
+        let message = command.message
         let clientParam = command.parameters[0]
 
         var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam)
@@ -140,7 +142,7 @@ extension BoardCommands {
                 ))
                 mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, manual: true)
             } else {
-                message.reply(key: "board.grab.notcreated", fromCommand: command, map: [
+                command.message.reply(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": client
                 ])
                 return
@@ -154,7 +156,7 @@ extension BoardCommands {
                 lastAuthor: message.user.nickname
             ))
 
-            message.reply(key: "board.grab.updated", fromCommand: command, map: [
+            command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
                 "clientId": rescue!.commandIdentifier!,
                 "text": injectMessage
             ])
@@ -163,20 +165,22 @@ extension BoardCommands {
         }
     }
 
-    func didReceiveSubstituteCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
-        guard let rescue = self.assertGetRescueId(command: command, fromMessage: message) else {
+    func didReceiveSubstituteCommand (command: IRCBotCommand) {
+        let message = command.message
+
+        guard let rescue = self.assertGetRescueId(command: command) else {
             return
         }
 
         guard let quoteIndex = Int(command.parameters[1]) else {
-            message.reply(key: "board.sub.invalidindex", fromCommand: command, map: [
+            command.message.reply(key: "board.sub.invalidindex", fromCommand: command, map: [
                 "index": command.parameters[1]
             ])
             return
         }
 
         guard quoteIndex >= 0 && quoteIndex < rescue.quotes.count else {
-            message.reply(key: "board.sub.outofbounds", fromCommand: command, map: [
+            command.message.reply(key: "board.sub.outofbounds", fromCommand: command, map: [
                 "index": quoteIndex,
                 "caseId": rescue.commandIdentifier!
             ])
@@ -189,7 +193,7 @@ extension BoardCommands {
         quote.message = contents
         quote.lastAuthor = message.user.nickname
         rescue.quotes[quoteIndex] = quote
-        message.reply(key: "board.sub.updated", fromCommand: command, map: [
+        command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
             "index": quoteIndex,
             "caseId": rescue.commandIdentifier!,
             "contents": contents

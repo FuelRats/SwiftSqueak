@@ -34,7 +34,7 @@ class TweetCommands: IRCBotModule {
             IRCBotCommandDeclaration(
                 commands: ["tweetcase", "tweetc"],
                 minParameters: 1,
-                onCommand: didReceiveTweetCaseCommand(command:fromMessage:),
+                onCommand: didReceiveTweetCaseCommand(command:),
                 maxParameters: 1,
                 permission: .RescueWriteOwn
             )
@@ -45,20 +45,20 @@ class TweetCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    func didReceiveTweetCaseCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
-        guard let rescue = BoardCommands.assertGetRescueId(command: command, fromMessage: message) else {
+    func didReceiveTweetCaseCommand (command: IRCBotCommand) {
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         guard let platform = rescue.platform else {
-            message.reply(key: "tweetcase.noplatform", fromCommand: command, map: [
+            command.message.reply(key: "tweetcase.noplatform", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!
             ])
             return
         }
 
         guard let system = rescue.system else {
-            message.reply(key: "tweetcase.missingsystem", fromCommand: command, map: [
+            command.message.reply(key: "tweetcase.missingsystem", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!
             ])
             return
@@ -82,11 +82,11 @@ class TweetCommands: IRCBotModule {
             ])
 
             Twitter.tweet(message: tweet, complete: {
-                message.reply(key: "tweetcase.success", fromCommand: command, map: [
+                command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier!
                 ])
             }, error: { _ in
-                message.reply(key: "tweetcase.failure", fromCommand: command, map: [
+                command.message.reply(key: "tweetcase.failure", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier!
                 ])
             })

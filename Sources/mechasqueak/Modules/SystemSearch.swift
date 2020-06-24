@@ -34,7 +34,7 @@ class SystemSearch: IRCBotModule {
             IRCBotCommandDeclaration(
                 commands: ["search"],
                 minParameters: 1,
-                onCommand: didReceiveSystemSearchCommand(command:fromMessage:),
+                onCommand: didReceiveSystemSearchCommand(command:),
                 maxParameters: 1,
                 lastParameterIsContinous: true,
                 permission: nil
@@ -43,7 +43,7 @@ class SystemSearch: IRCBotModule {
             IRCBotCommandDeclaration(
                 commands: ["landmark"],
                 minParameters: 1,
-                onCommand: didReceiveLandmarkCommand(command:fromMessage:),
+                onCommand: didReceiveLandmarkCommand(command:),
                 maxParameters: 1,
                 lastParameterIsContinous: true,
                 permission: nil
@@ -61,7 +61,7 @@ class SystemSearch: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    func didReceiveSystemSearchCommand(command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveSystemSearchCommand(command: IRCBotCommand) {
         let system = command.parameters.joined(separator: " ")
 
         SystemsAPI.performSearch(forSystem: system, onComplete: { searchResults in
@@ -74,7 +74,7 @@ class SystemSearch: IRCBotModule {
             })
 
             guard results.count > 0 else {
-                message.reply(key: "systemsearch.noresults", fromCommand: command)
+                command.message.reply(key: "systemsearch.noresults", fromCommand: command)
                 return
             }
 
@@ -82,21 +82,21 @@ class SystemSearch: IRCBotModule {
                 $0.textRepresentation
             }).joined(separator: ", ")
 
-            message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
+            command.message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
                 "system": system,
                 "results": resultString
             ])
         }, onError: { _ in
-            message.reply(key: "systemsearch.error", fromCommand: command)
+            command.message.reply(key: "systemsearch.error", fromCommand: command)
         })
     }
 
-    func didReceiveLandmarkCommand (command: IRCBotCommand, fromMessage message: IRCPrivateMessage) {
+    func didReceiveLandmarkCommand (command: IRCBotCommand) {
         let system = command.parameters.joined(separator: " ")
 
         SystemsAPI.performLandmarkCheck(forSystem: system, onComplete: { result in
             guard result.landmarks.count > 0 else {
-                message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
                     "system": system
                 ])
                 return
@@ -104,13 +104,13 @@ class SystemSearch: IRCBotModule {
 
             let landmark = result.landmarks[0]
 
-            message.reply(key: "landmark.response", fromCommand: command, map: [
+            command.message.reply(key: "landmark.response", fromCommand: command, map: [
                 "system": result.meta.name,
                 "distance": self.formatter.string(from: NSNumber(value: landmark.distance))!,
                 "landmark": landmark.name
             ])
         }, onError: { _ in
-            message.reply(key: "landmark.noresults", fromCommand: command, map: [
+            command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
                 "system": system
             ])
         })

@@ -26,15 +26,17 @@ import Foundation
 import IRCKit
 
 extension BoardCommands {
-    func didReceiveAssignCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
+    func didReceiveAssignCommand (command: IRCBotCommand) {
+        let message = command.message
+
         // Find case by rescue ID or client name
-        guard let rescue = self.assertGetRescueId(command: command, fromMessage: message) else {
+        guard let rescue = self.assertGetRescueId(command: command) else {
             return
         }
 
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
-            message.reply(message: "board.assign.noplatform")
+            command.message.reply(message: "board.assign.noplatform")
             return
         }
 
@@ -61,13 +63,13 @@ extension BoardCommands {
 
         let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
 
-        message.reply(key: format, fromCommand: command, map: [
+        command.message.reply(key: format, fromCommand: command, map: [
             "client": rescue.clientNick!,
             "rats": allRats.joined(separator: ", ")
         ])
 
         if assigns.1.count > 0 && configuration.general.drillMode == false {
-            message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
+            command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
                 "platform": platform.ircRepresentable,
                 "rats": assigns.1.joined(separator: ", ")
             ])
@@ -76,8 +78,10 @@ extension BoardCommands {
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
 
-    func didReceiveUnassignCommand (command: IRCBotCommand, message: IRCPrivateMessage) {
-        guard let rescue = self.assertGetRescueId(command: command, fromMessage: message) else {
+    func didReceiveUnassignCommand (command: IRCBotCommand) {
+        let message = command.message
+
+        guard let rescue = self.assertGetRescueId(command: command) else {
             return
         }
 
@@ -93,7 +97,7 @@ extension BoardCommands {
                 guard let assignIndex = rescue.rats.firstIndex(where: {
                     $0.id.rawValue == rat.id.rawValue
                 }) else {
-                    message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
+                    command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                         "rat": rat.attributes.name.value,
                         "caseId": rescue.commandIdentifier!
                     ])
@@ -106,7 +110,7 @@ extension BoardCommands {
                 guard let assignIndex = rescue.unidentifiedRats.firstIndex(where: {
                     $0.lowercased() == unassign.lowercased()
                 }) else {
-                    message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
+                    command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                         "rat": unassign,
                         "caseId": rescue.commandIdentifier!
                     ])
@@ -119,7 +123,7 @@ extension BoardCommands {
         }
 
         let unassignedRats = removed.joined(separator: ", ")
-        message.reply(key: "board.unassign.removed", fromCommand: command, map: [
+        command.message.reply(key: "board.unassign.removed", fromCommand: command, map: [
             "caseId": rescue.commandIdentifier!,
             "rats": unassignedRats
         ])
