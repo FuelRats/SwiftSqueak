@@ -34,6 +34,7 @@ class BoardAssignCommands: IRCBotModule {
     @BotCommand(
         ["assign", "go"],
         parameters: 2...,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -47,7 +48,7 @@ class BoardAssignCommands: IRCBotModule {
 
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
-            command.message.reply(message: "board.assign.noplatform")
+            command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
 
@@ -92,6 +93,7 @@ class BoardAssignCommands: IRCBotModule {
     @BotCommand(
         ["unassign", "deassign", "rm", "remove", "standdown"],
         parameters: 2...,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

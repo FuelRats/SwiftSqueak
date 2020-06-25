@@ -34,6 +34,7 @@ class BoardAttributeCommands: IRCBotModule {
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -61,6 +62,7 @@ class BoardAttributeCommands: IRCBotModule {
         ["system", "sys", "loc", "location"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .utility,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -106,6 +108,7 @@ class BoardAttributeCommands: IRCBotModule {
         ["cmdr", "client", "commander"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -131,6 +134,7 @@ class BoardAttributeCommands: IRCBotModule {
         ["nick", "ircnick", "nickname"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -154,6 +158,7 @@ class BoardAttributeCommands: IRCBotModule {
     @BotCommand(
         ["cr", "codered", "casered"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -192,6 +197,7 @@ class BoardAttributeCommands: IRCBotModule {
         ["title", "operation"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

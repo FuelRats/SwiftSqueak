@@ -35,6 +35,7 @@ class GeneralCommands: IRCBotModule {
     @BotCommand(
         ["sysstats", "syscount", "systems"],
         parameters: 0...0,
+        category: .utility,
         permission: nil
     )
     var didReceiveSystemStatisticsCommand = { command in
@@ -59,13 +60,14 @@ class GeneralCommands: IRCBotModule {
                 "bodies": numberFormatter.string(from: result.attributes.bodycount)!
             ])
         }, onError: { _ in
-            command.message.reply(key: "sysstats.error", fromCommand: command)
+            command.message.error(key: "sysstats.error", fromCommand: command)
         })
     }
 
     @BotCommand(
         ["version", "uptime"],
         parameters: 0...0,
+        category: .utility,
         permission: nil
     )
     var didReceiveVersionCommand = { command in
@@ -85,7 +87,8 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["whoami"],
-        parameters: 0...0
+        parameters: 0...0,
+        category: .utility
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -123,8 +126,9 @@ class GeneralCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["whois", "who", "ratid", "id"],
+        ["whois", "ratid", "who", "id"],
         parameters: 1...1,
+        category: .utility,
         permission: .RatRead
     )
     var didReceiveWhoIsCommand = { command in
@@ -132,7 +136,7 @@ class GeneralCommands: IRCBotModule {
         let nick = command.parameters[0]
 
         guard let user = message.destination.member(named: nick) else {
-            command.message.reply(key: "whois.notfound", fromCommand: command, map: [
+            command.message.error(key: "whois.notfound", fromCommand: command, map: [
                 "nick": nick
             ])
             return
@@ -179,6 +183,7 @@ class GeneralCommands: IRCBotModule {
         ["msg", "say"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .utility,
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
@@ -193,6 +198,7 @@ class GeneralCommands: IRCBotModule {
         ["me", "action", "emote"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .utility,
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in

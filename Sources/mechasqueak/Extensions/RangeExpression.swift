@@ -7,13 +7,13 @@
 
 import Foundation
 
-protocol EvaluableRange {
+protocol AnyRange {
     associatedtype Bound
     var lower: Bound? { get }
     var upper: Bound? { get }
 }
 
-extension ClosedRange: EvaluableRange {
+extension ClosedRange: AnyRange {
     var lower: Bound? {
         return self.lowerBound
     }
@@ -23,7 +23,7 @@ extension ClosedRange: EvaluableRange {
     }
 }
 
-extension PartialRangeFrom: EvaluableRange {
+extension PartialRangeFrom: AnyRange {
     var lower: Bound? {
         return self.lowerBound
     }
@@ -33,7 +33,7 @@ extension PartialRangeFrom: EvaluableRange {
     }
 }
 
-extension PartialRangeUpTo: EvaluableRange {
+extension PartialRangeUpTo: AnyRange {
     var lower: Bound? {
         return nil
     }
@@ -43,7 +43,7 @@ extension PartialRangeUpTo: EvaluableRange {
     }
 }
 
-extension PartialRangeThrough: EvaluableRange {
+extension PartialRangeThrough: AnyRange {
     var lower: Bound? {
         return nil
     }

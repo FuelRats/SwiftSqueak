@@ -36,20 +36,21 @@ class RemoteRescueCommands: IRCBotModule {
     @BotCommand(
         ["closed", "recent"],
         parameters: 0...1,
+        category: .rescues,
         permission: .RescueRead
     )
     var didReceiveRecentlyClosedCommand = { command in
         var closeCount = 3
         if command.parameters.count > 0 {
             guard let count = Int(command.parameters[0]) else {
-                command.message.reply(key: "rescue.closed.invalid", fromCommand: command, map: [
+                command.message.error(key: "rescue.closed.invalid", fromCommand: command, map: [
                     "count": command.parameters[0]
                 ])
                 return
             }
 
             guard count <= 10 && count > 0 else {
-                command.message.reply(key: "rescue.closed.invalid", fromCommand: command, map: [
+                command.message.error(key: "rescue.closed.invalid", fromCommand: command, map: [
                     "count": count
                 ])
                 return
@@ -74,18 +75,19 @@ class RemoteRescueCommands: IRCBotModule {
 
             command.message.reply(list: rescueList, separator: " - ")
         }, error: { _ in
-            command.message.reply(key: "rescue.closed.error", fromCommand: command)
+            command.message.error(key: "rescue.closed.error", fromCommand: command)
         })
     }
 
     @BotCommand(
         ["delete"],
         parameters: 1...1,
+        category: .rescues,
         permission: .RescueWrite
     )
     var didReceiveDeleteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.reply(key: "rescue.delete.invalid", fromCommand: command, map: [
+            command.message.error(key: "rescue.delete.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
             ])
             return
@@ -117,8 +119,9 @@ class RemoteRescueCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["mdlist", "trashlist", "purgelist", "listtrash"],
+        ["trashlist", "mdlist", "purgelist", "listtrash"],
         parameters: 0...0,
+        category: .rescues,
         permission: .RescueRead,
         allowedDestinations: .PrivateMessage
     )
@@ -145,18 +148,19 @@ class RemoteRescueCommands: IRCBotModule {
                 ])
             }
         }, error: { _ in
-            command.message.reply(key: "rescue.trashlist.error", fromCommand: command)
+            command.message.error(key: "rescue.trashlist.error", fromCommand: command)
         })
     }
 
     @BotCommand(
-        ["mdremove", "restore", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
+        ["restore", "mdremove", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
         parameters: 1...1,
+        category: .rescues,
         permission: .RescueWrite
     )
     var didReceiveRestoreTrashCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.reply(key: "rescue.restore.invalid", fromCommand: command, map: [
+            command.message.error(key: "rescue.restore.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
             ])
             return
@@ -166,7 +170,7 @@ class RemoteRescueCommands: IRCBotModule {
             var rescue = result.body.data!.primary.value
 
             guard rescue.outcome == .Purge else {
-                command.message.reply(key: "rescue.restore.nottrash", fromCommand: command, map: [
+                command.message.error(key: "rescue.restore.nottrash", fromCommand: command, map: [
                     "id": id.ircRepresentation
                 ])
                 return
@@ -179,21 +183,22 @@ class RemoteRescueCommands: IRCBotModule {
                     "id": id.ircRepresentation
                 ])
             }, error: { _ in
-                command.message.reply(key: "rescue.restore.error", fromCommand: command, map: [
+                command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
                     "id": id.ircRepresentation
                 ])
             })
 
         }, error: { _ in
-            command.message.reply(key: "rescue.restore.error", fromCommand: command, map: [
+            command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
                 "id": id.ircRepresentation
             ])
         })
     }
 
     @BotCommand(
-        ["pwn", "unfiled", "paperworkneeded", "needspaperwork", "npw"],
+        ["unfiled", "pwn", "paperworkneeded", "needspaperwork", "npw"],
         parameters: 0...0,
+        category: .rescues,
         permission: .RescueRead,
         allowedDestinations: .PrivateMessage
     )
@@ -218,18 +223,19 @@ class RemoteRescueCommands: IRCBotModule {
                 ])
             }
         }, error: { _ in
-            command.message.reply(key: "rescue.unfiled.error", fromCommand: command)
+            command.message.error(key: "rescue.unfiled.error", fromCommand: command)
         })
     }
 
     @BotCommand(
         ["quoteid"],
         parameters: 1...1,
+        category: .rescues,
         permission: .RescueRead
     )
     var didReceiveQuoteRemoteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.reply(key: "rescue.quoteid.invalid", fromCommand: command, map: [
+            command.message.error(key: "rescue.quoteid.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
             ])
             return
@@ -256,7 +262,7 @@ class RemoteRescueCommands: IRCBotModule {
                 ])
             }
         }, error: { _ in
-            command.message.reply(key: "rescue.quoteid.error", fromCommand: command, map: [
+            command.message.error(key: "rescue.quoteid.error", fromCommand: command, map: [
                 "id": id.ircRepresentation
             ])
         })
@@ -265,11 +271,12 @@ class RemoteRescueCommands: IRCBotModule {
     @BotCommand(
         ["reopen"],
         parameters: 1...1,
+        category: .rescues,
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.reply(key: "rescue.reopen.invalid", fromCommand: command, map: [
+            command.message.error(key: "rescue.reopen.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
             ])
             return
@@ -278,7 +285,7 @@ class RemoteRescueCommands: IRCBotModule {
         if let existingRescue = mecha.rescueBoard.rescues.first(where: {
             $0.id == id
         }) {
-            command.message.reply(key: "rescue.reopen.exists", fromCommand: command, map: [
+            command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
                 "id": id,
                 "caseId": existingRescue.commandIdentifier!
             ])
@@ -309,7 +316,7 @@ class RemoteRescueCommands: IRCBotModule {
                 "caseId": rescue.commandIdentifier!
             ])
         }, error: { _ in
-            command.message.reply(key: "rescue.reopen.error", fromCommand: command)
+            command.message.error(key: "rescue.reopen.error", fromCommand: command)
         })
     }
 }

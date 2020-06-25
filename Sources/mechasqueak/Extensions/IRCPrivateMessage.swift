@@ -23,4 +23,17 @@ extension IRCPrivateMessage {
             )
         }
     }
+
+    func replyPrivate (message: String) {
+        if self.destination.isPrivateMessage {
+            self.reply(message: message)
+            return
+        }
+        self.client.sendNotice(toTarget: self.user.nickname, contents: message)
+    }
+
+    func replyPrivate (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
+        let message = lingo.localize(key, locale: command.locale.identifier, interpolations: map)
+        self.replyPrivate(message: message)
+    }
 }

@@ -45,9 +45,10 @@ class BoardCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["sync", "refreshboard", "reindex", "resetboard", "forcerestartboard",
-                   "forcerefreshboard", "frb", "fbr", "boardrefresh"],
+        ["sync", "fbr", "refreshboard", "reindex", "resetboard", "forcerestartboard",
+                   "forcerefreshboard", "frb", "boardrefresh"],
         parameters: 0...0,
+        category: .rescues,
         permission: .RescueWrite,
         allowedDestinations: .Channel
     )
@@ -58,6 +59,7 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["list"],
         parameters: 0...1,
+        category: .board,
         permission: .RescueRead
     )
     var didReceiveListCommand = { command in
@@ -130,6 +132,7 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["clear", "close"],
         parameters: 1...2,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -216,9 +219,10 @@ class BoardCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["md", "trash", "purge", "mdadd"],
+        ["trash", "md", "purge", "mdadd"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        category: .board,
         permission: .RescueWriteOwn
     )
     var didReceiveTrashCommand = { command in
@@ -240,15 +244,16 @@ class BoardCommands: IRCBotModule {
                 mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
             }
         }, onError: { _ in
-            command.message.reply(key: "board.trash.error", fromCommand: command, map: [
+            command.message.error(key: "board.trash.error", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!
             ])
         })
     }
 
     @BotCommand(
-        ["pwl", "paperwork"],
+        ["paperwork", "pwl"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueRead
     )
     var didReceivePaperworkLinkCommand = { command in
@@ -269,6 +274,7 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["quiet"],
         parameters: 0...0,
+        category: .other,
         permission: .RescueRead
     )
     var didReceiveQuietCommand = { command in
@@ -307,7 +313,8 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["prep"],
-        parameters: 0...
+        parameters: 0...,
+        category: nil
     )
     var didReceivePrepCommand = { command in
         let nick = command.parameters[0]
@@ -326,7 +333,7 @@ class BoardCommands: IRCBotModule {
 
     static func assertGetRescueId (command: IRCBotCommand) -> LocalRescue? {
         guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]) else {
-            command.message.reply(key: "board.casenotfound", fromCommand: command, map: [
+            command.message.error(key: "board.casenotfound", fromCommand: command, map: [
                 "caseIdentifier": command.parameters[0]
             ])
             return nil

@@ -36,6 +36,7 @@ class TweetCommands: IRCBotModule {
     @BotCommand(
         ["tweetcase", "tweetc"],
         parameters: 1...1,
+        category: .utility,
         permission: .RescueWriteOwn
     )
     var didReceiveTweetCaseCommand = { command in
@@ -44,7 +45,7 @@ class TweetCommands: IRCBotModule {
         }
 
         guard let platform = rescue.platform else {
-            command.message.reply(key: "tweetcase.noplatform", fromCommand: command, map: [
+            command.message.error(key: "tweetcase.noplatform", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!
             ])
             return
@@ -79,7 +80,7 @@ class TweetCommands: IRCBotModule {
                     "caseId": rescue.commandIdentifier!
                 ])
             }, error: { _ in
-                command.message.reply(key: "tweetcase.failure", fromCommand: command, map: [
+                command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier!
                 ])
             })

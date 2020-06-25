@@ -32,6 +32,7 @@ class ShortenURLCommands: IRCBotModule {
     @BotCommand(
         ["shorten", "short", "shortener"],
         parameters: 1...2,
+        category: .utility,
         permission: .RescueWriteOwn
     )
     var didReceiveShortenURLCommand = { (command: IRCBotCommand) in
@@ -41,7 +42,7 @@ class ShortenURLCommands: IRCBotModule {
         }
 
         guard let url = URL(string: command.parameters[0]) else {
-            command.message.reply(key: "shorten.invalidurl", fromCommand: command)
+            command.message.error(key: "shorten.invalidurl", fromCommand: command)
             return
         }
 
@@ -51,7 +52,7 @@ class ShortenURLCommands: IRCBotModule {
                 "title": response.title
             ])
         }, error: { _ in
-            command.message.reply(key: "shorten.error", fromCommand: command)
+            command.message.error(key: "shorten.error", fromCommand: command)
         })
     }
 

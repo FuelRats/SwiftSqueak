@@ -34,6 +34,7 @@ class BoardQuoteCommands: IRCBotModule {
     @BotCommand(
         ["quote"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueRead,
         allowedDestinations: .PrivateMessage
     )
@@ -77,6 +78,7 @@ class BoardQuoteCommands: IRCBotModule {
     @BotCommand(
         ["grab"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -113,7 +115,7 @@ class BoardQuoteCommands: IRCBotModule {
                 ))
                 mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, manual: true)
             } else {
-                command.message.reply(key: "board.grab.notcreated", fromCommand: command, map: [
+                command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": clientUser.nickname
                 ])
                 return
@@ -140,6 +142,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["inject"],
         parameters: 1...2,
         lastParameterIsContinous: true,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -166,7 +169,7 @@ class BoardQuoteCommands: IRCBotModule {
                 ))
                 mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, manual: true)
             } else {
-                command.message.reply(key: "board.grab.notcreated", fromCommand: command, map: [
+                command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": client
                 ])
                 return
@@ -193,6 +196,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["sub"],
         parameters: 3...3,
         lastParameterIsContinous: true,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -204,14 +208,14 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
         guard let quoteIndex = Int(command.parameters[1]) else {
-            command.message.reply(key: "board.sub.invalidindex", fromCommand: command, map: [
+            command.message.error(key: "board.sub.invalidindex", fromCommand: command, map: [
                 "index": command.parameters[1]
             ])
             return
         }
 
         guard quoteIndex >= 0 && quoteIndex < rescue.quotes.count else {
-            command.message.reply(key: "board.sub.outofbounds", fromCommand: command, map: [
+            command.message.error(key: "board.sub.outofbounds", fromCommand: command, map: [
                 "index": quoteIndex,
                 "caseId": rescue.commandIdentifier!
             ])

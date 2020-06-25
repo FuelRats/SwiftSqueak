@@ -48,6 +48,7 @@ class BoardPlatformCommands: IRCBotModule {
     @BotCommand(
         ["xb"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -58,6 +59,7 @@ class BoardPlatformCommands: IRCBotModule {
     @BotCommand(
         ["pc"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -68,6 +70,7 @@ class BoardPlatformCommands: IRCBotModule {
     @BotCommand(
         ["ps"],
         parameters: 1...1,
+        category: .board,
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

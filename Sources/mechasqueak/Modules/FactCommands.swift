@@ -42,7 +42,8 @@ class FactCommands: IRCBotModule {
     @BotCommand(
         ["fact", "facts"],
         parameters: 0...3,
-        lastParameterIsContinous: true
+        lastParameterIsContinous: true,
+        category: .facts
     )
     var didReceiveFactCommand = { command in
         if command.parameters.count == 0 {
@@ -63,7 +64,7 @@ class FactCommands: IRCBotModule {
                 didReceiveFactDeleteCommand(command: command)
 
             default:
-                command.message.reply(key: "facts.invalidargument", fromCommand: command, map: [
+                command.message.error(key: "facts.invalidargument", fromCommand: command, map: [
                     "argument": modifier
                 ])
         }
@@ -74,7 +75,7 @@ class FactCommands: IRCBotModule {
         Fact.findAll(using: Database.default, matching: query, { facts, _ in
 
             guard let facts = facts else {
-                command.message.reply(key: "facts.list.error", fromCommand: command)
+                command.message.error(key: "facts.list.error", fromCommand: command)
                 return
             }
 
@@ -100,7 +101,7 @@ class FactCommands: IRCBotModule {
 
     static func didReceiveFactInfoCommand (command: IRCBotCommand) {
         guard command.parameters.count == 2 else {
-            command.message.reply(key: "facts.info.syntax", fromCommand: command)
+            command.message.error(key: "facts.info.syntax", fromCommand: command)
             return
         }
 
@@ -139,12 +140,12 @@ class FactCommands: IRCBotModule {
         let message = command.message
 
         guard command.parameters.count == 3 else {
-            command.message.reply(key: "facts.set.syntax", fromCommand: command)
+            command.message.error(key: "facts.set.syntax", fromCommand: command)
             return
         }
 
         guard message.user.hasPermission(permission: .UserWrite) else {
-            command.message.reply(key: "facts.set.nopermission", fromCommand: command)
+            command.message.error(key: "facts.set.nopermission", fromCommand: command)
             return
         }
 
@@ -167,7 +168,7 @@ class FactCommands: IRCBotModule {
 
                 fact.update(id: fact.id!, { (_, error) in
                     guard error == nil else {
-                        command.message.reply(key: "facts.set.error", fromCommand: command, map: [
+                        command.message.error(key: "facts.set.error", fromCommand: command, map: [
                             "fact": command.parameters[1].lowercased()
                         ])
                         return
@@ -193,20 +194,20 @@ class FactCommands: IRCBotModule {
 
             fact.save({ (_, error) in
                 guard error == nil else {
-                    command.message.reply(key: "facts.set.error", fromCommand: command, map: [
+                    command.message.error(key: "facts.set.error", fromCommand: command, map: [
                         "fact": command.parameters[1].lowercased()
                     ])
                     return
                 }
 
-                command.message.reply(key: "facts.set.created", fromCommand: command, map: [
+                command.message.error(key: "facts.set.created", fromCommand: command, map: [
                     "fact": command.parameters[1].lowercased(),
                     "locale": locale.englishDescription,
                     "message": excerpt
                 ])
             })
         }, onError: { _ in
-            command.message.reply(key: "facts.set.error", fromCommand: command, map: [
+            command.message.error(key: "facts.set.error", fromCommand: command, map: [
                 "fact": command.parameters[1].lowercased()
             ])
         })
@@ -216,12 +217,12 @@ class FactCommands: IRCBotModule {
         let message = command.message
 
         guard command.parameters.count == 2 else {
-            command.message.reply(key: "facts.del.syntax", fromCommand: command)
+            command.message.error(key: "facts.del.syntax", fromCommand: command)
             return
         }
 
         guard message.user.hasPermission(permission: .UserWrite) else {
-            command.message.reply(key: "facts.del.nopermission", fromCommand: command)
+            command.message.error(key: "facts.del.nopermission", fromCommand: command)
             return
         }
 
@@ -239,7 +240,7 @@ class FactCommands: IRCBotModule {
 
             Fact.deleteAll(using: Database.default, matching: query, { error in
                 guard error == nil else {
-                    command.message.reply(key: "facts.del.error", fromCommand: command, map: [
+                    command.message.error(key: "facts.del.error", fromCommand: command, map: [
                         "fact": command.parameters[1].lowercased()
                     ])
                     return
@@ -250,7 +251,7 @@ class FactCommands: IRCBotModule {
                 ])
             })
         }, onError: { _ in
-            command.message.reply(key: "facts.del.error", fromCommand: command, map: [
+            command.message.error(key: "facts.del.error", fromCommand: command, map: [
                 "fact": command.parameters[1].lowercased()
             ])
         })

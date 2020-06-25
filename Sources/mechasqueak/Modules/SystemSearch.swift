@@ -35,7 +35,8 @@ class SystemSearch: IRCBotModule {
     @BotCommand(
         ["search"],
         parameters: 1...1,
-        lastParameterIsContinous: true
+        lastParameterIsContinous: true,
+        category: .utility
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
@@ -63,14 +64,15 @@ class SystemSearch: IRCBotModule {
                 "results": resultString
             ])
         }, onError: { _ in
-            command.message.reply(key: "systemsearch.error", fromCommand: command)
+            command.message.error(key: "systemsearch.error", fromCommand: command)
         })
     }
 
     @BotCommand(
         ["landmark"],
         parameters: 1...1,
-        lastParameterIsContinous: true
+        lastParameterIsContinous: true,
+        category: .utility
     )
     var didReceiveLandmarkCommand = { command in
         let system = command.parameters.joined(separator: " ")

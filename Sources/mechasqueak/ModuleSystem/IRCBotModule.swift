@@ -41,11 +41,12 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
 
-    init <T: EvaluableRange> (
+    init <T: AnyRange> (
         wrappedValue value: @escaping BotCommandFunction,
         _ commands: [String],
         parameters: T,
         lastParameterIsContinous: Bool = false,
+        category: HelpCategory?,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All
     ) {
@@ -57,6 +58,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
             onCommand: self.wrappedValue,
             maxParameters: parameters.upper as? Int,
             lastParameterIsContinous: lastParameterIsContinous,
+            category: category,
             permission: permission,
             allowedDestinations: allowedDestinations
         )
@@ -72,6 +74,7 @@ struct IRCBotCommandDeclaration {
     let permission: AccountPermission?
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
+    let category: HelpCategory?
 
     var onCommand: BotCommandFunction?
 
@@ -81,6 +84,7 @@ struct IRCBotCommandDeclaration {
         onCommand: BotCommandFunction?,
         maxParameters: Int? = nil,
         lastParameterIsContinous: Bool = false,
+        category: HelpCategory?,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All) {
 
@@ -91,6 +95,7 @@ struct IRCBotCommandDeclaration {
         self.permission = permission
         self.onCommand = onCommand
         self.allowedDestinations = allowedDestinations
+        self.category = category
     }
 }
 
@@ -142,7 +147,7 @@ class IRCBotModuleManager {
             // Do not interpret commands from playback of old messages
             return
         }
-        
+
         guard let command = MechaSqueak.commands.first(where: {
             $0.commands.contains(ircBotCommand.command)
         }) else {
@@ -150,17 +155,23 @@ class IRCBotModuleManager {
         }
 
         if message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
-            message.reply(message: "!\(ircBotCommand.command) command can only be used in a public channel")
+            message.error(key: "command.publiconly", fromCommand: ircBotCommand, map: [
+                "command": ircBotCommand.command
+            ])
             return
         }
 
         if message.destination.isPrivateMessage == false && command.allowedDestinations == .PrivateMessage {
-             message.reply(message: "!\(ircBotCommand.command) command can only be used in private message")
+            message.error(key: "command.privateonly", fromCommand: ircBotCommand, map: [
+                "command": ircBotCommand.command
+            ])
              return
         }
 
         guard command.minimumParameters <= ircBotCommand.parameters.count else {
-            message.reply(message: "!\(ircBotCommand.command) command was given too few parameters")
+            message.error(key: "command.toofewparams", fromCommand: ircBotCommand, map: [
+                "command": ircBotCommand.command
+            ])
             return
         }
 
@@ -187,13 +198,15 @@ class IRCBotModuleManager {
         }
 
         if let maxParameters = command.maximumParameters, ircBotCommand.parameters.count > maxParameters {
-            message.reply(message: "!\(ircBotCommand.command) command was given too many parameters")
+            message.error(key: "command.toomanyparams", fromCommand: ircBotCommand, map: [
+                "command": ircBotCommand.command
+            ])
             return
         }
 
         if let permission = command.permission {
             guard message.user.hasPermission(permission: permission) else {
-                message.reply(key: "board.nopermission", fromCommand: ircBotCommand)
+                message.error(key: "board.nopermission", fromCommand: ircBotCommand)
                 return
             }
         }
