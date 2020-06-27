@@ -252,7 +252,7 @@ class BoardCommands: IRCBotModule {
                 mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
             }
         }, onError: { _ in
-            command.message.error(key: "board.trash.error", fromCommand: command, map: [
+            command.message.reply(key: "board.trash.error", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!
             ])
         })
