@@ -35,6 +35,9 @@ class BoardAssignCommands: IRCBotModule {
         ["assign", "go"],
         parameters: 2...,
         category: .board,
+        description: "Add rats to the rescue and instruct the client to add them as friends.",
+        paramText: "<case id/client> ...rats",
+        example: "4 Orange_Sheets Absolver xlexious",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -94,6 +97,9 @@ class BoardAssignCommands: IRCBotModule {
         ["unassign", "deassign", "rm", "remove", "standdown"],
         parameters: 2...,
         category: .board,
+        description: "Remove rats from the rescue",
+        paramText: "<case id/client> ...rats",
+        example: "4 Orange_Sheets Absolver xlexious",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

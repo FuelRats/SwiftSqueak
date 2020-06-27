@@ -40,10 +40,11 @@ class FactCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["fact", "facts"],
+        ["facts", "fact"],
         parameters: 0...3,
         lastParameterIsContinous: true,
-        category: .facts
+        category: .facts,
+        description: "Lists all the information commands"
     )
     var didReceiveFactCommand = { command in
         if command.parameters.count == 0 {

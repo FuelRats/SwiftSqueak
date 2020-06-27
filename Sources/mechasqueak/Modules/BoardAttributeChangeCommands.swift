@@ -35,6 +35,9 @@ class BoardAttributeCommands: IRCBotModule {
         ["active", "inactive", "activate", "deactivate"],
         parameters: 1...1,
         category: .board,
+        description: "Toggle a case between active or inactive.",
+        paramText: "<case id/client>",
+        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -63,6 +66,9 @@ class BoardAttributeCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .utility,
+        description: "Change the star system of this rescue to a different one.",
+        paramText: "<case id/client> <system name>",
+        example: "4 NLTT 48288",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -109,6 +115,9 @@ class BoardAttributeCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .board,
+        description: "Change the CMDR name of the client of this rescue.",
+        paramText: "<case id/client> <new name>",
+        example: "4 SpaceDawg",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -135,6 +144,9 @@ class BoardAttributeCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .board,
+        description: "Change the IRC nick associated with the client of this rescue.",
+        paramText: "<case id/client> <new nick>",
+        example: "4 SpaceDawg",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -159,6 +171,9 @@ class BoardAttributeCommands: IRCBotModule {
         ["cr", "codered", "casered"],
         parameters: 1...1,
         category: .board,
+        description: "Toggle the case between code red (on emergency oxygen) status or not.",
+        paramText: "<case id/client>",
+        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -198,6 +213,9 @@ class BoardAttributeCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .board,
+        description: "Set the operations title of this rescue, used to give a unique name to special rescues",
+        paramText: "<case id/client> <operation title>",
+        example: "4 Beyond the Void",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

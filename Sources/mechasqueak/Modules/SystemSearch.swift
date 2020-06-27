@@ -36,7 +36,10 @@ class SystemSearch: IRCBotModule {
         ["search"],
         parameters: 1...1,
         lastParameterIsContinous: true,
-        category: .utility
+        category: .utility,
+        description: "Search for a system in the galaxy database.",
+        paramText: "<system name>",
+        example: "NLTT 48288"
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
@@ -72,7 +75,10 @@ class SystemSearch: IRCBotModule {
         ["landmark"],
         parameters: 1...1,
         lastParameterIsContinous: true,
-        category: .utility
+        category: .utility,
+        description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
+        paramText: "<system name>",
+        example: "NLTT 48288"
     )
     var didReceiveLandmarkCommand = { command in
         let system = command.parameters.joined(separator: " ")

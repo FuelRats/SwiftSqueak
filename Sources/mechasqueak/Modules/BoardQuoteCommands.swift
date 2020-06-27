@@ -35,6 +35,9 @@ class BoardQuoteCommands: IRCBotModule {
         ["quote"],
         parameters: 1...1,
         category: .board,
+        description: "Show all information about a specific case",
+        paramText: "<case id/client name>",
+        example: "4",
         permission: .RescueRead,
         allowedDestinations: .PrivateMessage
     )
@@ -79,6 +82,9 @@ class BoardQuoteCommands: IRCBotModule {
         ["grab"],
         parameters: 1...1,
         category: .board,
+        description: "Grab the last message by the client and add it to the rescue, if no rescue exists create one.",
+        paramText: "<client>",
+        example: "SpaceDawg",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -143,6 +149,9 @@ class BoardQuoteCommands: IRCBotModule {
         parameters: 1...2,
         lastParameterIsContinous: true,
         category: .board,
+        description: "Add some new information to the case, if one does not exist, create one with this information",
+        paramText: "<case id/client> <text>",
+        example: "4 client is 1.1 million ls from main star, rats on the way",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -197,6 +206,9 @@ class BoardQuoteCommands: IRCBotModule {
         parameters: 3...3,
         lastParameterIsContinous: true,
         category: .board,
+        description: "Change a text entry in the rescue replacing its contents with new text",
+        paramText: "<case id/client> <line number> <new text>",
+        example: "4 1 Client is PC, not Xbox",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

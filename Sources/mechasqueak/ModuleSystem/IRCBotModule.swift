@@ -47,6 +47,9 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         parameters: T,
         lastParameterIsContinous: Bool = false,
         category: HelpCategory?,
+        description: String,
+        paramText: String? = nil,
+        example: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All
     ) {
@@ -59,6 +62,9 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
             maxParameters: parameters.upper as? Int,
             lastParameterIsContinous: lastParameterIsContinous,
             category: category,
+            description: description,
+            paramText: paramText,
+            example: example,
             permission: permission,
             allowedDestinations: allowedDestinations
         )
@@ -75,6 +81,9 @@ struct IRCBotCommandDeclaration {
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
     let category: HelpCategory?
+    let description: String
+    var paramText: String?
+    var example: String?
 
     var onCommand: BotCommandFunction?
 
@@ -85,6 +94,9 @@ struct IRCBotCommandDeclaration {
         maxParameters: Int? = nil,
         lastParameterIsContinous: Bool = false,
         category: HelpCategory?,
+        description: String,
+        paramText: String? = nil,
+        example: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All) {
 
@@ -96,6 +108,9 @@ struct IRCBotCommandDeclaration {
         self.onCommand = onCommand
         self.allowedDestinations = allowedDestinations
         self.category = category
+        self.description = description
+        self.paramText = paramText
+        self.example = example
     }
 }
 

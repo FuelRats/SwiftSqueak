@@ -37,6 +37,9 @@ class RemoteRescueCommands: IRCBotModule {
         ["closed", "recent"],
         parameters: 0...1,
         category: .rescues,
+        description: "Shows recently closed cases.",
+        paramText: "[number of cases]",
+        example: "10",
         permission: .RescueRead
     )
     var didReceiveRecentlyClosedCommand = { command in
@@ -83,6 +86,9 @@ class RemoteRescueCommands: IRCBotModule {
         ["delete"],
         parameters: 1...1,
         category: .rescues,
+        description: "Delete a rescue by UUID, cannot be used on a rescue that is currently on the board.",
+        paramText: "<rescue uuid",
+        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
         permission: .RescueWrite
     )
     var didReceiveDeleteCommand = { command in
@@ -122,6 +128,7 @@ class RemoteRescueCommands: IRCBotModule {
         ["trashlist", "mdlist", "purgelist", "listtrash"],
         parameters: 0...0,
         category: .rescues,
+        description: "Shows all the rescues that have been added to the trash list but not yet deleted",
         permission: .RescueRead,
         allowedDestinations: .PrivateMessage
     )
@@ -156,6 +163,9 @@ class RemoteRescueCommands: IRCBotModule {
         ["restore", "mdremove", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
         parameters: 1...1,
         category: .rescues,
+        description: "Restore a case from the trash list.",
+        paramText: "<rescue uuid>",
+        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
         permission: .RescueWrite
     )
     var didReceiveRestoreTrashCommand = { command in
@@ -199,6 +209,7 @@ class RemoteRescueCommands: IRCBotModule {
         ["unfiled", "pwn", "paperworkneeded", "needspaperwork", "npw"],
         parameters: 0...0,
         category: .rescues,
+        description: "Get a list of rescues that have not had their paperwork completed.",
         permission: .RescueRead,
         allowedDestinations: .PrivateMessage
     )
@@ -231,6 +242,9 @@ class RemoteRescueCommands: IRCBotModule {
         ["quoteid"],
         parameters: 1...1,
         category: .rescues,
+        description: "Show all information about a case by UUID",
+        paramText: "<rescue uuid>",
+        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
         permission: .RescueRead
     )
     var didReceiveQuoteRemoteCommand = { command in
@@ -272,6 +286,9 @@ class RemoteRescueCommands: IRCBotModule {
         ["reopen"],
         parameters: 1...1,
         category: .rescues,
+        description: "Add a previously closed case back onto the board.",
+        paramText: "<rescue uuid>",
+        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in

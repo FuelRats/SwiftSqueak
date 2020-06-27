@@ -49,6 +49,7 @@ class BoardCommands: IRCBotModule {
                    "forcerefreshboard", "frb", "boardrefresh"],
         parameters: 0...0,
         category: .rescues,
+        description: "Force MechaSqueak to perform a synchronization of data between itself and the rescue server.",
         permission: .RescueWrite,
         allowedDestinations: .Channel
     )
@@ -60,6 +61,9 @@ class BoardCommands: IRCBotModule {
         ["list"],
         parameters: 0...1,
         category: .board,
+        description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
+        paramText: "[-iaru@]",
+        example: "-i",
         permission: .RescueRead
     )
     var didReceiveListCommand = { command in
@@ -133,6 +137,7 @@ class BoardCommands: IRCBotModule {
         ["clear", "close"],
         parameters: 1...2,
         category: .board,
+        description: "Closes a case and posts the paperwork link.",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -223,6 +228,9 @@ class BoardCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .board,
+        description: "Moves a case to the trash list with a message describing why it was deleted",
+        paramText: "<case id/client> <message>",
+        example: "4 client left before rats were assigned ",
         permission: .RescueWriteOwn
     )
     var didReceiveTrashCommand = { command in
@@ -254,6 +262,9 @@ class BoardCommands: IRCBotModule {
         ["paperwork", "pwl"],
         parameters: 1...1,
         category: .board,
+        description: "Retrieves the paperwork link for a case on the board.",
+        paramText: "<case id/client>",
+        example: "4",
         permission: .RescueRead
     )
     var didReceivePaperworkLinkCommand = { command in
@@ -275,6 +286,7 @@ class BoardCommands: IRCBotModule {
         ["quiet"],
         parameters: 0...0,
         category: .other,
+        description: "Displays the amount of time since the last rescue",
         permission: .RescueRead
     )
     var didReceiveQuietCommand = { command in
@@ -314,7 +326,8 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["prep"],
         parameters: 0...,
-        category: nil
+        category: nil,
+        description: ""
     )
     var didReceivePrepCommand = { command in
         let nick = command.parameters[0]

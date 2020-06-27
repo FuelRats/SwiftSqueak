@@ -36,6 +36,7 @@ class GeneralCommands: IRCBotModule {
         ["sysstats", "syscount", "systems"],
         parameters: 0...0,
         category: .utility,
+        description: "See statistics about the systems API.",
         permission: nil
     )
     var didReceiveSystemStatisticsCommand = { command in
@@ -68,6 +69,7 @@ class GeneralCommands: IRCBotModule {
         ["version", "uptime"],
         parameters: 0...0,
         category: .utility,
+        description: "See version information about the bot.",
         permission: nil
     )
     var didReceiveVersionCommand = { command in
@@ -88,7 +90,8 @@ class GeneralCommands: IRCBotModule {
     @BotCommand(
         ["whoami"],
         parameters: 0...0,
-        category: .utility
+        category: .utility,
+        description: "Check the Fuel Rats account information the bot is currently associating with your nick"
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -129,6 +132,9 @@ class GeneralCommands: IRCBotModule {
         ["whois", "ratid", "who", "id"],
         parameters: 1...1,
         category: .utility,
+        description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
+        paramText: "<nickname>",
+        example: "Orange_Sheets",
         permission: .RatRead
     )
     var didReceiveWhoIsCommand = { command in
@@ -184,6 +190,9 @@ class GeneralCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .utility,
+        description: "Make the bot send an IRC message somewhere.",
+        paramText: "<destination> <message>",
+        example: "#ratchat Squeak!",
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
@@ -199,6 +208,9 @@ class GeneralCommands: IRCBotModule {
         parameters: 2...2,
         lastParameterIsContinous: true,
         category: .utility,
+        description: "Make the bot send an IRC action (/me) somewhere.",
+        paramText: "<destination> <action message>",
+        example: "#ratchat noms popcorn.",
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in
