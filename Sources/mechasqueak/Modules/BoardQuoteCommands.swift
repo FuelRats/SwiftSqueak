@@ -146,7 +146,7 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["inject"],
-        parameters: 1...2,
+        parameters: 2...2,
         lastParameterIsContinous: true,
         category: .board,
         description: "Add some new information to the case, if one does not exist, create one with this information",
