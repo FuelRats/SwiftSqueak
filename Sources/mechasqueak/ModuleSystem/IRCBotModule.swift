@@ -185,7 +185,9 @@ class IRCBotModuleManager {
 
         guard command.minimumParameters <= ircBotCommand.parameters.count else {
             message.error(key: "command.toofewparams", fromCommand: ircBotCommand, map: [
-                "command": ircBotCommand.command
+                "command": ircBotCommand.command,
+                "usage": command.paramText != nil ? "Usage: !\(ircBotCommand.command) \(command.paramText!)" : "",
+                "example": command.example != nil ? "(Example: !\(ircBotCommand.command) \(command.example!))" : ""
             ])
             return
         }
@@ -214,7 +216,9 @@ class IRCBotModuleManager {
 
         if let maxParameters = command.maximumParameters, ircBotCommand.parameters.count > maxParameters {
             message.error(key: "command.toomanyparams", fromCommand: ircBotCommand, map: [
-                "command": ircBotCommand.command
+                "command": ircBotCommand.command,
+                "usage": command.paramText != nil ? "Usage: !\(ircBotCommand.command) \(command.paramText!)" : "",
+                "example": command.example != nil ? "(Example: !\(ircBotCommand.command) \(command.example!))" : ""
             ])
             return
         }

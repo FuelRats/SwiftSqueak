@@ -1,8 +1,8 @@
 {
   "command.publiconly": "!%{command} command can only be used in a public channel",
   "command.privateonly": "!%{command} command can only be used in private message",
-  "command.toofewparams": "!%{command} command was given too few parameters",
-  "command.toomanyparams": "!%{command} command was given too many parameters",
+  "command.toofewparams": "!%{command} command was given too few parameters. %{usage} %{example}",
+  "command.toomanyparams": "!%{command} command was given too many parameters. %{usage} %{example}",
   "whoami.notloggedin": "You are not logged in to NickServ, so I don't know why you're asking me.",
   "whoami.nodata": "You are logged in as user %{account} but I couldn't find IRC services data for this account.",
   "whoami.noaccount": "You are logged in as user %{account} but I couldn't find a Fuel Rats API account linked to you.",
@@ -146,7 +146,9 @@
   "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
   "shorten.error": "Was unable to shorten URL due to a request error.",
   "shorten.shortened": "URL has been shortened to: %{url} - Title: %{title}",
-  
+
+  "tweet.success": "Successfully posted tweet from @FuelRatAlerts.",
+  "tweet.error": "Encountered an error in posting tweet from @FuelRatAlerts.",
   "tweetcase.noplatform": "Could not generate a case tweet for case #%{caseId} as no platform is set.",
   "tweetcase.missingsystem": "Could not generate a case tweet for case #%{caseId} as no system is set.",
   "tweetcase.nosystem": "%{platform} rats needed for a rescue! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
@@ -158,7 +160,7 @@
   
   "autocorrect.correction": "\u0002\u000304Autocorrect\u0003\u0002 \"%{system}\" is probably \"%{correction}\".",
   
-  "facts.invalidargument": "Invalid argument given to !facts command, !facts accepts add, set, info, and del.",
+  "facts.invalidargument": "Invalid argument given to !facts command, !facts accepts add, set, info, locales, and del.",
   "facts.set.syntax": "Invalid arguments, syntax: !facts add/set <name>[-language code] <message>.",
   "facts.set.error": "Encountered an error saving !%{fact}.",
   "facts.set.updated": "Successfully updated !%{fact} (%{locale} locale) with the new message: \"%{message}\".",
@@ -183,7 +185,7 @@
 
   "help.howto": "This is a list of MechaSqueak's command cateogries, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.nofacts": "Information commands such as !prep and !pcwing are not listed here, to see a list of those, use !facts.",
-  "help.categoryerror": "%{category} is not in the categories list.",
+  "help.categoryerror": "%{category} is not in the categories list. To list all categories, do !help. To see help for a specific command, add a ! before the command.",
   "help.categorylist": "Showing commands in the %{category} category. To see see more information about the command, do !help !command (e.g !help !assign).",
   "help.commandlist": "\u0002!%{command}\u0002 %{params} - %{description}",
   "help.commandtitle": "\u0002!%{command}\u0002 %{params} %{example}",
