@@ -34,13 +34,33 @@ class TweetCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["tweet"],
+        parameters: 1...1,
+        lastParameterIsContinous: true,
+        category: .utility,
+        description: "Send a tweet from @FuelRatAlerts",
+        paramText: "<tweet>",
+        example: "Need rats urgently for two PS4 cases in the bubble.",
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveTweetCommand = { command in
+        Twitter.tweet(message: command.parameters[0], complete: {
+            command.message.reply(key: "tweet.success", fromCommand: command)
+        }, error: { _ in
+            command.message.error(key: "tweet.error", fromCommand: command)
+        })
+    }
+
+    @BotCommand(
         ["tweetcase", "tweetc"],
         parameters: 1...1,
         category: .utility,
-        description: "Tweet information about a case to @FuelRatAlerts",
+        description: "Tweet information about a case from @FuelRatAlerts",
         paramText: "<case id/client>",
         example: "4",
-        permission: .RescueWriteOwn
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
     )
     var didReceiveTweetCaseCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
