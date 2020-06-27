@@ -44,7 +44,9 @@ class FactCommands: IRCBotModule {
         parameters: 0...3,
         lastParameterIsContinous: true,
         category: .facts,
-        description: "Lists all the information commands"
+        description: "View the list of facts, modify, or delete them.",
+        paramText: "set/info/locales/del [fact][-locale] [fact message]",
+        example: "set pcwing-es bla bla bla, !facts info pcwing-es, !facts locales, !facts del pcwing-es"
     )
     var didReceiveFactCommand = { command in
         if command.parameters.count == 0 {
@@ -61,7 +63,10 @@ class FactCommands: IRCBotModule {
             case "info":
                 didReceiveFactInfoCommand(command: command)
 
-            case "del":
+            case "locales":
+                didReceiveFactLocalesCommand(command: command)
+
+            case "del", "delete":
                 didReceiveFactDeleteCommand(command: command)
 
             default:
@@ -124,7 +129,7 @@ class FactCommands: IRCBotModule {
 
             command.message.reply(key: "facts.info.message", fromCommand: command, map: [
                 "fact": name,
-                "locale": command.locale.englishDescription,
+                "locale": locale.englishDescription,
                 "created": fact.createdAt,
                 "updated": fact.updatedAt,
                 "author": fact.author,
@@ -133,6 +138,26 @@ class FactCommands: IRCBotModule {
         }, onError: { _ in
             command.message.reply(key: "facts.info.error", fromCommand: command, map: [
                 "fact": command.parameters[1].lowercased()
+            ])
+        })
+    }
+
+    static func didReceiveFactLocalesCommand (command: IRCBotCommand) {
+        Fact.findAll({ facts, _ in
+            guard let facts = facts else {
+                command.message.error(key: "facts.list.error", fromCommand: command)
+                return
+            }
+
+            let locales = Set(facts.compactMap({
+                $0.language
+            })).map({ (localeIdentifier) -> String in
+                let locale = Locale(identifier: localeIdentifier)
+                return "\(locale.identifier) (\(locale.englishDescription))"
+            }).joined(separator: ", ")
+
+            command.message.reply(key: "facts.locales", fromCommand: command, map: [
+                "locales": locales
             ])
         })
     }

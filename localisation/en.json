@@ -176,6 +176,7 @@
   "facts.info.notfound": "Could not find a %{locale} locale command named \"%{fact}\".",
   "facts.info.error": "Encountered an error looking up information for fact !%{fact}",
   "facts.info.message": "Info for !%{fact} (%{locale} locale): Created at %{created}, last updated by %{author} at %{updated}. Contents: \"%{excerpt}\"",
+  "facts.locales": "Listing all locales in the database: %{locales}",
   
   "say.sending": "Sending message \"%{contents}\" to %{target}",
   "me.sending": "Emoting \"%{contents}\" to %{target}",
@@ -196,5 +197,5 @@
 
   "help.command.list": "Flags: -r: Show only with assigned rats, -u: Show only with no assigned rats, -a: Show only active cases. -i: Show only inactive cases, -@: Display case UUIDs.",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
-  "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation, e.g !facts-es."
+  "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts."
 }
