@@ -65,7 +65,7 @@ class HelpCommands: IRCBotModule {
         guard command.parameters[0].starts(with: "!") else {
             guard let category = HelpCategory(rawValue: command.parameters[0]) else {
                 message.error(key: "help.categoryerror", fromCommand: command, map: [
-                    "category": command.parameters[1]
+                    "category": command.parameters[0]
                 ])
                 return
             }
