@@ -72,11 +72,11 @@ class RemoteRescueCommands: IRCBotModule {
                 ])
             })
 
-            command.message.reply(key: "rescue.closed.list", fromCommand: command, map: [
+            command.message.replyPrivate(key: "rescue.closed.list", fromCommand: command, map: [
                 "count": closeCount
             ])
 
-            command.message.reply(list: rescueList, separator: " - ")
+            command.message.replyPrivate(list: rescueList, separator: " - ")
         }, error: { _ in
             command.message.error(key: "rescue.closed.error", fromCommand: command)
         })
@@ -125,29 +125,65 @@ class RemoteRescueCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["deleteall", "cleartrash"],
+        parameters: 0...0,
+        category: .rescues,
+        description: "Delete all rescues currently in the trashlist",
+        permission: .RescueWrite
+    )
+    var didReceiveDeleteAllCommand = { command in
+        FuelRatsAPI.getRescuesInTrash(complete: { results in
+            let rescues = results.body.data!.primary.values
+            guard rescues.count > 0 else {
+                command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
+                return
+            }
+
+            for rescue in rescues {
+                FuelRatsAPI.deleteRescue(id: rescue.id.rawValue, complete: {
+                    command.message.replyPrivate(key: "rescue.delete.success", fromCommand: command, map: [
+                        "id": rescue.id.rawValue.ircRepresentation
+                    ])
+                }, error: { error in
+                    if error.response!.status == .noContent {
+                        command.message.replyPrivate(key: "rescue.delete.success", fromCommand: command, map: [
+                            "id": rescue.id.rawValue.ircRepresentation
+                        ])
+                    } else {
+                        command.message.error(key: "rescue.delete.failure", fromCommand: command, map: [
+                            "id": rescue.id.rawValue.ircRepresentation
+                        ])
+                    }
+                })
+            }
+        }, error: { _ in
+            command.message.error(key: "rescue.trashlist.error", fromCommand: command)
+        })
+    }
+
+    @BotCommand(
         ["trashlist", "mdlist", "purgelist", "listtrash"],
         parameters: 0...0,
         category: .rescues,
         description: "Shows all the rescues that have been added to the trash list but not yet deleted",
-        permission: .RescueRead,
-        allowedDestinations: .PrivateMessage
+        permission: .RescueRead
     )
     var didReceiveListTrashcommand = { command in
         FuelRatsAPI.getRescuesInTrash(complete: { results in
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
-                command.message.reply(key: "rescue.trashlist.empty", fromCommand: command)
+                command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
                 return
             }
 
-            command.message.reply(key: "rescue.trashlist.list", fromCommand: command, map: [
+            command.message.replyPrivate(key: "rescue.trashlist.list", fromCommand: command, map: [
                 "count": rescues.count
             ])
 
             for rescue in rescues {
                 let format = rescue.attributes.codeRed.value ? "rescue.trashlist.entrycr" : "rescue.trashlist.entry"
 
-                command.message.reply(key: format, fromCommand: command, map: [
+                command.message.replyPrivate(key: format, fromCommand: command, map: [
                     "id": rescue.id.rawValue.ircRepresentation,
                     "client": rescue.client ?? "unknown client",
                     "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
@@ -217,16 +253,16 @@ class RemoteRescueCommands: IRCBotModule {
         FuelRatsAPI.getUnfiledRescues(complete: { results in
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
-                command.message.reply(key: "rescue.unfiled.empty", fromCommand: command)
+                command.message.replyPrivate(key: "rescue.unfiled.empty", fromCommand: command)
                 return
             }
 
-            command.message.reply(key: "rescue.unfiled.list", fromCommand: command, map: [
+            command.message.replyPrivate(key: "rescue.unfiled.list", fromCommand: command, map: [
                 "count": rescues.count
             ])
 
             for rescue in rescues {
-                command.message.reply(key: "rescue.unfiled.entry", fromCommand: command, map: [
+                command.message.replyPrivate(key: "rescue.unfiled.entry", fromCommand: command, map: [
                     "client": rescue.client ?? "unknown client",
                     "system": rescue.system ?? "unknown system",
                     "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
@@ -258,7 +294,7 @@ class RemoteRescueCommands: IRCBotModule {
         FuelRatsAPI.getRescue(id: id, complete: { result in
             let rescue = result.body.data!.primary.value
 
-            command.message.reply(key: "rescue.quoteid.title", fromCommand: command, map: [
+            command.message.replyPrivate(key: "rescue.quoteid.title", fromCommand: command, map: [
                 "client": rescue.client ?? "unknown client",
                 "system": rescue.system ?? "unknown system",
                 "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
@@ -268,7 +304,7 @@ class RemoteRescueCommands: IRCBotModule {
             ])
 
             for (index, quote) in rescue.quotes.enumerated() {
-                command.message.reply(key: "rescue.quoteid.quote", fromCommand: command, map: [
+                command.message.replyPrivate(key: "rescue.quoteid.quote", fromCommand: command, map: [
                     "index": index,
                     "author": quote.lastAuthor,
                     "time": quote.updatedAt,
