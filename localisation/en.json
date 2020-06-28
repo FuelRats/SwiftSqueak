@@ -12,6 +12,9 @@
   "whois.nodata": "%{nick} is logged in to NickServ as %{account} but I could not find any IRC services data for their account.",
   "whois.noaccount": "%{nick} is logged in to NickServ as %{account} but I could not find a Fuel Rats account linked to their nick.",
   "whois.response": "%{nick} is logged in as user %{account} and have Fuel Rats User ID %{userId}. Rats: %{rats}.",
+  "jumpcall.notfound": "CAUTION: You called jumps for case #%{case} but this case is not currently on the board.",
+  "jumpcall.noaccount": "CAUTION: You ccalled jumps for case #%{case} but no Fuel Rats account can be found for you.",
+  "jumpcall.wrongplatform": "CAUTION: You called jumps for case #%{case} which is on %{platform} but you do not have a registered rat for this platform.",
   
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
@@ -30,7 +33,7 @@
   "board.signal.nosystem": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case #%{caseId}.",
   "board.signal.notindb": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (not in galaxy database) case #%{caseId}.",
   "board.signal.landmark": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) case #%{caseId}.",
-  "board.signal.permit": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %(permit) case #%{caseId}.",
+  "board.signal.permit": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %{permit} case #%{caseId}.",
   "board.signal.exists": "CMDR %{client} belongs to existing %{platform} case #%{caseId} in %{system}.",
   
   "board.casenotfound": "Could not find a case ID or client name matching \"%{caseIdentifier}\".",

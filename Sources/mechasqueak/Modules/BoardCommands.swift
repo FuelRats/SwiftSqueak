@@ -24,11 +24,17 @@
 
 import Foundation
 import IRCKit
+import Regex
 
 class BoardCommands: IRCBotModule {
     var name: String = "Rescue Board"
     private var channelMessageObserver: NotificationToken?
     internal let distanceFormatter: NumberFormatter
+    static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})j #([0-9]{1,3})", groupNames: ["jumps", "case"])
+    static let jumpCallExpressionCaseAfter = try! Regex(
+        pattern: "#([0-9]{1,3}) ([0-9]{1,3})j",
+        groupNames: ["case", "jumps"]
+    )
 
     required init(_ moduleManager: IRCBotModuleManager) {
         self.distanceFormatter = NumberFormatter()
@@ -127,7 +133,7 @@ class BoardCommands: IRCBotModule {
             ])
         }).joined(separator: ", ")
 
-        command.message.reply(key: "board.list.cases", fromCommand: command, map: [
+        command.message.replyPrivate(key: "board.list.cases", fromCommand: command, map: [
             "cases": generatedList,
             "count": rescues.count
         ])
@@ -356,6 +362,49 @@ class BoardCommands: IRCBotModule {
     }
 
     func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
+
+        if let jumpCallMatch = BoardCommands.jumpCallExpression.findFirst(in: channelMessage.message)
+            ?? BoardCommands.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
+            let jumps = jumpCallMatch.group(named: "jumps")!
+            let caseId = jumpCallMatch.group(named: "case")!
+
+            guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
+                channelMessage.replyPrivate(message: lingo.localize(
+                    "jumpcall.notfound",
+                    locale: "en-GB",
+                    interpolations: [
+                        "case": caseId
+                    ]
+                ))
+                return
+            }
+
+            guard let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user else {
+                channelMessage.replyPrivate(message: lingo.localize(
+                    "jumpcall.noaccount",
+                    locale: "en-GB",
+                    interpolations: [
+                        "case": caseId
+                    ]
+                ))
+                return
+            }
+
+            let rats = accountInfo.ratsBelongingTo(user: user)
+            if rats.first(where: { (rat: Rat) -> Bool in
+                return rat.attributes.platform.value == rescue.platform
+            }) == nil {
+                channelMessage.replyPrivate(message: lingo.localize(
+                    "jumpcall.wrongplatform",
+                    locale: "en-GB",
+                    interpolations: [
+                        "case": caseId,
+                        "platform": rescue.platform?.ircRepresentable ?? "unknown platform"
+                    ]
+                ))
+            }
+        }
+
         if channelMessage.message.starts(with: "Incoming Client: ") {
             guard let rescue = LocalRescue(fromAnnouncer: channelMessage) else {
                 return
