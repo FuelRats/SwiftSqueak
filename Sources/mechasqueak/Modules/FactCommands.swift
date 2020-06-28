@@ -101,7 +101,7 @@ class FactCommands: IRCBotModule {
                 "locale": command.locale.englishDescription
             ])
 
-            command.message.reply(list: factStrings, separator: ", ", heading: heading)
+            command.message.replyPrivate(list: factStrings, separator: ", ", heading: heading)
         })
     }
 

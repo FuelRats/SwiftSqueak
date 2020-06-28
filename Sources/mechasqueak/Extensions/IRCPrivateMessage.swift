@@ -36,4 +36,20 @@ extension IRCPrivateMessage {
         let message = lingo.localize(key, locale: command.locale.identifier, interpolations: map)
         self.replyPrivate(message: message)
     }
+
+    public func reply (list: [String], separator: String, heading: String = "") {
+        let messages = list.ircList(separator: separator, heading: heading)
+
+        for message in messages {
+            self.reply(message: message)
+        }
+    }
+
+    public func replyPrivate (list: [String], separator: String, heading: String = "") {
+        let messages = list.ircList(separator: separator, heading: heading)
+
+        for message in messages {
+            self.replyPrivate(message: message)
+        }
+    }
 }

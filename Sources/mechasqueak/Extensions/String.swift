@@ -83,3 +83,24 @@ extension String {
         return mat[sCount][oCount]
     }
 }
+
+extension Array where Element == String {
+    func ircList (separator: String, heading: String = "") -> [String] {
+        return self.reduce([String](), { (acc: [String], entry: String) -> [String] in
+            var acc = acc
+            var entry = entry
+
+            if acc.last == nil {
+                entry = heading + entry
+            }
+
+            if acc.last == nil || acc.last!.count + separator.count + self.count > 400 {
+                acc.append(entry)
+                return acc
+            }
+
+            acc[acc.count - 1] = acc[acc.count - 1] + separator + entry
+            return acc
+        })
+    }
+}

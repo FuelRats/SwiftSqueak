@@ -38,8 +38,7 @@ class BoardQuoteCommands: IRCBotModule {
         description: "Show all information about a specific case",
         paramText: "<case id/client name>",
         example: "4",
-        permission: .RescueRead,
-        allowedDestinations: .PrivateMessage
+        permission: .RescueRead
     )
     var didReceiveQuoteCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
@@ -61,15 +60,15 @@ class BoardQuoteCommands: IRCBotModule {
         ])
 
         if rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 {
-            command.message.reply(key: "board.quote.noassigned", fromCommand: command)
+            command.message.replyPrivate(key: "board.quote.noassigned", fromCommand: command)
         } else {
-            command.message.reply(key: "board.quote.assigned", fromCommand: command, map: [
+            command.message.replyPrivate(key: "board.quote.assigned", fromCommand: command, map: [
                 "rats": rescue.assignList!
             ])
         }
 
         for (index, quote) in rescue.quotes.enumerated() {
-            command.message.reply(key: "board.quote.quote", fromCommand: command, map: [
+            command.message.replyPrivate(key: "board.quote.quote", fromCommand: command, map: [
                 "index": index,
                 "author": quote.lastAuthor,
                 "time": quote.updatedAt,
