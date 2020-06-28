@@ -67,7 +67,11 @@ class MechaSqueak {
         self.rescueBoard = RescueBoard()
 
         self.connections = configuration.connections.map({
-            return IRCClient(configuration: $0)
+            let client = IRCClient(configuration: $0)
+            client.connectCommands = [ { client in
+                client.send(command: .OPER, parameters: "mecha")
+            }]
+            return client
         })
 
         self.moduleManager = IRCBotModuleManager()
