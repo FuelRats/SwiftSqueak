@@ -330,7 +330,7 @@ class BoardCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["prep"],
+        ["prep", "psquit", "pcquit", "xquit"],
         parameters: 0...,
         category: nil,
         description: ""
@@ -362,10 +362,8 @@ class BoardCommands: IRCBotModule {
     }
 
     func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
-
         if let jumpCallMatch = BoardCommands.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? BoardCommands.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
-            let jumps = jumpCallMatch.group(named: "jumps")!
             let caseId = jumpCallMatch.group(named: "case")!
 
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
@@ -390,7 +388,7 @@ class BoardCommands: IRCBotModule {
                 return
             }
 
-            let rats = accountInfo.ratsBelongingTo(user: user)
+            let rats = accountInfo.ratsBelongingTo(user:   user)
             if rats.first(where: { (rat: Rat) -> Bool in
                 return rat.attributes.platform.value == rescue.platform
             }) == nil {
