@@ -55,8 +55,22 @@ enum RescueDescription: ResourceObjectDescription {
 }
 typealias Rescue = JSONEntity<RescueDescription>
 
-struct RescueDataObject: Codable, Equatable {
+struct RescueDataObject: Codable {
+    struct RescueDataStatus: Codable {
 
+    }
+
+    struct MarkForDeletionEntry: Codable {
+        var marked: Bool
+        var reason: String
+        var reporter: String
+
+    }
+    var langID: String?
+    var status: RescueDataStatus?
+    var IRCNick: String?
+    var boardIndex: Int?
+    var markedForDeletion: MarkForDeletionEntry?
 }
 
 struct RescueQuote: Codable, Equatable {
