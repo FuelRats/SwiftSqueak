@@ -118,8 +118,10 @@ class IRCBotModuleManager {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var registeredModules: [IRCBotModule] = []
+    var blacklist: [String]
 
     init () {
+        self.blacklist = configuration.general.blacklist
         self.channelMessageObserver = NotificationCenter.default.addObserver(
             descriptor: IRCChannelMessageNotification(),
             using: onChannelMessage(channelMessage:)
@@ -228,6 +230,18 @@ class IRCBotModuleManager {
                 message.error(key: "board.nopermission", fromCommand: ircBotCommand)
                 return
             }
+        }
+
+        if command.category == .board && blacklist.contains(where: {
+            $0.lowercased().range(of: message.user.nickname.lowercased()) != nil
+        }) {
+            message.client.sendNotice(
+                toTarget: "#opers",
+                contents: lingo.localize("command.blacklist", locale: "en-GB", interpolations: [
+                    "command": ircBotCommand.command,
+                    "nick": message.user.nickname
+                ])
+            )
         }
 
         command.onCommand?(ircBotCommand)

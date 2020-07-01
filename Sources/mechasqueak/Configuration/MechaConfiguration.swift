@@ -38,6 +38,7 @@ struct GeneralConfiguration: Codable {
     let rescueChannel: String
     let reportingChannel: String
     let drillMode: Bool
+    let blacklist: [String]
 }
 
 struct FuelRatsAPIConfiguration: Codable {
