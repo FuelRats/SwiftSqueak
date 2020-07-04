@@ -31,6 +31,7 @@ class LocalRescue: Codable {
     private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}-[A-Z]{2})\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
+    var clientHost: String?
 
     let id: UUID
 
@@ -106,6 +107,7 @@ class LocalRescue: Codable {
         self.id = UUID()
         self.client = message.user.nickname
         self.clientNick = message.user.nickname
+        self.clientHost = message.user.hostmask
 
         self.system = signal.system?.uppercased()
         if let platformString = signal.platform {
@@ -143,6 +145,10 @@ class LocalRescue: Codable {
         self.client = clientName
         self.clientNick = clientName
         self.system = input.system?.uppercased()
+
+        if let ircUser = command.message.destination.member(named: clientName) {
+            self.clientHost = ircUser.hostmask
+        }
 
         if let platformString = input.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
@@ -378,5 +384,9 @@ class LocalRescue: Codable {
         }))
 
         return assigns.joined(separator: ", ")
+    }
+
+    var isPrepped: Bool {
+        return mecha.rescueBoard.prepTimers[self.id] == nil
     }
 }

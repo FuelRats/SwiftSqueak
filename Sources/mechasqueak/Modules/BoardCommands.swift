@@ -377,6 +377,15 @@ class BoardCommands: IRCBotModule {
                 return
             }
 
+            if rescue.isPrepped == false {
+                // User called jumps for a case where the client has not been prepped, yell at them.
+                channelMessage.replyPrivate(message: lingo.localize(
+                    "jumpcall.notprepped",
+                    locale: "en-GB",
+                    interpolations: [:]
+                ))
+            }
+
             guard let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user else {
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.noaccount",
@@ -388,7 +397,7 @@ class BoardCommands: IRCBotModule {
                 return
             }
 
-            let rats = accountInfo.ratsBelongingTo(user:   user)
+            let rats = accountInfo.ratsBelongingTo(user: user)
             if rats.first(where: { (rat: Rat) -> Bool in
                 return rat.attributes.platform.value == rescue.platform
             }) == nil {
