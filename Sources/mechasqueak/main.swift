@@ -130,11 +130,39 @@ class MechaSqueak {
             mecha.rescueBoard.syncBoard()
         } else {
             accounts.lookupIfNotExists(user: userJoin.user)
+            if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userJoin.user.nickname) {
+                rescue.clientHost = userJoin.user.hostmask
+                userJoin.channel.send(key: "board.clientjoin", map: [
+                    "caseId": rescue.commandIdentifier!,
+                    "client": rescue.client ?? "unknown client"
+                ])
+            } else if let rescue = mecha.rescueBoard.rescues.first(where: {
+                $0.clientHost == userJoin.user.hostmask
+            }) {
+                rescue.clientNick = userJoin.user.nickname
+                userJoin.channel.send(key: "board.clientjoinhost", map: [
+                    "caseId": rescue.commandIdentifier!,
+                    "client": rescue.client ?? "unknown client",
+                    "nick": userJoin.user.nickname
+                ])
+            }
         }
     }
 
     func onUserQuit (userQuit: IRCUserQuitNotification.Payload) {
         accounts.mapping.removeValue(forKey: userQuit.sender!.nickname)
+
+        if
+            let sender = userQuit.sender,
+            let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
+        {
+            userQuit.client.sendMessage(
+                toChannelName: configuration.general.rescueChannel,
+                withKey: "board.clientquit", mapping: [
+                    "caseId": rescue.commandIdentifier!,
+                    "client": rescue.client ?? "unknown client"
+            ])
+        }
     }
 
     func onUserNickChange (nickChange: IRCUserChangedNickNotification.Payload) {

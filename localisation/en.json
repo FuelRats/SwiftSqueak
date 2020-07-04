@@ -16,13 +16,17 @@
   "jumpcall.notfound": "CAUTION: You called jumps for case #%{case} but this case is not currently on the board.",
   "jumpcall.noaccount": "CAUTION: You ccalled jumps for case #%{case} but no Fuel Rats account can be found for you.",
   "jumpcall.wrongplatform": "CAUTION: You called jumps for case #%{case} which is on %{platform} but you do not have a registered rat for this platform.",
+  "jumpcall.notprepped": "CAUTION: You have called jumps for a case where the client has not been !prep'd or told to logout. The first rat to respond to a case should always take care of this beforehand.",
   
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
   "systemsearch.error": "An error occured performing a system search.",
   "landmark.noresults": "%{system} was not found in the galaxy database.",
   "landmark.response": "%{system} is %{distance}ly from %{landmark}.",
-  
+
+  "board.clientjoin": "Client of case #%{caseId} (%{client}) has joined!",
+  "board.clientjoinhost": "Caution: Client of case #%{caseId} (%{client}) has joined with a different name! (%{nick})",
+  "board.clientquit": "Caution: Client of case #%{caseId} (%{client}) has left!",
   "board.synced": "Successfully synced board with %{api}. %{downstreamNew} new rescues were synced from the server and %{upstreamNew} new local rescues were synced to the API. %{downstreamChange} server-side changes were found and synced and %{upstreamChange} local changes were synced to the server. %{conflicts} case ID conflicts occured.",
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
   
