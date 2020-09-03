@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -10,14 +10,14 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/miroslavkovac/Lingo.git", from: Version(3, 0, 5)),
         .package(url: "https://github.com/IBM-Swift/SwiftyRequest.git", from: Version(3, 1, 0)),
-        .package(url: "https://github.com/IBM-Swift/Swift-Kuery-ORM.git", from: Version(0, 6, 1)),
-        .package(url: "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git", from: Version(2, 1, 1)),
-        .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 14, 0)),
-        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 6, 2)),
-        .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 4, 0)),
+        .package(name: "SwiftKueryORM", url: "https://github.com/IBM-Swift/Swift-Kuery-ORM.git", from: "0.6.1"),
+        .package(name: "SwiftKueryPostgreSQL", url: "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git", from: "2.1.1"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 22, 0)),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 9, 1)),
+        .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 7, 0)),
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(3, 0, 0)),
-        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 0)),
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 1)),
         .package(path: "../IRCKit")
     ],
     targets: [
