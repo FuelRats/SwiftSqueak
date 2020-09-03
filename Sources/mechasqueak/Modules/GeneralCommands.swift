@@ -80,7 +80,9 @@ class GeneralCommands: IRCBotModule {
         formatter.maximumUnitCount = 2
         formatter.unitsStyle = .full
 
-        command.message.reply(key: "version.message", fromCommand: command, map: [
+        let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
+
+        command.message.reply(key: replyKey, fromCommand: command, map: [
             "version": mecha.version,
             "uptime": formatter.string(from: timespan)!,
             "startup": mecha.startupTime.description

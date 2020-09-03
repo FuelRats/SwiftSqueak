@@ -110,6 +110,7 @@
   "board.notprepped": "WARNING: Client for case #%{caseId} has NOT been !prep-ed!",
   
   "version.message": "MechaSqueak version %{version}, up %{uptime}, since %{startup}.",
+  "version.drillmode": "MechaSqueak version %{version} (running in Drill Mode), up %{uptime}, since %{startup}.",
   "sysstats.message": "The systems database as of %{date} ago contains %{systems} star systems, with %{stars} stars and %{bodies} stellar bodies.",
   "sysstats.error": "I was unable to request statistics information from the Systems API due to an error.",
   
