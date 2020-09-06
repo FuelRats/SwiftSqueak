@@ -47,6 +47,7 @@ func loadConfiguration () -> MechaConfiguration {
 let configuration = loadConfiguration()
 
 class MechaSqueak {
+    let configPath: URL
     static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
     let accounts: NicknameLookupManager
@@ -62,6 +63,12 @@ class MechaSqueak {
     private var userNickChangeObserver: NotificationToken?
 
     init () {
+        var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        if CommandLine.arguments.count > 1 {
+            configPath = URL(fileURLWithPath: CommandLine.arguments[1])
+        }
+        self.configPath = configPath
+
         self.startupTime = Date()
         self.accounts = NicknameLookupManager()
         self.rescueBoard = RescueBoard()
