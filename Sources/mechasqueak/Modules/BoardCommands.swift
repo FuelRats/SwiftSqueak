@@ -303,12 +303,7 @@ class BoardCommands: IRCBotModule {
 
         let timespan = Date().timeIntervalSince(lastSignalDate)
 
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute, .second]
-        formatter.maximumUnitCount = 1
-        formatter.unitsStyle = .full
-
-        let timespanString = formatter.string(from: timespan) ?? ""
+        let timespanString = lastSignalDate.timeAgo
 
         if timespan >= 12 * 60 * 60 {
             command.message.reply(key: "board.quiet.quiet", fromCommand: command, map: [

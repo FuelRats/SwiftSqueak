@@ -47,15 +47,9 @@ class GeneralCommands: IRCBotModule {
             }
 
             let numberFormatter = NumberFormatter.englishFormatter()
-            let timespanFormatter = DateComponentsFormatter()
-            timespanFormatter.allowedUnits = [.hour, .minute, .second]
-            timespanFormatter.maximumUnitCount = 1
-            timespanFormatter.unitsStyle = .full
-
-            let updatedTimespan = Date().timeIntervalSince(Date(timeIntervalSince1970: date))
 
             command.message.reply(key: "sysstats.message", fromCommand: command, map: [
-                "date": timespanFormatter.string(from: updatedTimespan)!,
+                "date": Date(timeIntervalSince1970: date).timeAgo,
                 "systems": numberFormatter.string(from: result.attributes.syscount)!,
                 "stars": numberFormatter.string(from: result.attributes.starcount)!,
                 "bodies": numberFormatter.string(from: result.attributes.bodycount)!
