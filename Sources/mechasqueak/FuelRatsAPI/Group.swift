@@ -92,6 +92,9 @@ enum AccountPermission: String, Codable {
     case RescueRevisionWrite = "rescue-revisions.write"
 
     case TwitterWrite = "twitter.write"
+    
+    case DispatchRead = "dispatch.read"
+    case DispatchWrite = "dispatch.write"
 
 }
 
