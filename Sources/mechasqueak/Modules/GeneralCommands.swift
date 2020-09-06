@@ -67,18 +67,11 @@ class GeneralCommands: IRCBotModule {
         permission: nil
     )
     var didReceiveVersionCommand = { command in
-        let timespan = Date().timeIntervalSince(mecha.startupTime)
-
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute, .second]
-        formatter.maximumUnitCount = 2
-        formatter.unitsStyle = .full
-
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
 
         command.message.reply(key: replyKey, fromCommand: command, map: [
             "version": mecha.version,
-            "uptime": formatter.string(from: timespan)!,
+            "uptime": mecha.startupTime.timeAgo,
             "startup": mecha.startupTime.description
         ])
     }
