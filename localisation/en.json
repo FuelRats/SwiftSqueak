@@ -14,7 +14,7 @@
   "whois.noaccount": "%{nick} is logged in to NickServ as %{account} but I could not find a Fuel Rats account linked to their nick.",
   "whois.response": "%{nick} is logged in as user %{account} and have Fuel Rats User ID %{userId}. Rats: %{rats}.",
   "jumpcall.notfound": "CAUTION: You called jumps for case #%{case} but this case is not currently on the board.",
-  "jumpcall.noaccount": "CAUTION: You ccalled jumps for case #%{case} but no Fuel Rats account can be found for you.",
+  "jumpcall.noaccount": "CAUTION: You called jumps for case #%{case} but no Fuel Rats account can be found for you.",
   "jumpcall.wrongplatform": "CAUTION: You called jumps for case #%{case} which is on %{platform} but you do not have a registered rat for this platform.",
   "jumpcall.notprepped": "CAUTION: You have called jumps for a case where the client has not been !prep'd or told to logout. The first rat to respond to a case should always take care of this beforehand.",
   
