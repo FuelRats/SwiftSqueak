@@ -284,6 +284,11 @@ class FactCommands: IRCBotModule {
     }
 
     func onChannelMessage (channelMessage message: IRCPrivateMessage) {
+        guard message.raw.messageTags["batch"] == nil else {
+            // Do not interpret commands from playback of old messages
+            return
+        }
+        
         guard let command = IRCBotCommand(from: message) else {
             return
         }
