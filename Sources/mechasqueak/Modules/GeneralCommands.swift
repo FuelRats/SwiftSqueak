@@ -111,7 +111,7 @@ class GeneralCommands: IRCBotModule {
         }
 
         guard let apiUser = associatedNickname.body.includes![User.self].first(where: {
-            return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user.id.rawValue
+            return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user?.id.rawValue
         }) else {
             command.message.reply(key: "whoami.noaccount", fromCommand: command, map: [
                 "account": account
@@ -166,7 +166,7 @@ class GeneralCommands: IRCBotModule {
         }
 
         guard let apiUser = associatedNickname.body.includes![User.self].first(where: {
-            return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user.id.rawValue
+            return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user?.id.rawValue
         }) else {
             command.message.reply(key: "whois.noaccount", fromCommand: command, map: [
                 "nick": nick,

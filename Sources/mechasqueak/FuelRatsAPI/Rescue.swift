@@ -50,7 +50,7 @@ enum RescueDescription: ResourceObjectDescription {
 
     public struct Relationships: JSONAPI.Relationships {
         public var rats: ToManyRelationship<Rat>
-        public var firstLimpet: ToOneRelationship<Rat?>
+        public var firstLimpet: ToOneRelationship<Rat?>?
     }
 }
 typealias Rescue = JSONEntity<RescueDescription>
@@ -95,8 +95,8 @@ enum RescueOutcome: String, Codable {
     case Purge = "purge"
 }
 
-typealias RescueSearchDocument = Document<ManyResourceBody<Rescue>, Include3<Rat, User, Ship>>
-typealias RescueGetDocument = Document<SingleResourceBody<Rescue>, Include3<Rat, User, Ship>>
+typealias RescueSearchDocument = Document<ManyResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueGetDocument = Document<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,
     NoMetadata,
@@ -123,7 +123,7 @@ extension RescueSearchDocument {
     }
 
     func firstLimpetFor (rescue: Rescue) -> Rat? {
-        guard let firstLimpetId = rescue.relationships.firstLimpet.id.rawValue else {
+        guard let firstLimpetId = rescue.relationships.firstLimpet?.id.rawValue else {
             return nil
         }
 
@@ -200,7 +200,7 @@ extension RescueGetDocument {
             return nil
         }
 
-        guard let firstLimpetId = rescue.relationships.firstLimpet.id.rawValue else {
+        guard let firstLimpetId = rescue.relationships.firstLimpet?.id.rawValue else {
             return nil
         }
 

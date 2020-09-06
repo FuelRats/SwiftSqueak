@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/mattpolzin/JSONAPI.git",
         "state": {
           "branch": null,
-          "revision": "6ab4237c97e27ab0b5e3e1fe34738fa031a8dab9",
-          "version": "3.0.0"
+          "revision": "51cb140ebf27949d1185227e3eaef5a54d9a3bee",
+          "version": "4.0.0"
         }
       },
       {
@@ -66,7 +66,7 @@
       },
       {
         "package": "Poly",
-        "repositoryURL": "https://github.com/mattpolzin/Poly.git",
+        "repositoryURL": "https://github.com/mattpolzin/Poly",
         "state": {
           "branch": null,
           "revision": "36ba3f624bffa34f5f9b9c7648eab3cfdcab4748",

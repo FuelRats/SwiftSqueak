@@ -206,7 +206,7 @@ class LocalRescue: Codable {
         let firstLimpet: ToOneRelationship<Rat?> = .init(id: localRescue.firstLimpet?.id)
 
         let rescue = Rescue(
-            id: Rescue.Identifier.id(from: self.id),
+            id: Rescue.ID(rawValue: self.id),
             attributes: Rescue.Attributes.init(
                 client: .init(value: localRescue.client),
                 clientNick: .init(value: localRescue.clientNick),

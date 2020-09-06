@@ -39,12 +39,13 @@ enum UserDescription: ResourceObjectDescription {
     }
 
     public struct Relationships: JSONAPI.Relationships {
-        public let rats: ToManyRelationship<Rat>
-        public let displayRat: ToOneRelationship<Rat?>
-        public let groups: ToManyRelationship<Group>
-        public let clients: ToManyRelationship<Client>
-        public let epics: ToManyRelationship<Epic>
-        public let decals: ToManyRelationship<Decal>
+        public let rats: ToManyRelationship<Rat>?
+        public let displayRat: ToOneRelationship<Rat?>?
+        public let groups: ToManyRelationship<Group>?
+        public let clients: ToManyRelationship<Client>?
+        public let epics: ToManyRelationship<Epic>?
+        public let decals: ToManyRelationship<Decal>?
+        public let nicknames: ToManyRelationship<Nickname>?
     }
 }
 typealias User = JSONEntity<UserDescription>

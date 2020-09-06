@@ -16,7 +16,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 9, 1)),
         .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 7, 0)),
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
-        .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(3, 0, 0)),
+        .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(4, 0, 0)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 1)),
         .package(path: "../IRCKit")
     ],

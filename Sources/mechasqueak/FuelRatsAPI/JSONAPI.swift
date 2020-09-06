@@ -63,7 +63,7 @@ typealias JSONEntity<Description: ResourceObjectDescription> =
 typealias UnidentifiedJSONEntity<Description: ResourceObjectDescription> =
     JSONAPI.ResourceObject<Description, NoMetadata, NoLinks, Unidentified>
 
-typealias ToOneRelationship<Entity: Identifiable> = JSONAPI.ToOneRelationship<Entity, NoMetadata, NoLinks>
+typealias ToOneRelationship<Entity: JSONAPIIdentifiable> = JSONAPI.ToOneRelationship<Entity, NoMetadata, NoLinks>
 typealias ToManyRelationship<Entity: Relatable> = JSONAPI.ToManyRelationship<Entity, NoMetadata, NoLinks>
 
 typealias Document<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include> = JSONAPI.Document<

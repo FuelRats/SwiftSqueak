@@ -37,7 +37,7 @@ enum DecalDescription: ResourceObjectDescription {
     }
 
     public struct Relationships: JSONAPI.Relationships {
-        public let user: ToOneRelationship<User?>
+        public let user: ToOneRelationship<User?>?
     }
 }
 

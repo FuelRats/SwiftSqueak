@@ -44,8 +44,7 @@ enum NicknameDescription: ResourceObjectDescription {
     }
 
     public struct Relationships: JSONAPI.Relationships {
-        public let user: ToOneRelationship<User?>
-        public let rat: ToOneRelationship<Rat?>
+        public let user: ToOneRelationship<User?>?
     }
 }
 typealias Nickname = JSONEntity<NicknameDescription>
@@ -64,7 +63,7 @@ extension NicknameSearchDocument {
     }
 
     var user: User? {
-        let userId = self.body.primaryResource?.values[0].relationships.user.id
+        let userId = self.body.primaryResource?.values[0].relationships.user?.id
 
         return self.body.includes![User.self].first(where: {
             userId != nil && $0.id == userId
@@ -72,15 +71,15 @@ extension NicknameSearchDocument {
     }
 
     func ratsBelongingTo (user: User) -> [Rat] {
-        return user.relationships.rats.ids.compactMap({ ratId in
+        return user.relationships.rats?.ids.compactMap({ ratId in
             return self.body.includes![Rat.self].first(where: {
                 $0.id.rawValue == ratId.rawValue
             })
-        })
+        }) ?? []
     }
 
     var permissions: [AccountPermission] {
-        let groupIds = self.user?.relationships.groups.ids ?? []
+        let groupIds = self.user?.relationships.groups?.ids ?? []
 
         return self.body.includes![Group.self].filter({
             groupIds.contains($0.id)

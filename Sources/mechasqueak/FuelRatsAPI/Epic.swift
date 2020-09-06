@@ -35,10 +35,10 @@ enum EpicDescription: ResourceObjectDescription {
     }
 
     public struct Relationships: JSONAPI.Relationships {
-        public let nominees: ToManyRelationship<User>
-        public let rescue: ToOneRelationship<Rescue?>
-        public let nominatedBy: ToOneRelationship<User?>
-        public let approvedBy: ToOneRelationship<User?>
+        public let nominees: ToManyRelationship<User>?
+        public let rescue: ToOneRelationship<Rescue?>?
+        public let nominatedBy: ToOneRelationship<User?>?
+        public let approvedBy: ToOneRelationship<User?>?
     }
 }
 typealias Epic = JSONEntity<EpicDescription>
