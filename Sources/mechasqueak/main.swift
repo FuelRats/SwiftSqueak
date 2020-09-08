@@ -30,7 +30,7 @@ import AsyncHTTPClient
 let lingo = try! Lingo(rootPath: "\(FileManager.default.currentDirectoryPath)/localisation", defaultLocale: "en")
 let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
     redirectConfiguration: .none,
-    timeout: .init(connect: .seconds(50), read: .seconds(50))
+    timeout: .init(connect: .seconds(5), read: .seconds(5))
 ))
 
 func loadConfiguration () -> MechaConfiguration {
