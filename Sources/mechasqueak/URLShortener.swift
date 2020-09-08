@@ -47,14 +47,9 @@ class URLShortener {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    guard response.status.code == 200 else {
-                        error(nil)
-                        return
-                    }
-
                     let decoder = JSONDecoder()
 
                     let shortenResult = try! decoder.decode(ShortURLResponse.self, from: Data(buffer: response.body!))

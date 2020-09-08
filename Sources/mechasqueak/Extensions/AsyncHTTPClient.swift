@@ -23,36 +23,25 @@
  */
 
 import Foundation
-import CryptoSwift
 import AsyncHTTPClient
+import NIO
 
-class Twitter {
-    static func tweet (message: String, complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
-        let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/json")
-
-        request.body = .data(try! JSONSerialization.data(withJSONObject: [
-            "message": message
-        ], options: []))
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+extension EventLoopFuture where Value == HTTPClient.Response {
+    func whenCompleteExpecting(status: Int, complete: @escaping (Result<HTTPClient.Response, Error>) -> Void) {
+        self.whenComplete { result in
             switch result {
-                case .success:
-                    complete()
-                case .failure(let restError):
-                    error(restError)
+                case .success(let response):
+                    if response.status.code == status {
+                        complete(result)
+                    } else {
+                        complete(Result.failure(response))
+                    }
+
+                case .failure:
+                    complete(result)
             }
         }
     }
 }
 
-fileprivate extension String {
-    var twitterUrlEncoded: String? {
-        return self.addingPercentEncoding(withAllowedCharacters: CharacterSet(
-            charactersIn: "ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-        ))
-    }
-}
+extension HTTPClient.Response: Error {}

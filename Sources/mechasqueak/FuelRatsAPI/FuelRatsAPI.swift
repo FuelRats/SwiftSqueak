@@ -39,14 +39,9 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    guard response.status.code == 200 else {
-                        error(nil)
-                        return
-                    }
-
                     let document = try! NicknameSearchDocument.from(data: Data(buffer: response.body!))
                     guard (document.body.data?.primary.values.count)! > 0 else {
                         complete(nil)
@@ -71,14 +66,9 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    guard response.status.code == 200 else {
-                        error(nil)
-                        return
-                    }
-
                     let document = try! RescueSearchDocument.from(data: Data(buffer: response.body!))
                     guard document.body.data != nil else {
                         return
@@ -100,14 +90,9 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    guard response.status.code == 200 else {
-                        error(nil)
-                        return
-                    }
-
                     let document = try! RescueGetDocument.from(data: Data(buffer: response.body!))
                     guard document.body.data != nil else {
                         return
@@ -181,14 +166,10 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 204) { result in
             switch result {
-                case .success(let response):
-                    if response.status.code == 204 {
-                        complete()
-                    } else {
-                        error(nil)
-                    }
+                case .success:
+                    complete()
                 case .failure(let restError):
                     error(restError)
             }

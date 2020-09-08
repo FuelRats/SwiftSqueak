@@ -255,15 +255,9 @@ class LocalRescue: Codable {
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         request.body = .data(try! encoder.encode(postDocument))
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 201) { result in
             switch result {
                 case .success(let response):
-                    guard response.status.code == 201 else {
-                        self.synced = false
-                        board.synced = false
-                        return
-                    }
-
                     self.synced = true
                 case .failure:
                     self.synced = false
@@ -299,15 +293,9 @@ class LocalRescue: Codable {
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         request.body = .data(try! encoder.encode(patchDocument))
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
-                case .success(let response):
-                    guard response.status.code == 200 else {
-                        self.synced = false
-                        board.synced = false
-                        return
-                    }
-
+                case .success:
                     self.synced = true
                     board.checkSynced()
                 case .failure:
@@ -344,15 +332,9 @@ class LocalRescue: Codable {
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         request.body = .data(try! encoder.encode(patchDocument))
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    print(String(data: Data(buffer: response.body!), encoding: .utf8))
-                    guard response.status.code == 200 else {
-                        onError(nil)
-                        return
-                    }
-
                     onComplete()
                 case .failure(let error):
                     onError(error)
@@ -388,14 +370,9 @@ class LocalRescue: Codable {
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         request.body = .data(try! encoder.encode(patchDocument))
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
-                case .success(let response):
-                    guard response.status.code == 200 else {
-                        onError(nil)
-                        return
-                    }
-
+                case .success:
                     onComplete()
                 case .failure(let error):
                     onError(error)

@@ -166,14 +166,9 @@ extension Rescue {
 
         request.body = .data(try! encoder.encode(patchDocument))
 
-        httpClient.execute(request: request).whenComplete { result in
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
-                case .success(let response):
-                    guard response.status.code == 200 else {
-                        error(nil)
-                        return
-                    }
-
+                case .success:
                     complete()
                 case .failure(let restError):
                     error(restError)

@@ -74,7 +74,7 @@ class BoardCommands: IRCBotModule {
     )
     var didReceiveListCommand = { command in
         var arguments: [ListCommandArgument] = []
-        if command.parameters.count > 0 && command.parameters[0].starts(with: "-") {
+        if command.parameters[0].starts(with: "-") {
             var args = command.parameters[0]
             args = String(args.suffix(from: args.index(after: args.startIndex))).lowercased()
 
