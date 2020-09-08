@@ -81,9 +81,11 @@ class MechaSqueak {
 
         self.connections = configuration.connections.map({
             let client = IRCClient(configuration: $0)
-            client.connectCommands = [ { client in
-                client.send(command: .OPER, parameters: "mecha")
-            }]
+            if configuration.general.escalatePrivileges {
+                client.connectCommands = [ { client in
+                    client.send(command: .OPER, parameters: "mecha")
+                }]
+            }
             return client
         })
         
