@@ -24,7 +24,6 @@
 
 import Foundation
 import IRCKit
-import SwiftyRequest
 import JSONAPI
 
 class NicknameLookupManager {
@@ -82,7 +81,7 @@ class NicknameLookupManager {
 class NicknameLookupOperation: Operation {
     let user: IRCUser
     var onCompletion: ((NicknameSearchDocument?) -> Void)?
-    var onError: ((RestError) -> Void)?
+    var onError: ((Error?) -> Void)?
     private var _executing: Bool = false
     private var _finished: Bool = false
 

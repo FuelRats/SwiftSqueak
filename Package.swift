@@ -9,7 +9,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/miroslavkovac/Lingo.git", from: Version(3, 0, 5)),
-        .package(url: "https://github.com/IBM-Swift/SwiftyRequest.git", from: Version(3, 1, 0)),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 2, 1)),
         .package(name: "SwiftKueryORM", url: "https://github.com/IBM-Swift/Swift-Kuery-ORM.git", from: "0.6.1"),
         .package(name: "SwiftKueryPostgreSQL", url: "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git", from: "2.1.1"),
         .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 22, 0)),
@@ -28,10 +28,10 @@ let package = Package(
             name: "mechasqueak",
             dependencies: [
                 .product(name: "Lingo", package: "Lingo"),
-                .product(name: "SwiftyRequest", package: "SwiftyRequest"),
                 "SwiftKueryORM",
                 "SwiftKueryPostgreSQL",
                 "CryptoSwift",
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "NIOExtras", package: "swift-nio-extras"),

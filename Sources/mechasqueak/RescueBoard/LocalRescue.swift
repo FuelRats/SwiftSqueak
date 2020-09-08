@@ -23,7 +23,7 @@
  */
 
 import Foundation
-import SwiftyRequest
+import AsyncHTTPClient
 import Regex
 import IRCKit
 
@@ -240,23 +240,30 @@ class LocalRescue: Codable {
             links: .none
         )
 
-        let request = RestRequest(method: .post, url: "\(configuration.api.url)/rescues")
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        let url = URLComponents(string: "\(configuration.api.url)/rescues")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.messageBody = try! encoder.encode(postDocument)
+        request.body = .data(try! encoder.encode(postDocument))
 
-        request.responseData(completionHandler: { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
-                    self.synced = true
+                case .success(let response):
+                    guard response.status.code == 201 else {
+                        self.synced = false
+                        board.synced = false
+                        return
+                    }
 
+                    self.synced = true
                 case .failure:
                     self.synced = false
                     board.synced = false
             }
-        })
+        }
     }
 
     func syncUpstream (fromBoard board: RescueBoard, representing: IRCUser? = nil) {
@@ -273,33 +280,41 @@ class LocalRescue: Codable {
             links: .none
         )
 
-        let request = RestRequest(method: .patch, url: "\(configuration.api.url)/rescues/\(self.id.uuidString)")
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
-            request.headerParameters["x-representing"] = userId.uuidString
+            request.headers.add(name: "x-representing", value: userId.uuidString)
         }
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.messageBody = try! encoder.encode(patchDocument)
+        request.body = .data(try! encoder.encode(patchDocument))
 
-        request.responseData(completionHandler: { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
+                case .success(let response):
+                    guard response.status.code == 200 else {
+                        self.synced = false
+                        board.synced = false
+                        return
+                    }
+
                     self.synced = true
                     board.checkSynced()
                 case .failure:
                     self.synced = false
                     board.synced = false
             }
-        })
+        }
     }
 
     func close (
         fromBoard board: RescueBoard,
         firstLimpet: Rat? = nil,
         onComplete: @escaping () -> Void,
-        onError: @escaping (Error) -> Void
+        onError: @escaping (Error?) -> Void
     ) {
         self.status = .Closed
         self.firstLimpet = firstLimpet
@@ -312,28 +327,35 @@ class LocalRescue: Codable {
             links: .none
         )
 
-        let request = RestRequest(method: .patch, url: "\(configuration.api.url)/rescues/\(self.id.uuidString)")
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.messageBody = try! encoder.encode(patchDocument)
+        request.body = .data(try! encoder.encode(patchDocument))
 
-        request.responseData(completionHandler: { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
+                case .success(let response):
+                    guard response.status.code == 200 else {
+                        onError(nil)
+                        return
+                    }
+
                     onComplete()
                 case .failure(let error):
                     onError(error)
             }
-        })
+        }
     }
 
     func trash (
         fromBoard board: RescueBoard,
         reason: String,
         onComplete: @escaping () -> Void,
-        onError: @escaping (Error) -> Void
+        onError: @escaping (Error?) -> Void
     ) {
         self.status = .Closed
         self.outcome = .Purge
@@ -347,21 +369,28 @@ class LocalRescue: Codable {
             links: .none
         )
 
-        let request = RestRequest(method: .patch, url: "\(configuration.api.url)/rescues/\(self.id.uuidString)")
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.messageBody = try! encoder.encode(patchDocument)
+        request.body = .data(try! encoder.encode(patchDocument))
 
-        request.responseData(completionHandler: { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
+                case .success(let response):
+                    guard response.status.code == 200 else {
+                        onError(nil)
+                        return
+                    }
+
                     onComplete()
                 case .failure(let error):
                     onError(error)
             }
-        })
+        }
     }
 
     func hasConflictingId (inBoard board: RescueBoard) -> Bool {

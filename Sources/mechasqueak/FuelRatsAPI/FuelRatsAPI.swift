@@ -23,29 +23,28 @@
  */
 
 import Foundation
-import SwiftyRequest
+import AsyncHTTPClient
 
 class FuelRatsAPI {
     static func getNicknameFor (
         ircAccount: String,
         complete: @escaping (NicknameSearchDocument?) -> Void,
-        error: @escaping (RestError) -> Void
+        error: @escaping (Error?) -> Void
     ) throws {
+        let url = URLComponents(string: "\(configuration.api.url)/nicknames?nick=\(ircAccount)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        let request = RestRequest(
-            method: .get,
-            url: "\(configuration.api.url)/nicknames?nick=\(ircAccount)",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(3), read: .seconds(5)),
-            eventLoopGroup: nil
-        )
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
-
-        request.responseData { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
-                    let document = try! NicknameSearchDocument.from(data: response.body)
+                    guard response.status.code == 200 else {
+                        error(nil)
+                        return
+                    }
+
+                    let document = try! NicknameSearchDocument.from(data: Data(buffer: response.body!))
                     guard (document.body.data?.primary.values.count)! > 0 else {
                         complete(nil)
                         return
@@ -61,24 +60,23 @@ class FuelRatsAPI {
     static func rescueSearch (
         query: [URLQueryItem],
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
-        let request = RestRequest(
-            method: .get,
-            url: "\(configuration.api.url)/rescues",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(3), read: .seconds(5)),
-            eventLoopGroup: nil
-        )
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        var url = URLComponents(string: "\(configuration.api.url)/rescues")!
+        url.queryItems = query
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        request.queryItems = query
-
-        request.responseData { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
-                    let document = try! RescueSearchDocument.from(data: response.body)
+                    guard response.status.code == 200 else {
+                        error(nil)
+                        return
+                    }
+
+                    let document = try! RescueSearchDocument.from(data: Data(buffer: response.body!))
                     guard document.body.data != nil else {
                         return
                     }
@@ -92,22 +90,22 @@ class FuelRatsAPI {
     static func getRescue (
         id: UUID,
         complete: @escaping (RescueGetDocument) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
-        let request = RestRequest(
-            method: .get,
-            url: "\(configuration.api.url)/rescues/\(id)",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(3), read: .seconds(5)),
-            eventLoopGroup: nil
-        )
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(id)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        request.responseData { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
-                    let document = try! RescueGetDocument.from(data: response.body)
+                    guard response.status.code == 200 else {
+                        error(nil)
+                        return
+                    }
+
+                    let document = try! RescueGetDocument.from(data: Data(buffer: response.body!))
                     guard document.body.data != nil else {
                         return
                     }
@@ -121,7 +119,7 @@ class FuelRatsAPI {
 
     static func getOpenRescues (
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
         let query = [URLQueryItem(name: "filter", value: [
             "status": ["ne": "closed"]
@@ -133,7 +131,7 @@ class FuelRatsAPI {
     static func getRecentlyClosedRescues (
         count: Int,
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
         let query = [
             URLQueryItem(name: "filter", value: [
@@ -148,7 +146,7 @@ class FuelRatsAPI {
 
     static func getRescuesInTrash (
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
         let query = [
             URLQueryItem(name: "filter", value: [
@@ -162,7 +160,7 @@ class FuelRatsAPI {
 
     static func getUnfiledRescues (
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
         let query = [
             URLQueryItem(name: "filter", value: [
@@ -174,21 +172,20 @@ class FuelRatsAPI {
         FuelRatsAPI.rescueSearch(query: query, complete: complete, error: error)
     }
 
-    static func deleteRescue (id: UUID, complete: @escaping () -> Void, error: @escaping (RestError) -> Void) {
-        let request = RestRequest(
-            method: .delete,
-            url: "\(configuration.api.url)/rescues/\(id)",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(3), read: .seconds(5)),
-            eventLoopGroup: nil
-        )
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+    static func deleteRescue (id: UUID, complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(id)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .DELETE)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        request.responseData { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
-                    complete()
+                case .success(let response):
+                    if response.status.code == 204 {
+                        complete()
+                    } else {
+                        error(nil)
+                    }
                 case .failure(let restError):
                     error(restError)
             }

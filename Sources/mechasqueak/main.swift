@@ -25,8 +25,13 @@
 import Foundation
 import Lingo
 import IRCKit
+import AsyncHTTPClient
 
 let lingo = try! Lingo(rootPath: "\(FileManager.default.currentDirectoryPath)/localisation", defaultLocale: "en")
+let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
+    redirectConfiguration: .none,
+    timeout: .init(connect: .seconds(50), read: .seconds(50))
+))
 
 func loadConfiguration () -> MechaConfiguration {
     var configPath = URL(
@@ -61,6 +66,7 @@ class MechaSqueak {
     private var userJoinObserver: NotificationToken?
     private var userQuitObserver: NotificationToken?
     private var userNickChangeObserver: NotificationToken?
+    static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
 
     init () {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -80,6 +86,7 @@ class MechaSqueak {
             }]
             return client
         })
+        
 
         self.moduleManager = IRCBotModuleManager()
         self.commands = [

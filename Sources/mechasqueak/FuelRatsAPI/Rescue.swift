@@ -24,7 +24,7 @@
 
 import Foundation
 import JSONAPI
-import SwiftyRequest
+import AsyncHTTPClient
 
 enum RescueDescription: ResourceObjectDescription {
     public static var jsonType: String { return "rescues" }
@@ -146,7 +146,7 @@ extension RescueSearchDocument {
 }
 
 extension Rescue {
-    func update (complete: @escaping () -> Void, error: @escaping (Error) -> Void) {
+    func update (complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self),
@@ -155,24 +155,29 @@ extension Rescue {
             links: .none
         )
 
-        let request = RestRequest(
-            method: .patch,
-            url: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString)"
-        )
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.messageBody = try! encoder.encode(patchDocument)
 
-        request.responseData(completionHandler: { result in
+        request.body = .data(try! encoder.encode(patchDocument))
+
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
+                case .success(let response):
+                    guard response.status.code == 200 else {
+                        error(nil)
+                        return
+                    }
+
                     complete()
                 case .failure(let restError):
                     error(restError)
             }
-        })
+        }
     }
 }
 

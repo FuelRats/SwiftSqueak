@@ -23,7 +23,6 @@
  */
 
 import Foundation
-import SwiftyRequest
 import NIO
 import IRCKit
 

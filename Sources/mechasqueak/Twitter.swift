@@ -23,25 +23,30 @@
  */
 
 import Foundation
-import SwiftyRequest
 import CryptoSwift
+import AsyncHTTPClient
 
 class Twitter {
-    static func tweet (message: String, complete: @escaping () -> Void, error: @escaping (Error) -> Void) {
-        let request = RestRequest(method: .post, url: "\(configuration.api.url)/webhooks/twitter")
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
+    static func tweet (message: String, complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
+        let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        request.messageBodyDictionary = [
+        request.body = .data(try! JSONSerialization.data(withJSONObject: [
             "message": message
-        ]
+        ], options: []))
 
-        request.responseData { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
-                    complete()
+                case .success(let response):
+                    guard response.status.code == 200 else {
+                        error(nil)
+                        return
+                    }
 
+                    complete()
                 case .failure(let restError):
-                    print(String(data: restError.responseData!, encoding: .utf8)!)
                     error(restError)
             }
         }

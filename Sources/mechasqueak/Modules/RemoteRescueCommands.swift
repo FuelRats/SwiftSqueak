@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import AsyncHTTPClient
 
 class RemoteRescueCommands: IRCBotModule {
     var name: String = "Remote Rescue Commands"
@@ -112,15 +113,9 @@ class RemoteRescueCommands: IRCBotModule {
                 "id": id.ircRepresentation
             ])
         }, error: { error in
-            if error.response!.status == .noContent {
-                command.message.reply(key: "rescue.delete.success", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
-            } else {
-                command.message.reply(key: "rescue.delete.failure", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
-            }
+            command.message.reply(key: "rescue.delete.failure", fromCommand: command, map: [
+                "id": id.ircRepresentation
+            ])
         })
     }
 
@@ -145,15 +140,9 @@ class RemoteRescueCommands: IRCBotModule {
                         "id": rescue.id.rawValue.ircRepresentation
                     ])
                 }, error: { error in
-                    if error.response!.status == .noContent {
-                        command.message.replyPrivate(key: "rescue.delete.success", fromCommand: command, map: [
-                            "id": rescue.id.rawValue.ircRepresentation
-                        ])
-                    } else {
-                        command.message.error(key: "rescue.delete.failure", fromCommand: command, map: [
-                            "id": rescue.id.rawValue.ircRepresentation
-                        ])
-                    }
+                    command.message.error(key: "rescue.delete.failure", fromCommand: command, map: [
+                        "id": rescue.id.rawValue.ircRepresentation
+                    ])
                 })
             }
         }, error: { _ in

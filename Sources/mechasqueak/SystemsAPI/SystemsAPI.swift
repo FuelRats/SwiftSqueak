@@ -23,39 +23,42 @@
  */
 
 import Foundation
-import SwiftyRequest
+import AsyncHTTPClient
 import IRCKit
 
 class SystemsAPI {
     static func performSearch (
         forSystem systemName: String,
         onComplete: @escaping (SystemsAPISearchDocument) -> Void,
-        onError: @escaping (Error) -> Void
+        onError: @escaping (Error?) -> Void
     ) {
-        let request = RestRequest(
-            method: .get,
-            url: "https://sapi.fuelrats.dev/mecha",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(5), read: .seconds(10)),
-            eventLoopGroup: nil
-        )
-        request.queryItems = []
-        request.queryItems?.append(URLQueryItem(name: "name", value: systemName))
+        var url = URLComponents(string: "https://sapi.fuelrats.dev/mecha")!
+        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
 
-        request.responseData(completionHandler: { result in
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
+                    guard response.status.code == 200 else {
+                        onError(nil)
+                        return
+                    }
+
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-                    let searchResult = try! decoder.decode(SystemsAPISearchDocument.self, from: response.body)
+                    let searchResult = try! decoder.decode(
+                        SystemsAPISearchDocument.self,
+                        from: Data(buffer: response.body!)
+                    )
                     onComplete(searchResult)
-
-                case .failure(let error):
-                    onError(error)
+                case .failure(let restError):
+                    onError(restError)
             }
-        })
+        }
     }
 
     static func performSearchAndLandmarkCheck (
@@ -90,68 +93,74 @@ class SystemsAPI {
 
     static func performLandmarkCheck (
         forSystem systemName: String,
-        onComplete: @escaping (SystemsAPILandmarkDocument) -> Void, onError: @escaping (Error) -> Void) {
-        let request = RestRequest(
-            method: .get,
-            url: "https://sapi.fuelrats.dev/landmark",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(5), read: .seconds(10)),
-            eventLoopGroup: nil
-        )
-        request.queryItems = []
-        request.queryItems?.append(URLQueryItem(name: "name", value: systemName))
+        onComplete: @escaping (SystemsAPILandmarkDocument) -> Void, onError: @escaping (Error?) -> Void) {
+        var url = URLComponents(string: "https://sapi.fuelrats.dev/landmark")!
+        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
 
-        request.responseData(completionHandler: { result in
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
+                    guard response.status.code == 200 else {
+                        onError(nil)
+                        return
+                    }
+
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
                     do {
-                        let searchResult = try decoder.decode(SystemsAPILandmarkDocument.self, from: response.body)
+                        let searchResult = try decoder.decode(
+                            SystemsAPILandmarkDocument.self,
+                            from: Data(buffer: response.body!)
+                        )
                         onComplete(searchResult)
                     } catch let error {
                         onError(error)
                     }
-
-                case .failure(let error):
-                    onError(error)
+                case .failure(let restError):
+                    onError(restError)
             }
-        })
+        }
     }
 
     static func performStatisticsQuery (
         onComplete: @escaping (SystemsAPIStatisticsDocument) -> Void,
-        onError: @escaping (Error) -> Void
+        onError: @escaping (Error?) -> Void
     ) {
-        let request = RestRequest(
-            method: .get,
-            url: "https://sapi.fuelrats.dev/api/stats",
-            insecure: false,
-            clientCertificate: nil,
-            timeout: .init(connect: .seconds(3), read: .seconds(5)),
-            eventLoopGroup: nil
-        )
+        let url = URLComponents(string: "https://sapi.fuelrats.dev/api/stats")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        request.responseData(completionHandler: { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
+                    guard response.status.code == 200 else {
+                        onError(nil)
+                        return
+                    }
+
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
                     do {
-                        let result = try decoder.decode(SystemsAPIStatisticsDocument.self, from: response.body)
+                        let result = try decoder.decode(
+                            SystemsAPIStatisticsDocument.self,
+                            from: Data(buffer: response.body!)
+                        )
                         onComplete(result)
                     } catch let error {
                         print(error)
                         onError(error)
                     }
-
-                case .failure(let error):
-                    onError(error)
+                case .failure(let restError):
+                    onError(restError)
             }
-        })
+        }
     }
 }
 

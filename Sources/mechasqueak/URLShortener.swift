@@ -23,18 +23,16 @@
  */
 
 import Foundation
-import SwiftyRequest
+import AsyncHTTPClient
 
 class URLShortener {
     static func shorten (
         url: URL, keyword: String?,
         complete: @escaping (ShortURLResponse) -> Void,
-        error: @escaping (Error) -> Void
+        error: @escaping (Error?) -> Void
     ) {
-        let request = RestRequest(method: .get, url: configuration.shortener.url)
-        request.credentials = .bearerAuthentication(token: configuration.api.token)
-
-        request.queryItems = [
+        var requestUrl = URLComponents(string: configuration.shortener.url)!
+        requestUrl.queryItems = [
             URLQueryItem(name: "action", value: "shorturl"),
             URLQueryItem(name: "format", value: "json"),
             URLQueryItem(name: "url", value: url.absoluteString),
@@ -42,15 +40,24 @@ class URLShortener {
         ]
 
         if let keyword = keyword {
-            request.queryItems?.append(URLQueryItem(name: "keyword", value: keyword))
+            requestUrl.queryItems?.append(URLQueryItem(name: "keyword", value: keyword))
         }
 
-        request.responseData { result in
+        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
+                    guard response.status.code == 200 else {
+                        error(nil)
+                        return
+                    }
+
                     let decoder = JSONDecoder()
 
-                    let shortenResult = try! decoder.decode(ShortURLResponse.self, from: response.body)
+                    let shortenResult = try! decoder.decode(ShortURLResponse.self, from: Data(buffer: response.body!))
                     complete(shortenResult)
                 case .failure(let restError):
                     error(restError)
