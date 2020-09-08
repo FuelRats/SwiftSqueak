@@ -159,6 +159,7 @@ extension Rescue {
         var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)

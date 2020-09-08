@@ -249,6 +249,7 @@ class LocalRescue: Codable {
         var request = try! HTTPClient.Request(url: url.url!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
@@ -289,6 +290,7 @@ class LocalRescue: Codable {
         var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
             request.headers.add(name: "x-representing", value: userId.uuidString)
         }
@@ -336,6 +338,7 @@ class LocalRescue: Codable {
         var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
@@ -344,6 +347,7 @@ class LocalRescue: Codable {
         httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
+                    print(String(data: Data(buffer: response.body!), encoding: .utf8))
                     guard response.status.code == 200 else {
                         onError(nil)
                         return
@@ -378,6 +382,7 @@ class LocalRescue: Codable {
         var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
