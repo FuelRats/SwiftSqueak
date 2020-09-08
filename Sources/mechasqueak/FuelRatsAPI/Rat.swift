@@ -68,6 +68,19 @@ enum GamePlatform: String, Codable {
         }
     }
 
+    var signal: String {
+        switch self {
+            case .PC:
+                return "(PC_SIGNAL)"
+
+            case .Xbox:
+                return "(XB_SIGNAL)"
+
+            case .PS4:
+                return "(PS_SIGNAL)"
+        }
+    }
+
     static func parsedFromText (text: String) -> GamePlatform? {
         let text = text.lowercased()
         switch text {

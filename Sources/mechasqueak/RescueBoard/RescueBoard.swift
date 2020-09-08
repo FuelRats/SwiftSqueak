@@ -145,7 +145,8 @@ class RescueBoard {
                 "client": rescue.client ?? "unknown",
                 "platform": rescue.platform?.ircRepresentable ?? "unknown",
                 "oxygen": oxygenStatus,
-                "caseId": caseId
+                "caseId": caseId,
+                "platformSignal": rescue.platform?.signal ?? ""
             ]))
             return
         }
@@ -160,7 +161,8 @@ class RescueBoard {
                     "platform": rescue.platform?.ircRepresentable ?? "unknown",
                     "oxygen": oxygenStatus,
                     "caseId": caseId,
-                    "system": rescue.system ?? "none"
+                    "system": rescue.system ?? "none",
+                    "platformSignal": rescue.platform?.signal ?? ""
                 ]))
 
                 if let correction = correction {
@@ -185,7 +187,8 @@ class RescueBoard {
                 "system": rescue.system ?? "none",
                 "distance": distance,
                 "landmark": landmarkResult.name,
-                "permit": searchResult.permitText ?? ""
+                "permit": searchResult.permitText ?? "",
+                "platformSignal": rescue.platform?.signal ?? ""
             ]))
         })
     }
