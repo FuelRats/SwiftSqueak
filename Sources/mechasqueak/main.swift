@@ -171,7 +171,7 @@ class MechaSqueak {
             let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
         {
             userQuit.client.sendMessage(
-                toChannelName: configuration.general.rescueChannel,
+                toChannelName: rescue.channel,
                 withKey: "board.clientquit", mapping: [
                     "caseId": rescue.commandIdentifier!,
                     "client": rescue.client ?? "unknown client"

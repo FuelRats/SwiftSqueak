@@ -32,6 +32,7 @@ class LocalRescue: Codable {
     var synced = false
     var isClosing = false
     var clientHost: String?
+    var channel: String
 
     let id: UUID
 
@@ -63,6 +64,7 @@ class LocalRescue: Codable {
         self.id = UUID()
 
         let client = match.group(at: 1)!
+        self.channel = message.destination.name
         self.client = client
         self.system = match.group(at: 2)!.uppercased()
 
@@ -108,6 +110,7 @@ class LocalRescue: Codable {
         self.client = message.user.nickname
         self.clientNick = message.user.nickname
         self.clientHost = message.user.hostmask
+        self.channel = message.destination.name
 
         self.system = signal.system?.uppercased()
         if let platformString = signal.platform {
@@ -145,6 +148,7 @@ class LocalRescue: Codable {
         self.client = clientName
         self.clientNick = clientName
         self.system = input.system?.uppercased()
+        self.channel = command.message.destination.name
 
         if let ircUser = command.message.destination.member(named: clientName) {
             self.clientHost = ircUser.hostmask
@@ -178,6 +182,7 @@ class LocalRescue: Codable {
         self.clientNick = attr.clientNick.value
         self.clientLanguage = Locale(identifier: attr.clientLanguage.value ?? "en-GB")
         self.commandIdentifier = attr.commandIdentifier.value
+        self.channel = configuration.general.rescueChannel
 
         self.codeRed = attr.codeRed.value
         self.notes = attr.notes.value

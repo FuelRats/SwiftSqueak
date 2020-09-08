@@ -154,7 +154,7 @@ class SystemsAPI {
                         )
                         onComplete(result)
                     } catch let error {
-                        print(error)
+                        print(String(describing: error))
                         onError(error)
                     }
                 case .failure(let restError):

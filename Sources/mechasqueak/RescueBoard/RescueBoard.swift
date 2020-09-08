@@ -194,7 +194,7 @@ class RescueBoard {
         FuelRatsAPI.getOpenRescues(complete: { rescueDocument in
             self.merge(rescueDocument: rescueDocument)
         }, error: { error in
-            print(error)
+            print(String(describing: error))
             self.synced = false
         })
     }
