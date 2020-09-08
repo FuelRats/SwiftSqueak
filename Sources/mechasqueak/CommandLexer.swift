@@ -41,7 +41,10 @@ struct IRCBotCommand {
             let str = String(substr).trimmingCharacters(in: .whitespacesAndNewlines)
             if CommandToken.regex.matches(str) && hasCommand == false {
                 hasCommand = true
-                return Token.Command(CommandToken(fromString: str))
+                guard let token = CommandToken(fromString: str) else {
+                    return Token.Parameter(str)
+                }
+                return Token.Command(token)
             }
             return Token.Parameter(str)
         })
@@ -105,10 +108,16 @@ struct CommandToken {
     let identifier: String
     let languageCode: String?
 
-    init (fromString token: String) {
+    init? (fromString token: String) {
         let match = CommandToken.regex.findFirst(in: token)!
-        self.declaration = match.group(at: 1)!
-        self.identifier = match.group(at: 2)!.lowercased()
+        guard
+            let declaration = match.group(at: 1),
+            let identifier = match.group(at: 2)?.lowercased() else {
+            return nil
+        }
+
+        self.declaration = declaration
+        self.identifier = identifier
         self.languageCode = match.group(at: 3)?.lowercased()
     }
 }
