@@ -106,15 +106,19 @@ class RescueBoard {
         if let existingRescue = self.rescues.first(where: {
             $0.client == rescue.client || ($0.clientNick != nil && $0.clientNick == rescue.clientNick)
         }) {
+
+            let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
             message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
                 "client": existingRescue.client!,
                 "system": existingRescue.system!,
                 "caseId": existingRescue.commandIdentifier!,
-                "platform": rescue.platform?.ircRepresentable ?? "unknown"
+                "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                "cr": crStatus
             ]))
             return
         }
 
+        let crStatus = rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         let identifier = self.getNewIdentifier()
         rescue.commandIdentifier = identifier
         self.recentIdentifiers.remove(identifier)
@@ -146,7 +150,8 @@ class RescueBoard {
                 "platform": rescue.platform?.ircRepresentable ?? "unknown",
                 "oxygen": oxygenStatus,
                 "caseId": caseId,
-                "platformSignal": rescue.platform?.signal ?? ""
+                "platformSignal": rescue.platform?.signal ?? "",
+                "cr": crStatus
             ]))
             return
         }
@@ -162,7 +167,8 @@ class RescueBoard {
                     "oxygen": oxygenStatus,
                     "caseId": caseId,
                     "system": rescue.system ?? "none",
-                    "platformSignal": rescue.platform?.signal ?? ""
+                    "platformSignal": rescue.platform?.signal ?? "",
+                    "cr": crStatus
                 ]))
 
                 if let correction = correction {
@@ -188,7 +194,8 @@ class RescueBoard {
                 "distance": distance,
                 "landmark": landmarkResult.name,
                 "permit": searchResult.permitText ?? "",
-                "platformSignal": rescue.platform?.signal ?? ""
+                "platformSignal": rescue.platform?.signal ?? "",
+                "cr": crStatus
             ]))
         })
     }
