@@ -65,7 +65,7 @@ class Autocorrect {
             // Only the sector itself was entered nothing after it, there is nothing we can do here, exit
             return nil
         }
-
+ 
         var sector = components[0]
         var fragments = components[1].components(separatedBy: " ")
         if sectors.contains(sector) == false {

@@ -60,6 +60,9 @@ class LocalRescue: Codable {
         guard let match = LocalRescue.announcerExpression.findFirst(in: message.message) else {
             return nil
         }
+        guard message.user.channelUserModes.contains(.admin) else {
+            return nil
+        }
 
         self.id = UUID()
 
