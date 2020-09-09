@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import NIO
 
 class SystemSearch: IRCBotModule {
     var name: String = "SystemSearch"
@@ -43,8 +44,8 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
-
-        SystemsAPI.performSearch(forSystem: system, onComplete: { searchResults in
+        let deadline: NIODeadline = .now() + .seconds(30)
+        SystemsAPI.performSearch(forSystem: system, deadline: deadline, onComplete: { searchResults in
             var results = searchResults.data
 
             results = results.filter({

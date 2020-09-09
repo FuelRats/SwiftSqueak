@@ -25,10 +25,12 @@
 import Foundation
 import AsyncHTTPClient
 import IRCKit
+import NIO
 
 class SystemsAPI {
     static func performSearch (
         forSystem systemName: String,
+        deadline: NIODeadline? = .now() + .seconds(5),
         onComplete: @escaping (SystemsAPISearchDocument) -> Void,
         onError: @escaping (Error?) -> Void
     ) {
@@ -39,7 +41,7 @@ class SystemsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+        httpClient.execute(request: request, deadline: deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
                     let decoder = JSONDecoder()
@@ -51,6 +53,7 @@ class SystemsAPI {
                     )
                     onComplete(searchResult)
                 case .failure(let restError):
+                    print(restError)
                     onError(restError)
             }
         }
