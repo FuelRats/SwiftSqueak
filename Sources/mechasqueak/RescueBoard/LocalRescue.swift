@@ -120,7 +120,7 @@ class LocalRescue: Codable {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
 
-        self.codeRed = false
+        self.codeRed = signal.isCodeRed
 
         self.clientLanguage = Locale(identifier: "en-GB")
         self.notes = ""
@@ -161,7 +161,7 @@ class LocalRescue: Codable {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
 
-        self.codeRed = false
+        self.codeRed = input.isCodeRed
         self.clientLanguage = Locale(identifier: "en-GB")
         self.notes = ""
 

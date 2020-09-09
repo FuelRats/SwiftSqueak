@@ -28,8 +28,20 @@ struct SignalScanner {
     private let platformVariations = ["pc", "xbox one", "xbox", "xb1", "xb",
                                       "playstation 4", "playstation", "ps4", "ps"]
 
+    private let crVariations = ["not ok", "code red"]
+
     let system: String?
     let platform: String?
+    let crStatus: String?
+
+    var isCodeRed: Bool {
+        if let crText = self.crStatus {
+            if crText.contains("not ok") || crText.contains("code red") {
+                return true
+            }
+        }
+        return false
+    }
 
     init? (message: String, requireSignal: Bool = false) {
         var punctuationSet = CharacterSet.punctuationCharacters
@@ -45,6 +57,7 @@ struct SignalScanner {
         let startIndex = signalIndex ?? message.startIndex
 
         var systemEndIndex = message.endIndex
+
         var platformString: String?
 
         for platform in platformVariations {
@@ -56,6 +69,17 @@ struct SignalScanner {
         }
 
         self.platform = platformString
+        var crString: String?
+
+        for crVariation in crVariations {
+            if let range = message.range(of: crVariation, options: .caseInsensitive) {
+                crString = String(message[range])
+                break
+            }
+        }
+
+        self.crStatus = crString?.lowercased()
+
 
         let system = String(message[startIndex..<systemEndIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
         if system.count > 0 {
