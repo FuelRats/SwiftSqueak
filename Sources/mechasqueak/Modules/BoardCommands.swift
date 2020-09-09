@@ -362,6 +362,10 @@ class BoardCommands: IRCBotModule {
             return
         }
 
+        guard configuration.general.drillMode == false else {
+            return
+        }
+
         if let jumpCallMatch = BoardCommands.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? BoardCommands.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
             let caseId = jumpCallMatch.group(named: "case")!
