@@ -31,9 +31,12 @@ struct IRCBotCommand {
     var parameters: [String]
     let locale: Locale
     let message: IRCPrivateMessage
+    private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
 
     init? (from channelMessage: IRCPrivateMessage) {
-        let message = channelMessage.message.trimmingCharacters(in: .whitespacesAndNewlines)
+        var message = channelMessage.message
+        message = IRCBotCommand.ircFormattingExpression.replaceAll(in: message, with: "")
+        message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var hasCommand = false
 
