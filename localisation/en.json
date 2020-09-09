@@ -92,7 +92,7 @@
   "board.close.notassigned": "Unable to close case #%{caseId} to \"%{firstLimpet}\" as they are not assigned to the case.",
   "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
-  "board.close.success": "Successfully closed case #%{caseId}.",
+  "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
   
   "board.trash.success": "Successfully added case #%{caseId} to the trash.",
