@@ -76,7 +76,7 @@
   
   "board.list.cases": "%{count} cases found, %{cases}",
   "board.list.none": "No matching cases found.  %{flags}",
-  "board.list.case.default": "[%{caseId}] %{client} (%{platform}) %{assigned}",
+  "board.list.case.default": "[%{caseId}] %{client} (%{platform}) %{cr} %{assigned}",
   "board.list.inactivecase.default": "[%{caseId}] %{client} (%{platform}) %{cr} (Inactive) %{assigned}",
   "board.list.case.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
   "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
