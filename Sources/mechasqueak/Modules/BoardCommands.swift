@@ -362,12 +362,11 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard configuration.general.drillMode == false else {
-            return
-        }
-
         if let jumpCallMatch = BoardCommands.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? BoardCommands.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
+            guard configuration.general.drillMode == false else {
+                return
+            }
             let caseId = jumpCallMatch.group(named: "case")!
 
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
