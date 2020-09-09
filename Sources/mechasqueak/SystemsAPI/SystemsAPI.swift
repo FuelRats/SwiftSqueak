@@ -32,7 +32,7 @@ class SystemsAPI {
         onComplete: @escaping (SystemsAPISearchDocument) -> Void,
         onError: @escaping (Error?) -> Void
     ) {
-        var url = URLComponents(string: "https://sapi.fuelrats.dev/mecha")!
+        var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
