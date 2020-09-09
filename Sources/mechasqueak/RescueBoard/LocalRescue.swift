@@ -260,7 +260,7 @@ class LocalRescue: Codable {
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 201) { result in
             switch result {
-                case .success(let response):
+                case .success:
                     self.synced = true
                 case .failure:
                     self.synced = false
@@ -337,7 +337,7 @@ class LocalRescue: Codable {
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
-                case .success(let response):
+                case .success:
                     onComplete()
                 case .failure(let error):
                     onError(error)

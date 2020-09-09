@@ -88,7 +88,7 @@ class RemoteRescueCommands: IRCBotModule {
         parameters: 1...1,
         category: .rescues,
         description: "Delete a rescue by UUID, cannot be used on a rescue that is currently on the board.",
-        paramText: "<rescue uuid",
+        paramText: "<rescue uuid>",
         example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
         permission: .RescueWrite
     )

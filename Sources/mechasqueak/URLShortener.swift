@@ -45,7 +45,6 @@ class URLShortener {
 
         var request = try! HTTPClient.Request(url: requestUrl.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {

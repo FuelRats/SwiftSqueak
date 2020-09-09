@@ -124,7 +124,6 @@ class SystemsAPI {
         let url = URLComponents(string: "https://sapi.fuelrats.dev/api/stats")!
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {

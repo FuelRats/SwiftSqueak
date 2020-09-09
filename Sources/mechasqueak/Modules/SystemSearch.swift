@@ -81,7 +81,7 @@ class SystemSearch: IRCBotModule {
         example: "NLTT 48288"
     )
     var didReceiveLandmarkCommand = { command in
-        let system = command.parameters.joined(separator: " ")
+        var system = command.parameters.joined(separator: " ")
 
         SystemsAPI.performLandmarkCheck(forSystem: system, onComplete: { result in
             guard result.landmarks.count > 0 else {

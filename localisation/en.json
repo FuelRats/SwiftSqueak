@@ -192,7 +192,7 @@
   "say.sending": "Sending message \"%{contents}\" to %{target}",
   "me.sending": "Emoting \"%{contents}\" to %{target}",
 
-  "help.howto": "This is a list of MechaSqueak's command cateogries, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
+  "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.nofacts": "Information commands such as !prep and !pcwing are not listed here, to see a list of those, use !facts.",
   "help.categoryerror": "%{category} is not in the categories list. To list all categories, do !help. To see help for a specific command, add a ! before the command.",
   "help.categorylist": "Showing commands in the %{category} category. To see see more information about the command, do !help !command (e.g !help !assign).",
@@ -209,5 +209,6 @@
 
   "help.command.list": "Flags: -r: Show only with assigned rats, -u: Show only with no assigned rats, -a: Show only active cases. -i: Show only inactive cases, -@: Display case UUIDs.",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
+  "help.command.clear": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be closed and when they should be deleted.",
   "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts."
 }
