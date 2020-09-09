@@ -161,10 +161,7 @@ extension Rescue {
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-
-        request.body = .data(try! encoder.encode(patchDocument))
+        request.body = try? .encodable(patchDocument)
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {

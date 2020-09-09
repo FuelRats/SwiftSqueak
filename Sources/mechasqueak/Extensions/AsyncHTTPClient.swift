@@ -45,3 +45,11 @@ extension EventLoopFuture where Value == HTTPClient.Response {
 }
 
 extension HTTPClient.Response: Error {}
+
+extension HTTPClient.Body {
+    static func encodable<T: Encodable> (_ object: T) throws -> HTTPClient.Body {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
+        return .data(try encoder.encode(object))
+    }
+}

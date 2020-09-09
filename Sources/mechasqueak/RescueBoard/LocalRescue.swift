@@ -254,9 +254,7 @@ class LocalRescue: Codable {
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.body = .data(try! encoder.encode(postDocument))
+        request.body = try? .encodable(postDocument)
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 201) { result in
             switch result {
@@ -292,9 +290,7 @@ class LocalRescue: Codable {
             request.headers.add(name: "x-representing", value: userId.uuidString)
         }
 
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.body = .data(try! encoder.encode(patchDocument))
+        request.body = try? .encodable(patchDocument)
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
@@ -330,10 +326,8 @@ class LocalRescue: Codable {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.body = .data(try! encoder.encode(patchDocument))
+        
+        request.body = try? .encodable(patchDocument)
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
@@ -369,9 +363,7 @@ class LocalRescue: Codable {
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
-        request.body = .data(try! encoder.encode(patchDocument))
+        request.body = try? .encodable(patchDocument)
 
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
