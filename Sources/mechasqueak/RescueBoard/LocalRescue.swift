@@ -75,7 +75,7 @@ class LocalRescue: Codable {
         self.platform = GamePlatform(rawValue: platformString.lowercased())
 
         let o2StatusString = match.group(at: 4)!
-        if o2StatusString == "NOT OK" {
+        if o2StatusString.uppercased() == "NOT OK" {
             self.codeRed = true
         } else {
             self.codeRed = false
@@ -334,6 +334,7 @@ class LocalRescue: Codable {
                 case .success:
                     onComplete()
                 case .failure(let error):
+                    print(String(describing: error))
                     onError(error)
             }
         }
