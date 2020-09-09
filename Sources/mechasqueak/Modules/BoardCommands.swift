@@ -133,7 +133,7 @@ class BoardCommands: IRCBotModule {
             ])
         }).joined(separator: ", ")
 
-        command.message.replyPrivate(key: "board.list.cases", fromCommand: command, map: [
+        command.message.reply(key: "board.list.cases", fromCommand: command, map: [
             "cases": generatedList,
             "count": rescues.count
         ])
