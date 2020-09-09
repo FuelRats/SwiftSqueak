@@ -31,14 +31,7 @@ extension IRCPrivateMessage {
     }
 
     func error (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        if command.message.destination.isPrivateMessage {
-            self.reply(message: lingo.localize(key, locale: command.locale.identifier, interpolations: map))
-        } else {
-            client.sendNotice(
-                toTarget: command.message.user.nickname,
-                contents: lingo.localize(key, locale: command.locale.identifier, interpolations: map)
-            )
-        }
+        self.reply(message: lingo.localize(key, locale: command.locale.identifier, interpolations: map))
     }
 
     func replyPrivate (message: String) {
