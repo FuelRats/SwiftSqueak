@@ -33,7 +33,7 @@
   "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId}) %{platformSignal}",
   "board.announce.notindb": "%{signal} - CMDR %{client} - Reported System: %{system} (not in galaxy database) - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId}) %{platformSignal}",
   "board.announce.landmark": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId}) %{platformSignal}",
-  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId})  %{platformSignal}",
+  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} (Case #%{caseId}) %{platformSignal}",
   
   "board.signal.nosystem": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} Case #%{caseId} %{cr} %{platformSignal}",
   "board.signal.notindb": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (not in galaxy database) %{cr} (Case #%{caseId}) %{platformSignal}",
@@ -66,8 +66,14 @@
   "board.grab.updated": "Updated case #%{clientId} with \"%{text}\".",
 
   "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
-  "board.assign.go": "%{client}: Please add the following rat(s) to your friends list: %{rats}.",
-  "board.assign.gocr": "%{client}: Please REMAIN at the main menu and add the following rat(s) to your friends list: %{rats}",
+  "board.assign.go": {
+      "one": "%{client}: Please add the following rat to your friends list: %{rats}.",
+      "other": "%{client}: Please add the following %{count} rats to your friends list: %{rats}."
+  },
+  "board.assign.gocr": {
+      "one": "%{client}: Please REMAIN at the main menu and add the following rat to your friends list: %{rats}",
+      "other": "%{client}: Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}"
+  },
   "board.assign.unidentified": "WARNING: Could not find a %{platform} account associated with these rats: %{rats}.",
   "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
   "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",

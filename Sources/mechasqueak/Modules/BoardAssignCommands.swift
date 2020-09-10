@@ -80,7 +80,8 @@ class BoardAssignCommands: IRCBotModule {
 
         command.message.reply(key: format, fromCommand: command, map: [
             "client": rescue.clientNick!,
-            "rats": allRats.joined(separator: ", ")
+            "rats": allRats.joined(separator: ", "),
+            "count": allRats.count
         ])
 
         if assigns.1.count > 0 && configuration.general.drillMode == false {
