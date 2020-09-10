@@ -55,17 +55,13 @@ enum GamePlatform: String, Codable {
     case PS4 = "ps"
 
     var ircRepresentable: String {
-        let platformString = String(describing: self)
-        switch self {
-            case .PC:
-                return IRCFormat.color(.Grey, platformString)
+        let platformMap: [GamePlatform: IRCColor] = [
+            .PC: .LightGrey,
+            .Xbox: .Green,
+            .PS4: .LightBlue
+        ]
 
-            case .Xbox:
-                return IRCFormat.color(.Green, platformString)
-
-            case .PS4:
-                return IRCFormat.color(.LightBlue, platformString)
-        }
+        return IRCFormat.color(platformMap[self]!, String(describing: self))
     }
 
     var signal: String {
