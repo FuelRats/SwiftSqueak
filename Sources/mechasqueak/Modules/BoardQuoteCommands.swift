@@ -91,8 +91,11 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam)
-        let clientNick = rescue?.clientNick ?? clientParam
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+        
+        let clientNick = rescue.clientNick ?? clientParam
 
         guard let clientUser = message.destination.member(named: clientNick) else {
             command.message.reply(key: "board.grab.noclient", fromCommand: command, map: [
@@ -108,39 +111,20 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        if rescue == nil {
-            rescue = LocalRescue(text: lastMessage, clientName: clientNick, fromCommand: command)
-            if rescue != nil {
-                rescue?.quotes.append(RescueQuote(
-                    author: clientUser.nickname,
-                    message: lastMessage,
-                    createdAt: Date(),
-                    updatedAt: Date(),
-                    lastAuthor: clientUser.nickname
-                ))
-                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, initiated: .insertion)
-            } else {
-                command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
-                    "client": clientUser.nickname
-                ])
-                return
-            }
-        } else {
-            rescue?.quotes.append(RescueQuote(
-                author: clientUser.nickname,
-                message: lastMessage,
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: clientUser.nickname
-            ))
+        rescue.quotes.append(RescueQuote(
+            author: clientUser.nickname,
+            message: lastMessage,
+            createdAt: Date(),
+            updatedAt: Date(),
+            lastAuthor: clientUser.nickname
+        ))
 
-            command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-                "clientId": rescue!.commandIdentifier!,
-                "text": lastMessage
-            ])
+        command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
+            "clientId": rescue.commandIdentifier!,
+            "text": lastMessage
+        ])
 
-            rescue?.syncUpstream(fromBoard: mecha.rescueBoard)
-        }
+        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
 
     @BotCommand(
