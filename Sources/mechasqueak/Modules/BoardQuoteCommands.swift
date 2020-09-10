@@ -94,7 +94,7 @@ class BoardQuoteCommands: IRCBotModule {
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+
         let clientNick = rescue.clientNick ?? clientParam
 
         guard let clientUser = message.destination.member(named: clientNick) else {
@@ -150,6 +150,11 @@ class BoardQuoteCommands: IRCBotModule {
         let injectMessage = command.parameters[1]
 
         if rescue == nil {
+            if clientParam.lowercased() == "client" {
+                message.replyPrivate(key: "board.inject.ignored", fromCommand: command)
+                return
+            }
+
             rescue = LocalRescue(text: injectMessage, clientName: clientNick, fromCommand: command)
             if rescue != nil {
                 rescue?.quotes.append(RescueQuote(
