@@ -56,7 +56,7 @@ enum GamePlatform: String, Codable {
 
     var ircRepresentable: String {
         let platformMap: [GamePlatform: IRCColor] = [
-            .PC: .LightGrey,
+            .PC: .Purple,
             .Xbox: .Green,
             .PS4: .LightBlue
         ]
