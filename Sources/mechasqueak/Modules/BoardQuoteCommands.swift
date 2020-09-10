@@ -47,7 +47,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         let format = rescue.title != nil ? "board.quote.operation" : "board.quote.title"
 
-        command.message.reply(key: format, fromCommand: command, map: [
+        command.message.replyPrivate(key: format, fromCommand: command, map: [
             "title": rescue.title ?? "",
             "caseId": rescue.commandIdentifier!,
             "client": rescue.client ?? "unknown client",
