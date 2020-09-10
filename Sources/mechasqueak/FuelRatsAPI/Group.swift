@@ -96,6 +96,14 @@ enum AccountPermission: String, Codable {
     case DispatchRead = "dispatch.read"
     case DispatchWrite = "dispatch.write"
 
+    case UnknownPermission = ""
+}
+
+extension AccountPermission {
+    init (from decoder: Decoder) throws {
+        self = try AccountPermission(rawValue: decoder.singleValueContainer().decode(RawValue.self))
+            ?? AccountPermission.UnknownPermission
+    }
 }
 
 typealias Group = JSONEntity<GroupDescription>
