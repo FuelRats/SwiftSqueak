@@ -207,6 +207,12 @@ class RescueBoard {
                 "platformSignal": rescue.platform?.signal ?? "",
                 "cr": crStatus
             ]))
+
+            if initiated == .signal {
+                message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
+                    "client": rescue.clientNick ?? rescue.client ?? ""
+                ]))
+            }
         })
     }
 
