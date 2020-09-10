@@ -27,7 +27,7 @@ import Regex
 import IRCKit
 
 struct IRCBotCommand {
-    let command: String
+    var command: String
     var parameters: [String]
     let locale: Locale
     let message: IRCPrivateMessage

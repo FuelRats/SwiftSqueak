@@ -83,6 +83,14 @@ class BoardCommands: IRCBotModule {
             })
         }
 
+        if arguments.contains(.displayHelpInfo) {
+            var helpCommand = command
+            helpCommand.command = "!help"
+            helpCommand.parameters = ["!list"]
+            mecha.helpModule.didReceiveHelpCommand(helpCommand)
+            return
+        }
+
         let rescues = mecha.rescueBoard.rescues.filter({
             if arguments.contains(.showOnlyAssigned) && $0.rats.count == 0 && $0.unidentifiedRats.count == 0 {
                 return false
@@ -438,6 +446,7 @@ enum ListCommandArgument: Character {
     case showOnlyAssigned = "r"
     case showOnlyUnassigned = "u"
     case includeCaseIds = "@"
+    case displayHelpInfo = "h"
 
     var description: String {
         let maps: [ListCommandArgument: String] = [

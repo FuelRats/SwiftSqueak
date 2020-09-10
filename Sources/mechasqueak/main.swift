@@ -60,6 +60,7 @@ class MechaSqueak {
     let connections: [IRCClient]
     let rescueBoard: RescueBoard
     var rescueChannel: IRCChannel?
+    let helpModule: HelpCommands
     let startupTime: Date
     let version = "3.0.0"
     private var accountChangeObserver: NotificationToken?
@@ -91,6 +92,7 @@ class MechaSqueak {
         
 
         self.moduleManager = IRCBotModuleManager()
+        self.helpModule = HelpCommands(moduleManager)
         self.commands = [
             GeneralCommands(moduleManager),
             SystemSearch(moduleManager),
@@ -102,8 +104,7 @@ class MechaSqueak {
             RemoteRescueCommands(moduleManager),
             FactCommands(moduleManager),
             ShortenURLCommands(moduleManager),
-            TweetCommands(moduleManager),
-            HelpCommands(moduleManager)
+            TweetCommands(moduleManager)
         ]
 
         self.accountChangeObserver = NotificationCenter.default.addObserver(
