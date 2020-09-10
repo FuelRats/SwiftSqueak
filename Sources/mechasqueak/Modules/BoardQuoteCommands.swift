@@ -118,7 +118,7 @@ class BoardQuoteCommands: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: clientUser.nickname
                 ))
-                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, manual: true)
+                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, initiated: .insertion)
             } else {
                 command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": clientUser.nickname
@@ -175,7 +175,7 @@ class BoardQuoteCommands: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: message.user.nickname
                 ))
-                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, manual: true)
+                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, initiated: .insertion)
             } else {
                 command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": client

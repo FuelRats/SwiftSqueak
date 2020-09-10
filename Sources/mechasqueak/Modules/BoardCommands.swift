@@ -427,7 +427,7 @@ class BoardCommands: IRCBotModule {
                 return
             }
 
-            mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage, manual: true)
+            mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage, initiated: .signal)
         }
     }
 }

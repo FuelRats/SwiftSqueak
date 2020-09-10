@@ -102,7 +102,11 @@ class RescueBoard {
         })
     }
 
-    func add (rescue: LocalRescue, fromMessage message: IRCPrivateMessage, manual: Bool = false) {
+    func add (
+        rescue: LocalRescue,
+        fromMessage message: IRCPrivateMessage,
+        initiated: RescueInitiationType = .announcer
+    ) {
         if let existingRescue = self.rescues.first(where: {
             $0.client == rescue.client || ($0.clientNick != nil && $0.clientNick == rescue.clientNick)
         }) {
@@ -141,7 +145,7 @@ class RescueBoard {
         let oxygenStatus = rescue.codeRed ? "NOT OK" : "OK"
         let caseId = String(rescue.commandIdentifier!)
 
-        let announceType = manual ? "signal" : "announce"
+        let announceType = initiated == .announcer ? "announce" : "signal"
 
         guard let system = rescue.system else {
             message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
@@ -175,6 +179,12 @@ class RescueBoard {
                     message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
                         "system": system,
                         "correction": correction
+                    ]))
+                }
+
+                if initiated == .signal {
+                    message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
+                        "client": rescue.clientNick ?? rescue.client ?? ""
                     ]))
                 }
                 return
@@ -348,4 +358,10 @@ class RescueBoard {
             self.synced = true
         }
     }
+}
+
+enum RescueInitiationType {
+    case announcer
+    case signal
+    case insertion
 }
