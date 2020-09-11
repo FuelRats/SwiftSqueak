@@ -8,7 +8,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/miroslavkovac/Lingo.git", from: Version(3, 0, 5)),
+        .package(url: "https://github.com/xlexi/Lingo.git", from: Version(3, 0, 6)),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 2, 1)),
         .package(name: "SwiftKueryORM", url: "https://github.com/IBM-Swift/Swift-Kuery-ORM.git", from: "0.6.1"),
         .package(name: "SwiftKueryPostgreSQL", url: "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git", from: "2.1.1"),
