@@ -112,11 +112,11 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
         rescue.quotes.append(RescueQuote(
-            author: clientUser.nickname,
-            message: lastMessage,
+            author: message.user.nickname,
+            message: "<\(clientUser.nickname)> \(lastMessage)",
             createdAt: Date(),
             updatedAt: Date(),
-            lastAuthor: clientUser.nickname
+            lastAuthor: message.user.nickname
         ))
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
