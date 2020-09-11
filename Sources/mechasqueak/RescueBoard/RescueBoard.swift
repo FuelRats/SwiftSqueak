@@ -56,7 +56,7 @@ class RescueBoard {
                 }
                 mecha.accounts.lookupServiceAvailable = false
 
-                if let channel = mecha.reportingChannel, configuration.general.drillMode == false {
+                if let channel = mecha.reportingChannel {
                     channel.send(key: "board.syncfailed")
                 }
 
@@ -350,7 +350,7 @@ class RescueBoard {
             rescue.syncUpstream(fromBoard: self)
         }
 
-        if let rescueChannel = mecha.reportingChannel, configuration.general.drillMode == false {
+        if let rescueChannel = mecha.reportingChannel {
             rescueChannel.send(key: "board.synced", map: [
                 "api": configuration.api.url,
                 "downstreamNew": novelRescues.count,
