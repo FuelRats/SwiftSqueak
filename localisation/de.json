@@ -1,3 +1,10 @@
 {
-    "whoami.notloggedin": "Sie sind nicht bei NickServ angemeldet, daher weiß ich nicht, warum Sie mich fragen."
+    "board.assign.go": {
+       "one": "%{client}: Bitte füge folgende Ratte zu deiner Freundesliste hinzu: %{rats}.",
+       "other": "%{client}: Bitte füge folgende %{count} Ratten zu deiner Freundesliste hinzu: %{rats}."
+    },
+    "board.assign.gocr": {
+       "one": "%{client}: Bitte BLEIBE im Hauptmenu und füge folgende Ratte zu deiner Freundesliste hinzu: %{rats}",
+       "other": "%{client}: Bitte BLEIBE im Hauptmenu und füge folgende %{count} Ratten zu deiner Freundesliste hinzu: %{rats}"
+    }
 }
