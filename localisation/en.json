@@ -71,8 +71,8 @@
       "other": "%{client}: Please add the following %{count} rats to your friends list: %{rats}."
   },
   "board.assign.gocr": {
-      "one": "%{client}: Please REMAIN at the main menu and add the following rat to your friends list: %{rats}",
-      "other": "%{client}: Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}"
+      "one": "%{client}: Please REMAIN at the main menu and add the following rat to your friends list: %{rats}.",
+      "other": "%{client}: Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}."
   },
   "board.assign.unidentified": "WARNING: Could not find a %{platform} account associated with these rats: %{rats}.",
   "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",

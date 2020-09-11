@@ -4,7 +4,7 @@
        "other": "%{client}: Bitte füge folgende %{count} Ratten zu deiner Freundesliste hinzu: %{rats}."
     },
     "board.assign.gocr": {
-       "one": "%{client}: Bitte BLEIBE im Hauptmenu und füge folgende Ratte zu deiner Freundesliste hinzu: %{rats}",
-       "other": "%{client}: Bitte BLEIBE im Hauptmenu und füge folgende %{count} Ratten zu deiner Freundesliste hinzu: %{rats}"
+       "one": "%{client}: Bitte BLEIBE im Hauptmenu und füge folgende Ratte zu deiner Freundesliste hinzu: %{rats}.",
+       "other": "%{client}: Bitte BLEIBE im Hauptmenu und füge folgende %{count} Ratten zu deiner Freundesliste hinzu: %{rats}."
     }
 }
