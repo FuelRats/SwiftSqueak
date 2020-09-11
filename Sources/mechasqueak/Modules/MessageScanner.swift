@@ -24,10 +24,22 @@
 
 import Foundation
 import IRCKit
+import Regex
 
 class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
     private var channelMessageObserver: NotificationToken?
+    static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})j #([0-9]{1,3})", groupNames: ["jumps", "case"])
+    static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
+    static let jumpCallExpressionCaseAfter = try! Regex(
+        pattern: "#([0-9]{1,3}) ([0-9]{1,3})j",
+        groupNames: ["case", "jumps"]
+    )
+
+    static let caseRelevantPhrases = [
+        "fr+", "fr-", "wr+", "wr-", "bc+", "bc-", "fuel+", "fuel-", "sys-", "sysconf", "destroyed", "exploded",
+        "code red", "oxygen", "supercruise", "prep-"
+    ]
 
     required init(_ moduleManager: IRCBotModuleManager) {
 
@@ -44,8 +56,8 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if let jumpCallMatch = BoardCommands.jumpCallExpression.findFirst(in: channelMessage.message)
-            ?? BoardCommands.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
+        if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
+            ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
             guard configuration.general.drillMode == false else {
                 return
             }
@@ -102,6 +114,7 @@ class MessageScanner: IRCBotModule {
                 return
             }
             mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage)
+            return
         }
 
         if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased()) {
@@ -110,6 +123,30 @@ class MessageScanner: IRCBotModule {
             }
 
             mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage, initiated: .signal)
+            return
+        }
+
+        if let caseMentionMatch = MessageScanner.caseMentionExpression.findFirst(in: channelMessage.message) {
+            let caseId = caseMentionMatch.group(at: 1)!
+            guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
+                return
+            }
+
+            guard MessageScanner.caseRelevantPhrases.first(where: {
+                channelMessage.message.contains($0)
+            }) != nil else {
+                return
+            }
+
+            rescue.quotes.append(RescueQuote(
+                author: channelMessage.client.currentNick,
+                message: "<\(channelMessage.user.nickname)> \(channelMessage.message)",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: channelMessage.client.currentNick
+            ))
+
+            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
         }
     }
 }

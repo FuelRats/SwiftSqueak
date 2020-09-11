@@ -30,11 +30,6 @@ class BoardCommands: IRCBotModule {
     var name: String = "Rescue Board"
     private var channelMessageObserver: NotificationToken?
     internal let distanceFormatter: NumberFormatter
-    static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})j #([0-9]{1,3})", groupNames: ["jumps", "case"])
-    static let jumpCallExpressionCaseAfter = try! Regex(
-        pattern: "#([0-9]{1,3}) ([0-9]{1,3})j",
-        groupNames: ["case", "jumps"]
-    )
 
     required init(_ moduleManager: IRCBotModuleManager) {
         self.distanceFormatter = NumberFormatter()
