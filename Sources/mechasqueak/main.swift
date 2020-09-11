@@ -94,6 +94,7 @@ class MechaSqueak {
         self.moduleManager = IRCBotModuleManager()
         self.helpModule = HelpCommands(moduleManager)
         self.commands = [
+            MessageScanner(moduleManager),
             GeneralCommands(moduleManager),
             SystemSearch(moduleManager),
             BoardCommands(moduleManager),
