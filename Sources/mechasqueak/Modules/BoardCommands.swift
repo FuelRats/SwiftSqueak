@@ -333,6 +333,69 @@ class BoardCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["sysc"],
+        parameters: 2...2,
+        category: .board,
+        description: "Correct the system of a case to one of the options provided by the system correction search.",
+        paramText: "<case id/client> <number>",
+        example: "2",
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSystemCorrectionCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        guard let corrections = rescue.systemCorrections, corrections.count > 0 else {
+            command.message.error(key: "sysc.nocorrections", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier!,
+                "client": rescue.client ?? "unknown client"
+            ])
+            return
+        }
+
+        guard let index = Int(command.parameters[1]), index <= corrections.count, index > 0 else {
+            command.message.error(key: "sysc.invalidindex", fromCommand: command, map: [
+                "index": command.parameters[1]
+            ])
+            return
+        }
+        let selectedCorrection = corrections[index - 1]
+
+        SystemsAPI.performLandmarkCheck(forSystem: selectedCorrection.name, onComplete: { result in
+            switch result {
+                case .success(let landmarkResults):
+                    guard landmarkResults.landmarks.count > 0 else {
+                        return
+                    }
+                    let landmarkResult = landmarkResults.landmarks[0]
+
+                    let format = selectedCorrection.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
+
+                    let distance = NumberFormatter.englishFormatter().string(
+                        from: NSNumber(value: landmarkResult.distance) 
+                    )!
+                    command.message.reply(key: format, fromCommand: command, map: [
+                        "caseId": rescue.commandIdentifier!,
+                        "client": rescue.client ?? "unknown client",
+                        "system": selectedCorrection.name,
+                        "distance": distance,
+                        "landmark": landmarkResult.name,
+                        "permit": selectedCorrection.permitText ?? ""
+                    ])
+
+                case .failure:
+                    command.message.error(key: "sysc.seterror", fromCommand: command, map: [
+                        "system": selectedCorrection,
+                        "caseId": rescue.commandIdentifier!,
+                        "client": rescue.client ?? "unknown client"
+                    ])
+            }
+        })
+    }
+
+    @BotCommand(
         ["prep", "psquit", "pcquit", "xquit"],
         parameters: 1...,
         category: nil,

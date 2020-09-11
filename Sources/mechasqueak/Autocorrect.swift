@@ -50,8 +50,8 @@ class Autocorrect {
         if system.split(separator: " ").count < 3 {
             /* Non-procedural systems are likely to exist in the Systems API, so we will suggest the one that is
              closest in edit distance */
-            if search.data[0].distance ?? Int.max < 2 {
-                return search.data[0].name
+            if let data = search.data, data[0].distance ?? Int.max < 2 {
+                return data[0].name
             }
         }
 

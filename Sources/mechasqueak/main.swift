@@ -59,7 +59,7 @@ class MechaSqueak {
     let commands: [IRCBotModule]
     let connections: [IRCClient]
     let rescueBoard: RescueBoard
-    var rescueChannel: IRCChannel?
+    var reportingChannel: IRCChannel?
     let helpModule: HelpCommands
     let startupTime: Date
     let version = "3.0.0"
@@ -143,7 +143,7 @@ class MechaSqueak {
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
-            mecha.rescueChannel = userJoin.channel
+            mecha.reportingChannel = userJoin.channel
             mecha.rescueBoard.syncBoard()
         } else {
             accounts.lookupIfNotExists(user: userJoin.user)

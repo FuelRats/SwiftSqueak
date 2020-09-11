@@ -33,6 +33,7 @@ class LocalRescue: Codable {
     var isClosing = false
     var clientHost: String?
     var channel: String
+    var systemCorrections: [SystemsAPISearchDocument.SearchResult]?
 
     let id: UUID
 

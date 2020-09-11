@@ -21,6 +21,12 @@
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
   "systemsearch.error": "An error occured performing a system search.",
+  "sysc.noresults": "No nearest system matches found for case #%{caseId} (%{client}).",
+  "sysc.nearestmatches": "Nearest matches found for case #%{caseId} (%{client}): %{systems} (use !sysc <case id/client> <number> to correct system).",
+  "sysc.error": "Unable to check nearest system matches for case #%{caseId} (%{client}) due to a problem with the server.",
+  "sysc.nocorrections": "There are no corrections known for case #%{caseId} (%{client})",
+  "sysc.invalidindex": "%{index} is not a valid system correction index number.",
+  "sysc.seterror": "Unable to set system for case #%{caseId} (%{client}) to \"%{system}\" due to an error with the systems API.",
   "landmark.noresults": "%{system} was not found in the galaxy database.",
   "landmark.response": "%{system} is %{distance}ly from %{landmark}.",
 

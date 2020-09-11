@@ -30,12 +30,15 @@ import NIO
 class SystemsAPI {
     static func performSearch (
         forSystem systemName: String,
-        deadline: NIODeadline? = .now() + .seconds(5),
-        onComplete: @escaping (SystemsAPISearchDocument) -> Void,
-        onError: @escaping (Error?) -> Void
+        quickSearch: Bool = false,
+        onComplete: @escaping (Result<SystemsAPISearchDocument, Error>) -> Void
     ) {
         var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
+        if quickSearch {
+            url.queryItems?.append(URLQueryItem(name: "fast", value: "true"))
+        }
+        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(30))
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
@@ -51,10 +54,10 @@ class SystemsAPI {
                         SystemsAPISearchDocument.self,
                         from: Data(buffer: response.body!)
                     )
-                    onComplete(searchResult)
+                    onComplete(Result.success(searchResult))
                 case .failure(let restError):
                     print(restError)
-                    onError(restError)
+                    onComplete(Result.failure(restError))
             }
         }
     }
@@ -66,32 +69,93 @@ class SystemsAPI {
             SystemsAPILandmarkDocument.LandmarkResult?,
             String?
         ) -> Void) {
-        self.performSearch(forSystem: systemName, onComplete: { systemSearch in
-            guard let result = systemSearch.data.first(where: {
-                $0.similarity == 1
-            }) else {
-                onComplete(nil, nil, Autocorrect.check(system: systemName, search: systemSearch)?.uppercased())
+        self.performSearch(forSystem: systemName, quickSearch: true, onComplete: { request in
+            switch request {
+                case .success(let systemSearch):
+                    guard let result = systemSearch.data?.first(where: {
+                        $0.similarity == 1
+                    }) else {
+                        onComplete(nil, nil, Autocorrect.check(system: systemName, search: systemSearch)?.uppercased())
+                        return
+                    }
+
+                    self.performLandmarkCheck(forSystem: result.name, onComplete: { request in
+                        switch request {
+                            case .success(let landmarkSearch):
+                                guard let landmarkResult = landmarkSearch.landmarks.first else {
+                                    onComplete(result, nil, nil)
+                                    return
+                                }
+
+                                onComplete(result, landmarkResult, nil)
+
+                            case .failure:
+                                onComplete(result, nil, nil)
+                        }
+                    })
+
+                case .failure:
+                    onComplete(nil, nil, nil)
+            }
+        })
+    }
+
+    static func performCaseLookup (forSystem system: String, inRescue rescue: LocalRescue, onComplete: @escaping (
+        SystemsAPISearchDocument.SearchResult?,
+        SystemsAPILandmarkDocument.LandmarkResult?,
+        String?
+    ) -> Void) {
+        SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, correction in
+            onComplete(searchResult, landmarkResult, correction)
+
+            guard (searchResult == nil || landmarkResult == nil) && configuration.general.drillMode == false else {
                 return
             }
 
-            self.performLandmarkCheck(forSystem: result.name, onComplete: { landmarkSearch in
-                guard let landmarkResult = landmarkSearch.landmarks.first else {
-                    onComplete(result, nil, nil)
-                    return
-                }
+            SystemsAPI.performSearch(forSystem: system, onComplete: { result in
+                switch result {
+                    case .success(let data):
+                        guard var results = data.data else {
+                            mecha.reportingChannel?.send(key: "sysc.noresults", map: [
+                                "caseId": rescue.commandIdentifier!,
+                                "client": rescue.client ?? "unknown client"
+                            ])
+                            return
+                        }
+                        guard results.count > 0 else {
+                            mecha.reportingChannel?.send(key: "sysc.noresults", map: [
+                                "caseId": rescue.commandIdentifier!
+                            ])
+                            return
+                        }
 
-                onComplete(result, landmarkResult, nil)
-            }, onError: { _ in
-                onComplete(result, nil, nil)
+                        results.removeSubrange(9...)
+
+                        rescue.systemCorrections = results
+
+                        let resultString = results.enumerated().map({
+                            $0.element.correctionRepresentation(index: $0.offset + 1)
+                        }).joined(separator: ", ")
+
+                        mecha.reportingChannel?.send(key: "sysc.nearestmatches", map: [
+                            "caseId": rescue.commandIdentifier!,
+                            "client": rescue.client ?? "unknown client",
+                            "systems": resultString
+                        ])
+
+                    case .failure:
+                        mecha.reportingChannel?.send(key: "sysc.error", map: [
+                            "caseId": rescue.commandIdentifier!,
+                            "client": rescue.client ?? "unknown client"
+                        ])
+                }
             })
-        }, onError: { _ in
-            onComplete(nil, nil, nil)
         })
     }
 
     static func performLandmarkCheck (
         forSystem systemName: String,
-        onComplete: @escaping (SystemsAPILandmarkDocument) -> Void, onError: @escaping (Error?) -> Void) {
+        onComplete: @escaping (Result<SystemsAPILandmarkDocument, Error>) -> Void) {
         var url = URLComponents(string: "https://sapi.fuelrats.dev/landmark")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
 
@@ -110,12 +174,12 @@ class SystemsAPI {
                             SystemsAPILandmarkDocument.self,
                             from: Data(buffer: response.body!)
                         )
-                        onComplete(searchResult)
+                        onComplete(Result.success(searchResult))
                     } catch let error {
-                        onError(error)
+                        onComplete(Result.failure(error))
                     }
                 case .failure(let restError):
-                    onError(restError)
+                    onComplete(Result.failure(restError))
             }
         }
     }
@@ -153,10 +217,11 @@ class SystemsAPI {
 
 struct SystemsAPISearchDocument: Codable {
     let meta: Meta
-    let data: [SearchResult]
+    let data: [SearchResult]?
 
     struct Meta: Codable {
-        let name: String
+        let name: String?
+        let error: String?
         let type: String
     }
 
@@ -200,6 +265,19 @@ struct SystemsAPISearchDocument: Codable {
                 return "\"\(self.name)\" [\(self.searchSimilarityText)] \(permitReq)"
             }
             return "\"\(self.name)\" [\(self.searchSimilarityText)]"
+        }
+
+
+        func correctionRepresentation (index: Int) -> String {
+            if self.permitRequired {
+                if let permitName = self.permitName {
+                    let permitReq = IRCFormat.color(.LightRed, "(\(permitName) Permit Required)")
+                    return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
+                }
+                let permitReq = IRCFormat.color(.LightRed, "(Permit Required)")
+                return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
+            }
+            return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
         }
     }
 }

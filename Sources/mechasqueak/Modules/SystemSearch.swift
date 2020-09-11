@@ -44,31 +44,32 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
-        let deadline: NIODeadline = .now() + .seconds(30)
-        SystemsAPI.performSearch(forSystem: system, deadline: deadline, onComplete: { searchResults in
-            var results = searchResults.data
+        SystemsAPI.performSearch(forSystem: system, onComplete: { request in
+            switch request {
+                case .success(let searchResults):
+                    guard var results = searchResults.data else {
+                        command.message.error(key: "systemsearch.error", fromCommand: command)
+                        return
+                    }
 
-            results = results.filter({
-                $0.name.count < 10
-                    || ($0.distance != nil && $0.distance! < $0.name.count)
-                    || ($0.similarity != nil && $0.similarity! > 0.3)
-            })
+                    guard results.count > 0 else {
+                        command.message.reply(key: "systemsearch.noresults", fromCommand: command)
+                        return
+                    }
 
-            guard results.count > 0 else {
-                command.message.reply(key: "systemsearch.noresults", fromCommand: command)
-                return
+                    let resultString = results.map({
+                        $0.textRepresentation
+                    }).joined(separator: ", ")
+
+                    command.message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
+                        "system": system,
+                        "results": resultString
+                    ])
+
+                case .failure:
+                    command.message.error(key: "systemsearch.error", fromCommand: command)
             }
 
-            let resultString = results.map({
-                $0.textRepresentation
-            }).joined(separator: ", ")
-
-            command.message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
-                "system": system,
-                "results": resultString
-            ])
-        }, onError: { _ in
-            command.message.error(key: "systemsearch.error", fromCommand: command)
         })
     }
 
@@ -84,25 +85,30 @@ class SystemSearch: IRCBotModule {
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
 
-        SystemsAPI.performLandmarkCheck(forSystem: system, onComplete: { result in
-            guard result.landmarks.count > 0 else {
-                command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                    "system": system
-                ])
-                return
+        SystemsAPI.performLandmarkCheck(forSystem: system, onComplete: { request in
+            switch request {
+                case .success(let result):
+                    guard result.landmarks.count > 0 else {
+                        command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                            "system": system
+                        ])
+                        return
+                    }
+
+                    let landmark = result.landmarks[0]
+
+                    command.message.reply(key: "landmark.response", fromCommand: command, map: [
+                        "system": result.meta.name,
+                        "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
+                        "landmark": landmark.name
+                    ])
+
+                case .failure:
+                    command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                        "system": system
+                    ])
             }
 
-            let landmark = result.landmarks[0]
-
-            command.message.reply(key: "landmark.response", fromCommand: command, map: [
-                "system": result.meta.name,
-                "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
-                "landmark": landmark.name
-            ])
-        }, onError: { _ in
-            command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                "system": system
-            ])
         })
     }
 }

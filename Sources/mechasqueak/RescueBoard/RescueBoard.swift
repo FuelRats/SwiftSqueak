@@ -56,7 +56,7 @@ class RescueBoard {
                 }
                 mecha.accounts.lookupServiceAvailable = false
 
-                if let channel = mecha.rescueChannel, configuration.general.drillMode == false {
+                if let channel = mecha.reportingChannel, configuration.general.drillMode == false {
                     channel.send(key: "board.syncfailed")
                 }
 
@@ -160,8 +160,9 @@ class RescueBoard {
             return
         }
 
-        SystemsAPI.performSearchAndLandmarkCheck(
+        SystemsAPI.performCaseLookup(
             forSystem: system,
+            inRescue: rescue,
             onComplete: { searchResult, landmarkResult, correction in
             guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
                 message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
@@ -349,7 +350,7 @@ class RescueBoard {
             rescue.syncUpstream(fromBoard: self)
         }
 
-        if let rescueChannel = mecha.rescueChannel, configuration.general.drillMode == false {
+        if let rescueChannel = mecha.reportingChannel, configuration.general.drillMode == false {
             rescueChannel.send(key: "board.synced", map: [
                 "api": configuration.api.url,
                 "downstreamNew": novelRescues.count,
