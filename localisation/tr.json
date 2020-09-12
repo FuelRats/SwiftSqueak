@@ -1,0 +1,12 @@
+{
+    "board.assign.go": {
+       "one": "%{client}: Lütfen bu fareyi arkadaş olarak ekleyin: %{rats}.",
+       "other": "%{client}: Lütfen bu %{count} fareyi arkadaş olarak ekleyin: %{rats}."
+    },
+    "board.assign.gocr": {
+       "one": "%{client}: Lütfen ANA MENÜDE KALIN ve bu fareyi arkadaş olarak ekleyin: %{rats}.",
+       "other": "%{client}: Lütfen ANA MENÜDE KALIN ve bu %{count} fareyi arkadaş olarak ekleyin: %{rats}."
+    }
+}
+
+
