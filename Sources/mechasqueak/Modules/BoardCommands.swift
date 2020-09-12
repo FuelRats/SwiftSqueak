@@ -288,7 +288,7 @@ class BoardCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["quiet"],
+        ["quiet", "last"],
         parameters: 0...0,
         category: .other,
         description: "Displays the amount of time since the last rescue",
