@@ -39,7 +39,7 @@ class LocalRescue: Codable {
 
     var client: String?
     var clientNick: String?
-    var clientLanguage: Locale
+    var clientLanguage: Locale?
     var commandIdentifier: Int?
     var codeRed: Bool
     var notes: String
@@ -123,7 +123,6 @@ class LocalRescue: Codable {
 
         self.codeRed = signal.isCodeRed
 
-        self.clientLanguage = Locale(identifier: "en-GB")
         self.notes = ""
         self.quotes = [(RescueQuote(
             author: message.user.nickname,
@@ -163,7 +162,6 @@ class LocalRescue: Codable {
         }
 
         self.codeRed = input.isCodeRed
-        self.clientLanguage = Locale(identifier: "en-GB")
         self.notes = ""
 
         self.quotes = []
@@ -184,7 +182,7 @@ class LocalRescue: Codable {
 
         self.client = attr.client.value
         self.clientNick = attr.clientNick.value
-        self.clientLanguage = Locale(identifier: attr.clientLanguage.value ?? "en-GB")
+        self.clientLanguage = attr.clientLanguage.value != nil ? Locale(identifier: attr.clientLanguage.value!) : nil
         self.commandIdentifier = attr.commandIdentifier.value
         self.channel = configuration.general.rescueChannel
 
@@ -219,7 +217,7 @@ class LocalRescue: Codable {
             attributes: Rescue.Attributes.init(
                 client: .init(value: localRescue.client),
                 clientNick: .init(value: localRescue.clientNick),
-                clientLanguage: .init(value: localRescue.clientLanguage.identifier),
+                clientLanguage: .init(value: localRescue.clientLanguage?.identifier),
                 commandIdentifier: .init(value: localRescue.commandIdentifier),
                 codeRed: .init(value: localRescue.codeRed),
                 notes: .init(value: localRescue.notes),
