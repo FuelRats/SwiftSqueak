@@ -112,13 +112,19 @@ class RescueBoard {
         }) {
 
             let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
-            message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
-                "client": existingRescue.client!,
-                "system": existingRescue.system!,
-                "caseId": existingRescue.commandIdentifier!,
-                "platform": existingRescue.platform?.ircRepresentable ?? "unknown",
-                "cr": crStatus
-            ]))
+            if initiated == .signal {
+                message.reply(message: lingo.localize("board.signal.helpyou", locale: "en", interpolations: [
+                    "client": rescue.clientNick ?? rescue.client ?? ""
+                ]))
+            } else {
+                message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
+                    "client": existingRescue.client!,
+                    "system": existingRescue.system!,
+                    "caseId": existingRescue.commandIdentifier!,
+                    "platform": existingRescue.platform?.ircRepresentable ?? "unknown",
+                    "cr": crStatus
+                ]))
+            }
 
             var changes: [String] = []
             if rescue.platform != existingRescue.platform {
