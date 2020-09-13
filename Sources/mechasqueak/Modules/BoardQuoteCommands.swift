@@ -199,11 +199,11 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["sub"],
-        parameters: 3...3,
+        parameters: 2...3,
         lastParameterIsContinous: true,
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
-        paramText: "<case id/client> <line number> <new text>",
+        paramText: "<case id/client> <line number> [new text]",
         example: "4 1 Client is PC, not Xbox",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
@@ -231,16 +231,25 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
         var quote = rescue.quotes[quoteIndex]
-        let contents = command.parameters[2]
+        if command.parameters.count > 2 {
+            let contents = command.parameters[2]
 
-        quote.message = contents
-        quote.lastAuthor = message.user.nickname
-        rescue.quotes[quoteIndex] = quote
-        command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
-            "index": quoteIndex,
-            "caseId": rescue.commandIdentifier!,
-            "contents": contents
-        ])
+            quote.message = contents
+            quote.lastAuthor = message.user.nickname
+            rescue.quotes[quoteIndex] = quote
+            command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
+                "index": quoteIndex,
+                "caseId": rescue.commandIdentifier!,
+                "contents": contents
+            ])
+        } else {
+            rescue.quotes.remove(at: quoteIndex)
+            command.message.reply(key: "board.sub.deleted", fromCommand: command, map: [
+                "index": quoteIndex,
+                "caseId": rescue.commandIdentifier!
+            ])
+        }
+
 
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }

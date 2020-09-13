@@ -91,6 +91,7 @@
   "board.sub.invalidindex": "Cannot substitute index %{index} into the case as it is not a valid index.",
   "board.sub.outofbounds": "Cannot substitute index %{index} of case #%{caseId} as it is out of bounds.",
   "board.sub.updated": "Updated line %{index} of case #%{caseId} with \"%{contents}\".",
+  "board.sub.deleted": "Deleted line %{index} of case #%{caseId}",
   
   "board.list.cases": "%{count} cases found, %{cases}",
   "board.list.none": "No matching cases found.  %{flags}",
