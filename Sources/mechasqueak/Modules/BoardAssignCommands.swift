@@ -87,7 +87,9 @@ class BoardAssignCommands: IRCBotModule {
 
         command.message.reply(key: format, fromCommand: command, map: [
             "client": rescue.clientNick!,
-            "rats": allRats.joined(separator: ", "),
+            "rats": allRats.map({
+                "\"\($0)\""
+            }).joined(separator: ", "),
             "count": allRats.count
         ])
 
