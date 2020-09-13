@@ -70,10 +70,19 @@ class BoardAssignCommands: IRCBotModule {
                 let nick = message.destination.member(named: assign),
                 let rat = nick.getRatRepresenting(rescue: rescue)
             else {
+                guard acc.1.contains(assign) == false else {
+                    return acc
+                }
+
                 acc.1.append(assign)
                 return acc
             }
 
+            guard acc.0.contains(where: {
+                $0.id.rawValue == rat.id.rawValue
+            }) == false else {
+                return acc
+            }
             acc.0.append(rat)
             return acc
         })
