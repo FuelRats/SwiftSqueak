@@ -57,7 +57,7 @@ extension Fact: Model {
         onComplete: @escaping (Fact?) -> Void,
         onError: ((Error) -> Void)? = nil
     ) {
-        let query = FactQuery(name: name.lowercased(), language: locale.identifier)
+        let query = FactQuery(name: name.lowercased(), language: String(locale.identifier.prefix(2)))
         Fact.findAll(using: Database.default, matching: query, { (facts, error) in
             if let error = error {
                 onError?(error)
