@@ -60,6 +60,7 @@
   "board.syschange.permit": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}) %{permit}.",
   
   "board.clientchange": "Client name for case #%{caseId} (%{oldClient}) has been changed to: %{client}.",
+  "board.clientchange.exists": "Refusing to set client name of case #%{caseId} to \"%{client}\" as that is already the client of another case.",
   "board.nickchange": "Client nick for case #%{caseId} (%{client}) has been changed to %{nick}.",
   "board.codered.active": "CODE RED! %{client} (#%{caseId}) is on emergency oxygen!",
   "board.codered.attention": "%{rats}; this is your case!",

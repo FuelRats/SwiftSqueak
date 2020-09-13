@@ -126,8 +126,20 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
 
+
         let oldClient = rescue.client!
         let client = command.parameters[1]
+
+        guard mecha.rescueBoard.rescues.contains(where: {
+            $0.client == client
+        }) == false else {
+            command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier!,
+                "client": client
+            ])
+            return
+        }
+
         rescue.client = client
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
