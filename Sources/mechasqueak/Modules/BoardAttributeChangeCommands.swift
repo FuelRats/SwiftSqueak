@@ -131,7 +131,7 @@ class BoardAttributeCommands: IRCBotModule {
         let client = command.parameters[1]
 
         guard mecha.rescueBoard.rescues.contains(where: {
-            $0.client == client
+            $0.client?.lowercased() == client.lowercased()
         }) == false else {
             command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!,
@@ -168,6 +168,15 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         let nick = command.parameters[1]
+        guard mecha.rescueBoard.rescues.contains(where: {
+            $0.clientNick?.lowercased() == nick.lowercased()
+        }) == false else {
+            command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier!,
+                "nick": nick
+            ])
+            return
+        }
         rescue.clientNick = nick
 
         command.message.reply(key: "board.nickchange", fromCommand: command, map: [
