@@ -89,7 +89,7 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Delete a rescue by UUID, cannot be used on a rescue that is currently on the board.",
         paramText: "<rescue uuid>",
-        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
+        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueWrite
     )
     var didReceiveDeleteCommand = { command in
@@ -190,7 +190,7 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Restore a case from the trash list.",
         paramText: "<rescue uuid>",
-        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
+        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueWrite
     )
     var didReceiveRestoreTrashCommand = { command in
@@ -269,7 +269,7 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Show all information about a case by UUID",
         paramText: "<rescue uuid>",
-        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
+        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueRead
     )
     var didReceiveQuoteRemoteCommand = { command in
@@ -313,7 +313,7 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Add a previously closed case back onto the board.",
         paramText: "<rescue uuid>",
-        example: "035c1a9a-c066-40d0-bc4a-bee736879fd5",
+        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
