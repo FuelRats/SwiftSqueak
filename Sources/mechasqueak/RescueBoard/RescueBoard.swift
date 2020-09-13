@@ -142,7 +142,6 @@ class RescueBoard {
         self.rescues.append(rescue)
         rescue.createUpstream(fromBoard: self)
 
-        let oxygenStatus = rescue.codeRed ? "NOT OK" : "OK"
         let caseId = String(rescue.commandIdentifier!)
 
         let announceType = initiated == .announcer ? "announce" : "signal"
@@ -152,7 +151,7 @@ class RescueBoard {
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "unknown",
                 "platform": rescue.platform?.ircRepresentable ?? "unknown",
-                "oxygen": oxygenStatus,
+                "oxygen": rescue.ircOxygenStatus,
                 "caseId": caseId,
                 "platformSignal": rescue.platform?.signal ?? "",
                 "cr": crStatus
@@ -169,7 +168,7 @@ class RescueBoard {
                     "signal": configuration.general.signal.uppercased(),
                     "client": rescue.client ?? "unknown",
                     "platform": rescue.platform?.ircRepresentable ?? "unknown",
-                    "oxygen": oxygenStatus,
+                    "oxygen": rescue.ircOxygenStatus,
                     "caseId": caseId,
                     "system": rescue.system ?? "none",
                     "platformSignal": rescue.platform?.signal ?? "",
@@ -199,7 +198,7 @@ class RescueBoard {
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "unknown",
                 "platform": rescue.platform?.ircRepresentable ?? "unknown",
-                "oxygen": oxygenStatus,
+                "oxygen": rescue.ircOxygenStatus,
                 "caseId": caseId,
                 "system": rescue.system ?? "none",
                 "distance": distance,
@@ -209,10 +208,23 @@ class RescueBoard {
                 "cr": crStatus
             ]))
 
-            if initiated == .signal {
+            if initiated == .signal && rescue.codeRed == false {
                 message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
                     "client": rescue.clientNick ?? rescue.client ?? ""
                 ]))
+            } else if initiated != .insertion && rescue.codeRed == true {
+                let factKey = rescue.platform != nil ? "\(rescue.platform!.rawValue)quit" : "prepcr"
+                print(factKey)
+                Fact.get(
+                    name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en"),
+                    onComplete: { fact in
+                        guard let fact = fact else {
+                            return
+                        }
+                        let client = rescue.clientNick ?? rescue.client ?? ""
+                        message.reply(message: "\(client) \(fact.message)")
+                    }
+                )
             }
         })
     }
