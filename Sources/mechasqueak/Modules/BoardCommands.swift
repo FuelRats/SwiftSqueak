@@ -388,11 +388,14 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["prep", "psquit", "pcquit", "xquit"],
-        parameters: 1...,
+        parameters: 0...,
         category: nil,
         description: ""
     )
     var didReceivePrepCommand = { command in
+        guard command.parameters.count > 0 else {
+            return
+        }
         let nick = command.parameters[0]
 
         guard let rescue = mecha.rescueBoard.rescues.first(where: {
