@@ -165,10 +165,6 @@ class IRCBotModuleManager {
             return
         }
 
-        if message.destination == mecha.reportingChannel && configuration.general.drillMode == true {
-            return
-        }
-
         guard let command = MechaSqueak.commands.first(where: {
             $0.commands.contains(ircBotCommand.command)
         }) else {
