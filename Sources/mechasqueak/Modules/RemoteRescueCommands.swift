@@ -287,8 +287,8 @@ class RemoteRescueCommands: IRCBotModule {
                 "client": rescue.client ?? "unknown client",
                 "system": rescue.system ?? "unknown system",
                 "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
-                "created": rescue.createdAt,
-                "updated": rescue.updatedAt,
+                "created": rescue.createdAt.ircRepresentable,
+                "updated": rescue.updatedAt.ircRepresentable,
                 "id": rescue.id.rawValue.ircRepresentation
             ])
 

@@ -53,8 +53,8 @@ class BoardQuoteCommands: IRCBotModule {
             "client": rescue.client ?? "unknown client",
             "system": rescue.system ?? "unknown system",
             "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
-            "created": rescue.createdAt,
-            "updated": rescue.updatedAt,
+            "created": rescue.createdAt.ircRepresentable,
+            "updated": rescue.updatedAt.ircRepresentable,
             "id": rescue.id.ircRepresentation,
             "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         ])
@@ -71,7 +71,7 @@ class BoardQuoteCommands: IRCBotModule {
             command.message.replyPrivate(key: "board.quote.quote", fromCommand: command, map: [
                 "index": index,
                 "author": quote.lastAuthor,
-                "time": quote.updatedAt,
+                "time": quote.updatedAt.ircRepresentable,
                 "message": quote.message
             ])
         }
