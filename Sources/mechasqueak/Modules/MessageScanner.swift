@@ -80,11 +80,23 @@ class MessageScanner: IRCBotModule {
                 ))
             }
 
-            guard
-                let accountInfo = channelMessage.user.associatedAPIData,
-                let user = accountInfo.user,
-                configuration.general.drillMode == false
-                else {
+            if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
+                let rats = accountInfo.ratsBelongingTo(user: user)
+                if rats.first(where: { (rat: Rat) -> Bool in
+                    return rat.attributes.platform.value == rescue.platform
+                }) == nil {
+                    if configuration.general.drillMode == false {
+                        channelMessage.replyPrivate(message: lingo.localize(
+                            "jumpcall.wrongplatform",
+                            locale: "en-GB",
+                            interpolations: [
+                                "case": caseId,
+                                "platform": rescue.platform?.ircRepresentable ?? "unknown platform"
+                            ]
+                        ))
+                    }
+                }
+            } else if configuration.general.drillMode == false {
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.noaccount",
                     locale: "en-GB",
@@ -92,24 +104,9 @@ class MessageScanner: IRCBotModule {
                         "case": caseId
                     ]
                 ))
-                return
             }
 
-            let rats = accountInfo.ratsBelongingTo(user: user)
-            if rats.first(where: { (rat: Rat) -> Bool in
-                return rat.attributes.platform.value == rescue.platform
-            }) == nil {
-                if configuration.general.drillMode == false {
-                    channelMessage.replyPrivate(message: lingo.localize(
-                        "jumpcall.wrongplatform",
-                        locale: "en-GB",
-                        interpolations: [
-                            "case": caseId,
-                            "platform": rescue.platform?.ircRepresentable ?? "unknown platform"
-                        ]
-                    ))
-                }
-            }
+
 
             rescue.quotes.append(RescueQuote(
                 author: channelMessage.client.currentNick,
