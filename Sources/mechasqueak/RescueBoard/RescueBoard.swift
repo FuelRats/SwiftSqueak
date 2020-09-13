@@ -116,9 +116,27 @@ class RescueBoard {
                 "client": existingRescue.client!,
                 "system": existingRescue.system!,
                 "caseId": existingRescue.commandIdentifier!,
-                "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                "platform": existingRescue.platform?.ircRepresentable ?? "unknown",
                 "cr": crStatus
             ]))
+
+            var changes: [String] = []
+            if rescue.platform != existingRescue.platform {
+                changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
+            }
+            if rescue.system != existingRescue.system {
+                changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "unknown") -> \(rescue.system ?? "unknown")")
+            }
+            if rescue.codeRed != existingRescue.codeRed {
+                changes.append("\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)")
+            }
+            if changes.count > 0 {
+                message.reply(message: lingo.localize("board.signal.changes", locale: "en-GB", interpolations: [
+                    "caseId": existingRescue.commandIdentifier!,
+                    "changes": changes.joined(separator: ", ")
+                ]))
+            }
+
             return
         }
 

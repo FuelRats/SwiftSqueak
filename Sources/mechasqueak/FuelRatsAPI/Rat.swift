@@ -94,3 +94,9 @@ enum GamePlatform: String, Codable {
         }
     }
 }
+
+extension Optional where Wrapped == GamePlatform {
+    var ircRepresentable: String {
+        return self?.ircRepresentable ?? "unknown"
+    }
+}
