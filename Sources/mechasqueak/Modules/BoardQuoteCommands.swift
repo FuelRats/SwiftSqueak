@@ -83,7 +83,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["grab"],
         parameters: 1...1,
         category: .board,
-        description: "Grab the last message by the client and add it to the rescue, if no rescue exists create one.",
+        description: "Grab the last message by the client and add it an existing rescue",
         paramText: "<client>",
         example: "SpaceDawg",
         permission: .RescueWriteOwn,
