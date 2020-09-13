@@ -28,7 +28,7 @@ import Regex
 import IRCKit
 
 class LocalRescue: Codable {
-    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}-[A-Z]{2})\\)(?: - IRC Nickname: (.*))?".r!
+    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-[A-Z]{2})?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
     var clientHost: String?
@@ -56,6 +56,13 @@ class LocalRescue: Codable {
 
     var firstLimpet: Rat?
     var rats: [Rat]
+
+    var ircOxygenStatus: String {
+        if self.codeRed {
+            return IRCFormat.color(.LightRed, "NOT OK")
+        }
+        return "OK"
+    }
 
     init? (fromAnnouncer message: IRCPrivateMessage) {
         guard let match = LocalRescue.announcerExpression.findFirst(in: message.message) else {
