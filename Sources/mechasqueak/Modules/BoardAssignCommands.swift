@@ -91,6 +91,9 @@ class BoardAssignCommands: IRCBotModule {
         rescue.unidentifiedRats.append(contentsOf: assigns.1)
 
         let allRats = assigns.0.map({ $0.attributes.name.value }) + assigns.1
+        guard allRats.count > 0 else {
+            return
+        }
 
         let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
 
