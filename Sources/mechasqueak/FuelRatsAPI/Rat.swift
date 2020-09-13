@@ -65,6 +65,9 @@ enum GamePlatform: String, Codable {
     }
 
     var signal: String {
+        if configuration.general.drillMode {
+            return ""
+        }
         switch self {
             case .PC:
                 return "(PC_SIGNAL)"
