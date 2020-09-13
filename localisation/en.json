@@ -76,6 +76,7 @@
   "board.grab.updated": "Updated case #%{clientId} with \"%{text}\".",
 
   "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
+  "board.assign.none": "Found nobody to assign to case #%{caseId}",
   "board.assign.go": {
       "one": "%{client}: Please add the following rat to your friends list: %{rats}",
       "other": "%{client}: Please add the following %{count} rats to your friends list: %{rats}"
