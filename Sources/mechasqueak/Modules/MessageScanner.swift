@@ -38,7 +38,7 @@ class MessageScanner: IRCBotModule {
 
     static let caseRelevantPhrases = [
         "fr+", "fr-", "wr+", "wr-", "bc+", "bc-", "fuel+", "fuel-", "sys-", "sysconf", "destroyed", "exploded",
-        "code red", "oxygen", "supercruise", "prep-"
+        "code red", "oxygen", "supercruise", "prep-", "prep+", "ez", "inst-"
     ]
 
     required init(_ moduleManager: IRCBotModuleManager) {
@@ -58,9 +58,6 @@ class MessageScanner: IRCBotModule {
 
         if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
-            guard configuration.general.drillMode == false else {
-                return
-            }
             let caseId = jumpCallMatch.group(named: "case")!
 
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
@@ -74,7 +71,7 @@ class MessageScanner: IRCBotModule {
                 return
             }
 
-            if rescue.isPrepped == false {
+            if rescue.isPrepped == false && configuration.general.drillMode == false {
                 // User called jumps for a case where the client has not been prepped, yell at them.
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.notprepped",
@@ -83,7 +80,11 @@ class MessageScanner: IRCBotModule {
                 ))
             }
 
-            guard let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user else {
+            guard
+                let accountInfo = channelMessage.user.associatedAPIData,
+                let user = accountInfo.user,
+                configuration.general.drillMode == false
+                else {
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.noaccount",
                     locale: "en-GB",
@@ -98,15 +99,27 @@ class MessageScanner: IRCBotModule {
             if rats.first(where: { (rat: Rat) -> Bool in
                 return rat.attributes.platform.value == rescue.platform
             }) == nil {
-                channelMessage.replyPrivate(message: lingo.localize(
-                    "jumpcall.wrongplatform",
-                    locale: "en-GB",
-                    interpolations: [
-                        "case": caseId,
-                        "platform": rescue.platform?.ircRepresentable ?? "unknown platform"
-                    ]
-                ))
+                if configuration.general.drillMode == false {
+                    channelMessage.replyPrivate(message: lingo.localize(
+                        "jumpcall.wrongplatform",
+                        locale: "en-GB",
+                        interpolations: [
+                            "case": caseId,
+                            "platform": rescue.platform?.ircRepresentable ?? "unknown platform"
+                        ]
+                    ))
+                }
             }
+
+            rescue.quotes.append(RescueQuote(
+                author: channelMessage.client.currentNick,
+                message: "<\(channelMessage.user.nickname)> \(channelMessage.message)",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: channelMessage.client.currentNick
+            ))
+
+            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
