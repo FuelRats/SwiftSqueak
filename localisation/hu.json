@@ -1,0 +1,10 @@
+{
+    "board.assign.go": {
+       "one": "%{client} Kérlek, add a következő rágcsálót a barát listádhoz: %{rats}",
+       "other": "%{client} Kérlek, add a következő %{count} rágcsálót a barát listádhoz: %{rats}"
+    },
+    "board.assign.gocr": {
+       "one": "%{client}: Kérlek, MARADJ a fő menüben és add a következő rágcsálót a barát listádhoz: %{rats}",
+       "other": "%{client}: Kérlek, MARADJ a fő menüben és add a következő %{count} rágcsálót a barát listádra: %{rats}"
+    }
+}
