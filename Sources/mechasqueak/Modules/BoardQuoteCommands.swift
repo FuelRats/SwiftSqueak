@@ -53,10 +53,12 @@ class BoardQuoteCommands: IRCBotModule {
             "client": rescue.client ?? "unknown client",
             "system": rescue.system ?? "unknown system",
             "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
-            "created": rescue.createdAt.ircRepresentable,
-            "updated": rescue.updatedAt.ircRepresentable,
-            "id": rescue.id.ircRepresentation,
             "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
+        ])
+
+        command.message.replyPrivate(key: "board.quote.dates", fromCommand: command, map: [
+            "created": rescue.createdAt.ircRepresentable,
+            "updated": rescue.updatedAt.ircRepresentable
         ])
 
         if rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 {

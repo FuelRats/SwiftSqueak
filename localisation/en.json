@@ -99,8 +99,9 @@
   "board.list.case.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
   "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
   
-  "board.quote.title": "Case #%{caseId} (%{client}) in %{system} (%{platform}) %{cr} opened %{created}, last updated %{updated} %{id}",
-  "board.quote.operation": "\"Operation %{title}\" (Case #%{caseId}) (%{client}) in %{system} (%{platform}) %{cr} opened %{created}, last updated %{updated} %{id}",
+  "board.quote.title": "Case #%{caseId} CMDR %{client} in %{system} (%{platform}) %{cr}",
+  "board.quote.operation": "\"Operation %{title}\" (Case #%{caseId}) (%{client}) in %{system} (%{platform}) %{cr}",
+  "board.quote.dates": "Opened %{created}, last updated %{updated}",
   
   "board.quote.quote": "[%{index}] %{author} (%{time}): %{message}",
   "board.quote.noassigned": "No rats are assigned to this case.",
