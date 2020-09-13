@@ -1,10 +1,10 @@
 {
     "board.assign.go": {
-       "one": "%{client}: Voeg alsjeblieft de volgende rat toe aan je vriendenlijst: %{rats}.",
-       "other": "%{client}: Voeg alsjeblieft de volgende %{count} ratten toe aan je vriendenlijst: %{rats}."
+       "one": "%{client}: Voeg alsjeblieft de volgende rat toe aan je vriendenlijst: %{rats}",
+       "other": "%{client}: Voeg alsjeblieft de volgende %{count} ratten toe aan je vriendenlijst: %{rats}"
     },
     "board.assign.gocr": {
-       "one": "%{client}: BLIJF in het hoofdmenu en voeg de volgende rat toe aan je vriendenlijst: %{rats}.",
-       "other": "%{client}: BLIJF in het hoofdmenu en volg de volgende %{count} ratten toe aan je vriendenlijst”%{rats}."
+       "one": "%{client}: BLIJF in het hoofdmenu en voeg de volgende rat toe aan je vriendenlijst: %{rats}",
+       "other": "%{client}: BLIJF in het hoofdmenu en volg de volgende %{count} ratten toe aan je vriendenlijst”%{rats}"
     }
 }

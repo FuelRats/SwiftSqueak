@@ -87,7 +87,9 @@ class BoardAssignCommands: IRCBotModule {
         if assigns.1.count > 0 && configuration.general.drillMode == false {
             command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
                 "platform": platform.ircRepresentable,
-                "rats": assigns.1.joined(separator: ", ")
+                "rats": assigns.1.map({
+                    "\"\($0)\""
+                }).joined(separator: ", ")
             ])
         }
 
