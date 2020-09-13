@@ -60,6 +60,13 @@ class BoardAssignCommands: IRCBotModule {
             var acc = acc
 
             guard
+                assign.lowercased() != rescue.clientNick?.lowercased()
+                && assign.lowercased() != rescue.client?.lowercased()
+            else {
+                return acc
+            }
+
+            guard
                 let nick = message.destination.member(named: assign),
                 let rat = nick.getRatRepresenting(rescue: rescue)
             else {
