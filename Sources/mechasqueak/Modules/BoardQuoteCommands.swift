@@ -143,12 +143,18 @@ class BoardQuoteCommands: IRCBotModule {
         let clientParam = command.parameters[0]
 
         var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam)
+        if rescue == nil && Int(clientParam) != nil && clientParam.count < 3 {
+            command.message.error(key: "board.casenotfound", fromCommand: command, map: [
+                "caseIdentifier": command.parameters[0]
+            ])
+            return
+        }
+
         let clientNick = rescue?.clientNick ?? clientParam
 
         let client = message.destination.member(named: clientNick)?.nickname ?? clientNick
 
         let injectMessage = command.parameters[1]
-
         if rescue == nil {
             if clientParam.lowercased() == "client" {
                 message.replyPrivate(key: "board.inject.ignored", fromCommand: command)
