@@ -229,7 +229,7 @@ class RescueBoard {
     func getNewIdentifier () -> Int {
         /* Get the first 10 identifiers not currently being used by a case, this method lets us generally stay between
          0 and 15 re-using a recent number if we need to without the case ID becoming something ridicolous like #32 */
-        let generatedIdentifiers = generateAvailableIdentifiers(count: 10)
+        let generatedIdentifiers = generateAvailableIdentifiers(count: 9)
 
         // Create a map of identifiers to the identifier's index in the the recently used list
         let identifierMap = generatedIdentifiers.reduce(
