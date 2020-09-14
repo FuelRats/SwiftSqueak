@@ -145,7 +145,7 @@ class MessageScanner: IRCBotModule {
             }
 
             guard MessageScanner.caseRelevantPhrases.first(where: {
-                channelMessage.message.contains($0)
+                channelMessage.message.lowercased().contains($0)
             }) != nil else {
                 return
             }
