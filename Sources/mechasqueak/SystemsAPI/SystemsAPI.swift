@@ -75,7 +75,7 @@ class SystemsAPI {
                     guard let result = systemSearch.data?.first(where: {
                         $0.similarity == 1
                     }) else {
-                        onComplete(nil, nil, Autocorrect.check(system: systemName, search: systemSearch)?.uppercased())
+                        onComplete(nil, nil, nil)
                         return
                     }
 
