@@ -27,7 +27,7 @@ import Regex
 
 struct SignalScanner {
     private static let platformExpression = "\\b(?:platform(?:\\: )?)?(pc|xbox one|xb1|xb|playstation(?: 4)?|ps4|ps)\\b".r!
-    private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b$".r!
+    private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b".r!
     private static let oxygenExpression = "\\b(?:O2(?:\\: )?|oxygen(?:\\: )?)?(ok|not ok|code red|cr)\\b".r!
 
     let system: String?
@@ -55,7 +55,7 @@ struct SignalScanner {
         }
         message = message.replacingOccurrences(
             of: "\(configuration.general.signal)",
-            with: "",
+            with: "|",
             options: .caseInsensitive
         )
 
@@ -63,7 +63,7 @@ struct SignalScanner {
         if let platformMatch = SignalScanner.platformExpression.findFirst(in: message) {
             self.platform = platformMatch.group(at: 1)
             print(platformMatch.group(at: 0)!)
-            message = message.replacingOccurrences(of: platformMatch.group(at: 0)!, with: "", options: .caseInsensitive)
+            message = message.replacingOccurrences(of: platformMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         } else {
             self.platform = nil
         }
@@ -71,7 +71,7 @@ struct SignalScanner {
 
         if let oxygenMatch = SignalScanner.oxygenExpression.findFirst(in: message) {
             self.crStatus = oxygenMatch.group(at: 1)?.lowercased()
-            message = message.replacingOccurrences(of: oxygenMatch.group(at: 0)!, with: "", options: .caseInsensitive)
+            message = message.replacingOccurrences(of: oxygenMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         } else {
             self.crStatus = nil
         }
