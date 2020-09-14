@@ -23,12 +23,12 @@
  */
 
 import Foundation
+import Regex
 
 struct SignalScanner {
-    private let platformVariations = ["pc", "xbox one", "xbox", "xb1", "xb",
-                                      "playstation 4", "playstation", "ps4", "ps"]
-
-    private let crVariations = ["not ok", "code red"]
+    private static let platformExpression = "\\b(?:platform(?:\\: )?)?(pc|xbox one|xb1|xb|playstation(?: 4)?|ps4|ps)\\b".r!
+    private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b$".r!
+    private static let oxygenExpression = "\\b(?:O2(?:\\: )?|oxygen(?:\\: )?)?(ok|not ok|code red|cr)\\b".r!
 
     let system: String?
     let platform: String?
@@ -36,7 +36,7 @@ struct SignalScanner {
 
     var isCodeRed: Bool {
         if let crText = self.crStatus {
-            if crText.contains("not ok") || crText.contains("code red") {
+            if crText.contains("not ok") || crText.contains("code red") || crText.contains("cr") {
                 return true
             }
         }
@@ -53,37 +53,32 @@ struct SignalScanner {
         if requireSignal == true && signalIndex == nil {
             return nil
         }
+        message = message.replacingOccurrences(
+            of: "\(configuration.general.signal)",
+            with: "",
+            options: .caseInsensitive
+        )
 
-        let startIndex = signalIndex ?? message.startIndex
 
-        var systemEndIndex = message.endIndex
-
-        var platformString: String?
-
-        for platform in platformVariations {
-            if let range = message.range(of: platform, options: .caseInsensitive) {
-                systemEndIndex = range.lowerBound
-                platformString = String(message[range])
-                break
-            }
+        if let platformMatch = SignalScanner.platformExpression.findFirst(in: message) {
+            self.platform = platformMatch.group(at: 1)
+            print(platformMatch.group(at: 0)!)
+            message = message.replacingOccurrences(of: platformMatch.group(at: 0)!, with: "", options: .caseInsensitive)
+        } else {
+            self.platform = nil
         }
+        message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        self.platform = platformString
-        var crString: String?
-
-        for crVariation in crVariations {
-            if let range = message.range(of: crVariation, options: .caseInsensitive) {
-                crString = String(message[range])
-                break
-            }
+        if let oxygenMatch = SignalScanner.oxygenExpression.findFirst(in: message) {
+            self.crStatus = oxygenMatch.group(at: 1)?.lowercased()
+            message = message.replacingOccurrences(of: oxygenMatch.group(at: 0)!, with: "", options: .caseInsensitive)
+        } else {
+            self.crStatus = nil
         }
+        message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        self.crStatus = crString?.lowercased()
-
-
-        let system = String(message[startIndex..<systemEndIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
-        if system.count > 0 {
-            self.system = system
+        if let systemMatch = SignalScanner.systemExpression.findFirst(in: message) {
+            self.system = systemMatch.group(at: 1)
         } else {
             self.system = nil
         }
