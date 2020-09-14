@@ -77,8 +77,8 @@ struct SignalScanner {
         }
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let systemMatch = SignalScanner.systemExpression.findFirst(in: message) {
-            self.system = systemMatch.group(at: 1)
+        if let range = message.range(of: "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b", options: .regularExpression) {
+            self.system = String(message[range])
         } else {
             self.system = nil
         }

@@ -129,7 +129,9 @@ class SystemsAPI {
                             return
                         }
 
-                        results.removeSubrange(9...)
+                        if results.count > 9 {
+                            results.removeSubrange(9...)
+                        }
 
                         rescue.systemCorrections = results
 
