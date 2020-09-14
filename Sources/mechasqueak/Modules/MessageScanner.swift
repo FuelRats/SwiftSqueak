@@ -127,7 +127,9 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased()) {
+        if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased())
+            && channelMessage.message.starts(with: "!") == false
+        {
             guard let rescue = LocalRescue(fromRatsignal: channelMessage) else {
                 return
             }
