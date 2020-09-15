@@ -44,10 +44,7 @@ struct SignalScanner {
     }
 
     init? (message: String, requireSignal: Bool = false) {
-        var punctuationSet = CharacterSet.punctuationCharacters
-        punctuationSet.remove(charactersIn: "-")
         var message = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        message = message.components(separatedBy: punctuationSet).joined()
 
         let signalIndex = message.range(of: configuration.general.signal, options: .caseInsensitive)?.upperBound
         if requireSignal == true && signalIndex == nil {
