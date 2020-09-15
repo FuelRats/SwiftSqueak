@@ -71,7 +71,7 @@ class MessageScanner: IRCBotModule {
                 return
             }
 
-            if rescue.isPrepped == false && configuration.general.drillMode == false {
+            if rescue.isPrepped == false && configuration.general.drillMode == false && rescue.codeRed == false {
                 // User called jumps for a case where the client has not been prepped, yell at them.
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.notprepped",
