@@ -75,7 +75,7 @@ class SystemsAPI {
                     guard let result = systemSearch.data?.first(where: {
                         $0.similarity == 1
                     }) else {
-                        onComplete(nil, nil, nil)
+                        onComplete(nil, nil, Autocorrect.check(system: systemName))
                         return
                     }
 
@@ -87,15 +87,15 @@ class SystemsAPI {
                                     return
                                 }
 
-                                onComplete(result, landmarkResult, nil)
+                                onComplete(result, landmarkResult, Autocorrect.check(system: systemName))
 
                             case .failure:
-                                onComplete(result, nil, nil)
+                                onComplete(result, nil, Autocorrect.check(system: systemName))
                         }
                     })
 
                 case .failure:
-                    onComplete(nil, nil, nil)
+                    onComplete(nil, nil, Autocorrect.check(system: systemName))
             }
         })
     }

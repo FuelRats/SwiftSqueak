@@ -32,42 +32,44 @@ extension String {
 
 extension String {
     public func levenshtein (_ other: String) -> Int {
-        let sCount = self.count
-        let oCount = other.count
-
-        guard sCount != 0 else {
-            return oCount
+        let a = self
+        let b = other
+        if (a.count == 0) {
+            return b.count
+        }
+        if (b.count == 0) {
+            return a.count
         }
 
-        guard oCount != 0 else {
-            return sCount
+        // Create an empty distance matrix with dimensions len(a)+1 x len(b)+1
+        var dists = Array(repeating: Array(repeating: 0, count: b.count+1), count: a.count+1)
+
+        // a's default distances are calculated by removing each character
+        for i in 1...(a.count) {
+            dists[i][0] = i
+        }
+        // b's default distances are calulated by adding each character
+        for j in 1...(b.count) {
+            dists[0][j] = j
         }
 
-        let line: [Int]  = Array(repeating: 0, count: oCount + 1)
-        var mat: [[Int]] = Array(repeating: line, count: sCount + 1)
+        // Find the remaining distances using previous distances
+        for i in 1...(a.count) {
+            for j in 1...(b.count) {
+                // Calculate the substitution cost
+                let cost = (a[i-1] == b[j-1]) ? 0 : 1
 
-        for iter in 0...sCount {
-            mat[iter][0] = iter
-        }
-
-        for iter2 in 0...oCount {
-            mat[0][iter2] = iter2
-        }
-
-        for iter in 1...oCount {
-            for iter2 in 1...sCount {
-                if self[iter - 1] == other[iter2 - 1] {
-                    mat[iter][iter2] = mat[iter - 1][iter2 - 1]       // no operation
-                } else {
-                    let del = mat[iter - 1][iter2] + 1         // deletion
-                    let ins = mat[iter][iter2 - 1] + 1         // insertion
-                    let sub = mat[iter - 1][iter2 - 1] + 1     // substitution
-                    mat[iter][iter2] = min(min(del, ins), sub)
-                }
+                dists[i][j] = Swift.min(
+                    // Removing a character from a
+                    dists[i-1][j] + 1,
+                    // Adding a character to b
+                    dists[i][j-1] + 1,
+                    // Substituting a character from a to b
+                    dists[i-1][j-1] + cost
+                )
             }
         }
-
-        return mat[sCount][oCount]
+        return dists.last!.last!
     }
 }
 
