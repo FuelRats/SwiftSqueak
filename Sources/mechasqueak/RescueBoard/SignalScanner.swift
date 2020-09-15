@@ -26,9 +26,9 @@ import Foundation
 import Regex
 
 struct SignalScanner {
-    private static let platformExpression = "\\b(?:platform(?:\\: )?)?(pc|xbox one|xb1|xb|playstation(?: 4)?|ps4|ps)\\b".r!
+    private static let platformExpression = "\\b(?:platform(?:\\: )?)?(pc|xbox one|xbox|xb1|xb|playstation(?: 4)?|ps4|ps)\\b".r!
     private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b".r!
-    private static let oxygenExpression = "\\b(?:O2(?:\\: )?|oxygen(?:\\: )?)?(ok|not ok|code red|cr)\\b".r!
+    private static let oxygenExpression = "\\b(?:(?:o2|oxygen)(?:\\:)? )?(ok|not ok|code red|cr)\\b".r!
 
     let system: String?
     let platform: String?
