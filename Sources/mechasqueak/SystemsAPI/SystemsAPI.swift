@@ -38,7 +38,7 @@ class SystemsAPI {
         if quickSearch {
             url.queryItems?.append(URLQueryItem(name: "fast", value: "true"))
         }
-        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(30))
+        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(60))
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
