@@ -232,7 +232,7 @@ class RescueBoard {
                 "cr": crStatus
             ]))
 
-            if initiated == .signal && rescue.codeRed == false {
+            if initiated != .insertion && rescue.codeRed == false {
                 message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
                     "client": rescue.clientNick ?? rescue.client ?? ""
                 ]))
