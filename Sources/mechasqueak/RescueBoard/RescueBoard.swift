@@ -105,7 +105,7 @@ class RescueBoard {
     func add (
         rescue: LocalRescue,
         fromMessage message: IRCPrivateMessage,
-        initiated: RescueInitiationType = .announcer
+        initiated: RescueInitiationType
     ) {
         if let existingRescue = self.rescues.first(where: {
             $0.client == rescue.client || ($0.clientNick != nil && $0.clientNick == rescue.clientNick)
@@ -206,11 +206,7 @@ class RescueBoard {
                     ]))
                 }
 
-                if initiated == .signal {
-                    message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
-                        "client": rescue.clientNick ?? rescue.client ?? ""
-                    ]))
-                }
+                self.prepClient(rescue: rescue, message: message, initiated: initiated)
                 return
             }
 
@@ -232,25 +228,28 @@ class RescueBoard {
                 "cr": crStatus
             ]))
 
-            if initiated != .insertion && rescue.codeRed == false {
-                message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
-                    "client": rescue.clientNick ?? rescue.client ?? ""
-                ]))
-            } else if initiated != .insertion && rescue.codeRed == true {
-                let factKey = rescue.platform != nil ? "\(rescue.platform!.rawValue)quit" : "prepcr"
-                print(factKey)
-                Fact.get(
-                    name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en"),
-                    onComplete: { fact in
-                        guard let fact = fact else {
-                            return
-                        }
-                        let client = rescue.clientNick ?? rescue.client ?? ""
-                        message.reply(message: "\(client) \(fact.message)")
-                    }
-                )
-            }
+            self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
+    }
+
+    func prepClient (rescue: LocalRescue, message: IRCPrivateMessage, initiated: RescueInitiationType) {
+        if initiated == .signal && rescue.codeRed == false {
+            message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
+                "client": rescue.clientNick ?? rescue.client ?? ""
+            ]))
+        } else if initiated != .insertion && rescue.codeRed == true {
+            let factKey = rescue.platform != nil ? rescue.platform!.quitFact : "prepcr"
+            Fact.get(
+                name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en"),
+                onComplete: { fact in
+                    guard let fact = fact else {
+                        return
+                    }
+                    let client = rescue.clientNick ?? rescue.client ?? ""
+                    message.reply(message: "\(client) \(fact.message)")
+                }
+            )
+        }
     }
 
     func syncBoard () {

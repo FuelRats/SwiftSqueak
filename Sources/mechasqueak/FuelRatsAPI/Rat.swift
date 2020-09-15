@@ -80,6 +80,15 @@ enum GamePlatform: String, Codable {
         }
     }
 
+    var quitFact: String {
+        let platformMap: [GamePlatform: String] = [
+            .PC: "pcquit",
+            .Xbox: "xquit",
+            .PS4: "psquit"
+        ]
+        return platformMap[self]!
+    }
+
     static func parsedFromText (text: String) -> GamePlatform? {
         let text = text.lowercased()
         switch text {

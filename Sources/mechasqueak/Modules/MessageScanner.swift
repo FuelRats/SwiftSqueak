@@ -123,7 +123,7 @@ class MessageScanner: IRCBotModule {
             guard let rescue = LocalRescue(fromAnnouncer: channelMessage) else {
                 return
             }
-            mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage)
+            mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage, initiated: .announcer)
             return
         }
 
