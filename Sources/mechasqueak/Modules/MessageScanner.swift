@@ -38,7 +38,8 @@ class MessageScanner: IRCBotModule {
 
     static let caseRelevantPhrases = [
         "fr+", "fr-", "wr+", "wr-", "bc+", "bc-", "fuel+", "fuel-", "sys-", "sysconf", "destroyed", "exploded",
-        "code red", "oxygen", "supercruise", "prep-", "prep+", "ez", "inst-", "open", "menu", "private", "actual"
+        "code red", "oxygen", "supercruise", "prep-", "prep+", "ez", "inst-", "open", "menu", "private", "actual",
+        "solo", "ready", "pos+"
     ]
 
     required init(_ moduleManager: IRCBotModuleManager) {
