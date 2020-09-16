@@ -262,10 +262,14 @@ class LocalRescue: Codable {
 
         request.body = try? .encodable(postDocument)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 201) { result in
+        httpClient.execute(request: request).whenComplete{ result in
             switch result {
-                case .success:
-                    self.synced = true
+                case .success(let response):
+                    if response.status == .created {
+                        self.synced = true
+                    } else if response.status == .conflict {
+                        mecha.rescueBoard.rescues.removeAll(where: { $0.id == self.id })
+                    }
                 case .failure:
                     self.synced = false
                     board.synced = false
