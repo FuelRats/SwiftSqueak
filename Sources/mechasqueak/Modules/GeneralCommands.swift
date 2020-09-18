@@ -124,7 +124,7 @@ class GeneralCommands: IRCBotModule {
         description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
         paramText: "<nickname>",
         example: "Orange_Sheets",
-        permission: .RatRead
+        permission: .RatReadOwn
     )
     var didReceiveWhoIsCommand = { command in
         let message = command.message
