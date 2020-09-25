@@ -106,7 +106,8 @@ class MechaSqueak {
             RemoteRescueCommands(moduleManager),
             FactCommands(moduleManager),
             ShortenURLCommands(moduleManager),
-            TweetCommands(moduleManager)
+            TweetCommands(moduleManager),
+            ManagementCommands(moduleManager)
         ]
 
         self.accountChangeObserver = NotificationCenter.default.addObserver(
