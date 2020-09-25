@@ -57,6 +57,7 @@ class NicknameLookupManager {
         }
 
         self.queue.addOperation(operation)
+        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount)")
     }
 
     func lookupIfNotExists (user: IRCUser) {
@@ -116,6 +117,10 @@ class NicknameLookupOperation: Operation {
         self.user = user
         super.init()
         self.name = user.nickname
+    }
+
+    override func main() {
+        start()
     }
 
     override func start() {
