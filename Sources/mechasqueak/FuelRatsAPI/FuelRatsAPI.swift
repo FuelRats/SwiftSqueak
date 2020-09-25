@@ -32,6 +32,7 @@ class FuelRatsAPI {
         error: @escaping (Error?) -> Void
     ) throws {
         guard let url = URLComponents(string: "\(configuration.api.url)/nicknames?nick=\(ircAccount)") else {
+            debug("Failed to create nickname URL for \(ircAccount)")
             error(nil)
             return
         }
@@ -44,6 +45,7 @@ class FuelRatsAPI {
                 case .success(let response):
                     let document = try! NicknameSearchDocument.from(data: Data(buffer: response.body!))
                     guard (document.body.data?.primary.values.count)! > 0 else {
+                        debug("No results found in fetch for \(ircAccount)")
                         complete(nil)
                         return
                     }

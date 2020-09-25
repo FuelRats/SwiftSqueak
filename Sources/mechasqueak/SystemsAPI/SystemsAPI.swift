@@ -56,7 +56,7 @@ class SystemsAPI {
                     )
                     onComplete(Result.success(searchResult))
                 case .failure(let restError):
-                    debug(restError)
+                    debug(String(describing: restError))
                     onComplete(Result.failure(restError))
             }
         }

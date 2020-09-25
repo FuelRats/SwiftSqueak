@@ -65,6 +65,7 @@ class NicknameLookupManager {
         }
 
         guard hasExistingFetchOperation(user: user) == false else {
+            debug("Ignoring fetch for \(user.nickname) due to existing fetch operation")
             return
         }
 
@@ -126,6 +127,7 @@ class NicknameLookupOperation: Operation {
         self.isExecuting = true
 
         guard let account = user.account else {
+            debug("Ignoring fetch for \(user.nickname) as they are not logged in")
             self.isFinished = true
             return
         }
