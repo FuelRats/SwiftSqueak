@@ -119,7 +119,9 @@ class NicknameLookupOperation: Operation {
     }
 
     override func start() {
+        debug("Starting fetch operation for \(user.nickname)")
         guard isCancelled == false else {
+            debug("Fetch operation was cancelled")
             self.isFinished = true
             return
         }
