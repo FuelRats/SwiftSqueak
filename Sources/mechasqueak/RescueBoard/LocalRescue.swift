@@ -344,7 +344,7 @@ class LocalRescue: Codable {
                 case .success:
                     onComplete()
                 case .failure(let error):
-                    print(String(describing: error))
+                    debug(String(describing: error))
                     onError(error)
             }
         }

@@ -42,6 +42,8 @@ struct GeneralConfiguration: Codable {
     var drillMode: Bool
     let blacklist: [String]
     let operLogin: [String]?
+    @Default<False>
+    var debug: Bool
 }
 
 struct FuelRatsAPIConfiguration: Codable {

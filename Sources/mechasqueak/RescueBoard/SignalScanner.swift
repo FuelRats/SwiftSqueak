@@ -59,7 +59,7 @@ struct SignalScanner {
 
         if let platformMatch = SignalScanner.platformExpression.findFirst(in: message) {
             self.platform = platformMatch.group(at: 1)
-            print(platformMatch.group(at: 0)!)
+            debug(platformMatch.group(at: 0)!)
             message = message.replacingOccurrences(of: platformMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         } else {
             self.platform = nil

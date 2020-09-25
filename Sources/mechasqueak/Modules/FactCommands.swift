@@ -348,7 +348,7 @@ class FactCommands: IRCBotModule {
         do {
             try Fact.createTableSync()
         } catch let error {
-            print(String(describing: error))
+            debug(String(describing: error))
         }
     }
 }

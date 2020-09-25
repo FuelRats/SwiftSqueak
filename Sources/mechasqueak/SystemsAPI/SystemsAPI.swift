@@ -56,7 +56,7 @@ class SystemsAPI {
                     )
                     onComplete(Result.success(searchResult))
                 case .failure(let restError):
-                    print(restError)
+                    debug(restError)
                     onComplete(Result.failure(restError))
             }
         }
@@ -207,7 +207,7 @@ class SystemsAPI {
                         )
                         onComplete(result)
                     } catch let error {
-                        print(String(describing: error))
+                        debug(String(describing: error))
                         onError(error)
                     }
                 case .failure(let restError):

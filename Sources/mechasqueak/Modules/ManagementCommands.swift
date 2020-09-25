@@ -66,16 +66,12 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveFlushCommand = { command in
-        guard let mapping = mecha.accounts.mapping.first(where: {
+        if let mapping = mecha.accounts.mapping.first(where: {
             $0.key.lowercased() == command.parameters[0].lowercased()
-        }) else {
-            command.message.replyPrivate(key: "flush.notfound", fromCommand: command, map: [
-                "name": command.parameters[0]
-            ])
-            return
+        }) {
+            mecha.accounts.mapping.removeValue(forKey: mapping.key)
         }
 
-        mecha.accounts.mapping.removeValue(forKey: mapping.key)
         guard let user = command.message.client.channels.first(where: {
             $0.member(named: command.parameters[0]) != nil
         })?.member(named: command.parameters[0]) else {

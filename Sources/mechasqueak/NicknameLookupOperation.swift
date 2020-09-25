@@ -132,15 +132,15 @@ class NicknameLookupOperation: Operation {
 
         try? FuelRatsAPI.getNicknameFor(ircAccount: account, complete: { apiNickname in
             if apiNickname != nil {
-                print("Synced account data for \(account)")
+                debug("Synced account data for \(account)")
             } else {
-                print("Did not find account data for \(account)")
+                debug("Did not find account data for \(account)")
             }
             self.isFinished = true
             self.isExecuting = false
             self.onCompletion?(apiNickname)
         }, error: { error in
-            print("Failed to lookup account data for \(account)")
+            debug("Failed to lookup account data for \(account)")
             self.isFinished = true
             self.isExecuting = false
             self.onError?(error)

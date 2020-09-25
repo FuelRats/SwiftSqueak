@@ -49,6 +49,12 @@ func loadConfiguration () -> MechaConfiguration {
     return try! configDecoder.decode(MechaConfiguration.self, from: configData)
 }
 
+func debug (_ output: String) {
+    if configuration.general.debug == true {
+        print(output)
+    }
+}
+
 let configuration = loadConfiguration()
 
 class MechaSqueak {
