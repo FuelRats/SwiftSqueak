@@ -67,6 +67,7 @@ class MechaSqueak {
     private var userJoinObserver: NotificationToken?
     private var userQuitObserver: NotificationToken?
     private var userNickChangeObserver: NotificationToken?
+    private var userHostChangeObserver: NotificationToken?
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
 
     init () {
@@ -124,6 +125,10 @@ class MechaSqueak {
         self.userNickChangeObserver = NotificationCenter.default.addObserver(
             descriptor: IRCUserChangedNickNotification(),
             using: onUserNickChange(nickChange:)
+        )
+        self.userHostChangeObserver = NotificationCenter.default.addObserver(
+            descriptor: IRCUserHostChangeNotification(),
+            using: onUserHostChange(hostChange:)
         )
     }
 
@@ -190,6 +195,18 @@ class MechaSqueak {
             accounts.mapping.removeValue(forKey: sender.nickname)
             accounts.mapping[nickChange.newNick] = apiNickname
         }
+    }
+
+    func onUserHostChange (hostChange: IRCUserHostChangeNotification.Payload) {
+        let sender = hostChange.sender!
+        accounts.mapping.removeValue(forKey: sender.nickname)
+
+        guard let user = hostChange.client.channels.first(where: {
+            $0.member(named: sender.nickname) != nil
+        })?.member(named: sender.nickname) else {
+            return
+        }
+        accounts.lookupIfNotExists(user: user)
     }
 }
 
