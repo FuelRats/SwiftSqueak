@@ -36,11 +36,9 @@ class FuelRatsAPI {
         complete: @escaping (NicknameSearchDocument?) -> Void,
         error: @escaping (Error?) -> Void
     ) throws {
-        guard let url = URLComponents(string: "\(configuration.api.url)/nicknames?nick=\(ircAccount)") else {
-            debug("Failed to create nickname URL for \(ircAccount)")
-            error(nil)
-            return
-        }
+        var url = URLComponents(string: "\(configuration.api.url)/nicknames")!
+        url.queryItems = [URLQueryItem(name: "nick", value: ircAccount)]
+
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
