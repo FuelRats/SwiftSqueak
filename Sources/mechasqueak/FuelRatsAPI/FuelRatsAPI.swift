@@ -24,8 +24,13 @@
 
 import Foundation
 import AsyncHTTPClient
+import NIO
 
 class FuelRatsAPI {
+    static private var deadline: NIODeadline {
+        return .now() + .seconds(5)
+    }
+
     static func getNicknameFor (
         ircAccount: String,
         complete: @escaping (NicknameSearchDocument?) -> Void,
@@ -40,7 +45,7 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+        httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
                     let document = try! NicknameSearchDocument.from(data: Data(buffer: response.body!))
@@ -68,7 +73,7 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+        httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
                     let document = try! RescueSearchDocument.from(data: Data(buffer: response.body!))
@@ -92,7 +97,7 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+        httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
                     let document = try! RescueGetDocument.from(data: Data(buffer: response.body!))
@@ -168,7 +173,7 @@ class FuelRatsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 204) { result in
+        httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 204) { result in
             switch result {
                 case .success:
                     complete()
