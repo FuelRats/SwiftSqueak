@@ -155,7 +155,7 @@ extension Rescue {
             links: .none
         )
 
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString)")!
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString.lowercased())")!
         var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
