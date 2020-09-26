@@ -270,7 +270,8 @@ class LocalRescue: Codable {
                     } else if response.status == .conflict {
                         mecha.rescueBoard.rescues.removeAll(where: { $0.id == self.id })
                     }
-                case .failure:
+                case .failure(let error):
+                    debug(String(describing: error))
                     self.synced = false
                     board.synced = false
             }
@@ -307,7 +308,8 @@ class LocalRescue: Codable {
                 case .success:
                     self.synced = true
                     board.checkSynced()
-                case .failure:
+                case .failure(let error):
+                    debug(String(describing: error))
                     self.synced = false
                     board.synced = false
             }
@@ -381,6 +383,7 @@ class LocalRescue: Codable {
                 case .success:
                     onComplete()
                 case .failure(let error):
+                    debug(String(describing: error))
                     onError(error)
             }
         }
