@@ -28,7 +28,7 @@ import NIO
 
 class FuelRatsAPI {
     static private var deadline: NIODeadline {
-        return .now() + .seconds(5)
+        return .now() + .seconds(15)
     }
 
     static func getNicknameFor (
