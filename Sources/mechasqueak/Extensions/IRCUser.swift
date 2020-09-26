@@ -49,7 +49,7 @@ extension IRCUser {
         })
 
         rats.sort(by: {
-            self.nickname.levenshtein($0.attributes.name.value) > self.nickname.levenshtein($1.attributes.name.value)
+            self.nickname.levenshtein($0.attributes.name.value) < self.nickname.levenshtein($1.attributes.name.value)
         })
 
         return rats.first
