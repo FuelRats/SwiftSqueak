@@ -303,11 +303,15 @@ class LocalRescue: Codable {
 
         request.body = try? .encodable(patchDocument)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+        httpClient.execute(request: request).whenComplete { result in
             switch result {
-                case .success:
-                    self.synced = true
-                    board.checkSynced()
+                case .success(let response):
+                    if response.status.code == 200 {
+                        self.synced = true
+                        board.checkSynced()
+                    } else {
+                        self.createUpstream(fromBoard: mecha.rescueBoard)
+                    }
                 case .failure(let error):
                     debug(String(describing: error))
                     self.synced = false
