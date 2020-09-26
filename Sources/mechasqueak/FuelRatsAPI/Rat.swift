@@ -40,7 +40,7 @@ enum RatDescription: ResourceObjectDescription {
 
     public struct Relationships: JSONAPI.Relationships {
         public let user: ToOneRelationship<User?>?
-        public let ships: ToManyRelationship<Ship>
+        public let ships: ToManyRelationship<Ship>?
     }
 }
 typealias Rat = JSONEntity<RatDescription>
