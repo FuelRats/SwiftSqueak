@@ -395,6 +395,7 @@ class LocalRescue: Codable {
 
     func hasConflictingId (inBoard board: RescueBoard) -> Bool {
         return board.rescues.contains(where: {
+            debug("Conflict Comparison: \(String(describing: self.commandIdentifier)) = \(String(describing: $0.commandIdentifier))")
             return self.commandIdentifier == nil || $0.commandIdentifier == self.commandIdentifier
         })
     }
