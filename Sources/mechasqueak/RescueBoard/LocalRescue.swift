@@ -80,7 +80,7 @@ class LocalRescue: Codable {
         self.system = match.group(at: 2)!.uppercased()
 
         let platformString = match.group(at: 3)!
-        self.platform = GamePlatform(rawValue: platformString.lowercased())
+        self.platform = GamePlatform.parsedFromText(text: platformString)
 
         let o2StatusString = match.group(at: 4)!
         if o2StatusString.uppercased() == "NOT OK" {
