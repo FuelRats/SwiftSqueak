@@ -195,7 +195,7 @@ class BoardCommands: IRCBotModule {
             }
 
             URLShortener.attemptShorten(
-                url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())")!,
+                url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!,
                 complete: { shortUrl in
                 if let firstLimpet = firstLimpet {
                     message.client.sendMessage(
