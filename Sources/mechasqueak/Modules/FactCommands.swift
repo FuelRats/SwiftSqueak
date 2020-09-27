@@ -30,6 +30,7 @@ import IRCKit
 class FactCommands: IRCBotModule {
     var name: String = "Fact Commands"
     private var channelMessageObserver: NotificationToken?
+    private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
 
     static func parseFromParameter (param: String) -> (String, Locale) {
@@ -283,7 +284,7 @@ class FactCommands: IRCBotModule {
         })
     }
 
-    func onChannelMessage (channelMessage message: IRCPrivateMessage) {
+    func onMessage (_ message: IRCPrivateMessage) {
         guard message.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
             return
@@ -332,7 +333,11 @@ class FactCommands: IRCBotModule {
 
         self.channelMessageObserver = NotificationCenter.default.addObserver(
             descriptor: IRCChannelMessageNotification(),
-            using: onChannelMessage(channelMessage:)
+            using: onMessage(_:)
+        )
+        self.privateMessageObserver = NotificationCenter.default.addObserver(
+            descriptor: IRCPrivateMessageNotification(),
+            using: onMessage(_:)
         )
 
         let pool = PostgreSQLConnection.createPool(
