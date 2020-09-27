@@ -210,6 +210,7 @@
   "facts.info.error": "Encountered an error looking up information for fact !%{fact}",
   "facts.info.message": "Info for !%{fact} (%{locale} locale): Created at %{created}, last updated by %{author} at %{updated}. Contents: \"%{excerpt}\"",
   "facts.locales": "Listing all locales in the database: %{locales}",
+  "fact.fallback": "!%{fact} is not available in %{language} (%{identifier}), falling back to English",
   
   "say.sending": "Sending message \"%{contents}\" to %{target}",
   "me.sending": "Emoting \"%{contents}\" to %{target}",

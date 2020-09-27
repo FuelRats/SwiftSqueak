@@ -27,6 +27,6 @@ import Foundation
 extension Locale {
     var englishDescription: String {
         let englishLocale = Locale(identifier: "en-GB")
-        return englishLocale.localizedString(forIdentifier: self.identifier) ?? "unknown"
+        return englishLocale.localizedString(forIdentifier: self.identifier) ?? "unknown locale"
     }
 }

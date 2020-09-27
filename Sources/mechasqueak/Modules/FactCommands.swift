@@ -307,16 +307,32 @@ class FactCommands: IRCBotModule {
 
         Fact.get(name: command.command, forLocale: command.locale, onComplete: { fact in
             guard let fact = fact else {
+                Fact.get(name: command.command, forLocale: Locale(identifier: "en"), onComplete: { fallbackFact in
+                    guard let fallbackFact = fallbackFact else {
+                        return
+                    }
+
+                    command.message.replyPrivate(key: "fact.fallback", fromCommand: command, map: [
+                        "fact": command.command,
+                        "identifier": command.locale.identifier,
+                        "language": command.locale.englishDescription
+                    ])
+                    self.messageFact(command: command, fact: fallbackFact)
+                })
                 return
             }
 
-            if command.parameters.count > 0 {
-                let target = command.parameters.joined(separator: " ")
-                command.message.reply(message: "\(target): \(fact.message)")
-            } else {
-                command.message.reply(message: fact.message)
-            }
+            self.messageFact(command: command, fact: fact)
         })
+    }
+
+    func messageFact (command: IRCBotCommand, fact: Fact) {
+        if command.parameters.count > 0 {
+            let target = command.parameters.joined(separator: " ")
+            command.message.reply(message: "\(target): \(fact.message)")
+        } else {
+            command.message.reply(message: fact.message)
+        }
     }
 
     func hashFact (command: IRCBotCommand) -> String {
