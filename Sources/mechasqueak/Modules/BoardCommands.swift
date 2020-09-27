@@ -208,6 +208,16 @@ class BoardCommands: IRCBotModule {
                             "link": shortUrl
                         ]
                     )
+
+                    message.client.sendMessage(
+                        toChannelName: command.parameters[1],
+                        withKey: "board.close.firstLimpetPaperwork",
+                        mapping: [
+                            "caseId": rescue.commandIdentifier!,
+                            "client": rescue.client ?? "unknown client",
+                            "link": shortUrl
+                        ]
+                    )
                     return
                 }
                 message.client.sendMessage(
@@ -278,7 +288,7 @@ class BoardCommands: IRCBotModule {
         }
 
         URLShortener.attemptShorten(
-            url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id)")!,
+            url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!,
             complete: { shortUrl in
             command.message.reply(key: "board.pwl.generated", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!,

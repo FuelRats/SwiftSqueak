@@ -112,6 +112,7 @@
   "board.close.notfound": "Unable to close case #%{caseId} to \"%{firstLimpet}\", no rat was found.",
   "board.close.notassigned": "Unable to close case #%{caseId} to \"%{firstLimpet}\" as they are not assigned to the case.",
   "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
+  "board.close.firstLimpetPaperwork": "Here is your paperwork for case #%{caseId} (%{client}): %{link}",
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
