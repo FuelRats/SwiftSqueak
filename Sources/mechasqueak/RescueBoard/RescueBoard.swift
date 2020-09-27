@@ -342,15 +342,15 @@ class RescueBoard {
 
         pendingDownstream.append(contentsOf: novelRescues)
 
-        let updatedDownstreamRescues = apiRescues.filter({ apiRescue in
-            let matchingLocal = self.rescues.first(where: { localRescue in
-                localRescue.id == apiRescue.id
-            })
-
-            return matchingLocal != nil && matchingLocal!.updatedAt < apiRescue.updatedAt
-        })
-
-        pendingDownstream.append(contentsOf: updatedDownstreamRescues)
+//        let updatedDownstreamRescues = apiRescues.filter({ apiRescue in
+//            let matchingLocal = self.rescues.first(where: { localRescue in
+//                localRescue.id == apiRescue.id
+//            })
+//
+//            return matchingLocal != nil && matchingLocal!.updatedAt < apiRescue.updatedAt
+//        })
+//
+//        pendingDownstream.append(contentsOf: updatedDownstreamRescues)
 
         var requiredIdChange = 0
 
@@ -389,7 +389,7 @@ class RescueBoard {
             rescueChannel.send(key: "board.synced", map: [
                 "api": configuration.api.url,
                 "downstreamNew": novelRescues.count,
-                "downstreamChange": updatedDownstreamRescues.count,
+                "downstreamChange": 0,
                 "upstreamNew": pendingUpstreamNew.count,
                 "upstreamChange": pendingUpstreamUpdate.count,
                 "conflicts": requiredIdChange
