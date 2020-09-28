@@ -406,7 +406,7 @@ class BoardCommands: IRCBotModule {
         guard command.parameters.count > 0 else {
             return
         }
-        let nick = command.parameters[0].lowercased()
+        let nick = command.parameters.joined(separator: " ").lowercased()
 
         guard let rescue = mecha.rescueBoard.rescues.first(where: {
             $0.client?.lowercased() == nick || $0.clientNick?.lowercased() == nick
