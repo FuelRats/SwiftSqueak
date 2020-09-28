@@ -183,7 +183,7 @@ class RescueBoard {
                 "platformSignal": rescue.platform?.signal ?? "",
                 "cr": crStatus,
                 "language": language,
-                "languageCode": languageCode
+                "langCode": languageCode
             ]))
             return
         }
@@ -203,7 +203,7 @@ class RescueBoard {
                     "platformSignal": rescue.platform?.signal ?? "",
                     "cr": crStatus,
                     "language": language,
-                    "languageCode": languageCode
+                    "langCode": languageCode
                 ]))
 
                 if let correction = correction {
@@ -234,7 +234,7 @@ class RescueBoard {
                 "platformSignal": rescue.platform?.signal ?? "",
                 "cr": crStatus,
                 "language": language,
-                "languageCode": languageCode
+                "langCode": languageCode
             ]))
 
             self.prepClient(rescue: rescue, message: message, initiated: initiated)
