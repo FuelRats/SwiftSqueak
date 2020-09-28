@@ -87,7 +87,7 @@ class Autocorrect {
             fragments[0] = Autocorrect.performNumberSubstitution(value: fragments[0])
         }
         var secondFragment = fragments.count > 1 ? fragments[1] : ""
-        if secondFragment.first!.isNumber {
+        if secondFragment.first != nil && secondFragment.first!.isNumber {
             /*  The first character of the second fragment of a procedural system name is always a letter.
              If it is a number in the input, replace it with letters that are commonly mistaken for numbers.  */
             secondFragment = secondFragment.replacingCharacters(
