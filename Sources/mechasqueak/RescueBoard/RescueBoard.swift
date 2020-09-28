@@ -285,9 +285,9 @@ class RescueBoard {
          it is to be picked. If two identifiers have the same score, we will prefer the one that is the lowest number */
         let sortedIdentifiers = generatedIdentifiers.sorted(by: {
             if identifierMap[$0] == identifierMap[$1] {
-                return $0 < $1
+                return $0 > $1
             }
-            return identifierMap[$0]! < identifierMap[$1]!
+            return identifierMap[$0]! > identifierMap[$1]!
         })
 
         // Return the best scoring identifier
