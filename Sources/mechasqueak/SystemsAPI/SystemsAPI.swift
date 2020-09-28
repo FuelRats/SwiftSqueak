@@ -224,7 +224,7 @@ struct SystemsAPISearchDocument: Codable {
     struct Meta: Codable {
         let name: String?
         let error: String?
-        let type: String
+        let type: String?
     }
 
     struct SearchResult: Codable {
@@ -290,6 +290,7 @@ struct SystemsAPILandmarkDocument: Codable {
 
     struct Meta: Codable {
         let name: String
+        let error: String?
     }
 
     struct LandmarkResult: Codable {
