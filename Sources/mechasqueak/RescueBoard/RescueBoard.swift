@@ -34,7 +34,7 @@ class RescueBoard {
     private let distanceFormatter: NumberFormatter
     var lastSignalReceived: Date?
     var prepTimers: [UUID: Scheduled<()>?] = [:]
-    var recentIdentifiers = Set<Int>()
+    var recentIdentifiers: [Int] = []
 
     init () {
         self.distanceFormatter = NumberFormatter()
@@ -149,8 +149,8 @@ class RescueBoard {
         let crStatus = rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         let identifier = self.getNewIdentifier()
         rescue.commandIdentifier = identifier
-        self.recentIdentifiers.remove(identifier)
-        self.recentIdentifiers.insert(identifier)
+        self.recentIdentifiers.removeAll(where: { $0 == identifier })
+        self.recentIdentifiers.append(identifier)
         self.lastSignalReceived = Date()
 
         if rescue.codeRed == false && configuration.general.drillMode == false {
@@ -264,7 +264,8 @@ class RescueBoard {
     func getNewIdentifier () -> Int {
         /* Get the first 10 identifiers not currently being used by a case, this method lets us generally stay between
          0 and 15 re-using a recent number if we need to without the case ID becoming something ridicolous like #32 */
-        let generatedIdentifiers = generateAvailableIdentifiers(count: 9)
+        let fetchCount = self.rescues.count > 9 ? 1 : 10 - self.rescues.count
+        let generatedIdentifiers = generateAvailableIdentifiers(count: fetchCount)
 
         // Create a map of identifiers to the identifier's index in the the recently used list
         let identifierMap = generatedIdentifiers.reduce(
@@ -284,10 +285,7 @@ class RescueBoard {
         /* Sort identifiers by their position in the recently used list, the longer ago one was used, the more likely
          it is to be picked. If two identifiers have the same score, we will prefer the one that is the lowest number */
         let sortedIdentifiers = generatedIdentifiers.sorted(by: {
-            if identifierMap[$0] == identifierMap[$1] {
-                return $0 < $1
-            }
-            return identifierMap[$0]! > identifierMap[$1]!
+            return identifierMap[$0]! < identifierMap[$1]!
         })
 
         // Return the best scoring identifier
@@ -370,8 +368,8 @@ class RescueBoard {
             }
 
             if let identifier = novelRescue.commandIdentifier {
-                self.recentIdentifiers.remove(identifier)
-                self.recentIdentifiers.insert(identifier)
+                self.recentIdentifiers.removeAll(where: { $0 == identifier })
+                self.recentIdentifiers.append(identifier)
             }
 
             self.rescues.append(novelRescue)
