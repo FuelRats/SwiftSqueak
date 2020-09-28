@@ -170,6 +170,9 @@ class RescueBoard {
 
         let announceType = initiated == .announcer ? "announce" : "signal"
 
+        let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
+        let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
+
         guard let system = rescue.system else {
             message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
@@ -178,7 +181,9 @@ class RescueBoard {
                 "oxygen": rescue.ircOxygenStatus,
                 "caseId": caseId,
                 "platformSignal": rescue.platform?.signal ?? "",
-                "cr": crStatus
+                "cr": crStatus,
+                "language": language,
+                "languageCode": languageCode
             ]))
             return
         }
@@ -196,7 +201,9 @@ class RescueBoard {
                     "caseId": caseId,
                     "system": rescue.system ?? "none",
                     "platformSignal": rescue.platform?.signal ?? "",
-                    "cr": crStatus
+                    "cr": crStatus,
+                    "language": language,
+                    "languageCode": languageCode
                 ]))
 
                 if let correction = correction {
@@ -225,7 +232,9 @@ class RescueBoard {
                 "landmark": landmarkResult.name,
                 "permit": searchResult.permitText ?? "",
                 "platformSignal": rescue.platform?.signal ?? "",
-                "cr": crStatus
+                "cr": crStatus,
+                "language": language,
+                "languageCode": languageCode
             ]))
 
             self.prepClient(rescue: rescue, message: message, initiated: initiated)
