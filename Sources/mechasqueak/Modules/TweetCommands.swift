@@ -41,7 +41,7 @@ class TweetCommands: IRCBotModule {
         description: "Send a tweet from @FuelRatAlerts",
         paramText: "<tweet>",
         example: "Need rats urgently for two PS4 cases in the bubble.",
-        permission: .RescueWriteOwn,
+        permission: .TwitterWrite,
         allowedDestinations: .Channel
     )
     var didReceiveTweetCommand = { command in
@@ -59,7 +59,7 @@ class TweetCommands: IRCBotModule {
         description: "Tweet information about a case from @FuelRatAlerts",
         paramText: "<case id/client>",
         example: "4",
-        permission: .RescueWriteOwn,
+        permission: .TwitterWrite,
         allowedDestinations: .Channel
     )
     var didReceiveTweetCaseCommand = { command in

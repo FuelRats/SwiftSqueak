@@ -98,7 +98,8 @@ extension IRCUser {
                 .RatWriteOwn,
                 .RescueRead,
                 .RescueReadOwn,
-                .RescueWriteOwn
+                .RescueWriteOwn,
+                .TwitterWrite
             ]
         }
 
