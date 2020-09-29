@@ -38,6 +38,7 @@ class SystemsAPI {
         if quickSearch {
             url.queryItems?.append(URLQueryItem(name: "fast", value: "true"))
         }
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
         let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(60))
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
@@ -161,6 +162,7 @@ class SystemsAPI {
         onComplete: @escaping (Result<SystemsAPILandmarkDocument, Error>) -> Void) {
         var url = URLComponents(string: "https://sapi.fuelrats.dev/landmark")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
