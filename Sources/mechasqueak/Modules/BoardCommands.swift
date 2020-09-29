@@ -371,7 +371,7 @@ class BoardCommands: IRCBotModule {
                         return
                     }
 
-                    rescue.system = selectedCorrection.name
+                    rescue.system = selectedCorrection.name.uppercased()
                     rescue.syncUpstream(fromBoard: mecha.rescueBoard)
 
                     let landmarkResult = landmarkResults.landmarks[0]
