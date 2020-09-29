@@ -142,35 +142,24 @@ class BoardAssignCommands: IRCBotModule {
         var removed: [String] = []
 
         for unassign in unassigns {
-            if
+            if let assignIndex = rescue.unidentifiedRats.firstIndex(where: {
+                $0.lowercased() == unassign.lowercased()
+            }) {
+                rescue.unidentifiedRats.remove(at: assignIndex)
+                removed.append(unassign)
+            } else if
                 let nick = message.destination.member(named: unassign),
-                let rat = nick.getRatRepresenting(rescue: rescue)
-            {
-                guard let assignIndex = rescue.rats.firstIndex(where: {
+                let rat = nick.getRatRepresenting(rescue: rescue),
+                let assignIndex = rescue.rats.firstIndex(where: {
                     $0.id.rawValue == rat.id.rawValue
-                }) else {
-                    command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
-                        "rat": rat.attributes.name.value,
-                        "caseId": rescue.commandIdentifier!
-                    ])
-                    return
-                }
-
+                }) {
                 rescue.rats.remove(at: assignIndex)
                 removed.append(rat.attributes.name.value)
             } else {
-                guard let assignIndex = rescue.unidentifiedRats.firstIndex(where: {
-                    $0.lowercased() == unassign.lowercased()
-                }) else {
-                    command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
-                        "rat": unassign,
-                        "caseId": rescue.commandIdentifier!
-                    ])
-                    return
-                }
-
-                rescue.unidentifiedRats.remove(at: assignIndex)
-                removed.append(unassign)
+                command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
+                    "rats": unassign,
+                    "caseId": rescue.commandIdentifier!
+                ])
             }
         }
 
