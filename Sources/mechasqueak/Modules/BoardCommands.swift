@@ -370,10 +370,12 @@ class BoardCommands: IRCBotModule {
                     guard landmarkResults.landmarks.count > 0 else {
                         return
                     }
+
+                    rescue.system = selectedCorrection.name
+                    rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+
                     let landmarkResult = landmarkResults.landmarks[0]
-
                     let format = selectedCorrection.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
-
                     let distance = NumberFormatter.englishFormatter().string(
                         from: NSNumber(value: landmarkResult.distance) 
                     )!
