@@ -110,10 +110,18 @@ class GeneralCommands: IRCBotModule {
             "\($0.attributes.name.value) (\($0.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
 
+        let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
+            if acc == nil || rat.attributes.createdAt.value < acc! {
+                return rat.attributes.createdAt.value
+            }
+            return acc
+        })
+
         command.message.reply(key: "whoami.response", fromCommand: command, map: [
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
-            "rats": rats
+            "rats": rats,
+            "joined": joinedDate?.eliteFormattedString ?? "unknown"
         ])
     }
 
@@ -166,11 +174,19 @@ class GeneralCommands: IRCBotModule {
             "\($0.attributes.name.value) (\($0.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
 
+        let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
+            if acc == nil || rat.attributes.createdAt.value < acc! {
+                return rat.attributes.createdAt.value
+            }
+            return acc
+        })
+
         command.message.reply(key: "whois.response", fromCommand: command, map: [
             "nick": nick,
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
-            "rats": rats
+            "rats": rats,
+            "joined": joinedDate?.eliteFormattedString ?? "unknown"
         ])
     }
 

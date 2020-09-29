@@ -52,4 +52,17 @@ extension Date {
     var ircRepresentable: String {
         return DateFormatter.ircFormatter.string(from: self)
     }
+
+    var eliteFormattedString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMMM"
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+
+        let dateString = formatter.string(from: self)
+        let year = Calendar.current.component(.year, from: self)
+        return "\(dateString), \(year + 1286)"
+
+    }
 }
