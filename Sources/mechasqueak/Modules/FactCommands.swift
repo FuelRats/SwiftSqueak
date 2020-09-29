@@ -294,16 +294,18 @@ class FactCommands: IRCBotModule {
             return
         }
 
-        let factHash = hashFact(command: command)
+        if message.destination.isPrivateMessage == false {
+            let factHash = hashFact(command: command)
 
-        guard self.factsDelimitingCache.contains(factHash) == false else {
-            return
+            guard self.factsDelimitingCache.contains(factHash) == false else {
+                return
+            }
+
+            self.factsDelimitingCache.insert(factHash)
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(5), execute: {
+                self.factsDelimitingCache.remove(factHash)
+            })
         }
-
-        self.factsDelimitingCache.insert(factHash)
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(5), execute: {
-            self.factsDelimitingCache.remove(factHash)
-        })
 
         Fact.get(name: command.command, forLocale: command.locale, onComplete: { fact in
             guard let fact = fact else {
