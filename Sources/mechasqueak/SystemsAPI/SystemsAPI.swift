@@ -50,11 +50,12 @@ class SystemsAPI {
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-                    let searchResult = try! decoder.decode(
-                        SystemsAPISearchDocument.self,
-                        from: Data(buffer: response.body!)
-                    )
-                    onComplete(Result.success(searchResult))
+                    do {
+                        let searchResult = try decoder.decode(SystemsAPISearchDocument.self, from: Data(buffer: response.body!))
+                        onComplete(Result.success(searchResult))
+                    } catch {
+                        onComplete(Result.failure(error))
+                    }
                 case .failure(let restError):
                     debug(String(describing: restError))
                     onComplete(Result.failure(restError))

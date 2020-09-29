@@ -46,7 +46,10 @@ class FuelRatsAPI {
         httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    let document = try! NicknameSearchDocument.from(data: Data(buffer: response.body!))
+                    guard let document = try? NicknameSearchDocument.from(data: Data(buffer: response.body!)) else {
+                        error(nil)
+                        return
+                    }
                     guard (document.body.data?.primary.values.count)! > 0 else {
                         debug("No results found in fetch for \(ircAccount)")
                         complete(nil)
@@ -74,10 +77,14 @@ class FuelRatsAPI {
         httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    let document = try! RescueSearchDocument.from(data: Data(buffer: response.body!))
-                    guard document.body.data != nil else {
+                    guard
+                        let document = try? RescueSearchDocument.from(data: Data(buffer: response.body!)),
+                        document.body.data != nil
+                    else {
+                        error(nil)
                         return
                     }
+
                     complete(document)
                 case .failure(let restError):
                     error(restError)
@@ -98,8 +105,11 @@ class FuelRatsAPI {
         httpClient.execute(request: request, deadline: FuelRatsAPI.deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-                    let document = try! RescueGetDocument.from(data: Data(buffer: response.body!))
-                    guard document.body.data != nil else {
+                    guard
+                        let document = try? RescueGetDocument.from(data: Data(buffer: response.body!)),
+                        document.body.data != nil
+                    else {
+                        error(nil)
                         return
                     }
 

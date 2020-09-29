@@ -51,7 +51,10 @@ class URLShortener {
                 case .success(let response):
                     let decoder = JSONDecoder()
 
-                    let shortenResult = try! decoder.decode(ShortURLResponse.self, from: Data(buffer: response.body!))
+                    guard let shortenResult = try? decoder.decode(ShortURLResponse.self, from: Data(buffer: response.body!)) else {
+                        error(nil)
+                        return
+                    }
                     complete(shortenResult)
                 case .failure(let restError):
                     error(restError)
