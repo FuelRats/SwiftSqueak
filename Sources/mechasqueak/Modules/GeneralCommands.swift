@@ -117,11 +117,16 @@ class GeneralCommands: IRCBotModule {
             return acc
         })
 
+        let verifiedStatus = associatedNickname.permissions.contains(.UserVerified) ?
+            IRCFormat.color(.LightGreen, "Verified") :
+            IRCFormat.color(.LightGreen, "Unverified")
+
         command.message.reply(key: "whoami.response", fromCommand: command, map: [
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats,
-            "joined": joinedDate?.eliteFormattedString ?? "unknown"
+            "joined": joinedDate?.eliteFormattedString ?? "unknown",
+            "verified": verifiedStatus
         ])
     }
 
@@ -181,12 +186,17 @@ class GeneralCommands: IRCBotModule {
             return acc
         })
 
+        let verifiedStatus = associatedNickname.permissions.contains(.UserVerified) ?
+            IRCFormat.color(.LightGreen, "Verified") :
+            IRCFormat.color(.LightGreen, "Unverified")
+
         command.message.reply(key: "whois.response", fromCommand: command, map: [
             "nick": nick,
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats,
-            "joined": joinedDate?.eliteFormattedString ?? "unknown"
+            "joined": joinedDate?.eliteFormattedString ?? "unknown",
+            "verified": verifiedStatus
         ])
     }
 
