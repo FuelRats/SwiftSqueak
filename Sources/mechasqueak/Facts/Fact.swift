@@ -26,6 +26,7 @@ import Foundation
 import SwiftKuery
 import SwiftKueryORM
 import SwiftKueryPostgreSQL
+import NIO
 
 struct Fact: Codable {
     static var dateEncodingFormat: DateEncodingFormat = .timestamp
@@ -51,6 +52,26 @@ struct FactListQuery: QueryParams {
 }
 
 extension Fact: Model {
+    public static func get (name: String, forLocale locale: Locale) -> EventLoopFuture<Fact?> {
+        let promise = loop.next().makePromise(of: Fact?.self)
+
+        let query = FactQuery(name: name.lowercased(), language: String(locale.identifier.prefix(2)))
+        Fact.findAll(using: Database.default, matching: query, { (facts, error) in
+            if let error = error {
+                promise.fail(error)
+                return
+            }
+
+            guard let facts = facts, facts.count > 0 else {
+                promise.succeed(nil)
+                return
+            }
+
+            promise.succeed(facts[0])
+        })
+        return promise.futureResult
+    }
+
     public static func get (
         name: String,
         forLocale locale: Locale,

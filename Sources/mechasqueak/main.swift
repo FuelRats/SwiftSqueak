@@ -26,6 +26,7 @@ import Foundation
 import Lingo
 import IRCKit
 import AsyncHTTPClient
+import NIO
 
 let lingo = try! Lingo(rootPath: "\(FileManager.default.currentDirectoryPath)/localisation", defaultLocale: "en")
 let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
@@ -218,5 +219,6 @@ class MechaSqueak {
 }
 
 let mecha = MechaSqueak()
+let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 
 RunLoop.main.run()

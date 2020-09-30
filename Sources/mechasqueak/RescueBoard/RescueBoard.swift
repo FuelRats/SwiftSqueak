@@ -248,16 +248,25 @@ class RescueBoard {
             ]))
         } else if initiated != .insertion && rescue.codeRed == true {
             let factKey = rescue.platform != nil ? rescue.platform!.quitFact : "prepcr"
-            Fact.get(
-                name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en"),
-                onComplete: { fact in
-                    guard let fact = fact else {
-                        return
-                    }
-                    let client = rescue.clientNick ?? rescue.client ?? ""
-                    message.reply(message: "\(client) \(fact.message)")
-                }
-            )
+
+            var fact = try? Fact.get(name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en")).wait()
+
+            // If platform specific quit is not available in this language, try !prepcr in this language
+            if fact == nil && rescue.clientLanguage != nil && rescue.platform != nil {
+                fact = try? Fact.get(name: "prepcr", forLocale: rescue.clientLanguage!).wait()
+            }
+
+            // If neiher quit or prepcr is available in this language, fall back to English.
+            if fact == nil {
+                fact = try? Fact.get(name: factKey, forLocale: Locale(identifier: "en")).wait()
+            }
+
+            guard fact != nil else {
+                return
+            }
+
+            let client = rescue.clientNick ?? rescue.client ?? ""
+            message.reply(message: "\(client) \(fact!.message)")
         }
     }
 
