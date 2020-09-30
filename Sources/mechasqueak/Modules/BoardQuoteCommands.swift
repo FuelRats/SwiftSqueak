@@ -26,6 +26,7 @@ import Foundation
 import IRCKit
 
 class BoardQuoteCommands: IRCBotModule {
+    static let disallowedInjectNames = ["ratsignal", "drillsignal", "client"]
     var name: String = "Case Quote Commands"
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -158,7 +159,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         let injectMessage = command.parameters[1]
         if rescue == nil {
-            if clientParam.lowercased() == "client" {
+            guard disallowedInjectNames.contains(clientParam.lowercased()) == false else {
                 message.replyPrivate(key: "board.inject.ignored", fromCommand: command)
                 return
             }
