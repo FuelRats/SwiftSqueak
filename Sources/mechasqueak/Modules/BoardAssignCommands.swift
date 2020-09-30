@@ -70,7 +70,7 @@ class BoardAssignCommands: IRCBotModule {
                 let nick = message.destination.member(named: assign),
                 let rat = nick.getRatRepresenting(rescue: rescue)
             else {
-                guard acc.1.contains(assign) == false else {
+                guard acc.1.contains(assign) == false && rescue.unidentifiedRats.contains(assign) == false else {
                     return acc
                 }
 
