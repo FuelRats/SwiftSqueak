@@ -85,4 +85,35 @@ class ManagementCommands: IRCBotModule {
             "name": command.parameters[0]
         ])
     }
+
+    @BotCommand(
+        ["groups", "permissions"],
+        parameters: 1...1,
+        category: .management,
+        description: "Lists the permissions of a specific person",
+        permission: .UserRead
+    )
+    var didReceivePermissionsCommand = { command in
+        guard let mapping = mecha.accounts.mapping.first(where: {
+            $0.key.lowercased() == command.parameters[0].lowercased()
+        }) else {
+            command.message.replyPrivate(key: "groups.nouser", fromCommand: command, map: [
+                "nick": command.parameters[0]
+            ])
+            return
+        }
+
+        let groupIds = mapping.value.user?.relationships.groups?.ids ?? []
+
+        let groups = mapping.value.body.includes![Group.self].filter({
+            groupIds.contains($0.id)
+        }).map({
+            $0.attributes.name.value
+        })
+
+        command.message.reply(key: "groups.response", fromCommand: command, map: [
+            "nick": command.parameters[0],
+            "groups": groups.joined(separator: ", ")
+        ])
+    }
 }
