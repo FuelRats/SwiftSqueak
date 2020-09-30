@@ -57,6 +57,7 @@ enum AccountPermission: String, Codable {
     case UserReadOwn = "users.read.me"
     case UserWrite = "users.write"
     case UserWriteOwn = "users.write.me"
+    case UserVerified = "users.verified"
 
     case ClientRead = "clients.read"
     case ClientReadOwn = "clients.read.me"
