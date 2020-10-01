@@ -34,7 +34,7 @@
   "landmark.response": "%{system} is %{distance}ly from %{landmark}.",
 
   "sctime.error": "Unable to understand the distance given in this command",
-  "sctime.response": "The estimated super cruise travel time for %{distance}ls is %{time}.",
+  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time}.",
 
   "board.clientjoin": "Client of case #%{caseId} (%{client}) has joined!",
   "board.clientjoinhost": "Caution: Client of case #%{caseId} (%{client}) has joined with a different name! (%{nick})",

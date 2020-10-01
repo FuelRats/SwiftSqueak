@@ -164,14 +164,6 @@ class BoardCommands: IRCBotModule {
                 return
             }
 
-            guard rescue.rats.contains(rat) else {
-                command.message.reply(key: "board.close.notassigned", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier!,
-                    "firstLimpet": rat.attributes.name.value
-                ])
-                return
-            }
-
             firstLimpet = rat
         }
 

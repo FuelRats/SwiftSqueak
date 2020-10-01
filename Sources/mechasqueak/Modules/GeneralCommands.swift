@@ -70,7 +70,8 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveTravelTimeCommand = { command in
         var distanceString = command.parameters.joined(separator: " ").lowercased().trimmingCharacters(in: .whitespaces)
-        var kiloPhrases = ["kls", "k ls", "k"]
+        var kiloPhrases = ["kls", "k ls", "k", "kly", "k ly"]
+        let isLy = distanceString.hasSuffix("ly")
         let isKilo = kiloPhrases.contains(where: {
             distanceString.hasSuffix($0)
         })
@@ -84,13 +85,20 @@ class GeneralCommands: IRCBotModule {
         }
 
         if isKilo {
-            distance = distance * 1000
+            distance = distance * 1000.0
+        }
+
+        if isLy {
+            distance = distance * 365.0 * 24.0 * 60.0 * 60.0
         }
 
         var seconds = 0.0
         if distance < 500000 {
             seconds = 4.4708*pow(distance, 0.3899)
-        } else {
+        } else if distance > 5100000 {
+            seconds = (distance - 5100000.0) / 2001 + 3420
+        }
+        else {
             /*
                 Thank you to RadLock for creating the original equation.
              */
@@ -105,7 +113,12 @@ class GeneralCommands: IRCBotModule {
         if seconds < 0 {
             return
         }
-        if seconds > 3600 {
+        if seconds > 86400 {
+
+            let days = Int(seconds / 86400)
+            let hours = Int(seconds.truncatingRemainder(dividingBy: 86400)) / 3600
+            time = "\(days) days, and \(hours) hours"
+        } else if seconds > 3600 {
             let hours = Int(seconds / 3600)
             let minutes = Int(seconds.truncatingRemainder(dividingBy: 3600)) / 60
             time = "\(hours) hours, and \(minutes) minutes"
@@ -118,7 +131,11 @@ class GeneralCommands: IRCBotModule {
         }
 
         let formatter = NumberFormatter.englishFormatter()
-        let formattedDistance = formatter.string(from: distance) ?? "\(distance)"
+        var formattedDistance = (formatter.string(from: distance) ?? "\(distance)") + "ls"
+        if distance > 3.6*pow(10, 6) {
+            formattedDistance = (formatter.string(from: distance / 60/60/24/365)  ?? "\(distance)") + "ly"
+        }
+ 
         command.message.reply(key: "sctime.response", fromCommand: command, map: [
             "distance": formattedDistance,
             "time": time
