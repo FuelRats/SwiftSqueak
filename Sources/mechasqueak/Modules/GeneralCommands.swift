@@ -102,6 +102,9 @@ class GeneralCommands: IRCBotModule {
         }
 
         var time = ""
+        if seconds < 0 {
+            return
+        }
         if seconds > 3600 {
             let hours = Int(seconds / 3600)
             let minutes = Int(seconds.truncatingRemainder(dividingBy: 3600)) / 60
