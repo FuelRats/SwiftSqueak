@@ -60,6 +60,52 @@ class GeneralCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["sctime", "sccalc", "traveltime"],
+        parameters: 1...,
+        category: .utility,
+        description: "Calculate supercruise travel time",
+        paramText: "<distance>",
+        example: "2500ls",
+        permission: nil
+    )
+    var didReceiveTravelTimeCommand = { command in
+        var distanceString = command.parameters.joined(separator: " ").lowercased().trimmingCharacters(in: .whitespaces)
+        let isKilo = distanceString.hasSuffix("kls") || distanceString.hasSuffix("k ls") || distanceString.hasSuffix("k")
+        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted
+
+        distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
+        guard var distance = Double(distanceString) else {
+            command.message.replyPrivate(key: "sctime.error", fromCommand: command)
+            return
+        }
+
+        if isKilo {
+            distance = distance * 1000
+        }
+
+        let seconds = ceil(65 + (1.8 * sqrt(Double(distance))))
+
+        var time = ""
+        if seconds > 3600 {
+            let hours = Int(seconds / 3600)
+            let minutes = Int(remainder(seconds, 3600) / 60)
+            time = "\(hours) hours, and \(minutes) minutes"
+        } else if seconds > 60 {
+            let minutes = Int(seconds / 60)
+            time = "\(minutes) minutes"
+        } else {
+            time = "\(seconds) seconds"
+        }
+
+        let formatter = NumberFormatter.englishFormatter()
+        let formattedDistance = formatter.string(from: distance) ?? "\(distance)"
+        command.message.reply(key: "sctime.response", fromCommand: command, map: [
+            "distance": formattedDistance,
+            "time": time
+        ])
+    }
+
+    @BotCommand(
         ["version", "uptime"],
         parameters: 0...0,
         category: .utility,
