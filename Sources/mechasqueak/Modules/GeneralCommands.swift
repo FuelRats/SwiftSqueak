@@ -79,20 +79,28 @@ class GeneralCommands: IRCBotModule {
 
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
-        guard var distance = Double(distanceString) else {
+        guard var distanceDouble = Double(distanceString) else {
             command.message.replyPrivate(key: "sctime.error", fromCommand: command)
             return
         }
 
         if isYear {
-            distance = distance * 365.28 * 24 * 60 * 60
+            distanceDouble = distanceDouble * 365.28 * 24 * 60 * 60
         }
 
         if isKilo {
-            distance = distance * 1000
+            distanceDouble = distanceDouble * 1000
         }
+        let distance = Int(distanceDouble)
 
-        let seconds = Int(65 + (1.8 * sqrt(Double(distance))))
+        /*
+            Thank you to RadLock for creating the original equation.
+         */
+        let part1 = 33.7+1.87*pow(10 as Double, -3)*Double(distance)
+        let part2 = -8.86*pow(10 as Double, -10) * pow(Double(distance), 2)
+        let part3 = 2.37*pow(10 as Double, -16) * pow(Double(distance), 3)
+        let part4 = -2.21*pow(10 as Double, -23) * pow(Double(distance), 4)
+        let seconds = Int(part1 + part2 + part3 + part4)
 
         var time = ""
         if seconds > 3600 {
