@@ -70,8 +70,7 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveTravelTimeCommand = { command in
         var distanceString = command.parameters.joined(separator: " ").lowercased().trimmingCharacters(in: .whitespaces)
-        let isYear = distanceString.hasSuffix("ly")
-        var kiloPhrases = ["kls", "k ls", "k", "kly", "k ly"]
+        var kiloPhrases = ["kls", "k ls", "k"]
         let isKilo = kiloPhrases.contains(where: {
             distanceString.hasSuffix($0)
         })
@@ -79,37 +78,38 @@ class GeneralCommands: IRCBotModule {
 
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
-        guard var distanceDouble = Double(distanceString) else {
+        guard var distance = Double(distanceString) else {
             command.message.replyPrivate(key: "sctime.error", fromCommand: command)
             return
         }
 
-        if isYear {
-            distanceDouble = distanceDouble * 365.28 * 24 * 60 * 60
-        }
-
         if isKilo {
-            distanceDouble = distanceDouble * 1000
+            distance = distance * 1000
         }
-        let distance = Int(distanceDouble)
 
-        /*
-            Thank you to RadLock for creating the original equation.
-         */
-        let part1 = 33.7+1.87*pow(10 as Double, -3)*Double(distance)
-        let part2 = -8.86*pow(10 as Double, -10) * pow(Double(distance), 2)
-        let part3 = 2.37*pow(10 as Double, -16) * pow(Double(distance), 3)
-        let part4 = -2.21*pow(10 as Double, -23) * pow(Double(distance), 4)
-        let seconds = Int(part1 + part2 + part3 + part4)
+        var seconds = 0.0
+        if distance < 500000 {
+            seconds = 4.4708*pow(distance, 0.3899)
+        } else {
+            /*
+                Thank you to RadLock for creating the original equation.
+             */
+           let part1 = 33.7+1.87*pow(10 as Double, -3)*Double(distance)
+           let part2 = -8.86*pow(10 as Double, -10) * pow(Double(distance), 2)
+           let part3 = 2.37*pow(10 as Double, -16) * pow(Double(distance), 3)
+           let part4 = -2.21*pow(10 as Double, -23) * pow(Double(distance), 4)
+           seconds = part1 + part2 + part3 + part4
+        }
 
         var time = ""
         if seconds > 3600 {
-            let hours = Int(seconds / 3600)
-            let minutes = Int((seconds % 3600) / 60)
+            let hours = ceil(seconds / 3600)
+            let minutes = ceil(seconds.truncatingRemainder(dividingBy: 3600)) / 60
             time = "\(hours) hours, and \(minutes) minutes"
         } else if seconds > 60 {
-            let minutes = Int(seconds / 60)
-            time = "\(minutes) minutes"
+            let minutes = ceil(seconds / 60)
+            let seconds = ceil((seconds.truncatingRemainder(dividingBy: 60)))
+            time = "\(minutes) minutes, and \(seconds) seconds"
         } else {
             time = "\(seconds) seconds"
         }
