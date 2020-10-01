@@ -103,15 +103,15 @@ class GeneralCommands: IRCBotModule {
 
         var time = ""
         if seconds > 3600 {
-            let hours = ceil(seconds / 3600)
-            let minutes = ceil(seconds.truncatingRemainder(dividingBy: 3600)) / 60
+            let hours = Int(seconds / 3600)
+            let minutes = Int(seconds.truncatingRemainder(dividingBy: 3600)) / 60
             time = "\(hours) hours, and \(minutes) minutes"
         } else if seconds > 60 {
-            let minutes = ceil(seconds / 60)
-            let seconds = ceil((seconds.truncatingRemainder(dividingBy: 60)))
+            let minutes = Int(seconds / 60)
+            let seconds = Int((seconds.truncatingRemainder(dividingBy: 60)))
             time = "\(minutes) minutes, and \(seconds) seconds"
         } else {
-            time = "\(seconds) seconds"
+            time = "\(Int(seconds)) seconds"
         }
 
         let formatter = NumberFormatter.englishFormatter()
