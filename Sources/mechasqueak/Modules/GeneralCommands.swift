@@ -274,7 +274,7 @@ class GeneralCommands: IRCBotModule {
 
         let verifiedStatus = associatedNickname.permissions.contains(.UserVerified) ?
             IRCFormat.color(.LightGreen, "Verified") :
-            IRCFormat.color(.LightGreen, "Unverified")
+            IRCFormat.color(.Orange, "Unverified")
 
         command.message.reply(key: "whois.response", fromCommand: command, map: [
             "nick": nick,
