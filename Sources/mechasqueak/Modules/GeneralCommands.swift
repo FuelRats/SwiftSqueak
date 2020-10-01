@@ -113,8 +113,11 @@ class GeneralCommands: IRCBotModule {
         if seconds < 0 {
             return
         }
-        if seconds > 86400 {
-
+        if seconds > 31536000 {
+            let years = Int(seconds / 31536000)
+            let days = Int(seconds.truncatingRemainder(dividingBy: 31536000)) / 86400
+            time = "\(years) years, and \(days) days"
+        } else if seconds > 86400 {
             let days = Int(seconds / 86400)
             let hours = Int(seconds.truncatingRemainder(dividingBy: 86400)) / 3600
             time = "\(days) days, and \(hours) hours"
