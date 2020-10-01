@@ -248,16 +248,40 @@ class RescueBoard {
             ]))
         } else if initiated != .insertion && rescue.codeRed == true {
             let factKey = rescue.platform != nil ? rescue.platform!.quitFact : "prepcr"
+            let locale = rescue.clientLanguage ?? Locale(identifier: "en")
 
+            Fact.get(name: factKey, forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
+                guard let fact = fact else {
+                    return Fact.get(name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en"))
+                }
 
-            Fact.get(name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en")).whenSuccess({ fact in
+                return loop.next().makeSucceededFuture(fact)
+            }).flatMap { (fact) -> EventLoopFuture<Fact?> in
+                if let fact = fact {
+                    return loop.next().makeSucceededFuture(fact)
+                } else if rescue.clientLanguage != nil && rescue.platform != nil {
+                    // If platform specific quit is not available in this language, try !prepcr in this language
+                    return Fact.get(name: "prepcr", forLocale: rescue.clientLanguage!)
+                } else {
+                    return loop.next().makeSucceededFuture(nil)
+                }
+            }.flatMap { (fact) -> EventLoopFuture<Fact?> in
+                if let fact = fact {
+                    return loop.next().makeSucceededFuture(fact)
+                } else if rescue.clientLanguage != nil && rescue.platform != nil {
+                    // If neiher quit or prepcr is available in this language, fall back to English.
+                    return Fact.get(name: factKey, forLocale: Locale(identifier: "en"))
+                } else {
+                    return loop.next().makeSucceededFuture(nil)
+                }
+            }.whenSuccess { fact in
                 guard fact != nil else {
                     return
                 }
 
                 let client = rescue.clientNick ?? rescue.client ?? ""
                 message.reply(message: "\(client) \(fact!.message)")
-            })
+            }
         }
     }
 
