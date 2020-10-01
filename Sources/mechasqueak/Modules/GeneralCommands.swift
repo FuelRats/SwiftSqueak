@@ -70,25 +70,34 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveTravelTimeCommand = { command in
         var distanceString = command.parameters.joined(separator: " ").lowercased().trimmingCharacters(in: .whitespaces)
-        let isKilo = distanceString.hasSuffix("kls") || distanceString.hasSuffix("k ls") || distanceString.hasSuffix("k")
+        let isYear = distanceString.hasSuffix("ly")
+        var kiloPhrases = ["kls", "k ls", "k", "kly", "k ly"]
+        let isKilo = kiloPhrases.contains(where: {
+            distanceString.hasSuffix($0)
+        })
         let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted
 
+        distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
         guard var distance = Double(distanceString) else {
             command.message.replyPrivate(key: "sctime.error", fromCommand: command)
             return
         }
 
+        if isYear {
+            distance = distance * 365.28 * 24 * 60 * 60
+        }
+
         if isKilo {
             distance = distance * 1000
         }
 
-        let seconds = ceil(65 + (1.8 * sqrt(Double(distance))))
+        let seconds = Int(65 + (1.8 * sqrt(Double(distance))))
 
         var time = ""
         if seconds > 3600 {
             let hours = Int(seconds / 3600)
-            let minutes = Int(remainder(seconds, 3600) / 60)
+            let minutes = Int((seconds % 3600) / 60)
             time = "\(hours) hours, and \(minutes) minutes"
         } else if seconds > 60 {
             let minutes = Int(seconds / 60)
