@@ -8,7 +8,7 @@
   "whoami.nodata": "You are logged in as user %{account} but I couldn't find IRC services data for this account.",
   "whoami.noaccount": "You are logged in as user %{account} but I couldn't find a Fuel Rats API account linked to you.",
   "whoami.response": "You are logged in as user %{account} (%{verified}) and have Fuel Rats User ID %{userId}. Joined: %{joined}. Rats: %{rats}.",
-  "whois.notfound": "Could not check account status for %{nick} as they were not found in the users list.",
+  "whois.notfound": "Could not check account status for %{nick} as they were not found in any channel.",
   "whois.notloggedin": "Could not check account status for %{nick} as they are not logged in to NickServ.",
   "whois.nodata": "%{nick} is logged in to NickServ as %{account} but I could not find any IRC services data for their account.",
   "whois.noaccount": "%{nick} is logged in to NickServ as %{account} but I could not find a Fuel Rats account linked to their nick.",

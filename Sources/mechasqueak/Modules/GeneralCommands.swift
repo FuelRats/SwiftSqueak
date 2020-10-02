@@ -229,7 +229,9 @@ class GeneralCommands: IRCBotModule {
         let message = command.message
         let nick = command.parameters[0]
 
-        guard let user = message.destination.member(named: nick) else {
+        guard let user = message.client.channels.compactMap({ channel in
+            return channel.member(named: nick)
+        }).first else {
             command.message.error(key: "whois.notfound", fromCommand: command, map: [
                 "nick": nick
             ])
