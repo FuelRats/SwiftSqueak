@@ -342,6 +342,7 @@ class FactCommands: IRCBotModule {
         for param in command.parameters {
             string += param.lowercased()
         }
+        string += command.locale.identifier
 
         return string.sha256()
     }
