@@ -77,7 +77,10 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
 
-        let system = command.parameters[1]
+        var system = command.parameters[1].uppercased()
+        if system.hasSuffix(" SYSTEM") {
+            system.removeLast(7)
+        }
 
         rescue.system = system.uppercased()
 
@@ -125,7 +128,6 @@ class BoardAttributeCommands: IRCBotModule {
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-
 
         let oldClient = rescue.client!
         let client = command.parameters[1]

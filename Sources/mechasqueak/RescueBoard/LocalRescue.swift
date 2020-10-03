@@ -77,7 +77,11 @@ class LocalRescue: Codable {
         let client = match.group(at: 1)!
         self.channel = message.destination.name
         self.client = client
-        self.system = match.group(at: 2)!.uppercased()
+        var system = match.group(at: 2)!.uppercased()
+        if system.hasSuffix(" SYSTEM") {
+            system.removeLast(7)
+        }
+        self.system = system
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
@@ -123,7 +127,12 @@ class LocalRescue: Codable {
         self.clientHost = message.user.hostmask
         self.channel = message.destination.name
 
-        self.system = signal.system?.uppercased()
+        var system = signal.system?.uppercased()
+        if system != nil && system!.hasSuffix(" SYSTEM") {
+            system?.removeLast(7)
+        }
+        self.system = system
+
         if let platformString = signal.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
@@ -157,7 +166,12 @@ class LocalRescue: Codable {
 
         self.client = clientName
         self.clientNick = clientName
-        self.system = input.system?.uppercased()
+
+        var system = input.system?.uppercased()
+        if system != nil && system!.hasSuffix(" SYSTEM") {
+            system?.removeLast(7)
+        }
+        self.system = system
         self.channel = command.message.destination.name
 
         if let ircUser = command.message.destination.member(named: clientName) {
