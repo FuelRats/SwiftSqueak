@@ -85,30 +85,19 @@ class SystemSearch: IRCBotModule {
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
 
-        SystemsAPI.performLandmarkCheck(forSystem: system, onComplete: { request in
-            switch request {
-                case .success(let result):
-                    guard result.landmarks.count > 0 else {
-                        command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                            "system": system
-                        ])
-                        return
-                    }
-
-                    let landmark = result.landmarks[0]
-
-                    command.message.reply(key: "landmark.response", fromCommand: command, map: [
-                        "system": result.meta.name,
-                        "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
-                        "landmark": landmark.name
-                    ])
-
-                case .failure:
-                    command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                        "system": system
-                    ])
+        SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { (searchResult, landmark, _) in
+            guard let landmark = landmark, let searchResult = searchResult else {
+                command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                    "system": system
+                ])
+                return
             }
 
+            command.message.reply(key: "landmark.response", fromCommand: command, map: [
+                "system": searchResult.name,
+                "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
+                "landmark": landmark.name
+            ])
         })
     }
 }
