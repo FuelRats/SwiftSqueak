@@ -26,6 +26,14 @@ import Foundation
 import IRCKit
 
 class GeneralCommands: IRCBotModule {
+    static let factors: [String: Double] = [
+        "ls": 1,
+        "ly": 365 * 24 * 60 * 60,
+        "pc": 3.262 * 365 * 24 * 60 * 60,
+        "parsec": 3.262 * 365 * 24 * 60 * 60,
+        "au": 499
+    ]
+
     static let SIprefixes: [String: Double] = [
         "n": pow(10, -9),
         "u": pow(10, -6),
@@ -87,15 +95,18 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveTravelTimeCommand = { command in
         var distanceString = command.parameters.joined(separator: " ").trimmingCharacters(in: .whitespaces)
-        let isLy = distanceString.lowercased().hasSuffix("ly")
-        if distanceString.lowercased().hasSuffix("ly") || distanceString.lowercased().hasSuffix("ls") {
-            distanceString.removeLast(2)
-        }
-
         var factor: Double = 1
+        for suffix in factors {
+            if distanceString.lowercased().hasSuffix(suffix.key) {
+                distanceString.removeLast(suffix.key.count)
+                factor = suffix.value
+            }
+        }
+        distanceString = distanceString.trimmingCharacters(in: .whitespaces)
+
         for prefix in SIprefixes {
             if distanceString.hasSuffix(prefix.key) {
-                factor = prefix.value
+                factor = factor * prefix.value
             }
         }
 
@@ -109,10 +120,6 @@ class GeneralCommands: IRCBotModule {
         }
 
         distance = distance * factor
-
-        if isLy {
-            distance = distance * 365.0 * 24.0 * 60.0 * 60.0
-        }
 
         var seconds = 0.0
         if distance < 500000 {
