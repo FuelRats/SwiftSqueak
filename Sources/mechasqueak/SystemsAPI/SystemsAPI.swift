@@ -160,7 +160,7 @@ class SystemsAPI {
     static func performLandmarkCheck (
         forSystem systemName: String,
         onComplete: @escaping (Result<SystemsAPILandmarkDocument, Error>) -> Void) {
-        var url = URLComponents(string: "https://sapi.fuelrats.dev/landmark")!
+        var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
         url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
 
@@ -193,7 +193,7 @@ class SystemsAPI {
         onComplete: @escaping (SystemsAPIStatisticsDocument) -> Void,
         onError: @escaping (Error?) -> Void
     ) {
-        let url = URLComponents(string: "https://sapi.fuelrats.dev/api/stats")!
+        let url = URLComponents(string: "https://system.api.fuelrats.com/api/stats")!
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
