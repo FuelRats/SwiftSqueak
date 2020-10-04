@@ -34,6 +34,7 @@ class LocalRescue: Codable {
     var clientHost: String?
     var channel: String
     var systemCorrections: [SystemsAPISearchDocument.SearchResult]?
+    var systemManuallyCorrected = false
 
     let id: UUID
 

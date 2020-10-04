@@ -109,7 +109,9 @@ class BoardAttributeCommands: IRCBotModule {
                     "landmark": landmarkResult.name,
                     "permit": searchResult.permitText ?? ""
                 ])
-            })
+            }
+        )
+        rescue.systemManuallyCorrected = true
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
 

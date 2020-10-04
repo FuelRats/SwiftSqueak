@@ -115,6 +115,10 @@ class SystemsAPI {
             }
 
             SystemsAPI.performSearch(forSystem: system, onComplete: { result in
+                guard rescue.systemManuallyCorrected == false else {
+                    return
+                }
+                
                 switch result {
                     case .success(let data):
                         guard var results = data.data else {
