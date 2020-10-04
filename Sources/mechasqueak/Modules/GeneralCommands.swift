@@ -26,6 +26,23 @@ import Foundation
 import IRCKit
 
 class GeneralCommands: IRCBotModule {
+    static let SIprefixes: [String: Double] = [
+        "n": pow(10, -9),
+        "u": pow(10, -6),
+        "m": pow(10, -3),
+        "c": pow(10, -2),
+        "d": pow(10, -1),
+        "da": pow(10, 1),
+        "h": pow(10, 2),
+        "k": pow(10, 3),
+        "M": pow(10, 6),
+        "G": pow(10, 9),
+        "T": pow(10, 12),
+        "P": pow(10, 15),
+        "E": pow(10, 18),
+        "Z": pow(10, 21),
+        "Y": pow(10, 24)
+    ]
     var name: String = "GeneralCommands"
 
     required init(_ moduleManager: IRCBotModuleManager) {
@@ -69,12 +86,19 @@ class GeneralCommands: IRCBotModule {
         permission: nil
     )
     var didReceiveTravelTimeCommand = { command in
-        var distanceString = command.parameters.joined(separator: " ").lowercased().trimmingCharacters(in: .whitespaces)
-        var kiloPhrases = ["kls", "k ls", "k", "kly", "k ly"]
-        let isLy = distanceString.hasSuffix("ly")
-        let isKilo = kiloPhrases.contains(where: {
-            distanceString.hasSuffix($0)
-        })
+        var distanceString = command.parameters.joined(separator: " ").trimmingCharacters(in: .whitespaces)
+        let isLy = distanceString.lowercased().hasSuffix("ly")
+        if distanceString.lowercased().hasSuffix("ly") || distanceString.lowercased().hasSuffix("ls") {
+            distanceString.removeLast(2)
+        }
+
+        var factor: Double = 1
+        for prefix in SIprefixes {
+            if distanceString.hasSuffix(prefix.key) {
+                factor = prefix.value
+            }
+        }
+
         let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted
 
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
@@ -84,9 +108,7 @@ class GeneralCommands: IRCBotModule {
             return
         }
 
-        if isKilo {
-            distance = distance * 1000.0
-        }
+        distance = distance * factor
 
         if isLy {
             distance = distance * 365.0 * 24.0 * 60.0 * 60.0
@@ -113,10 +135,12 @@ class GeneralCommands: IRCBotModule {
         if seconds < 0 {
             return
         }
+
+        let formatter = NumberFormatter.englishFormatter()
         if seconds > 31536000 {
             let years = Int(seconds / 31536000)
             let days = Int(seconds.truncatingRemainder(dividingBy: 31536000)) / 86400
-            time = "\(years) years, and \(days) days"
+            time = "\(formatter.string(from: years) ?? "\(years)") years, and \(days) days"
         } else if seconds > 86400 {
             let days = Int(seconds / 86400)
             let hours = Int(seconds.truncatingRemainder(dividingBy: 86400)) / 3600
@@ -133,10 +157,16 @@ class GeneralCommands: IRCBotModule {
             time = "\(Int(seconds)) seconds"
         }
 
-        let formatter = NumberFormatter.englishFormatter()
+        let lightYears = distance / 60/60/24/365
         var formattedDistance = (formatter.string(from: distance) ?? "\(distance)") + "ls"
-        if distance > 3.6*pow(10, 6) {
-            formattedDistance = (formatter.string(from: distance / 60/60/24/365)  ?? "\(distance)") + "ly"
+        if distance > 3.1*pow(10, 13) {
+            let scientificFormatter = NumberFormatter()
+            scientificFormatter.numberStyle = .scientific
+            scientificFormatter.positiveFormat = "0.###E+0"
+            scientificFormatter.exponentSymbol = "E"
+            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)") ly"
+        } else if distance > 3.6*pow(10, 6) {
+            formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
         }
  
         command.message.reply(key: "sctime.response", fromCommand: command, map: [
