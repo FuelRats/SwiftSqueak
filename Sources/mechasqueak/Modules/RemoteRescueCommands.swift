@@ -255,7 +255,7 @@ class RemoteRescueCommands: IRCBotModule {
                     "client": rescue.client ?? "unknown client",
                     "system": rescue.system ?? "unknown system",
                     "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
-                    "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())"
+                    "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
                 ])
             }
         }, error: { _ in
@@ -359,6 +359,41 @@ class RemoteRescueCommands: IRCBotModule {
             ])
         }, error: { _ in
             command.message.error(key: "rescue.reopen.error", fromCommand: command)
+        })
+    }
+
+    @BotCommand(
+        ["clientpw", "pwclient"],
+        parameters: 1...1,
+        lastParameterIsContinous: true,
+        category: .rescues,
+        description: "Get paperwork link for a previous client by name.",
+        paramText: "<client name>",
+        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
+        permission: .RescueRead
+    )
+    var didReceiveClientPaperworkCommand = { command in
+        FuelRatsAPI.getRescuesForClient(client: command.parameters[0], complete: { results in
+            let rescues = results.body.data!.primary.values
+            guard rescues.count > 0 else {
+                command.message.error(key: "rescue.clientpw.error", fromCommand: command, map: [
+                    "client": command.parameters[0]
+                ])
+                return
+            }
+            let rescue = rescues[0]
+
+            URLShortener.attemptShorten(
+                url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit")!,
+                complete: { shortUrl in
+                    command.message.reply(key: "rescue.clientpw.response", fromCommand: command, map: [
+                        "client": rescue.attributes.client.value ?? "unknown client",
+                        "created": rescue.attributes.createdAt.value.ircRepresentable,
+                        "link": shortUrl
+                    ])
+            })
+        }, error: { _ in
+
         })
     }
 }

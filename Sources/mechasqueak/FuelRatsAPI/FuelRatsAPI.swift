@@ -147,6 +147,21 @@ class FuelRatsAPI {
         FuelRatsAPI.rescueSearch(query: query, complete: complete, error: error)
     }
 
+    static func getRescuesForClient (
+        client: String,
+        complete: @escaping (RescueSearchDocument) -> Void,
+        error: @escaping (Error?) -> Void
+    ) {
+        let query = [
+            URLQueryItem(name: "filter", value: [
+                "client": ["ilike": client]
+            ].jsonString),
+            URLQueryItem(name: "sort", value: "-createdAt"),
+        ]
+
+        FuelRatsAPI.rescueSearch(query: query, complete: complete, error: error)
+    }
+
     static func getRescuesInTrash (
         complete: @escaping (RescueSearchDocument) -> Void,
         error: @escaping (Error?) -> Void

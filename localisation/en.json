@@ -179,6 +179,9 @@
   "rescue.reopen.error": "Could not reopen rescue \"%{id}\" due to an error from the rescue server.",
   "rescue.reopen.exists": "Could not reopen rescue \"%{id}\" as it is already currently on the board as case #%{caseId}.",
   "rescue.reopen.opened": "Rescue \"%{id}\" has been re-opened and added to the board as case #%{caseId}.",
+
+  "rescue.clientpw.error": "Unable to find any previous cases for \"%{client}\".",
+  "rescue.clientpw.response": "Latest previous case for client \"%{client}\" (created %{created}) is available here: %{link}",
   
   "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
   "shorten.error": "Was unable to shorten URL due to a request error.",
