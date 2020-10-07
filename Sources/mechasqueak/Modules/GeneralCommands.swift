@@ -146,10 +146,12 @@ class GeneralCommands: IRCBotModule {
         }
 
         let formatter = NumberFormatter.englishFormatter()
+        let yearFormatter = NumberFormatter.englishFormatter()
+        yearFormatter.maximumFractionDigits = 0
         if seconds > 31536000 {
             let years = seconds / 31536000
             let days = seconds.truncatingRemainder(dividingBy: 31536000) / 86400
-            time = "\(formatter.string(from: years) ?? "\(years)") years, and \(days.clean) days"
+            time = "\(yearFormatter.string(from: years) ?? "\(years)") years, and \(days.clean) days"
         } else if seconds > 86400 {
             let days = seconds / 86400
             let hours = seconds.truncatingRemainder(dividingBy: 86400) / 3600
