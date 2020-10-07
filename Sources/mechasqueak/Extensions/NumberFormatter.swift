@@ -46,3 +46,9 @@ extension NumberFormatter {
         return self.string(from: NSNumber(value: number))
     }
 }
+
+extension Double {
+    var clean: String {
+       return String(format: "%.0f", self)
+    }
+}

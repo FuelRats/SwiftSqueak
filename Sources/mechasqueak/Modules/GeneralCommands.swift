@@ -147,23 +147,23 @@ class GeneralCommands: IRCBotModule {
 
         let formatter = NumberFormatter.englishFormatter()
         if seconds > 31536000 {
-            let years = Int(seconds / 31536000)
-            let days = Int(seconds.truncatingRemainder(dividingBy: 31536000)) / 86400
-            time = "\(formatter.string(from: years) ?? "\(years)") years, and \(days) days"
+            let years = seconds / 31536000
+            let days = seconds.truncatingRemainder(dividingBy: 31536000) / 86400
+            time = "\(formatter.string(from: years) ?? "\(years)") years, and \(days.clean) days"
         } else if seconds > 86400 {
-            let days = Int(seconds / 86400)
-            let hours = Int(seconds.truncatingRemainder(dividingBy: 86400)) / 3600
-            time = "\(days) days, and \(hours) hours"
+            let days = seconds / 86400
+            let hours = seconds.truncatingRemainder(dividingBy: 86400) / 3600
+            time = "\(days.clean) days, and \(hours.clean) hours"
         } else if seconds > 3600 {
-            let hours = Int(seconds / 3600)
-            let minutes = Int(seconds.truncatingRemainder(dividingBy: 3600)) / 60
-            time = "\(hours) hours, and \(minutes) minutes"
+            let hours = seconds / 3600
+            let minutes = seconds.truncatingRemainder(dividingBy: 3600) / 60
+            time = "\(hours.clean) hours, and \(minutes.clean) minutes"
         } else if seconds > 60 {
-            let minutes = Int(seconds / 60)
-            let seconds = Int((seconds.truncatingRemainder(dividingBy: 60)))
-            time = "\(minutes) minutes, and \(seconds) seconds"
+            let minutes = seconds / 60
+            let seconds = (seconds.truncatingRemainder(dividingBy: 60))
+            time = "\(minutes.clean) minutes, and \(seconds.clean) seconds"
         } else {
-            time = "\(Int(seconds)) seconds"
+            time = "\(seconds.clean) seconds"
         }
 
         let lightYears = distance / 60/60/24/365
