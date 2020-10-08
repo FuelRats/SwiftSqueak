@@ -343,6 +343,9 @@ class LocalRescue: Codable {
     ) {
         self.status = .Closed
         self.firstLimpet = firstLimpet
+        if let firstLimpet = firstLimpet {
+            self.rats.append(firstLimpet)
+        }
 
         let patchDocument = SingleDocument(
             apiDescription: .none,
