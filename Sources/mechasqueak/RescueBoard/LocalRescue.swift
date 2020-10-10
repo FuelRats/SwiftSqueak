@@ -282,8 +282,6 @@ class LocalRescue: Codable {
                 case .success(let response):
                     if response.status == .created {
                         self.synced = true
-                    } else if response.status == .conflict {
-                        mecha.rescueBoard.rescues.removeAll(where: { $0.id == self.id })
                     }
                 case .failure(let error):
                     debug(String(describing: error))
