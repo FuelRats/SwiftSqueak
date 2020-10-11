@@ -341,7 +341,9 @@ class LocalRescue: Codable {
     ) {
         self.status = .Closed
         self.firstLimpet = firstLimpet
-        if let firstLimpet = firstLimpet, self.rats.contains(firstLimpet) == false {
+        if let firstLimpet = firstLimpet, self.rats.contains(where: {
+            $0.id.rawValue == firstLimpet.id.rawValue
+        }) == false {
             self.rats.append(firstLimpet)
         }
 
