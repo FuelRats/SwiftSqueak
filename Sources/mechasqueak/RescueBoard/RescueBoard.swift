@@ -42,6 +42,20 @@ class RescueBoard {
         self.distanceFormatter.groupingSize = 3
         self.distanceFormatter.maximumFractionDigits = 1
         self.distanceFormatter.roundingMode = .halfUp
+
+        FuelRatsAPI.getLastRescue(complete: { result in
+            guard let rescues = result.body.primaryResource, rescues.values.count > 0 else {
+                return
+            }
+
+            let createdAt = rescues.values[0].attributes.createdAt.value
+            if self.lastSignalReceived == nil || createdAt > self.lastSignalReceived! {
+                print(createdAt)
+                self.lastSignalReceived = createdAt
+            }
+        }, error: { error in
+            print(error)
+        })
     }
 
     var synced: Bool {

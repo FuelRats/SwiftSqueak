@@ -131,6 +131,18 @@ class FuelRatsAPI {
         FuelRatsAPI.rescueSearch(query: query, complete: complete, error: error)
     }
 
+    static func getLastRescue (
+        complete: @escaping (RescueSearchDocument) -> Void,
+        error: @escaping (Error?) -> Void
+    ) {
+        let query = [
+            URLQueryItem(name: "page[limit]", value: "1"),
+            URLQueryItem(name: "sort", value: "-createdAt")
+        ]
+
+        FuelRatsAPI.rescueSearch(query: query, complete: complete, error: error)
+    }
+
     static func getRecentlyClosedRescues (
         count: Int,
         complete: @escaping (RescueSearchDocument) -> Void,
