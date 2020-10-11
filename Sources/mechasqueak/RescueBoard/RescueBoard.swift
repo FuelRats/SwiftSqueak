@@ -108,7 +108,7 @@ class RescueBoard {
         initiated: RescueInitiationType
     ) {
         if let existingRescue = self.rescues.first(where: {
-            $0.client == rescue.client || ($0.clientNick != nil && $0.clientNick == rescue.clientNick)
+            $0.client?.lowercased() == rescue.client?.lowercased() || ($0.clientNick != nil && $0.clientNick?.lowercased() == rescue.clientNick?.lowercased())
         }) {
 
             let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
