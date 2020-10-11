@@ -254,7 +254,7 @@ class RemoteRescueCommands: IRCBotModule {
                 command.message.replyPrivate(key: "rescue.unfiled.entry", fromCommand: command, map: [
                     "client": rescue.client ?? "u\u{200B}nknown client",
                     "system": rescue.system ?? "u\u{200B}nknown system",
-                    "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown platform",
+                    "platform": rescue.platform.ircRepresentable,
                     "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
                 ])
             }
@@ -286,7 +286,7 @@ class RemoteRescueCommands: IRCBotModule {
             command.message.replyPrivate(key: "rescue.quoteid.title", fromCommand: command, map: [
                 "client": rescue.client ?? "u\u{200B}nknown client",
                 "system": rescue.system ?? "u\u{200B}nknown system",
-                "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown platform",
+                "platform": rescue.platform.ircRepresentable,
                 "created": rescue.createdAt.ircRepresentable,
                 "updated": rescue.updatedAt.ircRepresentable,
                 "id": rescue.id.rawValue.ircRepresentation

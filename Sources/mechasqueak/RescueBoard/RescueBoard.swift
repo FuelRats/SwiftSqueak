@@ -191,7 +191,7 @@ class RescueBoard {
             message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "u\u{200B}nknown",
-                "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown",
+                "platform": rescue.platform.ircRepresentable,
                 "oxygen": rescue.ircOxygenStatus,
                 "caseId": caseId,
                 "platformSignal": rescue.platform?.signal ?? "",
@@ -210,7 +210,7 @@ class RescueBoard {
                 message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
                     "signal": configuration.general.signal.uppercased(),
                     "client": rescue.client ?? "u\u{200B}nknown",
-                    "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown",
+                    "platform": rescue.platform.ircRepresentable,
                     "oxygen": rescue.ircOxygenStatus,
                     "caseId": caseId,
                     "system": rescue.system ?? "none",

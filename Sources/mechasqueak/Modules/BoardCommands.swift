@@ -125,7 +125,7 @@ class BoardCommands: IRCBotModule {
                 "caseId": rescue.commandIdentifier!,
                 "id": rescue.id.ircRepresentation,
                 "client": rescue.client ?? "?",
-                "platform": rescue.platform?.ircRepresentable,
+                "platform": rescue.platform.ircRepresentable,
                 "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : "",
                 "assigned": rescue.assignList != nil
                     && arguments.contains(.showOnlyAssigned) ? "Assigned: \(rescue.assignList!)" : ""
