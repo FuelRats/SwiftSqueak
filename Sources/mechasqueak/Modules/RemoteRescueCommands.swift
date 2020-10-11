@@ -175,7 +175,7 @@ class RemoteRescueCommands: IRCBotModule {
                 command.message.replyPrivate(key: format, fromCommand: command, map: [
                     "id": rescue.id.rawValue.ircRepresentation,
                     "client": rescue.client ?? "u\u{200B}nknown client",
-                    "platform": rescue.platform.ircRepresentable
+                    "platform": rescue.platform.ircRepresentable,
                     "reason": rescue.notes
                 ])
             }
