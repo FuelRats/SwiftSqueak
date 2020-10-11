@@ -26,7 +26,7 @@ import Foundation
 import IRCKit
 
 class BoardQuoteCommands: IRCBotModule {
-    static let disallowedInjectNames = ["ratsignal", "drillsignal", "client"]
+    static let disallowedInjectNames = ["ratsignal", "drillsignal", "client", "<client>"]
     var name: String = "Case Quote Commands"
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
