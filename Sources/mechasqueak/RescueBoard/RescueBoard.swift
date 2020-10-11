@@ -135,7 +135,7 @@ class RescueBoard {
                     "client": existingRescue.client!,
                     "system": existingRescue.system!,
                     "caseId": existingRescue.commandIdentifier!,
-                    "platform": existingRescue.platform?.ircRepresentable ?? "unknown",
+                    "platform": existingRescue.platform.ircRepresentable,
                     "cr": crStatus
                 ]))
             }
@@ -145,7 +145,7 @@ class RescueBoard {
                 changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
             }
             if rescue.system != existingRescue.system {
-                changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "unknown") -> \(rescue.system ?? "unknown")")
+                changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "u\u{200B}nknown") -> \(rescue.system ?? "u\u{200B}nknown")")
             }
             if rescue.codeRed != existingRescue.codeRed {
                 changes.append("\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)")
@@ -190,8 +190,8 @@ class RescueBoard {
         guard let system = rescue.system else {
             message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
-                "client": rescue.client ?? "unknown",
-                "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                "client": rescue.client ?? "u\u{200B}nknown",
+                "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown",
                 "oxygen": rescue.ircOxygenStatus,
                 "caseId": caseId,
                 "platformSignal": rescue.platform?.signal ?? "",
@@ -209,8 +209,8 @@ class RescueBoard {
             guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
                 message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
                     "signal": configuration.general.signal.uppercased(),
-                    "client": rescue.client ?? "unknown",
-                    "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                    "client": rescue.client ?? "u\u{200B}nknown",
+                    "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown",
                     "oxygen": rescue.ircOxygenStatus,
                     "caseId": caseId,
                     "system": rescue.system ?? "none",
@@ -237,8 +237,8 @@ class RescueBoard {
 
             message.reply(message: lingo.localize(format, locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
-                "client": rescue.client ?? "unknown",
-                "platform": rescue.platform?.ircRepresentable ?? "unknown",
+                "client": rescue.client ?? "u\u{200B}nknown",
+                "platform": rescue.platform.ircRepresentable,
                 "oxygen": rescue.ircOxygenStatus,
                 "caseId": caseId,
                 "system": rescue.system ?? "none",

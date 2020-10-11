@@ -109,6 +109,6 @@ enum GamePlatform: String, Codable {
 
 extension Optional where Wrapped == GamePlatform {
     var ircRepresentable: String {
-        return self?.ircRepresentable ?? "unknown"
+        return self?.ircRepresentable ?? "u\u{200B}nknown platform"
     }
 }

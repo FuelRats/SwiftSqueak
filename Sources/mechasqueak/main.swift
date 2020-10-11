@@ -165,7 +165,7 @@ class MechaSqueak {
                 rescue.clientHost = userJoin.user.hostmask
                 userJoin.channel.send(key: "board.clientjoin", map: [
                     "caseId": rescue.commandIdentifier!,
-                    "client": rescue.client ?? "unknown client"
+                    "client": rescue.client ?? "u\u{200B}nknown client"
                 ])
             } else if let rescue = mecha.rescueBoard.rescues.first(where: {
                 $0.clientHost == userJoin.user.hostmask
@@ -173,7 +173,7 @@ class MechaSqueak {
                 rescue.clientNick = userJoin.user.nickname
                 userJoin.channel.send(key: "board.clientjoinhost", map: [
                     "caseId": rescue.commandIdentifier!,
-                    "client": rescue.client ?? "unknown client",
+                    "client": rescue.client ?? "u\u{200B}nknown client",
                     "nick": userJoin.user.nickname
                 ])
             }
@@ -191,7 +191,7 @@ class MechaSqueak {
                 toChannelName: rescue.channel,
                 withKey: "board.clientquit", mapping: [
                     "caseId": rescue.commandIdentifier!,
-                    "client": rescue.client ?? "unknown client"
+                    "client": rescue.client ?? "u\u{200B}nknown client"
             ])
         }
     }

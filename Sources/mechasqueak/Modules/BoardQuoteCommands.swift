@@ -51,9 +51,9 @@ class BoardQuoteCommands: IRCBotModule {
         command.message.replyPrivate(key: format, fromCommand: command, map: [
             "title": rescue.title ?? "",
             "caseId": rescue.commandIdentifier!,
-            "client": rescue.client ?? "unknown client",
-            "system": rescue.system ?? "unknown system",
-            "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
+            "client": rescue.client ?? "u\u{200B}nknown client",
+            "system": rescue.system ?? "u\u{200B}nknown system",
+            "platform": rescue.platform.ircRepresentable,
             "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         ])
 

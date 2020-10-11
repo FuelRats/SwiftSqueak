@@ -94,7 +94,7 @@ class MessageScanner: IRCBotModule {
                             locale: "en-GB",
                             interpolations: [
                                 "case": caseId,
-                                "platform": rescue.platform?.ircRepresentable ?? "unknown platform"
+                                "platform": rescue.platform.ircRepresentable
                             ]
                         ))
                     }

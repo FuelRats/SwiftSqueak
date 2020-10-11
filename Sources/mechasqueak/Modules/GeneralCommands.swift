@@ -252,7 +252,7 @@ class GeneralCommands: IRCBotModule {
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats,
-            "joined": joinedDate?.eliteFormattedString ?? "unknown",
+            "joined": joinedDate?.eliteFormattedString ?? "u\u{200B}nknown",
             "verified": verifiedStatus
         ])
     }
@@ -324,7 +324,7 @@ class GeneralCommands: IRCBotModule {
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats,
-            "joined": joinedDate?.eliteFormattedString ?? "unknown",
+            "joined": joinedDate?.eliteFormattedString ?? "u\u{200B}nknown",
             "verified": verifiedStatus
         ])
     }

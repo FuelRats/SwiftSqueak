@@ -66,9 +66,9 @@ class RemoteRescueCommands: IRCBotModule {
             let rescueList = results.body.data!.primary.values.enumerated().map({ (index, rescue) in
                 return lingo.localize("rescue.closed.entry", locale: command.locale.identifier, interpolations: [
                     "index": index,
-                    "client": rescue.client ?? "unknown client",
-                    "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
-                    "system": rescue.system ?? "unknown system",
+                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "platform": rescue.platform.ircRepresentable,
+                    "system": rescue.system ?? "u\u{200B}nknown system",
                     "id": rescue.id.rawValue.ircRepresentation
                 ])
             })
@@ -174,8 +174,8 @@ class RemoteRescueCommands: IRCBotModule {
 
                 command.message.replyPrivate(key: format, fromCommand: command, map: [
                     "id": rescue.id.rawValue.ircRepresentation,
-                    "client": rescue.client ?? "unknown client",
-                    "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
+                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "platform": rescue.platform.ircRepresentable
                     "reason": rescue.notes
                 ])
             }
@@ -252,9 +252,9 @@ class RemoteRescueCommands: IRCBotModule {
 
             for rescue in rescues {
                 command.message.replyPrivate(key: "rescue.unfiled.entry", fromCommand: command, map: [
-                    "client": rescue.client ?? "unknown client",
-                    "system": rescue.system ?? "unknown system",
-                    "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
+                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "system": rescue.system ?? "u\u{200B}nknown system",
+                    "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown platform",
                     "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
                 ])
             }
@@ -284,9 +284,9 @@ class RemoteRescueCommands: IRCBotModule {
             let rescue = result.body.data!.primary.value
 
             command.message.replyPrivate(key: "rescue.quoteid.title", fromCommand: command, map: [
-                "client": rescue.client ?? "unknown client",
-                "system": rescue.system ?? "unknown system",
-                "platform": rescue.platform?.ircRepresentable ?? "unknown platform",
+                "client": rescue.client ?? "u\u{200B}nknown client",
+                "system": rescue.system ?? "u\u{200B}nknown system",
+                "platform": rescue.platform?.ircRepresentable ?? "u\u{200B}nknown platform",
                 "created": rescue.createdAt.ircRepresentable,
                 "updated": rescue.updatedAt.ircRepresentable,
                 "id": rescue.id.rawValue.ircRepresentation
@@ -387,7 +387,7 @@ class RemoteRescueCommands: IRCBotModule {
                 url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit")!,
                 complete: { shortUrl in
                     command.message.reply(key: "rescue.clientpw.response", fromCommand: command, map: [
-                        "client": rescue.attributes.client.value ?? "unknown client",
+                        "client": rescue.attributes.client.value ?? "u\u{200B}nknown client",
                         "created": rescue.attributes.createdAt.value.ircRepresentable,
                         "link": shortUrl
                     ])
