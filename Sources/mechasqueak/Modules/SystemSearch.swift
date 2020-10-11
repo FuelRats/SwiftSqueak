@@ -84,6 +84,9 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
+        if system.lowercased().starts(with: "near ") {
+            system.removeFirst(5)
+        }
 
         SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { (searchResult, landmark, _) in
             guard let landmark = landmark, let searchResult = searchResult else {
