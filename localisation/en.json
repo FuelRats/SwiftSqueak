@@ -3,7 +3,7 @@
   "command.privateonly": "!%{command} command can only be used in private message",
   "command.toofewparams": "!%{command} command was given too few parameters. %{usage} %{example}",
   "command.toomanyparams": "!%{command} command was given too many parameters. %{usage} %{example}",
-  "command.blacklist": "CAUTION: A user on the dispatching blacklist (%{nick}) used the %{command} command!",
+  "command.blacklist": "Janitors: A user on the dispatching blacklist (%{nick}) used the %{command} command!",
   "whoami.notloggedin": "You are not logged in to NickServ, so I don't know why you're asking me.",
   "whoami.nodata": "You are logged in as user %{account} but I couldn't find IRC services data for this account.",
   "whoami.noaccount": "You are logged in as user %{account} but I couldn't find a Fuel Rats API account linked to you.",
