@@ -80,6 +80,8 @@ class BoardAssignCommands: IRCBotModule {
 
             guard acc.0.contains(where: {
                 $0.id.rawValue == rat.id.rawValue
+            }) == false && rescue.rats.contains(where: {
+                $0.id.rawValue == rat.id.rawValue
             }) == false else {
                 return acc
             }
