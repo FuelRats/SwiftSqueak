@@ -33,7 +33,8 @@
   "landmark.noresults": "%{system} was not found in the galaxy database.",
   "landmark.response": "%{system} is %{distance}ly from %{landmark}.",
 
-  "sctime.error": "Unable to understand the distance given in this command",
+  "sctime.error": "Unable to understand the distance given in this command.",
+  "sctime.uniterror": "Unable to understand the distance unit provided to the command.",
   "sctime.response": "The estimated super cruise travel time for %{distance} is %{time}.",
 
   "board.clientjoin": "Client of case #%{caseId} (%{client}) has joined!",

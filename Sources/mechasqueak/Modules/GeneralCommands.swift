@@ -97,13 +97,14 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveTravelTimeCommand = { command in
         var distanceString = command.parameters.joined(separator: " ").trimmingCharacters(in: .whitespaces)
-        var factor: Double = 1
-        for suffix in factors {
-            if distanceString.lowercased().hasSuffix(suffix.key) {
-                distanceString.removeLast(suffix.key.count)
-                factor = suffix.value
-            }
+        guard let unit = factors.first(where: {
+            distanceString.lowercased().hasSuffix($0.key)
+        }) else {
+            command.message.reply(key: "sctime.uniterror", fromCommand: command)
+            return
         }
+        distanceString.removeLast(unit.key.count)
+        var factor = unit.value
         distanceString = distanceString.trimmingCharacters(in: .whitespaces)
 
         for prefix in SIprefixes {
@@ -117,7 +118,7 @@ class GeneralCommands: IRCBotModule {
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
         guard var distance = Double(distanceString) else {
-            command.message.replyPrivate(key: "sctime.error", fromCommand: command)
+            command.message.reply(key: "sctime.error", fromCommand: command)
             return
         }
 
