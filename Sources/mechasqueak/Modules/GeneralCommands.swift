@@ -100,7 +100,18 @@ class GeneralCommands: IRCBotModule {
         guard let unit = factors.first(where: {
             distanceString.lowercased().hasSuffix($0.key)
         }) else {
-            command.message.reply(key: "sctime.uniterror", fromCommand: command)
+            guard var unit = distanceString.components(separatedBy: CharacterSet.letters.inverted).last, unit.count > 0 else {
+                command.message.reply(key: "sctime.uniterror", fromCommand: command)
+                return
+            }
+
+            if unit.hasSuffix("s") && unit.count > 3 {
+                unit.removeLast()
+            }
+
+            command.message.reply(key: "sctime.unknownunit", fromCommand: command, map: [
+                "unit": unit.trimmingCharacters(in: .whitespaces)
+            ])
             return
         }
         distanceString.removeLast(unit.key.count)
