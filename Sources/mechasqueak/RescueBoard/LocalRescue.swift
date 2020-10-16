@@ -28,7 +28,7 @@ import Regex
 import IRCKit
 
 class LocalRescue: Codable {
-    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-[A-Z]{2})?)\\)(?: - IRC Nickname: (.*))?".r!
+    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
     var clientHost: String?
