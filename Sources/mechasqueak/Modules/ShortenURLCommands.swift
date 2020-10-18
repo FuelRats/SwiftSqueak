@@ -36,7 +36,8 @@ class ShortenURLCommands: IRCBotModule {
         description: "Create a t.fuelr.at short url to another url, optionally set a custom url rather than a random.",
         paramText: "<url> [custom link]",
         example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ importantinfo",
-        permission: .RescueWriteOwn
+        permission: .RescueWriteOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveShortenURLCommand = { (command: IRCBotCommand) in
         var keyword: String?
