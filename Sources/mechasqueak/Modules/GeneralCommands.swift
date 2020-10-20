@@ -34,7 +34,8 @@ class GeneralCommands: IRCBotModule {
         "parsecs": 3.262 * 365 * 24 * 60 * 60,
         "au": 499,
         "m": 3.336 * pow(10, -9),
-        "banana": 5.9 * pow(10, -10)
+        "banana": 5.9 * pow(10, -10),
+        "bananas": 5.9 * pow(10, -10)
     ]
 
     static let SIprefixes: [String: Double] = [
