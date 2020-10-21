@@ -184,14 +184,17 @@ class GeneralCommands: IRCBotModule {
 
         let lightYears = distance / 60/60/24/365
         var formattedDistance = (formatter.string(from: distance) ?? "\(distance)") + "ls"
+        let scientificFormatter = NumberFormatter()
+        scientificFormatter.numberStyle = .scientific
+        scientificFormatter.positiveFormat = "0.###E+0"
+        scientificFormatter.exponentSymbol = "E"
+
         if distance > 3.1*pow(10, 13) {
-            let scientificFormatter = NumberFormatter()
-            scientificFormatter.numberStyle = .scientific
-            scientificFormatter.positiveFormat = "0.###E+0"
-            scientificFormatter.exponentSymbol = "E"
-            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)") ly"
+            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
         } else if distance > 3.6*pow(10, 6) {
             formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
+        } else if distance < 1 {
+            formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(distance)")ls"
         }
  
         command.message.reply(key: "sctime.response", fromCommand: command, map: [
