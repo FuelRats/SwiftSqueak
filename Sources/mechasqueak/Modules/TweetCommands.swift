@@ -45,7 +45,25 @@ class TweetCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveTweetCommand = { command in
-        Twitter.tweet(message: command.parameters[0], complete: {
+        let contents = command.parameters[0]
+        if mecha.rescueBoard.rescues.first(where: { rescue in
+            if let system = rescue.system {
+                if contents.lowercased().contains(system.lowercased()) {
+                    return true
+                }
+            }
+            if let client = rescue.client {
+                if contents.lowercased().contains(client.lowercased()) {
+                    return true
+                }
+            }
+            return false
+        }) != nil {
+            command.message.error(key: "tweet.confidential", fromCommand: command)
+            return
+        }
+
+        Twitter.tweet(message: contents, complete: {
             command.message.reply(key: "tweet.success", fromCommand: command)
         }, error: { _ in
             command.message.error(key: "tweet.error", fromCommand: command)
