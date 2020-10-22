@@ -172,12 +172,13 @@ class MessageScanner: IRCBotModule {
 
             return rescue
         }
+        return nil
 
-        return mecha.rescueBoard.rescues.first(where: { rescue in
-            guard let clientNick = rescue.clientNick else {
-                return false
-            }
-            return message.message.lowercased().contains(clientNick.lowercased())
-        })
+//        return mecha.rescueBoard.rescues.first(where: { rescue in
+//            guard let clientNick = rescue.clientNick else {
+//                return false
+//            }
+//            return message.message.lowercased().contains(clientNick.lowercased())
+//        })
     }
 }
