@@ -92,7 +92,7 @@ class BoardAssignCommands: IRCBotModule {
         rescue.rats.append(contentsOf: assigns.0)
         rescue.unidentifiedRats.append(contentsOf: assigns.1)
 
-        let allRats = assigns.0.map({ $0.attributes.name.value }) + assigns.1
+        let allRats = rescue.rats.map({ $0.attributes.name.value }) + rescue.unidentifiedRats
         guard allRats.count > 0 else {
             command.message.error(key: "board.assign.none", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier!
