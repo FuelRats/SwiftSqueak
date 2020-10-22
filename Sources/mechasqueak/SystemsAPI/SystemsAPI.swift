@@ -137,22 +137,23 @@ class SystemsAPI {
 
                         let firstResult = results[0]
                         if firstResult.name.lowercased().strippingNonAlphanumeric == rescue.system?.lowercased().strippingNonAlphanumeric {
-                            rescue.system = firstResult.name
-                            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
-
                             SystemsAPI.performLandmarkCheck(forSystem: firstResult.name, onComplete: { result in
                                 switch result {
                                     case .success(let landmarkResult):
                                         guard landmarkResult.landmarks.count > 0 else {
                                             return
                                         }
+
+                                        rescue.system = firstResult.name.uppercased()
+                                        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+
                                         mecha.reportingChannel?.client.sendMessage(
                                             toChannelName: rescue.channel,
                                             withKey: "sysc.autocorrect",
                                             mapping: [
                                                 "caseId": rescue.commandIdentifier!,
                                                 "client": rescue.client ?? "",
-                                                "system": firstResult.name,
+                                                "system": firstResult.name.uppercased(),
                                                 "landmark": landmarkResult.landmarks[0].name,
                                                 "distance": NumberFormatter.englishFormatter().string(from: landmarkResult.landmarks[0].distance) ?? landmarkResult.landmarks[0].distance
                                             ]
