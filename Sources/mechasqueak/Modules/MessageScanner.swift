@@ -142,6 +142,9 @@ class MessageScanner: IRCBotModule {
         }
 
         if let rescue = caseMentionedInMessage(message: channelMessage) {
+            guard channelMessage.destination.channelModes[.isSecret] == nil else {
+                return
+            }
             guard MessageScanner.caseRelevantPhrases.first(where: {
                 channelMessage.message.lowercased().contains($0)
             }) != nil else {
