@@ -112,6 +112,10 @@ struct IRCBotCommandDeclaration {
         self.paramText = paramText
         self.example = example
     }
+
+    var isDispatchingCommand: Bool {
+        return self.category == .board && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
+    }
 }
 
 class IRCBotModuleManager {
@@ -231,8 +235,7 @@ class IRCBotModuleManager {
                 return
             }
         }
-
-        if command.category == .board && blacklist.contains(where: {
+        if command.isDispatchingCommand && blacklist.contains(where: {
             message.user.nickname.lowercased().contains($0.lowercased())
         }) {
             message.client.sendMessage(toChannelName: "#doersofstuff", withKey: "command.blacklist", mapping: [
