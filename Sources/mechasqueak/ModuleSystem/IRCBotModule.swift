@@ -233,7 +233,7 @@ class IRCBotModuleManager {
         }
 
         if command.category == .board && blacklist.contains(where: {
-            $0.lowercased().range(of: message.user.nickname.lowercased()) != nil
+            message.user.nickname.lowercased().contains($0.lowercased())
         }) {
             message.client.sendMessage(toChannelName: "#doersofstuff", withKey: "command.blacklist", mapping: [
                 "command": ircBotCommand.command,
