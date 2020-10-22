@@ -141,12 +141,7 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if let caseMentionMatch = MessageScanner.caseMentionExpression.findFirst(in: channelMessage.message) {
-            let caseId = caseMentionMatch.group(at: 1)!
-            guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
-                return
-            }
-
+        if let rescue = caseMentionedInMessage(message: channelMessage) {
             guard MessageScanner.caseRelevantPhrases.first(where: {
                 channelMessage.message.lowercased().contains($0)
             }) != nil else {
@@ -163,5 +158,23 @@ class MessageScanner: IRCBotModule {
 
             rescue.syncUpstream(fromBoard: mecha.rescueBoard)
         }
+    }
+
+    func caseMentionedInMessage (message: IRCPrivateMessage) -> LocalRescue? {
+        if let caseMentionMatch = MessageScanner.caseMentionExpression.findFirst(in: message.message) {
+            let caseId = caseMentionMatch.group(at: 1)!
+            guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
+                return nil
+            }
+
+            return rescue
+        }
+
+        return mecha.rescueBoard.rescues.first(where: { rescue in
+            guard let clientNick = rescue.clientNick else {
+                return false
+            }
+            return message.message.lowercased().contains(clientNick.lowercased())
+        })
     }
 }
