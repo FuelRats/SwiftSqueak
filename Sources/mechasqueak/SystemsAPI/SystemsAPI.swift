@@ -138,6 +138,7 @@ class SystemsAPI {
                         let firstResult = results[0]
                         if firstResult.name.lowercased().strippingNonAlphanumeric == rescue.system?.lowercased().strippingNonAlphanumeric {
                             rescue.system = firstResult.name
+                            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
 
                             SystemsAPI.performLandmarkCheck(forSystem: firstResult.name, onComplete: { result in
                                 switch result {
