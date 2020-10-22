@@ -94,6 +94,11 @@ class Autocorrect {
                 in: ...secondFragment.startIndex,
                 with: Autocorrect.performNumberSubstitution(value: String(secondFragment.first!))
             )
+            /* The last part of the second fragment of a procedural system is always a number. */
+            secondFragment = secondFragment.replacingCharacters(
+                in: secondFragment.endIndex...,
+                with: Autocorrect.performLetterrSubstitution(value: String(secondFragment.last!))
+            )
             fragments[1] = secondFragment
         }
 
