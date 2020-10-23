@@ -154,13 +154,12 @@ class BoardAssignCommands: IRCBotModule {
                 let nick = message.destination.member(named: unassign),
                 let apiData = nick.associatedAPIData,
                 let user = apiData.user {
-                if let assignIndex = apiData.ratsBelongingTo(user: user).firstIndex(where: { rat in
+                if let rat = apiData.ratsBelongingTo(user: user).first(where: { rat in
                     return rescue.rats.contains(where: {
                         $0.id.rawValue == rat.id.rawValue
                     })
-                }) {
-                    let rat = rescue.rats[assignIndex]
-                    rescue.rats.remove(at: assignIndex)
+                }), let ratIndex = rescue.rats.firstIndex(of: rat) {
+                    rescue.rats.remove(at: ratIndex)
                     removed.append(rat.attributes.name.value)
                     continue
                 }
