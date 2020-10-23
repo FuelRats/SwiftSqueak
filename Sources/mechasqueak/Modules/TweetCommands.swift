@@ -77,7 +77,7 @@ class TweetCommands: IRCBotModule {
         description: "Tweet information about a case from @FuelRatAlerts",
         paramText: "<case id/client>",
         example: "4",
-        permission: .TwitterWrite,
+        permission: .RescueWrite,
         allowedDestinations: .Channel
     )
     var didReceiveTweetCaseCommand = { command in

@@ -71,7 +71,8 @@ extension IRCUser {
                 .RescueRead,
                 .RescueReadOwn,
                 .RescueWrite,
-                .RescueWriteOwn
+                .RescueWriteOwn,
+                .TwitterWrite
             ]
         }
 
@@ -86,7 +87,8 @@ extension IRCUser {
                 .RescueRead,
                 .RescueReadOwn,
                 .RescueWrite,
-                .RescueWriteOwn
+                .RescueWriteOwn,
+                .TwitterWrite
             ]
         }
 
@@ -98,8 +100,7 @@ extension IRCUser {
                 .RatWriteOwn,
                 .RescueRead,
                 .RescueReadOwn,
-                .RescueWriteOwn,
-                .TwitterWrite
+                .RescueWriteOwn
             ]
         }
 
