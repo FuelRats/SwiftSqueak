@@ -149,20 +149,26 @@ class BoardAssignCommands: IRCBotModule {
             }) {
                 rescue.unidentifiedRats.remove(at: assignIndex)
                 removed.append(unassign)
+                continue
             } else if
                 let nick = message.destination.member(named: unassign),
-                let rat = nick.getRatRepresenting(rescue: rescue),
-                let assignIndex = rescue.rats.firstIndex(where: {
-                    $0.id.rawValue == rat.id.rawValue
+                let apiData = nick.associatedAPIData,
+                let user = apiData.user {
+                if let assignIndex = apiData.ratsBelongingTo(user: user).firstIndex(where: { rat in
+                    return rescue.rats.contains(where: {
+                        $0.id.rawValue == rat.id.rawValue
+                    })
                 }) {
-                rescue.rats.remove(at: assignIndex)
-                removed.append(rat.attributes.name.value)
-            } else {
-                command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
-                    "rats": unassign,
-                    "caseId": rescue.commandIdentifier!
-                ])
+                    let rat = rescue.rats[assignIndex]
+                    rescue.rats.remove(at: assignIndex)
+                    removed.append(rat.attributes.name.value)
+                    continue
+                }
             }
+            command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
+                "rats": unassign,
+                "caseId": rescue.commandIdentifier!
+            ])
         }
 
         let unassignedRats = removed.joined(separator: ", ")
