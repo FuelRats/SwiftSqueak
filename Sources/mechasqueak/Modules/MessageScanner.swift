@@ -89,14 +89,15 @@ class MessageScanner: IRCBotModule {
                     return rat.attributes.platform.value == rescue.platform
                 }) == nil {
                     if configuration.general.drillMode == false {
-                        channelMessage.replyPrivate(message: lingo.localize(
-                            "jumpcall.wrongplatform",
-                            locale: "en-GB",
-                            interpolations: [
+                        channelMessage.client.sendMessage(
+                            toChannelName: configuration.general.reportingChannel,
+                            withKey: "jumpcall.wrongplatform",
+                            mapping: [
                                 "case": caseId,
+                                "nick": channelMessage.user.nickname,
                                 "platform": rescue.platform.ircRepresentable
                             ]
-                        ))
+                        )
                     }
                 }
             } else if configuration.general.drillMode == false {
