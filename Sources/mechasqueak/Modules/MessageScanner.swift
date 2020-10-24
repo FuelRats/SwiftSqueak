@@ -29,17 +29,17 @@ import Regex
 class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
     private var channelMessageObserver: NotificationToken?
-    static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})j #([0-9]{1,3})", groupNames: ["jumps", "case"])
+    static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})[jJ] #([0-9]{1,3})", groupNames: ["jumps", "case"])
     static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
     static let jumpCallExpressionCaseAfter = try! Regex(
-        pattern: "#([0-9]{1,3}) ([0-9]{1,3})j",
+        pattern: "#([0-9]{1,3}) ([0-9]{1,3})[jJ]",
         groupNames: ["case", "jumps"]
     )
 
     static let caseRelevantPhrases = [
         "fr+", "fr-", "wr+", "wr-", "bc+", "bc-", "fuel+", "fuel-", "sys-", "sysconf", "destroyed", "exploded",
         "code red", "oxygen", "supercruise", "prep-", "prep+", "ez", "inst-", "open", "menu", "private", "actual",
-        "solo", "ready", "pos+", "rdy", "stand down", "stnd"
+        "solo", "ready", "pos+", "rdy", "stand down", "stnd", "log off"
     ]
 
     required init(_ moduleManager: IRCBotModuleManager) {
