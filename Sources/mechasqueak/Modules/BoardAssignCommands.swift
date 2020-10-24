@@ -85,6 +85,7 @@ class BoardAssignCommands: IRCBotModule {
             }) == false else {
                 return acc
             }
+            rescue.unidentifiedRats.removeAll(where: { $0.lowercased() == assign.lowercased() })
             acc.0.append(rat)
             return acc
         })
