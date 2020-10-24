@@ -95,6 +95,7 @@
       "other": "%{client}: Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}"
   },
   "board.assign.unidentified": "WARNING: Could not find a %{platform} account associated with these rats: %{rats}.",
+  "board.assign.notexist": "Could not add %{nick} to the case as there is no such person in the channel.",
   "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
   "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",
   
