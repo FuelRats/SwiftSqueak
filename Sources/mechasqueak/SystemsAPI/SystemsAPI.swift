@@ -136,7 +136,8 @@ class SystemsAPI {
                         }
 
                         let firstResult = results[0]
-                        if firstResult.name.lowercased().strippingNonAlphanumeric == rescue.system?.lowercased().strippingNonAlphanumeric {
+                        if firstResult.name.lowercased().strippingNonAlphanumeric == rescue.system?.lowercased().strippingNonAlphanumeric
+                            || firstResult.name.lowercased() == Autocorrect.check(system: rescue.system!)?.lowercased() {
                             SystemsAPI.performLandmarkCheck(forSystem: firstResult.name, onComplete: { result in
                                 switch result {
                                     case .success(let landmarkResult):
