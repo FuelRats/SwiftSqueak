@@ -80,11 +80,11 @@ enum GamePlatform: String, Codable {
         }
     }
 
-    var quitFact: String {
+    var factPrefix: String {
         let platformMap: [GamePlatform: String] = [
-            .PC: "pcquit",
-            .Xbox: "xquit",
-            .PS4: "psquit"
+            .PC: "pc",
+            .Xbox: "x",
+            .PS4: "ps"
         ]
         return platformMap[self]!
     }

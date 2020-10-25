@@ -50,11 +50,10 @@ class RescueBoard {
 
             let createdAt = rescues.values[0].attributes.createdAt.value
             if self.lastSignalReceived == nil || createdAt > self.lastSignalReceived! {
-                print(createdAt)
                 self.lastSignalReceived = createdAt
             }
         }, error: { error in
-            print(error)
+            debug(error.debugDescription)
         })
     }
 
@@ -261,7 +260,7 @@ class RescueBoard {
                 "client": rescue.clientNick ?? rescue.client ?? ""
             ]))
         } else if initiated != .insertion && rescue.codeRed == true {
-            let factKey = rescue.platform != nil ? rescue.platform!.quitFact : "prepcr"
+            let factKey = rescue.platform != nil ? "\(rescue.platform!.factPrefix)quit" : "prepcr"
             let locale = rescue.clientLanguage ?? Locale(identifier: "en")
 
             Fact.get(name: factKey, forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in

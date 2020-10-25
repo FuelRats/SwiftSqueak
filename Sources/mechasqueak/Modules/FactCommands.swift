@@ -32,6 +32,7 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
+    private var platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules"]
 
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
@@ -290,8 +291,20 @@ class FactCommands: IRCBotModule {
             return
         }
         
-        guard let command = IRCBotCommand(from: message) else {
+        guard var command = IRCBotCommand(from: message) else {
             return
+        }
+
+        if platformFacts.contains(where: { $0 == command.command }) {
+            guard
+                command.parameters.count > 0,
+                let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]),
+                let platform = rescue.platform
+                else {
+                return
+            }
+
+            command.command = "\(platform.factPrefix)\(command.command)"
         }
 
         if message.destination.isPrivateMessage == false {
