@@ -139,6 +139,7 @@
   "board.quiet.recent": "The last case was %{timespan} ago.",
   "board.quiet.notrecent": "The last case was %{timespan} ago. Time to summon a case?",
   "board.quiet.quiet": "Wow, the last signal was so long ago... %{timespan} ago to be exact! Orangey approves!",
+  "board.quiet.current": "A case is on going right now! Maybe you should be calling jumps instead of using !quiet 🤔",
   
   "board.notprepped": "WARNING: Client for case #%{caseId} has NOT been !prep-ed!",
   

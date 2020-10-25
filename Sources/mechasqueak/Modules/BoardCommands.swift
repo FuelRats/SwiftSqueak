@@ -302,6 +302,11 @@ class BoardCommands: IRCBotModule {
             return
         }
 
+        guard mecha.rescueBoard.rescues.first(where: { $0.status == .Open }) == nil else {
+            command.message.reply(key: "board.quiet.current", fromCommand: command)
+            return
+        }
+
         let timespan = Date().timeIntervalSince(lastSignalDate)
 
         let timespanString = lastSignalDate.timeAgo
