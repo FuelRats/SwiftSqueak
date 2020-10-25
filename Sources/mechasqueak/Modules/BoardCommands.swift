@@ -252,7 +252,8 @@ class BoardCommands: IRCBotModule {
                 $0.id == rescue.id
             })
             command.message.reply(key: "board.trash.success", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier!,
+                "client": rescue.client ?? "u\u{200B}nknown client"
             ])
             if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
                 timer?.cancel()
