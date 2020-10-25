@@ -45,10 +45,10 @@
   "board.synced": "Successfully synced board with %{api}. %{downstreamNew} new rescues were synced from the server and %{upstreamNew} new local rescues were synced to the server. %{downstreamChange} server-side changes were found and synced and %{upstreamChange} local changes were synced to the server. %{conflicts} case ID conflicts occured.",
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
   
-  "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
-  "board.announce.notindb": "%{signal} - CMDR %{client} - Reported System: %{system} (not in galaxy database) - Platform: %{platform} - O2: %{oxygen} Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
-  "board.announce.landmark": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) - Platform: %{platform} - O2: %{oxygen} Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
-  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
+  "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
+  "board.announce.notindb": "%{signal} - CMDR %{client} - Reported System: %{system} (not in galaxy database) - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
+  "board.announce.landmark": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
+  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
   
   "board.signal.nosystem": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} Case #%{caseId} %{cr} %{platformSignal}",
   "board.signal.notindb": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (not in galaxy database) %{cr} (Case #%{caseId}) %{platformSignal}",
