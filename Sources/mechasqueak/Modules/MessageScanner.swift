@@ -90,7 +90,7 @@ class MessageScanner: IRCBotModule {
                 }) == nil {
                     if configuration.general.drillMode == false {
                         channelMessage.client.sendMessage(
-                            toChannelName: configuration.general.reportingChannel,
+                            toChannelName: channelMessage.destination.name,
                             withKey: "jumpcall.wrongplatform",
                             mapping: [
                                 "case": caseId,
