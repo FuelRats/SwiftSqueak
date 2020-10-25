@@ -114,6 +114,13 @@ class SystemsAPI {
                 return
             }
 
+            guard system.lowercased().hasSuffix("sector") == false else {
+                mecha.reportingChannel?.send(key: "board.signal.unhelpfulsysmeme", map: [
+                    "system": system
+                ])
+                return
+            }
+
             SystemsAPI.performSearch(forSystem: system, onComplete: { result in
                 guard rescue.systemManuallyCorrected == false else {
                     return
