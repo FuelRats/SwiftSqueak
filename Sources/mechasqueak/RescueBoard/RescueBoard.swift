@@ -25,6 +25,7 @@
 import Foundation
 import NIO
 import IRCKit
+import Regex
 
 class RescueBoard {
     var rescues: [LocalRescue] = []
@@ -35,6 +36,7 @@ class RescueBoard {
     var lastSignalReceived: Date?
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
+    private let systemBodiesPattern = "(\\s(?:[A-Za-z]{1,2}(?: [0-9]{1,2})?))+$".r!
 
     init () {
         self.distanceFormatter = NumberFormatter()
@@ -186,7 +188,7 @@ class RescueBoard {
         let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
 
-        guard let system = rescue.system else {
+        guard var system = rescue.system else {
             message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "u\u{200B}nknown",
@@ -201,56 +203,65 @@ class RescueBoard {
             return
         }
 
+        if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system) {
+            system.removeLast(systemBodiesMatches.matched.count)
+            rescue.system = system
+            let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
+            rescue.quotes.append(RescueQuote(
+                author: message.client.currentNick,
+                message: "Client indicated location in system near body \(body)",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: message.client.currentNick)
+            )
+        }
+
         SystemsAPI.performCaseLookup(
             forSystem: system,
             inRescue: rescue,
             onComplete: { searchResult, landmarkResult, correction in
-            guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
-                message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
-                    "signal": configuration.general.signal.uppercased(),
-                    "client": rescue.client ?? "u\u{200B}nknown",
-                    "platform": rescue.platform.ircRepresentable,
-                    "oxygen": rescue.ircOxygenStatus,
-                    "caseId": caseId,
-                    "system": rescue.system ?? "none",
-                    "platformSignal": rescue.platform?.signal ?? "",
-                    "cr": crStatus,
-                    "language": language,
-                    "langCode": languageCode
-                ]))
+                if let searchResult = searchResult, let landmarkResult = landmarkResult {
+                    let distance = self.distanceFormatter.string(from: NSNumber(value: landmarkResult.distance))!
 
-                if let correction = correction {
-                    message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
+                    let format = searchResult.permitRequired ? "board.\(announceType).permit" : "board.\(announceType).landmark"
+
+                    message.reply(message: lingo.localize(format, locale: "en", interpolations: [
+                        "signal": configuration.general.signal.uppercased(),
+                        "client": rescue.client ?? "u\u{200B}nknown",
+                        "platform": rescue.platform.ircRepresentable,
+                        "oxygen": rescue.ircOxygenStatus,
+                        "caseId": caseId,
                         "system": system,
-                        "correction": correction
+                        "distance": distance,
+                        "landmark": landmarkResult.name,
+                        "permit": searchResult.permitText ?? "",
+                        "platformSignal": rescue.platform?.signal ?? "",
+                        "cr": crStatus,
+                        "language": language,
+                        "langCode": languageCode
                     ]))
+                } else {
+                    message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
+                        "signal": configuration.general.signal.uppercased(),
+                        "client": rescue.client ?? "u\u{200B}nknown",
+                        "platform": rescue.platform.ircRepresentable,
+                        "oxygen": rescue.ircOxygenStatus,
+                        "caseId": caseId,
+                        "system": system,
+                        "platformSignal": rescue.platform?.signal ?? "",
+                        "cr": crStatus,
+                        "language": language,
+                        "langCode": languageCode
+                    ]))
+
+                    if let correction = correction {
+                        message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
+                            "system": system,
+                            "correction": correction
+                        ]))
+                    }
                 }
-
                 self.prepClient(rescue: rescue, message: message, initiated: initiated)
-                return
-            }
-
-            let distance = self.distanceFormatter.string(from: NSNumber(value: landmarkResult.distance))!
-
-            let format = searchResult.permitRequired ? "board.\(announceType).permit" : "board.\(announceType).landmark"
-
-            message.reply(message: lingo.localize(format, locale: "en", interpolations: [
-                "signal": configuration.general.signal.uppercased(),
-                "client": rescue.client ?? "u\u{200B}nknown",
-                "platform": rescue.platform.ircRepresentable,
-                "oxygen": rescue.ircOxygenStatus,
-                "caseId": caseId,
-                "system": rescue.system ?? "none",
-                "distance": distance,
-                "landmark": landmarkResult.name,
-                "permit": searchResult.permitText ?? "",
-                "platformSignal": rescue.platform?.signal ?? "",
-                "cr": crStatus,
-                "language": language,
-                "langCode": languageCode
-            ]))
-
-            self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
     }
 
