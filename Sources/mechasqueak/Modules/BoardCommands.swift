@@ -406,17 +406,20 @@ class BoardCommands: IRCBotModule {
         guard command.parameters.count > 0 else {
             return
         }
-        let nick = command.parameters.joined(separator: " ").lowercased()
 
-        guard let rescue = mecha.rescueBoard.rescues.first(where: {
-            $0.client?.lowercased() == nick || $0.clientNick?.lowercased() == nick
-        }) else {
-            return
-        }
+        for param in command.parameters {
+            let nick = param.lowercased()
 
-        if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
-            timer?.cancel()
-            mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+            guard let rescue = mecha.rescueBoard.rescues.first(where: {
+                $0.client?.lowercased() == nick || $0.clientNick?.lowercased() == nick
+            }) else {
+                continue
+            }
+
+            if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
+                timer?.cancel()
+                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+            }
         }
     }
 
