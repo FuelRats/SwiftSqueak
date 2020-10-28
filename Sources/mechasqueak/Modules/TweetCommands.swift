@@ -46,6 +46,10 @@ class TweetCommands: IRCBotModule {
     )
     var didReceiveTweetCommand = { command in
         let contents = command.parameters[0]
+        guard contents.count >= 20 else {
+            command.message.error(key: "tweet.minlength", fromCommand: command)
+            return
+        }
         if mecha.rescueBoard.rescues.first(where: { rescue in
             if let system = rescue.system {
                 if contents.lowercased().contains(system.lowercased()) {

@@ -194,6 +194,7 @@
   "shorten.shortened": "URL has been shortened to: %{url} - Title: %{title}",
 
   "tweet.success": "Successfully posted tweet from @FuelRatAlerts.",
+  "tweet.minlength": "!tweet message must be at least 20 characters, did you mean to use !tweetcase/!tweetc?",
   "tweet.error": "Encountered an error in posting tweet from @FuelRatAlerts.",
   "tweet.confidential": "ERROR: Attempted to include confidential case information in a tweet, do not EVER broadcast client name or system on Twitter",
   "tweetcase.noplatform": "Could not generate a case tweet for case #%{caseId} as no platform is set.",
