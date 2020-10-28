@@ -48,8 +48,10 @@ extension IRCUser {
             $0.attributes.platform.value == rescue.platform
         })
 
+        let nickname = self.nickname.lowercased()
+
         rats.sort(by: {
-            self.nickname.levenshtein($0.attributes.name.value) < self.nickname.levenshtein($1.attributes.name.value)
+            nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased())
         })
 
         return rats.first
