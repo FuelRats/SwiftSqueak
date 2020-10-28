@@ -48,7 +48,8 @@ extension IRCUser {
             $0.attributes.platform.value == rescue.platform
         })
 
-        let nickname = self.nickname.lowercased()
+        var nickname = self.nickname.lowercased()
+        nickname = nickname.replacingOccurrences(of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
 
         rats.sort(by: {
             nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased())
