@@ -125,7 +125,7 @@ class IRCBotModuleManager {
     var blacklist: [String]
 
     init () {
-        self.blacklist = configuration.general.blacklist
+        self.blacklist = configuration.general.dispatchBlacklist
         self.channelMessageObserver = NotificationCenter.default.addObserver(
             descriptor: IRCChannelMessageNotification(),
             using: onChannelMessage(channelMessage:)

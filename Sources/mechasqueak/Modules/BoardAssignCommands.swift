@@ -58,7 +58,12 @@ class BoardAssignCommands: IRCBotModule {
         // Generate a tuple of assigned rats separated by identified rat IDs and unidentified rat names.
         let assigns: ([Rat], [String]) = command.parameters[1...].reduce(([], []), { acc, assign in
             var acc = acc
-
+            guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == assign.lowercased() }) == false else {
+                command.message.error(key: "board.assign.banned", fromCommand: command, map: [
+                    "assign": assign
+                ])
+                return acc
+            }
             guard
                 assign.lowercased() != rescue.clientNick?.lowercased()
                 && assign.lowercased() != rescue.client?.lowercased()
