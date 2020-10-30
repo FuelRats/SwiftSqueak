@@ -146,6 +146,9 @@ class MessageScanner: IRCBotModule {
             guard channelMessage.destination.channelModes[.isSecret] == nil else {
                 return
             }
+            if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
+                return
+            }
             guard MessageScanner.caseRelevantPhrases.first(where: {
                 channelMessage.message.lowercased().contains($0)
             }) != nil else {
