@@ -114,7 +114,7 @@ class SystemsAPI {
                 return
             }
 
-            guard system.lowercased().hasSuffix("sector") == false else {
+            guard system.lowercased().hasSuffix("sector") == false && sectors.contains(where: { $0.name == system.uppercased() }) == false else {
                 mecha.reportingChannel?.send(key: "board.signal.unhelpfulsysmeme", map: [
                     "system": system
                 ])
