@@ -143,8 +143,7 @@ class SystemsAPI {
                         }
 
                         let firstResult = results[0]
-                        if firstResult.name.lowercased().strippingNonAlphanumeric == rescue.system?.lowercased().strippingNonAlphanumeric
-                            || firstResult.name.lowercased() == Autocorrect.check(system: rescue.system!)?.lowercased() {
+                        if firstResult.canBeAutomaticCorrectionFor(system: system) {
                             SystemsAPI.performLandmarkCheck(forSystem: firstResult.name, onComplete: { result in
                                 switch result {
                                     case .success(let landmarkResult):
@@ -327,6 +326,14 @@ struct SystemsAPISearchDocument: Codable {
                 return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
             }
             return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
+        }
+
+        func canBeAutomaticCorrectionFor(system: String) -> Bool {
+            let system = system.lowercased()
+            let correctionName = self.name.lowercased()
+            return correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric
+                || correctionName == Autocorrect.check(system: system)?.lowercased()
+                || (correctionName == system.dropLast(1) && system.last!.isLetter)
         }
     }
 }
