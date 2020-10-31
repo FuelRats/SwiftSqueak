@@ -52,8 +52,8 @@ class MessageScanner: IRCBotModule {
     }
 
     func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
-        guard channelMessage.raw.messageTags["batch"] == nil else {
-            // Do not interpret commands from playback of old messages
+        guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination.channelModes.keys.contains(.isSecret) == false else {
+            // Do not interpret commands from playback of old messages or in secret channels
             return
         }
 
@@ -143,9 +143,6 @@ class MessageScanner: IRCBotModule {
         }
 
         if let rescue = caseMentionedInMessage(message: channelMessage) {
-            guard channelMessage.destination.channelModes[.isSecret] == nil else {
-                return
-            }
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
                 return
             }
