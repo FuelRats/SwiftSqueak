@@ -224,7 +224,8 @@ class GeneralCommands: IRCBotModule {
         ["whoami"],
         parameters: 0...0,
         category: .utility,
-        description: "Check the Fuel Rats account information the bot is currently associating with your nick"
+        description: "Check the Fuel Rats account information the bot is currently associating with your nick",
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -281,7 +282,8 @@ class GeneralCommands: IRCBotModule {
         description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
         paramText: "<nickname>",
         example: "SpaceDawg",
-        permission: .RatReadOwn
+        permission: .RatReadOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveWhoIsCommand = { command in
         let message = command.message
