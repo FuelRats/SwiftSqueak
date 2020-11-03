@@ -29,7 +29,7 @@ class Autocorrect {
     private static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
     private static let numberSubstitutions: [Character: Character] = [
-        "1": "L",
+        "1": "I",
         "4": "A",
         "5": "S",
         "8": "B",
@@ -37,6 +37,7 @@ class Autocorrect {
     ]
     private static let letterSubstitutions: [Character: Character] = [
         "L": "1",
+        "I": "1",
         "S": "5",
         "B": "8",
         "D": "0",
