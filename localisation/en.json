@@ -100,6 +100,7 @@
   "board.assign.notexist": "Could not add %{nick} to the case as there is no such person in the channel.",
   "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
   "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",
+  "board.unassign.none": "Found nobody to unassign from case #%{caseId}",
   
   "board.sub.invalidindex": "Cannot substitute index %{index} into the case as it is not a valid index.",
   "board.sub.outofbounds": "Cannot substitute index %{index} of case #%{caseId} as it is out of bounds.",
