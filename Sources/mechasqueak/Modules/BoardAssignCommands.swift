@@ -173,6 +173,11 @@ class BoardAssignCommands: IRCBotModule {
                     removed.append(rat.attributes.name.value)
                     continue
                 }
+            } else if
+                let ratIndex = rescue.rats.firstIndex(where: { $0.attributes.name.value.lowercased() == unassign.lowercased() })
+            {
+                removed.append(rescue.rats[ratIndex].attributes.name.value)
+                rescue.rats.remove(at: ratIndex)
             }
             command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                 "rats": unassign,
