@@ -29,6 +29,7 @@ import JSONAPI
 class NicknameLookupManager {
     let queue = OperationQueue()
     var mapping: [String: NicknameSearchDocument] = [:]
+    var birthdayAnnounced = Set<UUID>()
 
     init () {
         self.queue.maxConcurrentOperationCount = 5
@@ -40,12 +41,29 @@ class NicknameLookupManager {
         }
     }
 
-    func lookup (user: IRCUser) {
+    func lookup (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
         let operation = NicknameLookupOperation(user: user)
 
         operation.onCompletion = { apiNick in
             if let result = apiNick {
                 self.mapping[user.nickname] = result
+                if let apiUser = result.user, let joinDate = result.joinDate, Date().timeIntervalSince(mecha.startupTime) > 60 {
+                    let joinComponents = Calendar.current.dateComponents([.day, .month, .year], from: joinDate)
+                    let todayComponents = Calendar.current.dateComponents([.day, .month, .year], from: Date())
+                    let years = todayComponents.year! - joinComponents.year!
+
+                    if joinComponents.day! == todayComponents.day! && joinComponents.month! == todayComponents.month!, years > 0 {
+                        if self.birthdayAnnounced.contains(apiUser.id.rawValue) == false {
+                            mecha.reportingChannel?.send(key: "birthday", map: [
+                                "name": user.nickname,
+                                "years": years
+                            ])
+                            self.birthdayAnnounced.insert(apiUser.id.rawValue)
+                        }
+                    }
+                }
+                
+                completed?(result)
             }
         }
 
@@ -60,7 +78,7 @@ class NicknameLookupManager {
         debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount)")
     }
 
-    func lookupIfNotExists (user: IRCUser) {
+    func lookupIfNotExists (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
         guard self.mapping[user.nickname] == nil else {
             return
         }

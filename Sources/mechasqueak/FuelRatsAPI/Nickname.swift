@@ -87,6 +87,18 @@ extension NicknameSearchDocument {
             $0.attributes.permissions.value
         })
     }
+
+    var joinDate: Date? {
+        guard let user = self.user else {
+            return nil
+        }
+        return self.ratsBelongingTo(user: user).reduce(nil, { (currentDate: Date?, rat: Rat) -> Date? in
+            if currentDate == nil || rat.attributes.createdAt.value < currentDate! {
+                return rat.attributes.createdAt.value
+            }
+            return currentDate
+        })
+    }
 }
 typealias NicknameGetDocument = Document<
     SingleResourceBody<Nickname>,
