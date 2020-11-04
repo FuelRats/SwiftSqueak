@@ -72,6 +72,7 @@ class MechaSqueak {
     let version = "3.0.0"
     private var accountChangeObserver: NotificationToken?
     private var userJoinObserver: NotificationToken?
+    private var userPartObserver: NotificationToken?
     private var userQuitObserver: NotificationToken?
     private var userNickChangeObserver: NotificationToken?
     private var userHostChangeObserver: NotificationToken?
@@ -127,6 +128,10 @@ class MechaSqueak {
             descriptor: IRCUserJoinedChannelNotification(),
             using: onUserJoin(userJoin:)
         )
+        self.userPartObserver = NotificationCenter.default.addObserver(
+            descriptor: IRCUserLeftChannelNotification(),
+            using: onUserPart(userPart:)
+        )
         self.userQuitObserver = NotificationCenter.default.addObserver(
             descriptor: IRCUserQuitNotification(),
             using: onUserQuit(userQuit:)
@@ -179,6 +184,19 @@ class MechaSqueak {
                 ])
             }
         }
+    }
+
+    func onUserPart (userPart: IRCUserLeftChannelNotification.Payload) {
+        if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
+            guard userPart.channel.name.lowercased() == rescue.channel.lowercased() else {
+                return
+            }
+            userPart.channel.send(key: "board.clientquit", map: [
+                "caseId": rescue.commandIdentifier!,
+                "client": rescue.client ?? "u\u{200B}nknown client"
+            ])
+        }
+
     }
 
     func onUserQuit (userQuit: IRCUserQuitNotification.Payload) {
