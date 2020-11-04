@@ -36,7 +36,7 @@ class RescueBoard {
     var lastSignalReceived: Date?
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
-    private let systemBodiesPattern = "(\\s(?:[A-Za-z]{1,2}(?: [0-9]{1,2})?))+$".r!
+    private let systemBodiesPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
 
     init () {
         self.distanceFormatter = NumberFormatter()
