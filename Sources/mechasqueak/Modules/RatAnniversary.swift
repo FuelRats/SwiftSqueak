@@ -27,8 +27,42 @@ import IRCKit
 
 class RatAnniversary: IRCBotModule {
     var name: String = "Rat Anniversary"
+    var birthdayAnnounced = Set<UUID>()
+    private var channelMessageObserver: NotificationToken?
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
+        self.channelMessageObserver = NotificationCenter.default.addObserver(
+            descriptor: IRCChannelMessageNotification(),
+            using: onChannelMessage(channelMessage:)
+        )
+    }
+
+    func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
+        guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination == mecha.reportingChannel else {
+            // Do not interpret commands from playback of old messages or in secret channels
+            return
+        }
+
+        if
+            let apiData = channelMessage.user.associatedAPIData,
+            let apiUser = apiData.user,
+            let joinDate = apiData.joinDate
+        {
+            guard self.birthdayAnnounced.contains(apiUser.id.rawValue) == false else {
+                return
+            }
+            let joinComponents = Calendar.current.dateComponents([.day, .month, .year], from: joinDate)
+            let todayComponents = Calendar.current.dateComponents([.day, .month, .year], from: Date())
+            let years = todayComponents.year! - joinComponents.year!
+
+            if joinComponents.day! == todayComponents.day! && joinComponents.month! == todayComponents.month!, years > 0 {
+                mecha.reportingChannel?.send(key: "birthday", map: [
+                    "name": channelMessage.user.nickname,
+                    "years": years
+                ])
+                self.birthdayAnnounced.insert(apiUser.id.rawValue)
+            }
+        }
     }
 }
