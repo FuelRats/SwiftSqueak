@@ -142,16 +142,15 @@ class SystemsAPI {
                             return
                         }
 
-                        let firstResult = results[0]
-                        if firstResult.canBeAutomaticCorrectionFor(system: system) {
-                            SystemsAPI.performLandmarkCheck(forSystem: firstResult.name, onComplete: { result in
+                        if let autoCorrectableResult = results.first(where: { $0.canBeAutomaticCorrectionFor(system: system) }) {
+                            SystemsAPI.performLandmarkCheck(forSystem: autoCorrectableResult.name, onComplete: { result in
                                 switch result {
                                     case .success(let landmarkResult):
                                         guard landmarkResult.landmarks.count > 0 else {
                                             return
                                         }
 
-                                        rescue.system = firstResult.name.uppercased()
+                                        rescue.system = autoCorrectableResult.name.uppercased()
                                         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
 
                                         mecha.reportingChannel?.client.sendMessage(
@@ -160,7 +159,7 @@ class SystemsAPI {
                                             mapping: [
                                                 "caseId": rescue.commandIdentifier!,
                                                 "client": rescue.client ?? "",
-                                                "system": firstResult.name.uppercased(),
+                                                "system": autoCorrectableResult.name.uppercased(),
                                                 "landmark": landmarkResult.landmarks[0].name,
                                                 "distance": NumberFormatter.englishFormatter().string(from: landmarkResult.landmarks[0].distance) ?? landmarkResult.landmarks[0].distance
                                             ]
