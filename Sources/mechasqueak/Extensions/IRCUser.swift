@@ -27,7 +27,7 @@ import IRCKit
 
 extension IRCUser {
     var associatedAPIData: NicknameSearchDocument? {
-        return mecha.accounts.mapping[self.nickname]
+        return MechaSqueak.accounts.mapping[self.nickname]
     }
 
     func hasPermission (permission: AccountPermission) -> Bool {

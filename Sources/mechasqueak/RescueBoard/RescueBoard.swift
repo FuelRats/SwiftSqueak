@@ -69,7 +69,7 @@ class RescueBoard {
                 guard self.isSynced == true && self.syncTimer == nil else {
                     return
                 }
-                mecha.accounts.lookupServiceAvailable = false
+                MechaSqueak.accounts.lookupServiceAvailable = false
 
                 if let channel = mecha.reportingChannel {
                     channel.send(key: "board.syncfailed")
@@ -87,7 +87,7 @@ class RescueBoard {
                     return
                 }
 
-                mecha.accounts.lookupServiceAvailable = true
+                MechaSqueak.accounts.lookupServiceAvailable = true
                 self.isSynced = true
                 if let timer = self.syncTimer {
                     timer.cancel()

@@ -62,7 +62,7 @@ class MechaSqueak {
     let configPath: URL
     static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
-    let accounts: NicknameLookupManager
+    static let accounts = NicknameLookupManager()
     let commands: [IRCBotModule]
     let connections: [IRCClient]
     let rescueBoard: RescueBoard
@@ -70,12 +70,6 @@ class MechaSqueak {
     let helpModule: HelpCommands
     let startupTime: Date
     let version = "3.0.0"
-    private var accountChangeObserver: NotificationToken?
-    private var userJoinObserver: NotificationToken?
-    private var userPartObserver: NotificationToken?
-    private var userQuitObserver: NotificationToken?
-    private var userNickChangeObserver: NotificationToken?
-    private var userHostChangeObserver: NotificationToken?
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
 
     init () {
@@ -86,7 +80,6 @@ class MechaSqueak {
         self.configPath = configPath
 
         self.startupTime = Date()
-        self.accounts = NicknameLookupManager()
         self.rescueBoard = RescueBoard()
 
         self.connections = configuration.connections.map({
@@ -118,35 +111,11 @@ class MechaSqueak {
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager)
         ]
-
-        self.accountChangeObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCUserAccountChangeNotification(),
-            using: onAccountChange(accountChange:)
-        )
-
-        self.userJoinObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCUserJoinedChannelNotification(),
-            using: onUserJoin(userJoin:)
-        )
-        self.userPartObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCUserLeftChannelNotification(),
-            using: onUserPart(userPart:)
-        )
-        self.userQuitObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCUserQuitNotification(),
-            using: onUserQuit(userQuit:)
-        )
-        self.userNickChangeObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCUserChangedNickNotification(),
-            using: onUserNickChange(nickChange:)
-        )
-        self.userHostChangeObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCUserHostChangeNotification(),
-            using: onUserHostChange(hostChange:)
-        )
     }
 
-    func onAccountChange (accountChange: IRCUserAccountChangeNotification.Payload) {
+
+    @IRCListener<IRCUserAccountChangeNotification>
+    var onAccountChange = { accountChange in
         let user = accountChange.user
 
         guard user.account != nil else {
@@ -159,7 +128,8 @@ class MechaSqueak {
         }
     }
 
-    func onUserJoin (userJoin: IRCUserJoinedChannelNotification.Payload) {
+    @IRCListener<IRCUserJoinedChannelNotification>
+    var onUserJoin = { userJoin in
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
@@ -186,7 +156,8 @@ class MechaSqueak {
         }
     }
 
-    func onUserPart (userPart: IRCUserLeftChannelNotification.Payload) {
+    @IRCListener<IRCUserLeftChannelNotification>
+    var onUserPart = { userPart in
         if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
             guard userPart.channel.name.lowercased() == rescue.channel.lowercased() else {
                 return
@@ -199,7 +170,8 @@ class MechaSqueak {
 
     }
 
-    func onUserQuit (userQuit: IRCUserQuitNotification.Payload) {
+    @IRCListener<IRCUserQuitNotification>
+    var onUserQuit = { userQuit in
         accounts.mapping.removeValue(forKey: userQuit.sender!.nickname)
 
         if
@@ -215,7 +187,8 @@ class MechaSqueak {
         }
     }
 
-    func onUserNickChange (nickChange: IRCUserChangedNickNotification.Payload) {
+    @IRCListener<IRCUserChangedNickNotification>
+    var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
         if let apiNickname = accounts.mapping[sender.nickname] {
@@ -224,7 +197,9 @@ class MechaSqueak {
         }
     }
 
-    func onUserHostChange (hostChange: IRCUserHostChangeNotification.Payload) {
+
+    @IRCListener<IRCUserHostChangeNotification>
+    var onUserHostChange = { hostChange in
         let sender = hostChange.sender!
         accounts.mapping.removeValue(forKey: sender.nickname)
 

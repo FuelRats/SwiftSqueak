@@ -40,8 +40,8 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveFlushAllCommand = { command in
-        mecha.accounts.queue.cancelAllOperations()
-        mecha.accounts.mapping.removeAll()
+        MechaSqueak.accounts.queue.cancelAllOperations()
+        MechaSqueak.accounts.mapping.removeAll()
 
         let signedInUsers = mecha.connections.flatMap({
             return $0.channels.flatMap({
@@ -52,7 +52,7 @@ class ManagementCommands: IRCBotModule {
         })
 
         for user in signedInUsers {
-            mecha.accounts.lookupIfNotExists(user: user)
+            MechaSqueak.accounts.lookupIfNotExists(user: user)
         }
 
         command.message.replyPrivate(key: "flushall.response", fromCommand: command)
@@ -66,10 +66,10 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveFlushCommand = { command in
-        if let mapping = mecha.accounts.mapping.first(where: {
+        if let mapping = MechaSqueak.accounts.mapping.first(where: {
             $0.key.lowercased() == command.parameters[0].lowercased()
         }) {
-            mecha.accounts.mapping.removeValue(forKey: mapping.key)
+            MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
         }
 
         guard let user = command.message.client.channels.first(where: {
@@ -80,7 +80,7 @@ class ManagementCommands: IRCBotModule {
             ])
             return
         }
-        mecha.accounts.lookupIfNotExists(user: user)
+        MechaSqueak.accounts.lookupIfNotExists(user: user)
         command.message.replyPrivate(key: "flush.response", fromCommand: command, map: [
             "name": command.parameters[0]
         ])
@@ -94,7 +94,7 @@ class ManagementCommands: IRCBotModule {
         permission: .UserRead
     )
     var didReceivePermissionsCommand = { command in
-        guard let mapping = mecha.accounts.mapping.first(where: {
+        guard let mapping = MechaSqueak.accounts.mapping.first(where: {
             $0.key.lowercased() == command.parameters[0].lowercased()
         }) else {
             command.message.replyPrivate(key: "groups.nouser", fromCommand: command, map: [

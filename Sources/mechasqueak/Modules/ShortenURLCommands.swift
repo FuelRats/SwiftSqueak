@@ -27,7 +27,6 @@ import IRCKit
 
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
-    private var channelMessageObserver: NotificationToken?
 
     @BotCommand(
         ["shorten", "short", "shortener"],

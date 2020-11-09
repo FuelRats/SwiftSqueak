@@ -28,7 +28,6 @@ import Regex
 
 class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
-    private var channelMessageObserver: NotificationToken?
     static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})[jJ] #([0-9]{1,3})", groupNames: ["jumps", "case"])
     static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
     static let jumpCallExpressionCaseAfter = try! Regex(
@@ -43,15 +42,11 @@ class MessageScanner: IRCBotModule {
     ]
 
     required init(_ moduleManager: IRCBotModuleManager) {
-
         moduleManager.register(module: self)
-        self.channelMessageObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCChannelMessageNotification(),
-            using: onChannelMessage(channelMessage:)
-        )
     }
 
-    func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
+    @IRCListener<IRCChannelMessageNotification>
+    var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination.channelModes.keys.contains(.isSecret) == false else {
             // Do not interpret commands from playback of old messages or in secret channels
             return
@@ -164,7 +159,7 @@ class MessageScanner: IRCBotModule {
         }
     }
 
-    func caseMentionedInMessage (message: IRCPrivateMessage) -> LocalRescue? {
+    static func caseMentionedInMessage (message: IRCPrivateMessage) -> LocalRescue? {
         if let caseMentionMatch = MessageScanner.caseMentionExpression.findFirst(in: message.message) {
             let caseId = caseMentionMatch.group(at: 1)!
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {

@@ -119,22 +119,8 @@ struct IRCBotCommandDeclaration {
 }
 
 class IRCBotModuleManager {
-    private var channelMessageObserver: NotificationToken?
-    private var privateMessageObserver: NotificationToken?
     private var registeredModules: [IRCBotModule] = []
-    var blacklist: [String]
-
-    init () {
-        self.blacklist = configuration.general.dispatchBlacklist
-        self.channelMessageObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCChannelMessageNotification(),
-            using: onChannelMessage(channelMessage:)
-        )
-        self.privateMessageObserver = NotificationCenter.default.addObserver(
-            descriptor: IRCPrivateMessageNotification(),
-            using: onPrivateMessage(privateMessage:)
-        )
-    }
+    static var blacklist = configuration.general.dispatchBlacklist
 
     func register (module: IRCBotModule) {
         self.registeredModules.append(module)
@@ -144,7 +130,8 @@ class IRCBotModuleManager {
         MechaSqueak.commands.append(command)
     }
 
-    func onChannelMessage (channelMessage: IRCChannelMessageNotification.Payload) {
+    @IRCListener<IRCChannelMessageNotification>
+    var onChannelMessage = { channelMessage in
         guard let ircBotCommand = IRCBotCommand(from: channelMessage) else {
             return
         }
@@ -152,7 +139,9 @@ class IRCBotModuleManager {
         handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
-    func onPrivateMessage (privateMessage: IRCPrivateMessageNotification.Payload) {
+
+    @IRCListener<IRCPrivateMessageNotification>
+    var onPrivateMessage = { privateMessage in
         guard let ircBotCommand = IRCBotCommand(from: privateMessage) else {
             return
         }
@@ -160,7 +149,7 @@ class IRCBotModuleManager {
         handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
-    func handleIncomingCommand (ircBotCommand: IRCBotCommand) {
+    static func handleIncomingCommand (ircBotCommand: IRCBotCommand) {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
 
@@ -245,5 +234,15 @@ class IRCBotModuleManager {
         }
 
         command.onCommand?(ircBotCommand)
+    }
+}
+
+@propertyWrapper struct IRCListener<T: NotificationDescriptor> {
+    var wrappedValue: (T.Payload) -> Void
+    let token: NotificationToken
+
+    init (wrappedValue value: @escaping (T.Payload) -> Void) {
+        self.wrappedValue = value
+        self.token = NotificationCenter.default.addObserver(descriptor: T(), using: self.wrappedValue)
     }
 }

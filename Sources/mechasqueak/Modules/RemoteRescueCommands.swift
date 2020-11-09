@@ -28,7 +28,6 @@ import AsyncHTTPClient
 
 class RemoteRescueCommands: IRCBotModule {
     var name: String = "Remote Rescue Commands"
-    private var channelMessageObserver: NotificationToken?
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)

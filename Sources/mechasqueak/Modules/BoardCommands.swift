@@ -28,7 +28,6 @@ import Regex
 
 class BoardCommands: IRCBotModule {
     var name: String = "Rescue Board"
-    private var channelMessageObserver: NotificationToken?
     internal let distanceFormatter: NumberFormatter
 
     required init(_ moduleManager: IRCBotModuleManager) {

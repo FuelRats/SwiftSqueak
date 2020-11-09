@@ -27,7 +27,6 @@ import IRCKit
 
 class TweetCommands: IRCBotModule {
     var name: String = "Tweet Commands"
-    private var channelMessageObserver: NotificationToken?
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
