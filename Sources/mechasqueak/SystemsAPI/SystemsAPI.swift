@@ -55,6 +55,7 @@ class SystemsAPI {
                         let searchResult = try decoder.decode(SystemsAPISearchDocument.self, from: Data(buffer: response.body!))
                         onComplete(Result.success(searchResult))
                     } catch {
+                        debug(String(describing: error))
                         onComplete(Result.failure(error))
                     }
                 case .failure(let restError):
@@ -223,9 +224,11 @@ class SystemsAPI {
                         )
                         onComplete(Result.success(searchResult))
                     } catch let error {
+                        debug(String(describing: error))
                         onComplete(Result.failure(error))
                     }
                 case .failure(let restError):
+                    debug(String(describing: restError))
                     onComplete(Result.failure(restError))
             }
         }
