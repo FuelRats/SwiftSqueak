@@ -160,6 +160,7 @@ class GeneralCommands: IRCBotModule {
         }
 
         let formatter = NumberFormatter.englishFormatter()
+        formatter.maximumFractionDigits = 2
         let yearFormatter = NumberFormatter.englishFormatter()
         yearFormatter.maximumFractionDigits = 0
         if seconds > 31536000 {
