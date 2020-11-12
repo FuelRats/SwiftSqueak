@@ -179,7 +179,6 @@ class RescueBoard {
         }
 
         self.rescues.append(rescue)
-        rescue.createUpstream(fromBoard: self)
 
         let caseId = String(rescue.commandIdentifier!)
 
@@ -200,6 +199,7 @@ class RescueBoard {
                 "language": language,
                 "langCode": languageCode
             ]))
+            rescue.createUpstream(fromBoard: self)
             return
         }
 
@@ -263,6 +263,8 @@ class RescueBoard {
                 }
                 self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
+
+        rescue.createUpstream(fromBoard: self)
     }
 
     func prepClient (rescue: LocalRescue, message: IRCPrivateMessage, initiated: RescueInitiationType) {
