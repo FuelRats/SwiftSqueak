@@ -178,6 +178,7 @@ class BoardAssignCommands: IRCBotModule {
             {
                 removed.append(rescue.rats[ratIndex].attributes.name.value)
                 rescue.rats.remove(at: ratIndex)
+                continue
             }
             command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                 "rats": unassign,
