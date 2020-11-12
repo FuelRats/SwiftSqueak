@@ -208,7 +208,7 @@
   "tweetcase.success": "Successfully sent tweet for case #%{caseId}.",
   "tweetcase.failure": "Encountered an error in posting a tweet for case #%{caseId}.",
   
-  "autocorrect.correction": "\u0002\u000304Autocorrect\u0003\u0002 \"%{system}\" is probably \"%{correction}\".",
+  "autocorrect.correction": "\"%{system}\" is probably \"%{correction}\".",
   
   "facts.invalidargument": "Invalid argument given to !facts command, !facts accepts add, set, info, locales, and del.",
   "facts.set.syntax": "Invalid arguments, syntax: !facts add/set <name>[-language code] <message>.",
