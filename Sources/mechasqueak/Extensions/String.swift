@@ -75,6 +75,10 @@ extension String {
     var strippingNonAlphanumeric: String {
         return self.components(separatedBy: CharacterSet.alphanumerics.inverted).joined()
     }
+
+    var strippingNonLetters: String {
+        return self.components(separatedBy: CharacterSet.letters.inverted).joined()
+    }
 }
 
 extension Array where Element == String {

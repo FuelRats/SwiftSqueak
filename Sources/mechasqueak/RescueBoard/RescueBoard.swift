@@ -209,7 +209,7 @@ class RescueBoard {
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
             rescue.quotes.append(RescueQuote(
                 author: message.client.currentNick,
-                message: "Client indicated location in system near body \(body)",
+                message: "Client indicated location in system near body \"\(body)\"",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: message.client.currentNick)

@@ -336,6 +336,7 @@ struct SystemsAPISearchDocument: Codable {
             return correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric
                 || correctionName == Autocorrect.check(system: system)?.lowercased()
                 || (correctionName == system.dropLast(1) && system.last!.isLetter)
+                || (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
         }
     }
 }
