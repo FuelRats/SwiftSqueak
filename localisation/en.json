@@ -79,7 +79,7 @@
   "board.titleset": "Title for case #%{clientId} (%{client}) has been set to \"Operation %{title}\".",
   "board.caseopened": "Case #%{caseId} opened for %{client} with \"%{message}\".",
 
-  "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. If this is on purpose create a case with a different name and then rename it with !cmdr and !nick.",
+  "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. To override send the same command again within the next 60 seconds.",
   "board.grab.noclient": "Could not find the client for case %{caseId} in the channel.",
   "board.grab.nomessage": "Could not find any messages by %{client} in the channel.",
   "board.grab.notcreated": "Could not find an existing case for %{client} and could not create one from the contents of this message.",

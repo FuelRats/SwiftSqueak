@@ -27,6 +27,7 @@ import IRCKit
 
 class BoardQuoteCommands: IRCBotModule {
     static let disallowedInjectNames = ["ratsignal", "drillsignal", "client", "<client>"]
+    static var injectRepeatCache = Set<String>()
     var name: String = "Case Quote Commands"
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -159,8 +160,13 @@ class BoardQuoteCommands: IRCBotModule {
 
         let injectMessage = command.parameters[1]
         if rescue == nil {
-            guard disallowedInjectNames.contains(clientParam.lowercased()) == false else {
-                message.replyPrivate(key: "board.inject.ignored", fromCommand: command)
+            guard isLikelyAccidentalInject(clientParam: clientParam) == false || injectRepeatCache.contains(clientParam.lowercased()) else {
+                injectRepeatCache.insert(clientParam.lowercased())
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(60), execute: {
+                    injectRepeatCache.remove(clientParam.lowercased())
+                })
+
+                message.error(key: "board.inject.ignored", fromCommand: command)
                 return
             }
 
@@ -253,5 +259,17 @@ class BoardQuoteCommands: IRCBotModule {
 
 
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+    }
+
+    static func isLikelyAccidentalInject (clientParam: String) -> Bool {
+        guard disallowedInjectNames.contains(clientParam.lowercased()) == false else {
+            return true
+        }
+        guard let user = mecha.reportingChannel?.client.channels.compactMap({ channel in
+            return channel.member(named: clientParam)
+        }).first else {
+            return true
+        }
+        return user.account != nil
     }
 }
