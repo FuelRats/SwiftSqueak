@@ -99,8 +99,9 @@ class Autocorrect {
         }
 
         if secondFragment.last != nil && secondFragment.last!.isLetter {
+            let lastIndex = secondFragment.index(before: secondFragment.endIndex)
             secondFragment = secondFragment.replacingCharacters(
-                in: secondFragment.endIndex...,
+                in: lastIndex...lastIndex,
                 with: Autocorrect.performLetterSubstitution(value: String(secondFragment.last!))
             )
         }
