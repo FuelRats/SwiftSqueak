@@ -96,12 +96,16 @@ class Autocorrect {
                 with: Autocorrect.performNumberSubstitution(value: String(secondFragment.first!))
             )
             /* The last part of the second fragment of a procedural system is always a number. */
+        }
+
+        if secondFragment.last != nil && secondFragment.last!.isLetter {
             secondFragment = secondFragment.replacingCharacters(
                 in: secondFragment.endIndex...,
                 with: Autocorrect.performLetterrSubstitution(value: String(secondFragment.last!))
             )
-            fragments[1] = secondFragment
         }
+
+        fragments[1] = secondFragment
 
         let correctedSystem = "\(sector) SECTOR \(fragments.joined(separator: " "))"
 
