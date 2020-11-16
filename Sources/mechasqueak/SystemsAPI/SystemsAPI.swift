@@ -110,6 +110,7 @@ class SystemsAPI {
     ) -> Void) {
         SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, correction in
             onComplete(searchResult, landmarkResult, correction)
+            var system = system
 
             guard (searchResult == nil || landmarkResult == nil) && configuration.general.drillMode == false else {
                 return
@@ -120,6 +121,9 @@ class SystemsAPI {
                     "system": system
                 ])
                 return
+            }
+            if let correction = correction {
+                system = correction
             }
 
             SystemsAPI.performSearch(forSystem: system, onComplete: { result in
