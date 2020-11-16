@@ -101,7 +101,7 @@ class Autocorrect {
         if secondFragment.last != nil && secondFragment.last!.isLetter {
             secondFragment = secondFragment.replacingCharacters(
                 in: secondFragment.endIndex...,
-                with: Autocorrect.performLetterrSubstitution(value: String(secondFragment.last!))
+                with: Autocorrect.performLetterSubstitution(value: String(secondFragment.last!))
             )
         }
 
@@ -127,7 +127,7 @@ class Autocorrect {
         }))
     }
 
-    static func performLetterrSubstitution (value: String) -> String {
+    static func performLetterSubstitution (value: String) -> String {
         return String(value.map({ (char: Character) -> Character in
             if let substitution = letterSubstitutions[char] {
                 return substitution
