@@ -52,13 +52,13 @@ struct RatDataObject: Codable, Equatable {
 enum GamePlatform: String, Codable {
     case PC = "pc"
     case Xbox = "xb"
-    case PS4 = "ps"
+    case PS = "ps"
 
     var ircRepresentable: String {
         let platformMap: [GamePlatform: IRCColor] = [
             .PC: .Purple,
             .Xbox: .Green,
-            .PS4: .LightBlue
+            .PS: .LightBlue
         ]
 
         return IRCFormat.color(platformMap[self]!, String(describing: self))
@@ -75,7 +75,7 @@ enum GamePlatform: String, Codable {
             case .Xbox:
                 return "(XB_SIGNAL)"
 
-            case .PS4:
+            case .PS:
                 return "(PS_SIGNAL)"
         }
     }
@@ -84,7 +84,7 @@ enum GamePlatform: String, Codable {
         let platformMap: [GamePlatform: String] = [
             .PC: "pc",
             .Xbox: "x",
-            .PS4: "ps"
+            .PS: "ps"
         ]
         return platformMap[self]!
     }
@@ -99,7 +99,7 @@ enum GamePlatform: String, Codable {
                 return .Xbox
 
             case "ps", "ps4", "playstation":
-                return .PS4
+                return .PS
 
             default:
                 return nil

@@ -84,6 +84,6 @@ class BoardPlatformCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceivePS4PlatformCommand = { command in
-        platformChangeCommand(platform: .PS4, command: command)
+        platformChangeCommand(platform: .PS, command: command)
     }
 }
