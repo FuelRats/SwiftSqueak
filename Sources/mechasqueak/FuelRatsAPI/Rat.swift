@@ -98,7 +98,7 @@ enum GamePlatform: String, Codable {
             case "xbox", "xb", "xb1":
                 return .Xbox
 
-            case "ps", "ps4", "playstation":
+            case "ps", "ps4", "playstation", "ps5":
                 return .PS
 
             default:
