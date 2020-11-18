@@ -37,7 +37,8 @@ class GeneralCommands: IRCBotModule {
         "banana": 5.9 * pow(10, -10),
         "bananas": 5.9 * pow(10, -10),
         "smoot": 5.67 * pow(10, -9),
-        "smoots":  5.67 * pow(10, -9)
+        "smoots":  5.67 * pow(10, -9),
+        "snickers": 6.471 * pow(10, -10)
     ]
 
     static let SIprefixes: [String: Double] = [
