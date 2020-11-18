@@ -92,13 +92,20 @@ class GeneralCommands: IRCBotModule {
         ["sctime", "sccalc", "traveltime"],
         parameters: 1...,
         category: .utility,
-        description: "Calculate supercruise travel time",
-        paramText: "<distance>",
+        description: "Calculate supercruise travel time.",
+        paramText: "[-g] <distance>",
         example: "2500ls",
         permission: nil
     )
     var didReceiveTravelTimeCommand = { command in
-        var distanceString = command.parameters.joined(separator: " ").trimmingCharacters(in: .whitespaces)
+        var params = command.parameters
+        var destinationGravity = false
+        if params[0].lowercased() == "-g" {
+            destinationGravity = true
+            params.removeFirst()
+        }
+
+        var distanceString = params.joined(separator: " ").trimmingCharacters(in: .whitespaces)
         guard let unit = factors.first(where: {
             distanceString.lowercased().hasSuffix($0.key)
         }) else {
@@ -136,6 +143,9 @@ class GeneralCommands: IRCBotModule {
         }
 
         distance = distance * factor
+        if destinationGravity {
+            distance = distance / 2
+        }
 
         var seconds = 0.0
         if distance < 500000 {
@@ -157,6 +167,10 @@ class GeneralCommands: IRCBotModule {
         var time = ""
         if seconds < 0 {
             return
+        }
+
+        if destinationGravity {
+            seconds = seconds * 2
         }
 
         let formatter = NumberFormatter.englishFormatter()
