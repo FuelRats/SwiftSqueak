@@ -214,8 +214,9 @@ class GeneralCommands: IRCBotModule {
         } else if displayDistance < 1 {
             formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(displayDistance)")ls"
         }
- 
-        command.message.reply(key: "sctime.response", fromCommand: command, map: [
+
+        let responseKey = destinationGravity ? "sctime.response.g" : "sctime.response"
+        command.message.reply(key: responseKey, fromCommand: command, map: [
             "distance": formattedDistance,
             "time": time
         ])

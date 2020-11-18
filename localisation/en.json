@@ -37,7 +37,8 @@
   "sctime.error": "Unable to understand the distance given in this command.",
   "sctime.unknownunit": "Unable to understand the distance because I have no idea what a \"%{unit}\" is.",
   "sctime.uniterror": "Unable to understand the distance unit provided to the command.",
-  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time}.",
+  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (Assuming constant travel away from any gravity well).",
+  "sctime.response.g": "The estimated super cruise travel time for %{distance} is %{time} (Assuming travel from one gravity well to another).",
 
   "board.clientjoin": "Client of case #%{caseId} (%{client}) has joined!",
   "board.clientjoinhost": "Caution: Client of case #%{caseId} (%{client}) has joined with a different name! (%{nick})",
