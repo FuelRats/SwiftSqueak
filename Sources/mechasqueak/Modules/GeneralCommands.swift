@@ -143,6 +143,7 @@ class GeneralCommands: IRCBotModule {
         }
 
         distance = distance * factor
+        let displayDistance = distance
         if destinationGravity {
             distance = distance / 2
         }
@@ -197,8 +198,8 @@ class GeneralCommands: IRCBotModule {
             time = "\(seconds.clean) seconds"
         }
 
-        let lightYears = distance / 60/60/24/365
-        var formattedDistance = (formatter.string(from: distance) ?? "\(distance)") + "ls"
+        let lightYears = displayDistance / 60/60/24/365
+        var formattedDistance = (formatter.string(from: displayDistance) ?? "\(displayDistance)") + "ls"
         let scientificFormatter = NumberFormatter()
         scientificFormatter.numberStyle = .scientific
         scientificFormatter.positiveFormat = "0.###E+0"
@@ -209,7 +210,7 @@ class GeneralCommands: IRCBotModule {
         } else if distance > 3.6*pow(10, 6) {
             formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
         } else if distance < 1 {
-            formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(distance)")ls"
+            formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(displayDistance)")ls"
         }
  
         command.message.reply(key: "sctime.response", fromCommand: command, map: [
