@@ -74,7 +74,7 @@ class BoardPlatformCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["ps"],
+        ["ps", "ps4", "ps5"],
         parameters: 1...1,
         category: .board,
         description: "Change the platform of this case to PS4.",
