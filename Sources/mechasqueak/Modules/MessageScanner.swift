@@ -55,6 +55,9 @@ class MessageScanner: IRCBotModule {
         if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
             let caseId = jumpCallMatch.group(named: "case")!
+            guard channelMessage.message.count < 20 else {
+                return
+            }
 
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
                 if configuration.general.drillMode == false {
