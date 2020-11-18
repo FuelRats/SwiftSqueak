@@ -205,11 +205,11 @@ class GeneralCommands: IRCBotModule {
         scientificFormatter.positiveFormat = "0.###E+0"
         scientificFormatter.exponentSymbol = "E"
 
-        if distance > 3.1*pow(10, 13) {
+        if displayDistance > 3.1*pow(10, 13) {
             formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
-        } else if distance > 3.6*pow(10, 6) {
+        } else if displayDistance > 3.6*pow(10, 6) {
             formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
-        } else if distance < 1 {
+        } else if displayDistance < 1 {
             formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(displayDistance)")ls"
         }
  
