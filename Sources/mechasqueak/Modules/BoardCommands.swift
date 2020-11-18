@@ -396,7 +396,7 @@ class BoardCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["prep", "psquit", "pcquit", "xquit"],
+        ["prep", "psquit", "pcquit", "xquit", "prepcr"],
         parameters: 0...,
         category: nil,
         description: ""
