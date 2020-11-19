@@ -106,7 +106,9 @@ class Autocorrect {
             )
         }
 
-        fragments[1] = secondFragment
+        if secondFragment.count > 0 {
+            fragments[1] = secondFragment
+        }
 
         let correctedSystem = "\(sector) SECTOR \(fragments.joined(separator: " "))"
 
