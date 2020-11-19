@@ -250,10 +250,15 @@ class RemoteRescueCommands: IRCBotModule {
             ])
 
             for rescue in rescues {
+                let firstLimpet = results.body.includes![Rat.self].first(where: {
+                    $0.id.rawValue == rescue.relationships.firstLimpet?.id?.rawValue
+                })
+
                 command.message.replyPrivate(key: "rescue.unfiled.entry", fromCommand: command, map: [
                     "client": rescue.client ?? "u\u{200B}nknown client",
                     "system": rescue.system ?? "u\u{200B}nknown system",
                     "platform": rescue.platform.ircRepresentable,
+                    "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
                     "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
                 ])
             }
