@@ -172,7 +172,7 @@
   "rescue.restore.restored": "Successfully restored rescue \"%{id}\". Use !reopen to add it to the board.",
   "rescue.restore.error": "Failed to restore rescue \"%{id}\" due to an error in the rescue server.",
   
-  "rescue.unfiled.list": "Listing %{count} incomplete paperwork cases:",
+  "rescue.unfiled.list": "Listing %{count} incomplete paperwork cases from the last 30 days:",
   "rescue.unfiled.entry": "Rescue of %{client} in %{system} (%{platform}) Link: %{link}",
   "rescue.unfiled.empty": "There are currently no rescues with incomplete paperwork.",
   "rescue.unfiled.error": "Encountered a server error when retrieving the list of unfiled paperwork.",

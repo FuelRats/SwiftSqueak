@@ -192,10 +192,13 @@ class FuelRatsAPI {
         complete: @escaping (RescueSearchDocument) -> Void,
         error: @escaping (Error?) -> Void
     ) {
+        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+
         let query = [
             URLQueryItem(name: "filter", value: [
                 "status": ["eq": "closed"],
-                "outcome": ["is": nil]
+                "outcome": ["is": nil],
+                "createdAt": ["gte": DateFormatter.iso8601Full.string(from: thirtyDaysAgo)]
             ].jsonString)
         ]
 
