@@ -240,7 +240,7 @@
   "flush.nouser": "Cleared local cache for %{name} but I was unable to fetch a new copy as no online user for them could be found.",
   "flush.response": "Cleared local cache for %{name} and fetching new copy..",
 
-  "birthday": "Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈",
+  "birthday": "\u0002Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈\u0002",
 
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
