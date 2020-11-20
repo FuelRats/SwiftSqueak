@@ -282,8 +282,10 @@ class LocalRescue: Codable {
         httpClient.execute(request: request).whenComplete{ result in
             switch result {
                 case .success(let response):
-                    if response.status == .created {
+                    if response.status == .created || response.status == .conflict {
                         self.synced = true
+                    } else {
+                        debug(String(response.status.code))
                     }
                 case .failure(let error):
                     debug(String(describing: error))
@@ -321,10 +323,10 @@ class LocalRescue: Codable {
         httpClient.execute(request: request).whenComplete { result in
             switch result {
                 case .success(let response):
-                    if response.status.code == 200 {
+                    if response.status == .ok {
                         self.synced = true
                         board.checkSynced()
-                    } else {
+                    } else if response.status == .notFound {
                         self.createUpstream(fromBoard: mecha.rescueBoard)
                     }
                 case .failure(let error):
