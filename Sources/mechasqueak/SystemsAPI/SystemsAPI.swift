@@ -197,7 +197,7 @@ class SystemsAPI {
                         ])
 
                     case .failure:
-                        mecha.reportingChannel?.send(key: "sysc.error", map: [
+                        mecha.reportingChannel?.send(key: "sysc.noresults", map: [
                             "caseId": rescue.commandIdentifier!,
                             "client": rescue.client ?? "u\u{200B}nknown client"
                         ])
