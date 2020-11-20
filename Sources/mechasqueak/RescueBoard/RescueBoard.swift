@@ -377,8 +377,10 @@ class RescueBoard {
             return identifierMap[$0]! < identifierMap[$1]!
         })
 
-        // Return the best scoring identifier
-        return sortedIdentifiers[0]
+        // Return the best scoring identifier that is the opposite evenness of the last case identifier
+        return sortedIdentifiers.first(where: { identifier in
+            return identifier.isEven != (recentIdentifiers.last ?? 1).isEven
+        }) ?? sortedIdentifiers[0]
     }
 
     func generateAvailableIdentifiers (count: Int) -> [Int] {

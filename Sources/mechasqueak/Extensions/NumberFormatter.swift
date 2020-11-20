@@ -47,6 +47,12 @@ extension NumberFormatter {
     }
 }
 
+extension Int {
+    var isEven: Bool {
+        return self % 2 == 0
+    }
+}
+
 extension Double {
     var clean: String {
        return String(format: "%.0f", self)
