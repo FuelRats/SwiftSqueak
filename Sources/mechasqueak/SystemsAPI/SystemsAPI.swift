@@ -161,7 +161,7 @@ class SystemsAPI {
                                         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
 
                                         mecha.reportingChannel?.client.sendMessage(
-                                            toChannelName: rescue.channel,
+                                            toChannelName: rescue.channelName,
                                             withKey: "sysc.autocorrect",
                                             mapping: [
                                                 "caseId": rescue.commandIdentifier!,
@@ -190,7 +190,7 @@ class SystemsAPI {
                             $0.element.correctionRepresentation(index: $0.offset + 1)
                         }).joined(separator: ", ")
 
-                        mecha.reportingChannel?.send(key: "sysc.nearestmatches", map: [
+                        rescue.channel?.send(key: "sysc.nearestmatches", map: [
                             "caseId": rescue.commandIdentifier!,
                             "client": rescue.client ?? "u\u{200B}nknown client",
                             "systems": resultString

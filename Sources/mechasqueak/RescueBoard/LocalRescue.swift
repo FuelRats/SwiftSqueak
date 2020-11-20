@@ -32,7 +32,7 @@ class LocalRescue: Codable {
     var synced = false
     var isClosing = false
     var clientHost: String?
-    var channel: String
+    var channelName: String
     var systemCorrections: [SystemsAPISearchDocument.SearchResult]?
     var systemManuallyCorrected = false
     var permitRequired = false
@@ -78,7 +78,7 @@ class LocalRescue: Codable {
         self.id = UUID()
 
         let client = match.group(at: 1)!
-        self.channel = message.destination.name
+        self.channelName = message.destination.name
         self.client = client
         var system = match.group(at: 2)!.uppercased()
         if system.hasSuffix(" SYSTEM") {
@@ -128,7 +128,7 @@ class LocalRescue: Codable {
         self.client = message.user.nickname
         self.clientNick = message.user.nickname
         self.clientHost = message.user.hostmask
-        self.channel = message.destination.name
+        self.channelName = message.destination.name
 
         var system = signal.system?.uppercased()
         if system != nil && system!.hasSuffix(" SYSTEM") {
@@ -175,7 +175,7 @@ class LocalRescue: Codable {
             system?.removeLast(7)
         }
         self.system = system
-        self.channel = command.message.destination.name
+        self.channelName = command.message.destination.name
 
         if let ircUser = command.message.destination.member(named: clientName) {
             self.clientHost = ircUser.hostmask
@@ -208,7 +208,7 @@ class LocalRescue: Codable {
         self.clientNick = attr.clientNick.value
         self.clientLanguage = attr.clientLanguage.value != nil ? Locale(identifier: attr.clientLanguage.value!) : nil
         self.commandIdentifier = attr.commandIdentifier.value
-        self.channel = configuration.general.rescueChannel
+        self.channelName = configuration.general.rescueChannel
 
         self.codeRed = attr.codeRed.value
         self.notes = attr.notes.value
@@ -438,5 +438,9 @@ class LocalRescue: Codable {
 
     var isPrepped: Bool {
         return mecha.rescueBoard.prepTimers[self.id] == nil
+    }
+
+    var channel: IRCChannel? {
+        return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }
 }

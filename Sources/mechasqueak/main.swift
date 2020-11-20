@@ -159,7 +159,7 @@ class MechaSqueak {
     @IRCListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
         if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
-            guard userPart.channel.name.lowercased() == rescue.channel.lowercased() else {
+            guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
                 return
             }
             userPart.channel.send(key: "board.clientquit", map: [
@@ -179,7 +179,7 @@ class MechaSqueak {
             let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
         {
             userQuit.client.sendMessage(
-                toChannelName: rescue.channel,
+                toChannelName: rescue.channelName,
                 withKey: "board.clientquit", mapping: [
                     "caseId": rescue.commandIdentifier!,
                     "client": rescue.client ?? "u\u{200B}nknown client"
