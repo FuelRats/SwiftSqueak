@@ -147,6 +147,32 @@ class RescueBoard {
             }
             if rescue.system != existingRescue.system {
                 changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "u\u{200B}nknown") -> \(rescue.system ?? "u\u{200B}nknown")")
+                if let system = rescue.system {
+                    SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
+                        guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
+                            return
+                        }
+
+                        existingRescue.system = searchResult.name
+                        existingRescue.permitRequired = searchResult.permitRequired
+                        existingRescue.permitName = searchResult.permitName
+                        existingRescue.syncUpstream(fromBoard: mecha.rescueBoard)
+
+                        let distance = NumberFormatter.englishFormatter().string(
+                            from: NSNumber(value: landmarkResult.distance)
+                        )!
+                        
+                        let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
+                        message.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
+                            "caseId": rescue.commandIdentifier!,
+                            "client": rescue.client!,
+                            "system": system,
+                            "distance": distance,
+                            "landmark": landmarkResult.name,
+                            "permit": searchResult.permitText ?? ""
+                        ]))
+                    })
+                }
             }
             if rescue.codeRed != existingRescue.codeRed {
                 changes.append("\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)")
