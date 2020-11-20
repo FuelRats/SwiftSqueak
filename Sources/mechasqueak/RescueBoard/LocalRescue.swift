@@ -376,6 +376,58 @@ class LocalRescue: Codable {
         }
     }
 
+    func assign (_ assignParams: [String], fromChannel channel: IRCChannel) -> RescueAssignments {
+        let assigns: (RescueAssignments) = assignParams.reduce(RescueAssignments(), { assigns, param in
+            var assigns = assigns
+            guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param.lowercased() }) == false else {
+                assigns.blacklisted.insert(param)
+                return assigns
+            }
+
+            guard
+                param.lowercased() != self.clientNick?.lowercased()
+                && param.lowercased() != self.client?.lowercased()
+            else {
+                assigns.invalid.insert(param)
+                return assigns
+            }
+
+            guard let nick = channel.member(named: param) else {
+                assigns.notFound.insert(param)
+                return assigns
+            }
+
+            guard let rat = nick.getRatRepresenting(rescue: self) else {
+                guard assigns.unidentifiedRats.contains(param) == false && self.unidentifiedRats.contains(param) == false else {
+                    return assigns
+                }
+
+                assigns.unidentifiedRats.insert(param)
+                return assigns
+            }
+
+            guard assigns.rats.contains(where: {
+                $0.id.rawValue == rat.id.rawValue
+            }) == false && self.rats.contains(where: {
+                $0.id.rawValue == rat.id.rawValue
+            }) == false else {
+                return assigns
+            }
+
+            self.unidentifiedRats.removeAll(where: { $0.lowercased() == param.lowercased() })
+            assigns.rats.insert(rat)
+
+            return assigns
+        })
+
+        if assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 {
+            self.rats.append(contentsOf: assigns.rats)
+            self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
+            self.syncUpstream(fromBoard: mecha.rescueBoard)
+        }
+        return assigns
+    }
+
     func trash (
         fromBoard board: RescueBoard,
         reason: String,
@@ -443,4 +495,12 @@ class LocalRescue: Codable {
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }
+}
+
+struct RescueAssignments {
+    var rats = Set<Rat>()
+    var unidentifiedRats = Set<String>()
+    var blacklisted = Set<String>()
+    var notFound = Set<String>()
+    var invalid = Set<String>()
 }

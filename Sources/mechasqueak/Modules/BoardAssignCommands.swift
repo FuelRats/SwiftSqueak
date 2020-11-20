@@ -55,58 +55,32 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
 
-        // Generate a tuple of assigned rats separated by identified rat IDs and unidentified rat names.
-        let assigns: ([Rat], [String]) = command.parameters[1...].reduce(([], []), { acc, assign in
-            var acc = acc
-            guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == assign.lowercased() }) == false else {
-                command.message.error(key: "board.assign.banned", fromCommand: command, map: [
-                    "assign": assign
-                ])
-                return acc
-            }
-            guard
-                assign.lowercased() != rescue.clientNick?.lowercased()
-                && assign.lowercased() != rescue.client?.lowercased()
-            else {
-                return acc
-            }
+        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
 
-            guard let nick = message.destination.member(named: assign) else {
-                command.message.error(key: "board.assign.notexist", fromCommand: command, map: [
-                    "nick": assign
-                ])
-                return acc
-            }
+        sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
+    }
 
-            guard let rat = nick.getRatRepresenting(rescue: rescue) else {
-                guard acc.1.contains(assign) == false && rescue.unidentifiedRats.contains(assign) == false else {
-                    return acc
-                }
+    static func sendAssignMessages (assigns: RescueAssignments, forRescue rescue: LocalRescue, fromCommand command: IRCBotCommand) {
+        if assigns.blacklisted.count > 0 {
+            command.message.error(key: "board.assign.banned", fromCommand: command, map: [
+                "rats": assigns.blacklisted.joined(separator: ", ")
+            ])
+        }
 
-                acc.1.append(assign)
-                return acc
-            }
+        if assigns.notFound.count > 0 {
+            command.message.error(key: "board.assign.notexist", fromCommand: command, map: [
+                "rats": assigns.notFound.joined(separator: ", ")
+            ])
+        }
 
-            guard acc.0.contains(where: {
-                $0.id.rawValue == rat.id.rawValue
-            }) == false && rescue.rats.contains(where: {
-                $0.id.rawValue == rat.id.rawValue
-            }) == false else {
-                return acc
-            }
-            rescue.unidentifiedRats.removeAll(where: { $0.lowercased() == assign.lowercased() })
-            acc.0.append(rat)
-            return acc
-        })
-
-        rescue.rats.append(contentsOf: assigns.0)
-        rescue.unidentifiedRats.append(contentsOf: assigns.1)
+        if assigns.invalid.count > 0 {
+            command.message.error(key: "board.assign.invalid", fromCommand: command, map: [
+                "rats": assigns.notFound.joined(separator: ", ")
+            ])
+        }
 
         let allRats = rescue.rats.map({ $0.attributes.name.value }) + rescue.unidentifiedRats
         guard allRats.count > 0 else {
-            command.message.error(key: "board.assign.none", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
-            ])
             return
         }
 
@@ -120,16 +94,14 @@ class BoardAssignCommands: IRCBotModule {
             "count": allRats.count
         ])
 
-        if assigns.1.count > 0 && configuration.general.drillMode == false {
+        if assigns.unidentifiedRats.count > 0 && configuration.general.drillMode == false {
             command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
-                "platform": platform.ircRepresentable,
-                "rats": assigns.1.map({
+                "platform": rescue.platform!.ircRepresentable,
+                "rats": assigns.unidentifiedRats.map({
                     "\"\($0)\""
                 }).joined(separator: ", ")
             ])
         }
-
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
 
     @BotCommand(

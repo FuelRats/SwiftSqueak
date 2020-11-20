@@ -88,7 +88,7 @@
   "board.grab.updated": "Updated case #%{clientId} with \"%{text}\".",
 
   "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
-  "board.assign.banned": "%{assign} cannot be assigned to cases right now, contact the ops team for more information.",
+  "board.assign.banned": "%{rats} cannot be assigned to cases right now, contact the ops team for more information.",
   "board.assign.none": "Found nobody to assign to case #%{caseId}",
   "board.assign.go": {
       "one": "%{client}: Please add the following rat to your friends list: %{rats}",
@@ -99,10 +99,10 @@
       "other": "%{client}: Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}"
   },
   "board.assign.unidentified": "WARNING: Could not find a %{platform} account associated with these rats: %{rats}.",
-  "board.assign.notexist": "Could not add %{nick} to the case as there is no such person in the channel.",
+  "board.assign.notexist": "Could not add %{rats} to the case as they are not in the channel.",
+  "board.assign.invalid": "Could not add %{rats} to the case as it is not a valid assign.",
   "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
   "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",
-  "board.unassign.none": "Found nobody to unassign from case #%{caseId}",
   
   "board.sub.invalidindex": "Cannot substitute index %{index} into the case as it is not a valid index.",
   "board.sub.outofbounds": "Cannot substitute index %{index} of case #%{caseId} as it is out of bounds.",
