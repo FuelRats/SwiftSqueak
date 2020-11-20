@@ -284,12 +284,12 @@ class RescueBoard {
                         "langCode": languageCode
                     ]))
 
-                    if let correction = correction {
-                        message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
-                            "system": system,
-                            "correction": correction
-                        ]))
-                    }
+//                    if let correction = correction {
+//                        message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
+//                            "system": system,
+//                            "correction": correction
+//                        ]))
+//                    }
                 }
                 self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
