@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import NIO
 
 class BoardAssignCommands: IRCBotModule {
     var name: String = "Assign Commands"
@@ -32,7 +33,7 @@ class BoardAssignCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["assign", "go"],
+        ["go", "assign"],
         parameters: 2...,
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
@@ -58,6 +59,51 @@ class BoardAssignCommands: IRCBotModule {
         let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
 
         sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
+    }
+
+    @BotCommand(
+        ["gofr", "assignfr", "frgo"],
+        parameters: 2...,
+        category: .board,
+        description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
+        paramText: "<case id/client> ...rats",
+        example: "4 SpaceDawg StuffedRat",
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveAssignWithInstructionsCommand = { command in
+        let message = command.message
+
+        // Find case by rescue ID or client name
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        // Disallow assigns on rescues without a platform set
+        guard let platform = rescue.platform else {
+            command.message.error(key: "board.assign.noplatform", fromCommand: command)
+            return
+        }
+
+        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
+
+        sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
+        let locale = rescue.clientLanguage ?? Locale(identifier: "en")
+
+        Fact.get(name: "\(platform.factPrefix)fr", forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
+            guard let fact = fact else {
+                return Fact.get(name: "\(platform.factPrefix)fr", forLocale: Locale(identifier: "en"))
+            }
+
+            return loop.next().makeSucceededFuture(fact)
+        }).whenSuccess { fact in
+            guard fact != nil else {
+                return
+            }
+
+            let client = rescue.clientNick ?? rescue.client ?? ""
+            message.reply(message: "\(client) \(fact!.message)")
+        }
     }
 
     static func sendAssignMessages (assigns: RescueAssignments, forRescue rescue: LocalRescue, fromCommand command: IRCBotCommand) {
