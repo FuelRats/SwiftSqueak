@@ -35,6 +35,8 @@ class LocalRescue: Codable {
     var channel: String
     var systemCorrections: [SystemsAPISearchDocument.SearchResult]?
     var systemManuallyCorrected = false
+    var permitRequired = false
+    var permitName: String? = nil
 
     let id: UUID
 

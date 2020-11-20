@@ -81,6 +81,17 @@ class MessageScanner: IRCBotModule {
                 ))
             }
 
+            if rescue.permitRequired {
+                channelMessage.replyPrivate(message: lingo.localize(
+                    "jumpcall.permit",
+                    locale: "en-GB",
+                    interpolations: [
+                        "case": caseId,
+                        "permit": rescue.permitName ?? rescue.system ?? "unknown"
+                    ])
+                )
+            }
+
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)
                 if rats.first(where: { (rat: Rat) -> Bool in

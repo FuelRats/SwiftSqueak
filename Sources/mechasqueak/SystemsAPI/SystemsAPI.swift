@@ -156,6 +156,8 @@ class SystemsAPI {
                                         }
 
                                         rescue.system = autoCorrectableResult.name.uppercased()
+                                        rescue.permitRequired = autoCorrectableResult.permitRequired
+                                        rescue.permitName = autoCorrectableResult.permitName
                                         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
 
                                         mecha.reportingChannel?.client.sendMessage(
