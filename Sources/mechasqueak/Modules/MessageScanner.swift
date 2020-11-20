@@ -152,10 +152,9 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if let rescue = caseMentionedInMessage(message: channelMessage) {
+        if let rescue = caseMentionedInMessage(message: channelMessage), channelMessage.user.isAssignedTo(rescue: rescue) {
             if
-                let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression),
-                channelMessage.user.isAssignedTo(rescue: rescue)
+                let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression)
             {
                 let system = String(channelMessage.message[systemRange])
                 SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
