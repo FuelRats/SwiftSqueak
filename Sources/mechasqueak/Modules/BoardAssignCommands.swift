@@ -88,9 +88,8 @@ class BoardAssignCommands: IRCBotModule {
         let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
 
         sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
-        let locale = rescue.clientLanguage ?? Locale(identifier: "en")
 
-        Fact.get(name: "\(platform.factPrefix)fr", forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
+        Fact.get(name: "\(platform.factPrefix)fr", forLocale: command.locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
             guard let fact = fact else {
                 return Fact.get(name: "\(platform.factPrefix)fr", forLocale: Locale(identifier: "en"))
             }
