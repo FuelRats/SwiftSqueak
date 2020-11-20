@@ -134,16 +134,6 @@ class BoardAttributeCommands: IRCBotModule {
         let oldClient = rescue.client!
         let client = command.parameters[1]
 
-        guard mecha.rescueBoard.rescues.contains(where: {
-            $0.client?.lowercased() == client.lowercased()
-        }) == false else {
-            command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
-                "client": client
-            ])
-            return
-        }
-
         rescue.client = client
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
@@ -151,6 +141,16 @@ class BoardAttributeCommands: IRCBotModule {
             "oldClient": oldClient,
             "client": client
         ])
+
+
+        if let existingCase = mecha.rescueBoard.rescues.first(where: {
+            $0.client?.lowercased() == client.lowercased()
+        }) {
+            command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
+                "caseId": existingCase.commandIdentifier!,
+                "client": client
+            ])
+        }
 
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
@@ -172,15 +172,6 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         let nick = command.parameters[1]
-        guard mecha.rescueBoard.rescues.contains(where: {
-            $0.clientNick?.lowercased() == nick.lowercased()
-        }) == false else {
-            command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
-                "nick": nick
-            ])
-            return
-        }
         rescue.clientNick = nick
 
         command.message.reply(key: "board.nickchange", fromCommand: command, map: [
@@ -188,6 +179,16 @@ class BoardAttributeCommands: IRCBotModule {
             "client": rescue.client!,
             "nick": nick
         ])
+
+
+        if let existingCase = mecha.rescueBoard.rescues.first(where: {
+            $0.clientNick?.lowercased() == nick.lowercased()
+        }) {
+            command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
+                "caseId": existingCase.commandIdentifier!,
+                "nick": nick
+            ])
+        }
 
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)
     }
