@@ -58,6 +58,15 @@ extension IRCUser {
         return rats.first
     }
 
+    func isAssignedTo(rescue: LocalRescue) -> Bool {
+        guard let user = self.associatedAPIData?.user, let rats = self.associatedAPIData?.ratsBelongingTo(user: user) else {
+            return false
+        }
+        return rescue.rats.contains(where: { assigned in
+            return rats.contains(where: { $0.id.rawValue == assigned.id.rawValue })
+        })
+    }
+
     func hostPermissions () -> [AccountPermission] {
         if self.hostmask.hasSuffix("i.see.all")
             || self.hostmask.hasSuffix("netadmin.fuelrats.com")

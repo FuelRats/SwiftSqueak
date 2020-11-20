@@ -30,6 +30,7 @@ class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
     static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})[jJ] #([0-9]{1,3})", groupNames: ["jumps", "case"])
     static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
+    static let systemExpression = "(([A-Z][A-Z\\s]+) SECTOR ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+))"
     static let jumpCallExpressionCaseAfter = try! Regex(
         pattern: "#([0-9]{1,3}) ([0-9]{1,3})[jJ]",
         groupNames: ["case", "jumps"]
@@ -152,6 +153,37 @@ class MessageScanner: IRCBotModule {
         }
 
         if let rescue = caseMentionedInMessage(message: channelMessage) {
+            if
+                let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression),
+                channelMessage.user.isAssignedTo(rescue: rescue)
+            {
+                let system = String(channelMessage.message[systemRange])
+                SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
+                    guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
+                        return
+                    }
+
+                    rescue.system = searchResult.name
+                    rescue.permitRequired = searchResult.permitRequired
+                    rescue.permitName = searchResult.permitName
+                    rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+
+                    let distance = NumberFormatter.englishFormatter().string(
+                        from: NSNumber(value: landmarkResult.distance)
+                    )!
+
+                    let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
+                    channelMessage.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
+                        "caseId": rescue.commandIdentifier!,
+                        "client": rescue.client!,
+                        "system": system,
+                        "distance": distance,
+                        "landmark": landmarkResult.name,
+                        "permit": searchResult.permitText ?? ""
+                    ]))
+                })
+            }
+
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
                 return
             }
