@@ -93,6 +93,11 @@ class RescueCreateOperation: Operation {
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         request.body = try? .encodable(postDocument)
+        do {
+            try HTTPClient.Body.encodable(postDocument)
+        } catch {
+            debug(String(describing: error))
+        }
 
         httpClient.execute(request: request).whenComplete{ result in
             switch result {

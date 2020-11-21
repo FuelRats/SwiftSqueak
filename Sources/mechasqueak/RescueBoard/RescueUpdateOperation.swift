@@ -94,6 +94,11 @@ class RescueUpdateOperation: Operation {
         if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
             request.headers.add(name: "x-representing", value: userId.uuidString)
         }
+        do {
+            try HTTPClient.Body.encodable(patchDocument)
+        } catch {
+            debug(String(describing: error))
+        }
 
         request.body = try? .encodable(patchDocument)
 
