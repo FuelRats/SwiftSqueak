@@ -39,6 +39,8 @@ class LocalRescue: Codable {
     var systemManuallyCorrected = false
     var permitRequired = false
     var permitName: String? = nil
+    var landmark: SystemsAPILandmarkDocument.LandmarkResult?
+    var jumpCalls = 0
 
     let id: UUID
 
@@ -460,6 +462,13 @@ class LocalRescue: Codable {
 
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
+    }
+
+    func setSystemData (searchResult: SystemsAPISearchDocument.SearchResult, landmark: SystemsAPILandmarkDocument.LandmarkResult) {
+        self.system = searchResult.name.uppercased()
+        self.permitRequired = searchResult.permitRequired
+        self.permitName = searchResult.permitName
+        self.landmark = landmark
     }
 }
 

@@ -156,9 +156,7 @@ class RescueBoard {
                             return
                         }
 
-                        existingRescue.system = searchResult.name.uppercased()
-                        existingRescue.permitRequired = searchResult.permitRequired
-                        existingRescue.permitName = searchResult.permitName
+                        existingRescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
                         existingRescue.syncUpstream()
 
                         let distance = NumberFormatter.englishFormatter().string(
@@ -254,8 +252,7 @@ class RescueBoard {
 
                     let format = searchResult.permitRequired ? "board.\(announceType).permit" : "board.\(announceType).landmark"
                     if searchResult.permitRequired {
-                        rescue.permitRequired = true
-                        rescue.permitName = searchResult.permitName
+                        rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
                     }
 
                     message.reply(message: lingo.localize(format, locale: "en", interpolations: [
@@ -498,7 +495,7 @@ class RescueBoard {
                 }
 
                 if pendingUpstreamUpdate.count > 0 {
-                    updates.append(lingo.localize("board.synced.pendingUpstreamUpdate", locale: "en-GB", interpolations: [
+                    updates.append(lingo.localize("board.synced.upstreamUpdate", locale: "en-GB", interpolations: [
                         "count": pendingUpstreamUpdate.count
                     ]))
                 }

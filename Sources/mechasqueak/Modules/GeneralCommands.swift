@@ -64,6 +64,60 @@ class GeneralCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
+
+    @BotCommand(
+        ["needsrats", "needrats", "nr"],
+        parameters: 0...0,
+        category: .utility,
+        description: "Get a list of cases that currently require rats to call jumps",
+        permission: .RescueRead
+    )
+    var needsRatsCommand = { command in
+        let needsRats = mecha.rescueBoard.rescues.filter({ rescue in
+            guard rescue.system != nil && rescue.status == .Open else {
+                return false
+            }
+            if rescue.codeRed {
+                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 2 && rescue.jumpCalls < 3
+            }
+            return rescue.rats.count < 1 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls < 2
+        })
+
+        guard needsRats.count > 0 else {
+            command.message.reply(key: "needsrats.none", fromCommand: command)
+            return
+        }
+
+        var formattedCases = needsRats.map({ (rescue: LocalRescue) -> String in
+            var format = "needsrats.case"
+            if rescue.landmark != nil {
+                format = "needsrats.landmark"
+            }
+            if rescue.permitRequired {
+                format = "needsrats.permit"
+            }
+
+            var permitText = ""
+            if rescue.permitRequired {
+                permitText = IRCFormat.color(.LightRed, rescue.permitName != nil ? "\(rescue.permitName!) Permit Required" : "Permit Required")
+            }
+
+            return lingo.localize(format, locale: "en-GB", interpolations: [
+                "caseId": rescue.commandIdentifier,
+                "client": rescue.client ?? "?",
+                "platform": rescue.platform.ircRepresentable,
+                "system": rescue.system ?? "?",
+                "distance": rescue.landmark?.distance ?? 0,
+                "landmark": rescue.landmark?.name ?? "?",
+                "permit": permitText
+            ])
+        })
+
+        command.message.reply(key: "needsrats.message", fromCommand: command, map: [
+            "cases": formattedCases.joined(separator: ", ")
+        ])
+    }
+
     @BotCommand(
         ["sysstats", "syscount", "systems"],
         parameters: 0...0,

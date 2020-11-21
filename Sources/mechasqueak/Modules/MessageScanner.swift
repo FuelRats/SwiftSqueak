@@ -122,6 +122,7 @@ class MessageScanner: IRCBotModule {
 
 
 
+            rescue.jumpCalls += 1
             rescue.quotes.append(RescueQuote(
                 author: channelMessage.client.currentNick,
                 message: "<\(channelMessage.user.nickname)> \(channelMessage.message)",
@@ -161,6 +162,7 @@ class MessageScanner: IRCBotModule {
                     guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
                         return
                     }
+
 
                     rescue.system = searchResult.name.uppercased()
                     rescue.permitRequired = searchResult.permitRequired

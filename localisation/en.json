@@ -262,6 +262,12 @@
 
   "birthday": "\u0002Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈\u0002",
 
+  "needsrats.none": "There does not appear to be any cases that require rats to call jumps right now.",
+  "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" (%{platform})",
+  "neesdrats.landmark": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance} from %{landmark} (%{platform})",
+  "needsrats.permit": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance} from %{landmark} (%{permit}) (%{platform})",
+  "needsrats.message": "Cases that require jump calls right now: %{cases}",
+
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.nofacts": "Information commands such as !prep and !pcwing are not listed here, to see a list of those, use !facts.",

@@ -155,9 +155,8 @@ class SystemsAPI {
                                             return
                                         }
 
-                                        rescue.system = autoCorrectableResult.name.uppercased()
-                                        rescue.permitRequired = autoCorrectableResult.permitRequired
-                                        rescue.permitName = autoCorrectableResult.permitName
+
+                                        rescue.setSystemData(searchResult: autoCorrectableResult, landmark: landmarkResult.landmarks[0])
                                         rescue.syncUpstream()
 
                                         mecha.reportingChannel?.client.sendMessage(
