@@ -131,9 +131,11 @@
   "board.list.cases": "%{count} cases found, %{cases}",
   "board.list.none": "No matching cases found.  %{flags}",
   "board.list.case.default": "[%{caseId}] %{client} (%{platform}) %{cr} %{assigned}",
-  "board.list.inactivecase.default": "[%{caseId}] %{client} (%{platform}) %{cr} (Inactive) %{assigned}",
+  "board.list.inactivecase.default": "[%{caseId}] %{client} (%{platform}) %{cr} \u000315(Inactive)\u0003 %{assigned}",
+  "board.list.queuedcase.default": "[%{caseId}] %{client} (%{platform}) %{cr} \u000307(Queued)\u0003 %{assigned}",
   "board.list.case.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
-  "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
+  "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} \u000315(Inactive)\u0003 %{assigned}",
+  "board.list.queuedcase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} \u000307(Queued)\u0003 %{assigned}",
   
   "board.quote.title": "Case #%{caseId} CMDR %{client} in %{system} (%{platform}) %{cr}",
   "board.quote.operation": "\"Operation %{title}\" (Case #%{caseId}) (%{client}) in %{system} (%{platform}) %{cr}",
@@ -163,6 +165,10 @@
   "board.quiet.notrecent": "The last case was %{timespan} ago. Time to summon a case?",
   "board.quiet.quiet": "Wow, the last signal was so long ago... %{timespan} ago to be exact! Orangey approves!",
   "board.quiet.current": "A case is on going right now! Maybe you should be calling jumps instead of using !quiet 🤔",
+
+  "board.queue.already": "Case #%{caseId} is already queued.",
+  "board.dequeue.already": "Case #%{caseId} is not queued.",
+  "board.dequeue.response": "Case #%{caseId} has been dequeued.",
   
   "board.notprepped": "WARNING: Client for case #%{caseId} has NOT been !prep-ed!",
   
@@ -266,6 +272,9 @@
   "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" (%{platform})",
   "needsrats.landmark": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance}ly from %{landmark} (%{platform})",
   "needsrats.permit": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance}ly from %{landmark} (%{permit}) (%{platform})",
+  "needsrats.casecr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" (%{platform})",
+  "needsrats.landmarkcr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" %{distance}ly from %{landmark} (%{platform})",
+  "needsrats.permitcr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" %{distance}ly from %{landmark} (%{permit}) (%{platform})",
   "needsrats.message": "Cases that require jump calls right now: %{cases}",
 
 

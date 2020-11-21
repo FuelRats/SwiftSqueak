@@ -58,7 +58,7 @@ class BoardCommands: IRCBotModule {
         parameters: 0...1,
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
-        paramText: "[-iaru@]",
+        paramText: "[-iaruq@]",
         example: "-i",
         permission: .RescueRead
     )
@@ -90,6 +90,10 @@ class BoardCommands: IRCBotModule {
                 return false
             }
 
+            if arguments.contains(.showOnlyQueued) && $0.status != .Queued {
+                return false
+            }
+
             if arguments.contains(.showOnlyInactive) && $0.status != .Inactive {
                 return false
             }
@@ -117,10 +121,16 @@ class BoardCommands: IRCBotModule {
         let format = arguments.contains(.includeCaseIds) ? "includeid" : "default"
 
         let generatedList = rescues.map({ (rescue: LocalRescue) -> String in
-            let inactiveFormat = rescue.status == .Inactive ?
-                "board.list.inactivecase.\(format)" : "board.list.case.\(format)"
+            var entryFormat = "board.list.case.\(format)"
+            if rescue.status == .Inactive {
+                entryFormat = "board.list.inactivecase.\(format)"
+            }
 
-            return lingo.localize(inactiveFormat, locale: "en-GB", interpolations: [
+            if rescue.status == .Queued {
+                entryFormat = "board.list.queuedcase.\(format)"
+            }
+
+            return lingo.localize(entryFormat, locale: "en-GB", interpolations: [
                 "caseId": rescue.commandIdentifier,
                 "id": rescue.id.ircRepresentation,
                 "client": rescue.client ?? "?",
@@ -441,6 +451,7 @@ class BoardCommands: IRCBotModule {
 enum ListCommandArgument: Character {
     case showOnlyInactive = "i"
     case showOnlyActive = "a"
+    case showOnlyQueued = "q"
     case showOnlyAssigned = "r"
     case showOnlyUnassigned = "u"
     case includeCaseIds = "@"
@@ -450,6 +461,7 @@ enum ListCommandArgument: Character {
         let maps: [ListCommandArgument: String] = [
             .showOnlyActive: "Show Only Active",
             .showOnlyInactive: "Show only Inactive",
+            .showOnlyQueued: "Show only Queued",
             .showOnlyAssigned: "Show only Assigned",
             .showOnlyUnassigned: "Show only Unassigned",
             .includeCaseIds: "Include UUIDs"

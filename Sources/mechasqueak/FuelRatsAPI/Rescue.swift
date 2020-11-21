@@ -84,6 +84,7 @@ struct RescueQuote: Codable, Equatable {
 enum RescueStatus: String, Codable {
     case Open = "open"
     case Inactive = "inactive"
+    case Queued = "queued"
     case Closed = "closed"
 }
 

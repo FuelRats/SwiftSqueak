@@ -62,6 +62,72 @@ class BoardAttributeCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["queue"],
+        parameters: 1...1,
+        category: .board,
+        description: "Add a rescue to the queue list, informing the client.",
+        paramText: "<case id/client>",
+        example: "4",
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveQueueCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        guard rescue.status != .Queued else {
+            command.message.error(key: "board.queue.already", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier
+            ])
+            return
+        }
+        // rescue.status = .Queued
+
+        Fact.getWithFallback(name: "pqueue", forLcoale: command.locale).whenSuccess { fact in
+            guard let fact = fact else {
+                return
+            }
+
+            let target = rescue.clientNick ?? ""
+            command.message.reply(message: "\(target): \(fact.message)")
+        }
+
+        rescue.syncUpstream()
+    }
+
+    @BotCommand(
+        ["dequeue", "unqueue"],
+        parameters: 1...1,
+        category: .board,
+        description: "Remove a rescue from the queue list, informing the client.",
+        paramText: "<case id/client>",
+        example: "4",
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveDequeueCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        guard rescue.status == .Queued else {
+            command.message.error(key: "board.dequeue.already", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier
+            ])
+            return
+        }
+        rescue.status = .Open
+
+        command.message.reply(key: "board.dequeue.response", fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier,
+            "client": rescue.client!
+        ])
+
+        rescue.syncUpstream()
+    }
+
+    @BotCommand(
         ["system", "sys", "loc", "location"],
         parameters: 2...2,
         lastParameterIsContinous: true,
