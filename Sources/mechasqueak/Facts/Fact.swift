@@ -72,6 +72,16 @@ extension Fact: Model {
         return promise.futureResult
     }
 
+    public static func getWithFallback (name: String, forLcoale locale: Locale) -> EventLoopFuture<Fact?> {
+        return Fact.get(name: name, forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
+            guard let fact = fact else {
+                return Fact.get(name: name, forLocale: Locale(identifier: "en"))
+            }
+
+            return loop.next().makeSucceededFuture(fact)
+        })
+    }
+
     public static func get (
         name: String,
         forLocale locale: Locale,
