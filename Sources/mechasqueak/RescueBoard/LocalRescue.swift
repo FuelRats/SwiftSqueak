@@ -330,6 +330,7 @@ class LocalRescue: Codable {
                         self.synced = true
                         board.checkSynced()
                     } else if response.status == .notFound {
+                        debug(String(response.status.code))
                         self.createUpstream(fromBoard: mecha.rescueBoard)
                     } else {
 
@@ -476,7 +477,7 @@ class LocalRescue: Codable {
     func hasConflictingId (inBoard board: RescueBoard) -> Bool {
         return board.rescues.contains(where: {
             debug("Conflict Comparison: \(String(describing: self.commandIdentifier)) = \(String(describing: $0.commandIdentifier))")
-            return self.commandIdentifier == nil || $0.commandIdentifier == self.commandIdentifier
+            return $0.commandIdentifier == self.commandIdentifier
         })
     }
 
