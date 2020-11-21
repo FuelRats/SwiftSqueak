@@ -79,6 +79,13 @@ extension String {
     var strippingNonLetters: String {
         return self.components(separatedBy: CharacterSet.letters.inverted).joined()
     }
+
+    func excerpt (maxLength: Int) -> String {
+        if maxLength > 3 && self.count > maxLength {
+            return self.prefix(maxLength - 2) + ".."
+        }
+        return self
+    }
 }
 
 extension Array where Element == String {

@@ -124,10 +124,7 @@ class FactCommands: IRCBotModule {
                 return
             }
 
-            var excerpt = fact.message
-            if excerpt.count > 100 {
-                excerpt = "\(excerpt.prefix(98)).."
-            }
+            let excerpt = fact.message.excerpt(maxLength: 100)
 
             command.message.reply(key: "facts.info.message", fromCommand: command, map: [
                 "fact": name,
