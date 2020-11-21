@@ -153,7 +153,7 @@ class RescueBoard {
                             return
                         }
 
-                        existingRescue.system = searchResult.name
+                        existingRescue.system = searchResult.name.uppercased()
                         existingRescue.permitRequired = searchResult.permitRequired
                         existingRescue.permitName = searchResult.permitName
                         existingRescue.syncUpstream(fromBoard: mecha.rescueBoard)
@@ -231,7 +231,7 @@ class RescueBoard {
 
         if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system) {
             system.removeLast(systemBodiesMatches.matched.count)
-            rescue.system = system
+            rescue.system = system.uppercased()
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
             rescue.quotes.append(RescueQuote(
                 author: message.client.currentNick,

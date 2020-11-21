@@ -162,7 +162,7 @@ class MessageScanner: IRCBotModule {
                         return
                     }
 
-                    rescue.system = searchResult.name
+                    rescue.system = searchResult.name.uppercased()
                     rescue.permitRequired = searchResult.permitRequired
                     rescue.permitName = searchResult.permitName
                     rescue.syncUpstream(fromBoard: mecha.rescueBoard)
