@@ -145,10 +145,10 @@ class RescueBoard {
             }
 
             var changes: [String] = []
-            if rescue.platform != existingRescue.platform {
+            if rescue.platform != existingRescue.platform && rescue.platform != nil {
                 changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
             }
-            if rescue.system != existingRescue.system {
+            if rescue.system != existingRescue.system && rescue.system != nil {
                 changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "u\u{200B}nknown") -> \(rescue.system ?? "u\u{200B}nknown")")
                 if let system = rescue.system {
                     SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
