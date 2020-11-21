@@ -328,6 +328,9 @@ class LocalRescue: Codable {
                         board.checkSynced()
                     } else if response.status == .notFound {
                         self.createUpstream(fromBoard: mecha.rescueBoard)
+                    } else {
+
+                        debug(String(response.status.code))
                     }
                 case .failure(let error):
                     debug(String(describing: error))
