@@ -58,7 +58,7 @@ class BoardAttributeCommands: IRCBotModule {
             "client": rescue.client!
         ])
 
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(
@@ -112,7 +112,7 @@ class BoardAttributeCommands: IRCBotModule {
             }
         )
         rescue.systemManuallyCorrected = true
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(
@@ -152,7 +152,7 @@ class BoardAttributeCommands: IRCBotModule {
             ])
         }
 
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(
@@ -190,7 +190,7 @@ class BoardAttributeCommands: IRCBotModule {
             ])
         }
 
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(
@@ -231,7 +231,7 @@ class BoardAttributeCommands: IRCBotModule {
                 ])
             }
         }
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(
@@ -258,6 +258,6 @@ class BoardAttributeCommands: IRCBotModule {
             "title": title
         ])
 
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 }

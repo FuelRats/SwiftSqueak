@@ -86,6 +86,7 @@ extension String {
         }
         return self
     }
+
 }
 
 extension Array where Element == String {
@@ -106,5 +107,17 @@ extension Array where Element == String {
             acc[acc.count - 1] = acc[acc.count - 1] + separator + entry
             return acc
         })
+    }
+
+    var englishList: String {
+        guard self.count > 0 else {
+            return ""
+        }
+
+        guard self.count > 1 else {
+            return self[0] + "."
+        }
+
+        return self.dropLast(1).joined(separator: ", ") + " and " + self.last! + "."
     }
 }

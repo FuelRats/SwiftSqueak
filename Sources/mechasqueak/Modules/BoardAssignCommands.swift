@@ -211,6 +211,6 @@ class BoardAssignCommands: IRCBotModule {
             "caseId": rescue.commandIdentifier,
             "rats": unassignedRats
         ])
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 }

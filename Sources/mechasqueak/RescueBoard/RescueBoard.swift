@@ -29,6 +29,7 @@ import Regex
 
 class RescueBoard {
     var rescues: [LocalRescue] = []
+    let queue = OperationQueue()
     private var isSynced = true
     var syncTimer: RepeatedTask?
     private let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
@@ -40,6 +41,7 @@ class RescueBoard {
     var recentlyClosed = [Int: UUID]()
 
     init () {
+        self.queue.maxConcurrentOperationCount = 1
         self.distanceFormatter = NumberFormatter()
         self.distanceFormatter.numberStyle = .decimal
         self.distanceFormatter.groupingSize = 3
@@ -157,7 +159,7 @@ class RescueBoard {
                         existingRescue.system = searchResult.name.uppercased()
                         existingRescue.permitRequired = searchResult.permitRequired
                         existingRescue.permitName = searchResult.permitName
-                        existingRescue.syncUpstream(fromBoard: mecha.rescueBoard)
+                        existingRescue.syncUpstream()
 
                         let distance = NumberFormatter.englishFormatter().string(
                             from: NSNumber(value: landmarkResult.distance)
@@ -226,7 +228,7 @@ class RescueBoard {
                 "language": language,
                 "langCode": languageCode
             ]))
-            rescue.createUpstream(fromBoard: self)
+            rescue.createUpstream()
             return
         }
 
@@ -295,7 +297,7 @@ class RescueBoard {
                 self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
 
-        rescue.createUpstream(fromBoard: self)
+        rescue.createUpstream()
     }
 
     func prepClient (rescue: LocalRescue, message: IRCPrivateMessage, initiated: RescueInitiationType) {
@@ -415,13 +417,18 @@ class RescueBoard {
     func merge (rescueDocument: RescueSearchDocument) {
         let apiRescues = rescueDocument.convertToLocalRescues(onBoard: self)
 
-        var pendingUpstreamUpdate: [LocalRescue] = []
         var pendingDownstream: [LocalRescue] = []
 
         let pendingUpstreamNew = self.rescues.filter({ localRescue in
             return apiRescues.contains(where: { apiRescue in
                 apiRescue.id == localRescue.id
             }) == false
+        })
+
+        var pendingUpstreamUpdate = self.rescues.filter({ localRescue in
+            return apiRescues.contains(where: { apiRescue in
+                apiRescue.id == localRescue.id
+            })
         })
 
         let novelRescues = apiRescues.filter({ apiRescue in
@@ -465,27 +472,49 @@ class RescueBoard {
             self.rescues.append(novelRescue)
         }
 
-        for rescue in pendingUpstreamNew {
-            rescue.createUpstream(fromBoard: self)
-        }
+        var futures = pendingUpstreamNew.map({
+            $0.createUpstream()
+        })
 
-        for rescue in pendingUpstreamUpdate {
-            rescue.syncUpstream(fromBoard: self)
-        }
+        futures.append(contentsOf: pendingUpstreamUpdate.map({
+            $0.syncUpstream()
+        }))
 
-        if let rescueChannel = mecha.reportingChannel {
-            rescueChannel.send(key: "board.synced", map: [
-                "api": configuration.api.url,
-                "downstreamNew": novelRescues.count,
-                "downstreamChange": 0,
-                "upstreamNew": pendingUpstreamNew.count,
-                "upstreamChange": pendingUpstreamUpdate.count,
-                "conflicts": requiredIdChange
-            ])
-        }
+        EventLoopFuture.whenAllSucceed(futures, on: loop.next()).whenSuccess { _ in
+            mecha.rescueBoard.synced = true
+            if let rescueChannel = mecha.reportingChannel {
+                var updates = [String]()
 
-        if pendingUpstreamUpdate.count == 0 {
-            self.synced = true
+                if novelRescues.count > 0 {
+                    updates.append(lingo.localize("board.synced.downstreamNew", locale: "en-GB", interpolations: [
+                        "count": novelRescues.count
+                    ]))
+                }
+
+                if pendingUpstreamNew.count > 0 {
+                    updates.append(lingo.localize("board.synced.upstreamNew", locale: "en-GB", interpolations: [
+                        "count": pendingUpstreamNew.count
+                    ]))
+                }
+
+                if pendingUpstreamUpdate.count > 0 {
+                    updates.append(lingo.localize("board.synced.pendingUpstreamUpdate", locale: "en-GB", interpolations: [
+                        "count": pendingUpstreamUpdate.count
+                    ]))
+                }
+
+                if requiredIdChange > 0 {
+                    updates.append(lingo.localize("board.synced.conflicts", locale: "en-GB", interpolations: [
+                        "count": requiredIdChange
+                    ]))
+                }
+
+                let syncMessage = lingo.localize("board.synced", locale: "en-GB", interpolations: [
+                    "api": configuration.api.url,
+                    "updates": updates.englishList
+                ])
+                rescueChannel.send(message: syncMessage)
+            }
         }
     }
 }

@@ -26,8 +26,10 @@ import Foundation
 import AsyncHTTPClient
 import Regex
 import IRCKit
+import NIO
 
 class LocalRescue: Codable {
+
     private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
@@ -265,83 +267,38 @@ class LocalRescue: Codable {
         return rescue
     }
 
-    func createUpstream (fromBoard board: RescueBoard) {
-        let postDocument = SingleDocument(
-            apiDescription: .none,
-            body: .init(resourceObject: self.toApiRescue),
-            includes: .none,
-            meta: .none,
-            links: .none
-        )
+    @discardableResult
+    func createUpstream () -> EventLoopFuture<LocalRescue> {
+        let promise = loop.next().makePromise(of: LocalRescue.self)
 
-        let url = URLComponents(string: "\(configuration.api.url)/rescues")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-
-        request.body = try? .encodable(postDocument)
-
-        httpClient.execute(request: request).whenComplete{ result in
-            switch result {
-                case .success(let response):
-                    if response.status == .created || response.status == .conflict {
-                        self.synced = true
-                    } else {
-                        debug(String(response.status.code))
-                    }
-                case .failure(let error):
-                    debug(String(describing: error))
-                    self.synced = false
-                    board.synced = false
-            }
+        let operation = RescueCreateOperation(rescue: self)
+        operation.onCompletion = {
+            promise.succeed(self)
         }
+
+        operation.onError = { error in
+            promise.fail(error)
+        }
+
+        mecha.rescueBoard.queue.addOperation(operation)
+        return promise.futureResult
     }
 
-    func syncUpstream (fromBoard board: RescueBoard, representing: IRCUser? = nil) {
-        if board.synced == false {
-            self.synced = false
-            return
+    @discardableResult
+    func syncUpstream (representing: IRCUser? = nil) -> EventLoopFuture<LocalRescue> {
+        let promise = loop.next().makePromise(of: LocalRescue.self)
+
+        let operation = RescueUpdateOperation(rescue: self)
+        operation.onCompletion = {
+            promise.succeed(self)
         }
 
-        let patchDocument = SingleDocument(
-            apiDescription: .none,
-            body: .init(resourceObject: self.toApiRescue),
-            includes: .none,
-            meta: .none,
-            links: .none
-        )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-        if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
-            request.headers.add(name: "x-representing", value: userId.uuidString)
+        operation.onError = { error in
+            promise.fail(error)
         }
 
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenComplete { result in
-            switch result {
-                case .success(let response):
-                    if response.status == .ok {
-                        self.synced = true
-                        board.checkSynced()
-                    } else if response.status == .notFound {
-                        debug(String(response.status.code))
-                        self.createUpstream(fromBoard: mecha.rescueBoard)
-                    } else {
-
-                        debug(String(response.status.code))
-                    }
-                case .failure(let error):
-                    debug(String(describing: error))
-                    self.synced = false
-                    board.synced = false
-            }
-        }
+        mecha.rescueBoard.queue.addOperation(operation)
+        return promise.futureResult
     }
 
     func close (
@@ -432,7 +389,7 @@ class LocalRescue: Codable {
         if assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 {
             self.rats.append(contentsOf: assigns.rats)
             self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
-            self.syncUpstream(fromBoard: mecha.rescueBoard)
+            self.syncUpstream()
         }
         return assigns
     }

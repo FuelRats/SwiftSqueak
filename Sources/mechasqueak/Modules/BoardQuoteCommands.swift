@@ -128,7 +128,7 @@ class BoardQuoteCommands: IRCBotModule {
             "text": lastMessage
         ])
 
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(
@@ -200,7 +200,7 @@ class BoardQuoteCommands: IRCBotModule {
                 "text": injectMessage
             ])
 
-            rescue?.syncUpstream(fromBoard: mecha.rescueBoard)
+            rescue?.syncUpstream()
         }
     }
 
@@ -258,7 +258,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
 
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     static func isLikelyAccidentalInject (clientParam: String) -> Bool {

@@ -356,7 +356,7 @@ class RemoteRescueCommands: IRCBotModule {
             rescue.status = .Open
 
             mecha.rescueBoard.rescues.append(rescue)
-            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+            rescue.syncUpstream()
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
                 "id": id.ircRepresentation,
                 "caseId": rescue.commandIdentifier
@@ -408,7 +408,7 @@ class RemoteRescueCommands: IRCBotModule {
             rescue.status = .Open
 
             mecha.rescueBoard.rescues.append(rescue)
-            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+            rescue.syncUpstream()
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
                 "id": id.ircRepresentation,
                 "caseId": rescue.commandIdentifier

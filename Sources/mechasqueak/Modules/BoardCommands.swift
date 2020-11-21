@@ -172,7 +172,7 @@ class BoardCommands: IRCBotModule {
             })
 
             mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue.id
-            
+
             if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
                 timer?.cancel()
                 mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
@@ -373,7 +373,7 @@ class BoardCommands: IRCBotModule {
                     }
 
                     rescue.system = selectedCorrection.name.uppercased()
-                    rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+                    rescue.syncUpstream()
 
                     let landmarkResult = landmarkResults.landmarks[0]
                     let format = selectedCorrection.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"

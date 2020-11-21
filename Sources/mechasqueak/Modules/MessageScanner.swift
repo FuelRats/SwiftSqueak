@@ -130,7 +130,7 @@ class MessageScanner: IRCBotModule {
                 lastAuthor: channelMessage.client.currentNick
             ))
 
-            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+            rescue.syncUpstream()
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
@@ -165,7 +165,7 @@ class MessageScanner: IRCBotModule {
                     rescue.system = searchResult.name.uppercased()
                     rescue.permitRequired = searchResult.permitRequired
                     rescue.permitName = searchResult.permitName
-                    rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+                    rescue.syncUpstream()
 
                     let distance = NumberFormatter.englishFormatter().string(
                         from: NSNumber(value: landmarkResult.distance)
@@ -200,7 +200,7 @@ class MessageScanner: IRCBotModule {
                 lastAuthor: channelMessage.client.currentNick
             ))
 
-            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+            rescue.syncUpstream()
         }
     }
 

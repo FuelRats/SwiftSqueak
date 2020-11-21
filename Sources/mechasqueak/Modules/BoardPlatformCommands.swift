@@ -42,7 +42,7 @@ class BoardPlatformCommands: IRCBotModule {
             "caseId": rescue.commandIdentifier,
             "client": rescue.client!
         ])
-        rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+        rescue.syncUpstream()
     }
 
     @BotCommand(

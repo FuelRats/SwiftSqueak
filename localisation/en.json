@@ -44,7 +44,26 @@
   "board.clientjoin": "Client of case #%{caseId} (%{client}) has joined!",
   "board.clientjoinhost": "Caution: Client of case #%{caseId} (%{client}) has joined with a different name! (%{nick})",
   "board.clientquit": "Caution: Client of case #%{caseId} (%{client}) has left!",
-  "board.synced": "Successfully synced board with %{api}. %{downstreamNew} new rescues were synced from the server and %{upstreamNew} new local rescues were synced to the server. %{downstreamChange} server-side changes were found and synced and %{upstreamChange} local changes were synced to the server. %{conflicts} case ID conflicts occured.",
+  "board.synced": "Successfully synced board with %{api}. %{updates}",
+  "board.synced.downstreamNew": {
+      "one": "%{count} new rescue was downloaded from the server",
+      "other": "%{count} new rescues were downloaded from the server"
+  },
+  "board.synced.upstreamNew": {
+      "one": "%{count} new rescue was uploaded to the server",
+      "other": "%{count} new rescues were uploaded to the server"
+  },
+  "board.synced.downstreamUpdate": {
+      "one": "%{count} altered rescue was downloaded from the server",
+      "other": "%{count} altered rescues were downloaded from the server"
+  },
+  "board.synced.upstreamUpdate": {
+      "one": "%{count} altered rescue was uploaded to the server",
+      "other": "%{count} altered rescues were uploaded to server"
+  },"board.synced.conflicts": {
+      "one": "%{count} case number were altered due to a conflict",
+      "other": "%{count} case numbers were altered due to a conflict"
+  },
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
   
   "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (Case #%{caseId}) %{platformSignal}",
