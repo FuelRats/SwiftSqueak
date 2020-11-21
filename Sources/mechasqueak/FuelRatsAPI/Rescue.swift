@@ -33,7 +33,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var client: Attribute<String?>
         public var clientNick: Attribute<String?>
         public var clientLanguage: Attribute<String?>
-        public var commandIdentifier: Attribute<Int?>
+        public var commandIdentifier: Attribute<Int>
         public var codeRed: Attribute<Bool>
         public var notes: Attribute<String>
         public var platform: Attribute<GamePlatform?>

@@ -199,19 +199,19 @@ class BoardAssignCommands: IRCBotModule {
             }
             command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                 "rats": unassign,
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
         }
 
         guard removed.count > 0 else {
             command.message.reply(key: "board.unassign.none", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
             return
         }
         let unassignedRats = removed.joined(separator: ", ")
         command.message.reply(key: "board.unassign.removed", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "rats": unassignedRats
         ])
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)

@@ -39,7 +39,7 @@ class BoardPlatformCommands: IRCBotModule {
         rescue.platform = platform
         command.message.reply(key: "board.platformset", fromCommand: command, map: [
             "platform": rescue.platform!.ircRepresentable,
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "client": rescue.client!
         ])
         rescue.syncUpstream(fromBoard: mecha.rescueBoard)

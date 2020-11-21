@@ -135,7 +135,7 @@ class RescueBoard {
                 message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
                     "client": existingRescue.client!,
                     "system": existingRescue.system!,
-                    "caseId": existingRescue.commandIdentifier!,
+                    "caseId": existingRescue.commandIdentifier,
                     "platform": existingRescue.platform.ircRepresentable,
                     "cr": crStatus
                 ]))
@@ -164,7 +164,7 @@ class RescueBoard {
                         
                         let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
                         message.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
-                            "caseId": rescue.commandIdentifier!,
+                            "caseId": rescue.commandIdentifier,
                             "client": rescue.client!,
                             "system": system,
                             "distance": distance,
@@ -179,7 +179,7 @@ class RescueBoard {
             }
             if changes.count > 0 {
                 message.reply(message: lingo.localize("board.signal.changes", locale: "en-GB", interpolations: [
-                    "caseId": existingRescue.commandIdentifier!,
+                    "caseId": existingRescue.commandIdentifier,
                     "changes": changes.joined(separator: ", ")
                 ]))
             }
@@ -198,7 +198,7 @@ class RescueBoard {
             prepTimers[rescue.id] = group.next().scheduleTask(in: .seconds(180), {
                 if rescue.codeRed == false || rescue.status == .Inactive {
                     message.reply(message: lingo.localize("board.notprepped", locale: "en-GB", interpolations: [
-                        "caseId": rescue.commandIdentifier!
+                        "caseId": rescue.commandIdentifier
                     ]))
                 }
             })
@@ -206,7 +206,7 @@ class RescueBoard {
 
         self.rescues.append(rescue)
 
-        let caseId = String(rescue.commandIdentifier!)
+        let caseId = String(rescue.commandIdentifier)
 
         let announceType = initiated == .announcer ? "announce" : "signal"
 
@@ -458,10 +458,8 @@ class RescueBoard {
                 self.lastSignalReceived = novelRescue.createdAt
             }
 
-            if let identifier = novelRescue.commandIdentifier {
-                self.recentIdentifiers.removeAll(where: { $0 == identifier })
-                self.recentIdentifiers.append(identifier)
-            }
+            self.recentIdentifiers.removeAll(where: { $0 == novelRescue.commandIdentifier })
+            self.recentIdentifiers.append(novelRescue.commandIdentifier)
 
             self.rescues.append(novelRescue)
         }

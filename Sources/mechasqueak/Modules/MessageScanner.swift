@@ -173,7 +173,7 @@ class MessageScanner: IRCBotModule {
 
                     let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
                     channelMessage.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
-                        "caseId": rescue.commandIdentifier!,
+                        "caseId": rescue.commandIdentifier,
                         "client": rescue.client!,
                         "system": system,
                         "distance": distance,

@@ -54,7 +54,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
             "status": String(describing: rescue.status),
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "client": rescue.client!
         ])
 
@@ -89,7 +89,7 @@ class BoardAttributeCommands: IRCBotModule {
             onComplete: { searchResult, landmarkResult, _ in
                 guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
                     command.message.reply(key: "board.syschange.notindb", fromCommand: command, map: [
-                        "caseId": rescue.commandIdentifier!,
+                        "caseId": rescue.commandIdentifier,
                         "client": rescue.client!,
                         "system": system
                     ])
@@ -102,7 +102,7 @@ class BoardAttributeCommands: IRCBotModule {
                     from: NSNumber(value: landmarkResult.distance)
                 )!
                 command.message.reply(key: format, fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier!,
+                    "caseId": rescue.commandIdentifier,
                     "client": rescue.client!,
                     "system": system,
                     "distance": distance,
@@ -137,7 +137,7 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.client = client
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "oldClient": oldClient,
             "client": client
         ])
@@ -147,7 +147,7 @@ class BoardAttributeCommands: IRCBotModule {
             $0.client?.lowercased() == client.lowercased() && $0.id != rescue.id
         }) {
             command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.commandIdentifier!,
+                "caseId": existingCase.commandIdentifier,
                 "client": client
             ])
         }
@@ -175,7 +175,7 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.clientNick = nick
 
         command.message.reply(key: "board.nickchange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "client": rescue.client!,
             "nick": nick
         ])
@@ -185,7 +185,7 @@ class BoardAttributeCommands: IRCBotModule {
             $0.clientNick?.lowercased() == nick.lowercased() && $0.id != rescue.id
         }) {
             command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.commandIdentifier!,
+                "caseId": existingCase.commandIdentifier,
                 "nick": nick
             ])
         }
@@ -211,13 +211,13 @@ class BoardAttributeCommands: IRCBotModule {
         if rescue.codeRed == true {
             rescue.codeRed = false
             command.message.reply(key: "board.codered.no", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "client": rescue.client!
             ])
         } else {
             rescue.codeRed = true
             command.message.reply(key: "board.codered.active", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "client": rescue.client!
             ])
 
@@ -254,7 +254,7 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.title = title
 
         command.message.reply(key: "board.title.set", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "title": title
         ])
 

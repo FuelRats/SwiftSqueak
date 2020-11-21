@@ -100,7 +100,7 @@ class BoardCommands: IRCBotModule {
 
             return true
         }).sorted(by: {
-            $1.commandIdentifier! > $0.commandIdentifier!
+            $1.commandIdentifier > $0.commandIdentifier
         })
 
         guard rescues.count > 0 else {
@@ -121,7 +121,7 @@ class BoardCommands: IRCBotModule {
                 "board.list.inactivecase.\(format)" : "board.list.case.\(format)"
 
             return lingo.localize(inactiveFormat, locale: "en-GB", interpolations: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "id": rescue.id.ircRepresentation,
                 "client": rescue.client ?? "?",
                 "platform": rescue.platform.ircRepresentable,
@@ -157,7 +157,7 @@ class BoardCommands: IRCBotModule {
                 let rat = message.destination.member(named: command.parameters[1])?.getRatRepresenting(rescue: rescue)
             else {
                 command.message.reply(key: "board.close.notfound", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier!,
+                    "caseId": rescue.commandIdentifier,
                     "firstLimpet": command.parameters[1]
                 ])
                 return
@@ -177,7 +177,7 @@ class BoardCommands: IRCBotModule {
             }
 
             command.message.reply(key: "board.close.success", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "u\u{200B}nknown client"
             ])
 
@@ -193,7 +193,7 @@ class BoardCommands: IRCBotModule {
                         toChannelName: configuration.general.reportingChannel,
                         withKey: "board.close.reportFirstlimpet",
                         mapping: [
-                            "caseId": rescue.commandIdentifier!,
+                            "caseId": rescue.commandIdentifier,
                             "firstLimpet": firstLimpet.attributes.name.value,
                             "client": rescue.client ?? "u\u{200B}nknown client",
                             "link": shortUrl
@@ -204,7 +204,7 @@ class BoardCommands: IRCBotModule {
                         toChannelName: command.parameters[1],
                         withKey: "board.close.firstLimpetPaperwork",
                         mapping: [
-                            "caseId": rescue.commandIdentifier!,
+                            "caseId": rescue.commandIdentifier,
                             "client": rescue.client ?? "u\u{200B}nknown client",
                             "link": shortUrl
                         ]
@@ -215,7 +215,7 @@ class BoardCommands: IRCBotModule {
                     toChannelName: configuration.general.reportingChannel,
                     withKey: "board.close.report",
                     mapping: [
-                        "caseId": rescue.commandIdentifier!,
+                        "caseId": rescue.commandIdentifier,
                         "link": shortUrl,
                         "client": rescue.client ?? "unknown client"
                     ]
@@ -224,7 +224,7 @@ class BoardCommands: IRCBotModule {
 
         }, onError: { _ in
             command.message.reply(key: "board.close.error", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
         })
     }
@@ -251,7 +251,7 @@ class BoardCommands: IRCBotModule {
                 $0.id == rescue.id
             })
             command.message.reply(key: "board.trash.success", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "u\u{200B}nknown client"
             ])
             if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
@@ -260,7 +260,7 @@ class BoardCommands: IRCBotModule {
             }
         }, onError: { _ in
             command.message.reply(key: "board.trash.error", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
         })
     }
@@ -283,7 +283,7 @@ class BoardCommands: IRCBotModule {
             url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!,
             complete: { shortUrl in
             command.message.reply(key: "board.pwl.generated", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "link": shortUrl
             ])
         })
@@ -347,7 +347,7 @@ class BoardCommands: IRCBotModule {
 
         guard let corrections = rescue.systemCorrections, corrections.count > 0 else {
             command.message.error(key: "sysc.nocorrections", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "u\u{200B}nknown client"
             ])
             return
@@ -377,7 +377,7 @@ class BoardCommands: IRCBotModule {
                         from: NSNumber(value: landmarkResult.distance) 
                     )!
                     command.message.reply(key: format, fromCommand: command, map: [
-                        "caseId": rescue.commandIdentifier!,
+                        "caseId": rescue.commandIdentifier,
                         "client": rescue.client ?? "u\u{200B}nknown client",
                         "system": selectedCorrection.name,
                         "distance": distance,
@@ -388,7 +388,7 @@ class BoardCommands: IRCBotModule {
                 case .failure:
                     command.message.error(key: "sysc.seterror", fromCommand: command, map: [
                         "system": selectedCorrection,
-                        "caseId": rescue.commandIdentifier!,
+                        "caseId": rescue.commandIdentifier,
                         "client": rescue.client ?? "u\u{200B}nknown client"
                     ])
             }

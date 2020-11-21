@@ -90,14 +90,14 @@ class TweetCommands: IRCBotModule {
 
         guard let platform = rescue.platform else {
             command.message.error(key: "tweetcase.noplatform", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
             return
         }
 
         guard let system = rescue.system else {
             command.message.reply(key: "tweetcase.missingsystem", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
             return
         }
@@ -114,18 +114,18 @@ class TweetCommands: IRCBotModule {
             let tweet = lingo.localize(format, locale: "en-GB", interpolations: [
                 "platform": platform,
                 "systemDescription": description ?? "",
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "id": shortId.lowercased(),
                 "link": url.absoluteString
             ])
 
             Twitter.tweet(message: tweet, complete: {
                 command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier!
+                    "caseId": rescue.commandIdentifier
                 ])
             }, error: { _ in
                 command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier!
+                    "caseId": rescue.commandIdentifier
                 ])
             })
         })

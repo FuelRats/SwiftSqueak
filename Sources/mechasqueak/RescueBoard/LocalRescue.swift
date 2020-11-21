@@ -43,7 +43,7 @@ class LocalRescue: Codable {
     var client: String?
     var clientNick: String?
     var clientLanguage: Locale?
-    var commandIdentifier: Int?
+    var commandIdentifier: Int
     var codeRed: Bool
     var notes: String
     var platform: GamePlatform?
@@ -76,6 +76,7 @@ class LocalRescue: Codable {
         }
 
         self.id = UUID()
+        self.commandIdentifier = 0
 
         let client = match.group(at: 1)!
         self.channelName = message.destination.name
@@ -125,6 +126,7 @@ class LocalRescue: Codable {
         }
 
         self.id = UUID()
+        self.commandIdentifier = 0
         self.client = message.user.nickname
         self.clientNick = message.user.nickname
         self.clientHost = message.user.hostmask
@@ -166,6 +168,7 @@ class LocalRescue: Codable {
         }
 
         self.id = UUID()
+        self.commandIdentifier = 0
 
         self.client = clientName
         self.clientNick = clientName

@@ -102,7 +102,7 @@ class RemoteRescueCommands: IRCBotModule {
         if let boardRescue = mecha.rescueBoard.rescues.first(where: { $0.id == id }) {
             command.message.reply(key: "rescue.delete.active", fromCommand: command, map: [
                 "id": boardRescue.id.ircRepresentation,
-                "caseId": boardRescue.commandIdentifier!
+                "caseId": boardRescue.commandIdentifier
             ])
             return
         }
@@ -333,7 +333,7 @@ class RemoteRescueCommands: IRCBotModule {
         }) {
             command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
                 "id": id,
-                "caseId": existingRescue.commandIdentifier!
+                "caseId": existingRescue.commandIdentifier
             ])
             return
         }
@@ -359,7 +359,7 @@ class RemoteRescueCommands: IRCBotModule {
             rescue.syncUpstream(fromBoard: mecha.rescueBoard)
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
                 "id": id.ircRepresentation,
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
         }, error: { _ in
             command.message.error(key: "rescue.reopen.error", fromCommand: command)

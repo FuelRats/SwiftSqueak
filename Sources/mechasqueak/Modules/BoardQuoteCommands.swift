@@ -51,7 +51,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         command.message.replyPrivate(key: format, fromCommand: command, map: [
             "title": rescue.title ?? "",
-            "caseId": rescue.commandIdentifier!,
+            "caseId": rescue.commandIdentifier,
             "client": rescue.client ?? "u\u{200B}nknown client",
             "system": rescue.system ?? "u\u{200B}nknown system",
             "platform": rescue.platform.ircRepresentable,
@@ -124,7 +124,7 @@ class BoardQuoteCommands: IRCBotModule {
         ))
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-            "clientId": rescue.commandIdentifier!,
+            "clientId": rescue.commandIdentifier,
             "text": lastMessage
         ])
 
@@ -196,7 +196,7 @@ class BoardQuoteCommands: IRCBotModule {
             ))
 
             command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-                "clientId": rescue!.commandIdentifier!,
+                "clientId": rescue!.commandIdentifier,
                 "text": injectMessage
             ])
 
@@ -232,7 +232,7 @@ class BoardQuoteCommands: IRCBotModule {
         guard quoteIndex >= 0 && quoteIndex < rescue.quotes.count else {
             command.message.error(key: "board.sub.outofbounds", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
             return
         }
@@ -246,14 +246,14 @@ class BoardQuoteCommands: IRCBotModule {
             rescue.quotes[quoteIndex] = quote
             command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": rescue.commandIdentifier!,
+                "caseId": rescue.commandIdentifier,
                 "contents": contents
             ])
         } else {
             rescue.quotes.remove(at: quoteIndex)
             command.message.reply(key: "board.sub.deleted", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": rescue.commandIdentifier!
+                "caseId": rescue.commandIdentifier
             ])
         }
 

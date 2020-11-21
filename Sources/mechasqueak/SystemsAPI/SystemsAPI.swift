@@ -135,14 +135,14 @@ class SystemsAPI {
                     case .success(let data):
                         guard var results = data.data else {
                             mecha.reportingChannel?.send(key: "sysc.noresults", map: [
-                                "caseId": rescue.commandIdentifier!,
+                                "caseId": rescue.commandIdentifier,
                                 "client": rescue.client ?? "u\u{200B}nknown client"
                             ])
                             return
                         }
                         guard results.count > 0 else {
                             mecha.reportingChannel?.send(key: "sysc.noresults", map: [
-                                "caseId": rescue.commandIdentifier!
+                                "caseId": rescue.commandIdentifier
                             ])
                             return
                         }
@@ -164,7 +164,7 @@ class SystemsAPI {
                                             toChannelName: rescue.channelName,
                                             withKey: "sysc.autocorrect",
                                             mapping: [
-                                                "caseId": rescue.commandIdentifier!,
+                                                "caseId": rescue.commandIdentifier,
                                                 "client": rescue.client ?? "",
                                                 "system": autoCorrectableResult.name.uppercased(),
                                                 "landmark": landmarkResult.landmarks[0].name,
@@ -191,14 +191,14 @@ class SystemsAPI {
                         }).joined(separator: ", ")
 
                         rescue.channel?.send(key: "sysc.nearestmatches", map: [
-                            "caseId": rescue.commandIdentifier!,
+                            "caseId": rescue.commandIdentifier,
                             "client": rescue.client ?? "u\u{200B}nknown client",
                             "systems": resultString
                         ])
 
                     case .failure:
                         mecha.reportingChannel?.send(key: "sysc.noresults", map: [
-                            "caseId": rescue.commandIdentifier!,
+                            "caseId": rescue.commandIdentifier,
                             "client": rescue.client ?? "u\u{200B}nknown client"
                         ])
                 }
