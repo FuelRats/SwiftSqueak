@@ -251,9 +251,7 @@ class RescueBoard {
                     let distance = self.distanceFormatter.string(from: NSNumber(value: landmarkResult.distance))!
 
                     let format = searchResult.permitRequired ? "board.\(announceType).permit" : "board.\(announceType).landmark"
-                    if searchResult.permitRequired {
-                        rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
-                    }
+                    rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
 
                     message.reply(message: lingo.localize(format, locale: "en", interpolations: [
                         "signal": configuration.general.signal.uppercased(),

@@ -101,13 +101,17 @@ class GeneralCommands: IRCBotModule {
             if rescue.permitRequired {
                 permitText = IRCFormat.color(.LightRed, rescue.permitName != nil ? "\(rescue.permitName!) Permit Required" : "Permit Required")
             }
+            var distance = ""
+            if let distanceNumber = rescue.landmark?.distance  {
+                distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: distanceNumber))!
+            }
 
             return lingo.localize(format, locale: "en-GB", interpolations: [
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "?",
                 "platform": rescue.platform.ircRepresentable,
                 "system": rescue.system ?? "?",
-                "distance": rescue.landmark?.distance ?? 0,
+                "distance": distance,
                 "landmark": rescue.landmark?.name ?? "?",
                 "permit": permitText
             ])
