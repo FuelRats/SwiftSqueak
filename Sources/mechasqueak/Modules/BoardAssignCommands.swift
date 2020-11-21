@@ -204,9 +204,6 @@ class BoardAssignCommands: IRCBotModule {
         }
 
         guard removed.count > 0 else {
-            command.message.reply(key: "board.unassign.none", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
-            ])
             return
         }
         let unassignedRats = removed.joined(separator: ", ")
