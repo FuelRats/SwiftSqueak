@@ -367,6 +367,58 @@ class RemoteRescueCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["unclose"],
+        parameters: 1...1,
+        category: .rescues,
+        description: "Add a previously closed case back onto the board by its previous case number.",
+        paramText: "<closed case number>",
+        example: "5",
+        permission: .RescueWriteOwn
+    )
+    var didReceiveUncloseCommand = { command in
+        guard let caseNumber = Int(command.parameters[0]), let id = mecha.rescueBoard.recentlyClosed[caseNumber] else {
+            return
+        }
+
+        if let existingRescue = mecha.rescueBoard.rescues.first(where: {
+            $0.id == id
+        }) {
+            command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
+                "id": id,
+                "caseId": existingRescue.commandIdentifier
+            ])
+            return
+        }
+
+        FuelRatsAPI.getRescue(id: id, complete: { result in
+            let apiRescue = result.body.data!.primary.value
+            let rats = result.assignedRats()
+            let firstLimpet = result.firstLimpet()
+
+            let rescue = LocalRescue(
+                fromAPIRescue: apiRescue,
+                withRats: rats,
+                firstLimpet: firstLimpet,
+                onBoard: mecha.rescueBoard
+            )
+            if rescue.hasConflictingId(inBoard: mecha.rescueBoard) {
+                rescue.commandIdentifier = mecha.rescueBoard.getNewIdentifier()
+            }
+            rescue.outcome = nil
+            rescue.status = .Open
+
+            mecha.rescueBoard.rescues.append(rescue)
+            rescue.syncUpstream(fromBoard: mecha.rescueBoard)
+            command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
+                "id": id.ircRepresentation,
+                "caseId": rescue.commandIdentifier
+            ])
+        }, error: { _ in
+            command.message.error(key: "rescue.reopen.error", fromCommand: command)
+        })
+    }
+
+    @BotCommand(
         ["clientpw", "pwclient"],
         parameters: 1...1,
         lastParameterIsContinous: true,
