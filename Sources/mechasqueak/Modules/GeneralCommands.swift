@@ -97,6 +97,10 @@ class GeneralCommands: IRCBotModule {
                 format = "needsrats.permit"
             }
 
+            if rescue.codeRed {
+                format += "cr"
+            }
+
             var permitText = ""
             if rescue.permitRequired {
                 permitText = IRCFormat.color(.LightRed, rescue.permitName != nil ? "\(rescue.permitName!) Permit Required" : "Permit Required")
