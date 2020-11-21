@@ -144,7 +144,7 @@ class BoardAttributeCommands: IRCBotModule {
 
 
         if let existingCase = mecha.rescueBoard.rescues.first(where: {
-            $0.client?.lowercased() == client.lowercased()
+            $0.client?.lowercased() == client.lowercased() && $0.id != rescue.id
         }) {
             command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
                 "caseId": existingCase.commandIdentifier!,
@@ -182,7 +182,7 @@ class BoardAttributeCommands: IRCBotModule {
 
 
         if let existingCase = mecha.rescueBoard.rescues.first(where: {
-            $0.clientNick?.lowercased() == nick.lowercased()
+            $0.clientNick?.lowercased() == nick.lowercased() && $0.id != rescue.id
         }) {
             command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
                 "caseId": existingCase.commandIdentifier!,
