@@ -30,7 +30,7 @@ class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
     static let jumpCallExpression = try! Regex(pattern: "([0-9]{1,3})[jJ] #([0-9]{1,3})", groupNames: ["jumps", "case"])
     static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
-    static let systemExpression = "(([A-Z][A-Z\\s]+) SECTOR ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+))"
+    static let systemExpression = "(([A-Za-z0-9\\s]+) (SECTOR|sector) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+))"
     static let jumpCallExpressionCaseAfter = try! Regex(
         pattern: "#([0-9]{1,3}) ([0-9]{1,3})[jJ]",
         groupNames: ["case", "jumps"]
@@ -154,10 +154,16 @@ class MessageScanner: IRCBotModule {
         }
 
         if let rescue = caseMentionedInMessage(message: channelMessage), channelMessage.user.isAssignedTo(rescue: rescue) {
-            if
-                let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression)
-            {
-                let system = String(channelMessage.message[systemRange])
+            if let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression) {
+                var system = String(channelMessage.message[systemRange])
+                guard
+                    let sector = sectors.first(where: { system.lowercased().contains($0.name.lowercased()) }),
+                    let sectorRange = system.range(of: sector.name, options: .caseInsensitive)
+                else {
+                    return
+                }
+                system = String(system[sectorRange.lowerBound...])
+
                 SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
                     guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
                         return
@@ -177,7 +183,7 @@ class MessageScanner: IRCBotModule {
                     channelMessage.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
                         "caseId": rescue.commandIdentifier,
                         "client": rescue.client!,
-                        "system": system,
+                        "system": searchResult.name,
                         "distance": distance,
                         "landmark": landmarkResult.name,
                         "permit": searchResult.permitText ?? ""
