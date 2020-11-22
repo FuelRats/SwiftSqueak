@@ -89,9 +89,11 @@ class BoardAssignCommands: IRCBotModule {
 
         sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
 
-        Fact.get(name: "\(platform.factPrefix)fr", forLocale: command.locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
+        var factName = rescue.codeRed ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
+
+        Fact.get(name: factName, forLocale: command.locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
             guard let fact = fact else {
-                return Fact.get(name: "\(platform.factPrefix)fr", forLocale: Locale(identifier: "en"))
+                return Fact.get(name: factName, forLocale: Locale(identifier: "en"))
             }
 
             return loop.next().makeSucceededFuture(fact)
