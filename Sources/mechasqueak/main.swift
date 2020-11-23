@@ -136,8 +136,21 @@ class MechaSqueak {
             mecha.reportingChannel = userJoin.channel
             mecha.rescueBoard.syncBoard()
         } else {
+
             accounts.lookupIfNotExists(user: userJoin.user)
             if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userJoin.user.nickname) {
+                    rescue.quotes.removeAll(where: {
+                        $0.message.starts(with: "Client rejoined the rescue channel")
+                    })
+                    rescue.quotes.append(RescueQuote(
+                        author: userJoin.raw.client.currentNick,
+                        message: "Client rejoined the rescue channel",
+                        createdAt: Date(),
+                        updatedAt: Date(),
+                        lastAuthor: userJoin.raw.client.currentNick)
+                    )
+                    rescue.syncUpstream()
+
                 rescue.clientHost = userJoin.user.hostmask
                 userJoin.channel.send(key: "board.clientjoin", map: [
                     "caseId": rescue.commandIdentifier,
@@ -146,6 +159,18 @@ class MechaSqueak {
             } else if let rescue = mecha.rescueBoard.rescues.first(where: {
                 $0.clientHost == userJoin.user.hostmask
             }) {
+                rescue.quotes.removeAll(where: {
+                    $0.message.starts(with: "Client rejoined the rescue channel")
+                })
+                rescue.quotes.append(RescueQuote(
+                    author: userJoin.raw.client.currentNick,
+                    message: "Client rejoined the rescue channel as \(userJoin.user.nickname)",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: userJoin.raw.client.currentNick)
+                )
+                rescue.syncUpstream()
+
                 rescue.clientNick = userJoin.user.nickname
                 userJoin.channel.send(key: "board.clientjoinhost", map: [
                     "caseId": rescue.commandIdentifier,
@@ -162,6 +187,18 @@ class MechaSqueak {
             guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
                 return
             }
+            rescue.quotes.removeAll(where: {
+                $0.message == "Client left the rescue channel"
+            })
+            rescue.quotes.append(RescueQuote(
+                author: userPart.raw.client.currentNick,
+                message: "Client left the rescue channel",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: userPart.raw.client.currentNick)
+            )
+            rescue.syncUpstream()
+
             userPart.channel.send(key: "board.clientquit", map: [
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "u\u{200B}nknown client"
@@ -178,6 +215,18 @@ class MechaSqueak {
             let sender = userQuit.sender,
             let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
         {
+            rescue.quotes.removeAll(where: {
+                $0.message == "Client left the rescue channel"
+            })
+            rescue.quotes.append(RescueQuote(
+                author: userQuit.client.currentNick,
+                message: "Client left the rescue channel",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: userQuit.client.currentNick)
+            )
+            rescue.syncUpstream()
+
             userQuit.client.sendMessage(
                 toChannelName: rescue.channelName,
                 withKey: "board.clientquit", mapping: [
