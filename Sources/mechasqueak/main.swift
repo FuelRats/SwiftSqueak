@@ -187,6 +187,11 @@ class MechaSqueak {
             guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
                 return
             }
+            if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
+                prepTimer?.cancel()
+                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+            }
+
             rescue.quotes.removeAll(where: {
                 $0.message == "Client left the rescue channel"
             })
@@ -215,6 +220,10 @@ class MechaSqueak {
             let sender = userQuit.sender,
             let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
         {
+            if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
+                prepTimer?.cancel()
+                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+            }
             rescue.quotes.removeAll(where: {
                 $0.message == "Client left the rescue channel"
             })
