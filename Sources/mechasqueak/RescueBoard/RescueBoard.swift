@@ -195,7 +195,7 @@ class RescueBoard {
         self.recentIdentifiers.append(identifier)
         self.lastSignalReceived = Date()
 
-        if rescue.codeRed == false && configuration.general.drillMode == false {
+        if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
             prepTimers[rescue.id] = group.next().scheduleTask(in: .seconds(180), {
                 if rescue.codeRed == false || rescue.status == .Inactive {
                     message.reply(message: lingo.localize("board.notprepped", locale: "en-GB", interpolations: [
