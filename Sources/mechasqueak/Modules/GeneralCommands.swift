@@ -78,7 +78,7 @@ class GeneralCommands: IRCBotModule {
                 return false
             }
             if rescue.codeRed {
-                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 2 && rescue.jumpCalls < 2
+                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls < 1
             }
             return rescue.rats.count < 1 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls < 1
         })
