@@ -33,7 +33,7 @@ class BoardAssignCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["go", "assign"],
+        ["go", "assign", "add"],
         parameters: 2...,
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
