@@ -120,12 +120,17 @@ class MessageScanner: IRCBotModule {
                 ))
             }
 
+            var message = "<\(channelMessage.user.nickname)> \(channelMessage.message)"
 
+            let isDrilled = channelMessage.user.hasPermission(permission: .RescueRead)
+            if isDrilled == false {
+                message += " (Not Drilled)"
+            }
 
             rescue.jumpCalls += 1
             rescue.quotes.append(RescueQuote(
                 author: channelMessage.client.currentNick,
-                message: "<\(channelMessage.user.nickname)> \(channelMessage.message)",
+                message: message,
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: channelMessage.client.currentNick
