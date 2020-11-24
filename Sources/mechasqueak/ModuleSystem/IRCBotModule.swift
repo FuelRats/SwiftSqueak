@@ -164,14 +164,14 @@ class IRCBotModuleManager {
             return
         }
 
-        if message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
+        if message.user.hasPermission(permission: .RescueWrite) == false && message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
             message.error(key: "command.publiconly", fromCommand: ircBotCommand, map: [
                 "command": ircBotCommand.command
             ])
             return
         }
 
-        if message.destination.isPrivateMessage == false && command.allowedDestinations == .PrivateMessage {
+        if message.user.hasPermission(permission: .RescueWrite) == false && message.destination.isPrivateMessage == false && command.allowedDestinations == .PrivateMessage {
             message.error(key: "command.privateonly", fromCommand: ircBotCommand, map: [
                 "command": ircBotCommand.command
             ])
