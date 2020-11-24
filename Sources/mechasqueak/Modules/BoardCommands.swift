@@ -152,7 +152,7 @@ class BoardCommands: IRCBotModule {
         parameters: 1...2,
         category: .board,
         description: "Closes a case and posts the paperwork link.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveCloseCommand = { command in
@@ -249,7 +249,7 @@ class BoardCommands: IRCBotModule {
         description: "Moves a case to the trash list with a message describing why it was deleted",
         paramText: "<case id/client> <message>",
         example: "4 client left before rats were assigned ",
-        permission: .RescueWriteOwn
+        permission: .DispatchWrite
     )
     var didReceiveTrashCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
