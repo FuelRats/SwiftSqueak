@@ -40,7 +40,7 @@ class BoardQuoteCommands: IRCBotModule {
         description: "Show all information about a specific case",
         paramText: "<case id/client name>",
         example: "4",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveQuoteCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {

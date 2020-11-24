@@ -70,7 +70,7 @@ class GeneralCommands: IRCBotModule {
         parameters: 0...0,
         category: .utility,
         description: "Get a list of cases that currently require rats to call jumps",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var needsRatsCommand = { command in
         let needsRats = mecha.rescueBoard.rescues.filter({ rescue in

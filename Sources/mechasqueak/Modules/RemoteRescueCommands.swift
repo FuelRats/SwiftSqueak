@@ -40,7 +40,7 @@ class RemoteRescueCommands: IRCBotModule {
         description: "Shows recently closed cases.",
         paramText: "[number of cases]",
         example: "10",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveRecentlyClosedCommand = { command in
         var closeCount = 3
@@ -154,7 +154,7 @@ class RemoteRescueCommands: IRCBotModule {
         parameters: 0...0,
         category: .rescues,
         description: "Shows all the rescues that have been added to the trash list but not yet deleted",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveListTrashcommand = { command in
         FuelRatsAPI.getRescuesInTrash(complete: { results in
@@ -234,7 +234,7 @@ class RemoteRescueCommands: IRCBotModule {
         parameters: 0...0,
         category: .rescues,
         description: "Get a list of rescues that have not had their paperwork completed.",
-        permission: .RescueRead,
+        permission: .DispatchRead,
         allowedDestinations: .PrivateMessage
     )
     var didReceiveUnfiledListCommand = { command in
@@ -274,7 +274,7 @@ class RemoteRescueCommands: IRCBotModule {
         description: "Show all information about a case by UUID",
         paramText: "<rescue uuid>",
         example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveQuoteRemoteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
@@ -426,7 +426,7 @@ class RemoteRescueCommands: IRCBotModule {
         description: "Get paperwork link for a previous client by name.",
         paramText: "<client name>",
         example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveClientPaperworkCommand = { command in
         FuelRatsAPI.getRescuesForClient(client: command.parameters[0], complete: { results in

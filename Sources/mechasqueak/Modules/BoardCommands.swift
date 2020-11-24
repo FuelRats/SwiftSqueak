@@ -60,7 +60,7 @@ class BoardCommands: IRCBotModule {
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
         paramText: "[-iaruq@]",
         example: "-i",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveListCommand = { command in
         var arguments: [ListCommandArgument] = []
@@ -286,7 +286,7 @@ class BoardCommands: IRCBotModule {
         description: "Retrieves the paperwork link for a case on the board.",
         paramText: "<case id/client>",
         example: "4",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceivePaperworkLinkCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
@@ -308,7 +308,7 @@ class BoardCommands: IRCBotModule {
         parameters: 0...0,
         category: .other,
         description: "Displays the amount of time since the last rescue",
-        permission: .RescueRead
+        permission: .DispatchRead
     )
     var didReceiveQuietCommand = { command in
         guard let lastSignalDate = mecha.rescueBoard.lastSignalReceived else {
