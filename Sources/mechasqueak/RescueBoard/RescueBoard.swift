@@ -136,8 +136,8 @@ class RescueBoard {
                 ]))
             } else {
                 message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
-                    "client": existingRescue.client!,
-                    "system": existingRescue.system!,
+                    "client": existingRescue.client ?? "unknown client",
+                    "system": existingRescue.system ?? "unknown system",
                     "caseId": existingRescue.commandIdentifier,
                     "platform": existingRescue.platform.ircRepresentable,
                     "cr": crStatus
