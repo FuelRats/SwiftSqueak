@@ -375,9 +375,11 @@ class RescueBoard {
             return identifierMap[$0]! < identifierMap[$1]!
         })
 
-        let evenCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven }).count
-        let oddCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false }).count
-        let expectedEvenness = evenCases <= oddCases
+        let evenCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven && $0.codeRed == false }).count
+        let evenCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven && $0.codeRed == true }).count
+        let oddCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == false }).count
+        let oddCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == true }).count
+        let expectedEvenness = (evenCases + (evenCRCases * 3)) <= oddCases + (oddCRCases * 3)
 
         // Return the best scoring identifier that is the opposite evenness of the last case identifier
         return sortedIdentifiers.first(where: { identifier in
