@@ -189,7 +189,17 @@ class RescueBoard {
         }
 
         let crStatus = rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
-        let identifier = self.getNewIdentifier()
+
+        var even: Bool? = nil
+        if initiated == .insertion {
+            if message.user.nickname.lowercased().contains("even") {
+                even = true
+            } else if message.user.nickname.lowercased().contains("odd") {
+                even = false
+            }
+        }
+
+        let identifier = self.getNewIdentifier(even: even)
         rescue.commandIdentifier = identifier
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
@@ -348,7 +358,7 @@ class RescueBoard {
         })
     }
 
-    func getNewIdentifier () -> Int {
+    func getNewIdentifier (even: Bool? = nil) -> Int {
         /* Get the first 10 identifiers not currently being used by a case, this method lets us generally stay between
          0 and 15 re-using a recent number if we need to without the case ID becoming something ridicolous like #32 */
         let fetchCount = self.rescues.count > 9 ? 1 : max(10 - self.rescues.count, 4)
@@ -379,7 +389,10 @@ class RescueBoard {
         let evenCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven && $0.codeRed == true }).count
         let oddCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == false }).count
         let oddCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == true }).count
-        let expectedEvenness = (evenCases + (evenCRCases * 3)) <= oddCases + (oddCRCases * 3)
+        var expectedEvenness = even
+        if expectedEvenness == nil {
+            expectedEvenness = (evenCases + (evenCRCases * 3)) <= oddCases + (oddCRCases * 3)
+        }
 
         // Return the best scoring identifier that is the opposite evenness of the last case identifier
         return sortedIdentifiers.first(where: { identifier in
