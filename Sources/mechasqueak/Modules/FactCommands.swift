@@ -317,6 +317,11 @@ class FactCommands: IRCBotModule {
             })
         }
 
+        if command.parameters.count > 0 && command.parameters[0].lowercased() == message.client.currentNick.lowercased() {
+            command.message.reply(message: "\(command.message.user.nickname) what are you playing at?")
+            return
+        }
+
         Fact.get(name: command.command, forLocale: command.locale, onComplete: { fact in
             guard let fact = fact else {
                 Fact.get(name: command.command, forLocale: Locale(identifier: "en"), onComplete: { fallbackFact in
