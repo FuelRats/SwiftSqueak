@@ -175,7 +175,7 @@ class RescueBoard {
                     })
                 }
             }
-            if rescue.codeRed != existingRescue.codeRed {
+            if rescue.codeRed != existingRescue.codeRed && rescue.codeRed == true {
                 changes.append("\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)")
             }
             if changes.count > 0 {
