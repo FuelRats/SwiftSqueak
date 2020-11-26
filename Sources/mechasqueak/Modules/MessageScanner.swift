@@ -122,8 +122,10 @@ class MessageScanner: IRCBotModule {
 
             var message = "<\(channelMessage.user.nickname)> \(channelMessage.message)"
 
-            let isDrilled = channelMessage.user.hasPermission(permission: .RescueRead)
-            if isDrilled == false {
+            let isDrilled = channelMessage.user.hasPermission(permission: .DispatchRead)
+            if channelMessage.user.account == nil {
+                message += " (Unidentified)"
+            }else if isDrilled == false {
                 message += " (Not Drilled)"
             }
 
