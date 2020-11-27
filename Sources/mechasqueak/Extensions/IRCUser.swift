@@ -38,14 +38,14 @@ extension IRCUser {
         return permissions.contains(permission)
     }
 
-    func getRatRepresenting (rescue: LocalRescue) -> Rat? {
+    func getRatRepresenting (platform: GamePlatform?) -> Rat? {
         guard let apiData = self.associatedAPIData, let user = apiData.user else {
             return nil
         }
 
         var rats = apiData.ratsBelongingTo(user: user)
         rats = rats.filter({
-            $0.attributes.platform.value == rescue.platform
+            $0.attributes.platform.value == platform
         })
 
         var nickname = self.nickname.lowercased()

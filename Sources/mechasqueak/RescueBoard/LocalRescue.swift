@@ -365,7 +365,7 @@ class LocalRescue: Codable {
                 return assigns
             }
 
-            guard let rat = nick.getRatRepresenting(rescue: self) else {
+            guard let rat = nick.getRatRepresenting(platform: self.platform) else {
                 guard assigns.unidentifiedRats.contains(param) == false && self.unidentifiedRats.contains(param) == false else {
                     return assigns
                 }

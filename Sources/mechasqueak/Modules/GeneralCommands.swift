@@ -432,6 +432,41 @@ class GeneralCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["activerat", "assigncheck", "assigntest"],
+        parameters: 1...1,
+        category: .utility,
+        description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
+        paramText: "<platform>",
+        example: "PC",
+        permission: .RatReadOwn,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveAssignCheckCommand = { command in
+        let message = command.message
+        let user = message.user
+
+        guard let platform = GamePlatform(rawValue: command.parameters[0].lowercased()) else {
+            command.message.reply(key: "activerat.invalidplatform", fromCommand: command)
+            return
+        }
+
+        guard let rat = user.getRatRepresenting(platform: platform) else {
+            command.message.reply(key: "activerat.none", fromCommand: command, map: [
+                "platform": platform.ircRepresentable
+            ])
+            return
+        }
+
+        command.message.reply(key: "activerat.response", fromCommand: command, map: [
+            "platform": platform.ircRepresentable,
+            "id": rat.id.rawValue.ircRepresentation,
+            "name": rat.attributes.name
+        ])
+    }
+
+
+
+    @BotCommand(
         ["msg", "say"],
         parameters: 2...2,
         lastParameterIsContinous: true,

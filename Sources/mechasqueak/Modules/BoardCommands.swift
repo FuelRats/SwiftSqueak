@@ -164,7 +164,7 @@ class BoardCommands: IRCBotModule {
         var firstLimpet: Rat?
         if command.parameters.count > 1 && configuration.general.drillMode == false {
             guard
-                let rat = message.destination.member(named: command.parameters[1])?.getRatRepresenting(rescue: rescue)
+                let rat = message.destination.member(named: command.parameters[1])?.getRatRepresenting(platform: rescue.platform)
             else {
                 command.message.reply(key: "board.close.notfound", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier,
