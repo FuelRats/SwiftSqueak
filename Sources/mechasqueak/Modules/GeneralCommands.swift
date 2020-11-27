@@ -460,7 +460,7 @@ class GeneralCommands: IRCBotModule {
         command.message.reply(key: "activerat.response", fromCommand: command, map: [
             "platform": platform.ircRepresentable,
             "id": rat.id.rawValue.ircRepresentation,
-            "name": rat.attributes.name
+            "name": rat.attributes.name.value
         ])
     }
 
