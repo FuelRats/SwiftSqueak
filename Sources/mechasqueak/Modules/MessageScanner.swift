@@ -160,7 +160,10 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if let rescue = caseMentionedInMessage(message: channelMessage), channelMessage.user.isAssignedTo(rescue: rescue) {
+        if
+            let rescue = caseMentionedInMessage(message: channelMessage),
+            (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel)
+        {
             if let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression) {
                 var system = String(channelMessage.message[systemRange])
                 guard
