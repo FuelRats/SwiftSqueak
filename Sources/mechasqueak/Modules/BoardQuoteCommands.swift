@@ -262,6 +262,9 @@ class BoardQuoteCommands: IRCBotModule {
     }
 
     static func isLikelyAccidentalInject (clientParam: String) -> Bool {
+        guard configuration.general.drillMode == false else {
+            return false
+        }
         guard disallowedInjectNames.contains(clientParam.lowercased()) == false else {
             return true
         }
