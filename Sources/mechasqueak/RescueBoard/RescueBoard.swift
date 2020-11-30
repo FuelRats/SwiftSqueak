@@ -219,7 +219,7 @@ class RescueBoard {
 
         let caseId = String(rescue.commandIdentifier)
 
-        let announceType = initiated == .announcer ? "announce" : "signal"
+        let announceType = initiated == .signal ? "signal" : "announce"
 
         let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
