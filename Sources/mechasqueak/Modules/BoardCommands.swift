@@ -350,7 +350,7 @@ class BoardCommands: IRCBotModule {
         category: .board,
         description: "Correct the system of a case to one of the options provided by the system correction search.",
         paramText: "<case id/client> <number>",
-        example: "2",
+        example: "2 1",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
