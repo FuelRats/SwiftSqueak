@@ -89,7 +89,7 @@ class BoardAssignCommands: IRCBotModule {
 
         sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
 
-        var factName = rescue.codeRed ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
+        var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
 
         Fact.get(name: factName, forLocale: command.locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
             guard let fact = fact else {
