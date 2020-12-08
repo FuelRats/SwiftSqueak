@@ -26,7 +26,7 @@
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
   "systemsearch.error": "An error occured performing a system search.",
   "sysc.noresults": "No nearest system matches found for case #%{caseId} (%{client}).",
-  "sysc.nearestmatches": "Nearest matches found for case #%{caseId} (%{client}): %{systems} (use \u0002!sysc <case id/client> <number>\u0002 to correct system).",
+  "sysc.nearestmatches": "Nearest matches found for case #%{caseId} (%{client}): %{systems}.",
   "sysc.error": "Unable to check nearest system matches for case #%{caseId} (%{client}) due to a problem with the server.",
   "sysc.nocorrections": "There are no corrections known for case #%{caseId} (%{client})",
   "sysc.invalidindex": "%{index} is not a valid system correction index number.",
