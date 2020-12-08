@@ -126,7 +126,7 @@ class BoardAssignCommands: IRCBotModule {
             ])
         }
 
-        let allRats = rescue.rats.map({ $0.attributes.name.value }) + rescue.unidentifiedRats
+        let allRats = assigns.rats.map({ $0.attributes.name.value }) + assigns.unidentifiedRats
         guard allRats.count > 0 else {
             return
         }
