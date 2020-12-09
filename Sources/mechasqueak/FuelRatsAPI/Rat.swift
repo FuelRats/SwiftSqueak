@@ -61,7 +61,13 @@ enum GamePlatform: String, Codable {
             .PS: .LightBlue
         ]
 
-        return IRCFormat.color(platformMap[self]!, String(describing: self))
+        let englishDescriptions: [GamePlatform: String] = [
+            .PC: "PC",
+            .Xbox: "Xbox",
+            .PS: "PS"
+        ]
+
+        return IRCFormat.color(platformMap[self]!, englishDescriptions[self]!)
     }
 
     var signal: String {
