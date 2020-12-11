@@ -51,7 +51,11 @@ class LocalRescue: Codable {
     var codeRed: Bool
     var notes: String
     var platform: GamePlatform?
-    var system: String?
+    var system: String? {
+        didSet {
+            system = system?.prefix(64).uppercased()
+        }
+    }
     var quotes: [RescueQuote]
     var status: RescueStatus
     var title: String?

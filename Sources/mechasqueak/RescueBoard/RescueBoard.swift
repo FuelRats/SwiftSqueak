@@ -242,7 +242,7 @@ class RescueBoard {
 
         if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system) {
             system.removeLast(systemBodiesMatches.matched.count)
-            rescue.system = system.uppercased()
+            rescue.system = system
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
             rescue.quotes.append(RescueQuote(
                 author: message.client.currentNick,

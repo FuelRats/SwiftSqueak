@@ -148,7 +148,7 @@ class BoardAttributeCommands: IRCBotModule {
             system.removeLast(7)
         }
 
-        rescue.system = system.uppercased()
+        rescue.system = system
 
         SystemsAPI.performSearchAndLandmarkCheck(
             forSystem: system,
