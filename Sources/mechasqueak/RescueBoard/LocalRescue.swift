@@ -367,6 +367,7 @@ class LocalRescue: Codable {
 
             guard let rat = nick.getRatRepresenting(platform: self.platform) else {
                 guard assigns.unidentifiedRats.contains(param) == false && self.unidentifiedRats.contains(param) == false else {
+                    assigns.unidentifiedDuplicates.insert(param)
                     return assigns
                 }
 
@@ -379,6 +380,7 @@ class LocalRescue: Codable {
             }) == false && self.rats.contains(where: {
                 $0.id.rawValue == rat.id.rawValue
             }) == false else {
+                assigns.duplicates.insert(rat)
                 return assigns
             }
 
@@ -475,6 +477,8 @@ class LocalRescue: Codable {
 struct RescueAssignments {
     var rats = Set<Rat>()
     var unidentifiedRats = Set<String>()
+    var duplicates = Set<Rat>()
+    var unidentifiedDuplicates = Set<String>()
     var blacklisted = Set<String>()
     var notFound = Set<String>()
     var invalid = Set<String>()
