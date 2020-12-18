@@ -157,19 +157,16 @@ class GeneralCommands: IRCBotModule {
     @BotCommand(
         ["sctime", "sccalc", "traveltime"],
         parameters: 1...,
+        options: ["g"],
         category: .utility,
         description: "Calculate supercruise travel time.",
-        paramText: "[-g] <distance>",
+        paramText: "<distance>",
         example: "2500ls",
         permission: nil
     )
     var didReceiveTravelTimeCommand = { command in
         var params = command.parameters
-        var destinationGravity = false
-        if params[0].lowercased() == "-g" {
-            destinationGravity = true
-            params.removeFirst()
-        }
+        var destinationGravity = command.options.contains("g")
 
         var distanceString = params.joined(separator: " ").trimmingCharacters(in: .whitespaces)
         guard let unit = factors.first(where: {
