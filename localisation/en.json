@@ -305,8 +305,9 @@
   "help.command.list.i": "Show only inactive cases",
   "help.command.list.q": "Show only queued cases",
   "help.command.list.@": "Display case UUIDs",
+  "help.command.sctime.g": "Calculate going from one gravitational body to another, rather than towards deep space",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
   "help.command.clear": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be closed and when they should be deleted.",
   "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts.",
-  "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g argument before the distance to account for it."
+  "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option."
 }
