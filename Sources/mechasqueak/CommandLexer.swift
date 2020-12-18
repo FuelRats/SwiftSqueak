@@ -29,6 +29,7 @@ import IRCKit
 struct IRCBotCommand {
     var command: String
     var parameters: [String]
+    var options: Set<Character>
     let locale: Locale
     let message: IRCPrivateMessage
     private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
@@ -39,17 +40,23 @@ struct IRCBotCommand {
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var hasCommand = false
+        var hasOptions = false
 
-        var tokens = message.split(separator: " ").map({ substr -> Token in
+        var tokens = message.split(separator: " ").flatMap({ substr -> [Token] in
             let str = String(substr).trimmingCharacters(in: .whitespacesAndNewlines)
             if CommandToken.regex.matches(str) && hasCommand == false {
                 hasCommand = true
                 guard let token = CommandToken(fromString: str) else {
-                    return Token.Parameter(str)
+                    return [Token.Parameter(str)]
                 }
-                return Token.Command(token)
+                return [Token.Command(token)]
             }
-            return Token.Parameter(str)
+            if str.starts(with: "-") && str.count > 1 && hasOptions == false {
+                hasOptions = true
+                let optionChars = String(str.dropFirst())
+                return optionChars.map({ Token.Option($0) })
+            }
+            return [Token.Parameter(str)]
         })
 
         guard tokens.count > 0 else {
@@ -65,6 +72,13 @@ struct IRCBotCommand {
         self.message = channelMessage
         self.command = commandToken.identifier
         self.locale = Locale(identifier: commandToken.languageCode ?? "en")
+        self.options = Set(tokens.compactMap({
+            guard case let .Option(option) = $0 else {
+                return nil
+            }
+            return option
+        }))
+
         self.parameters = tokens.compactMap({
             guard case let .Parameter(param) = $0 else {
                 return nil
@@ -100,6 +114,7 @@ struct IRCBotCommand {
 
 enum Token {
     case Command(CommandToken)
+    case Option(Character)
     case Label(String)
     case Parameter(String)
 }

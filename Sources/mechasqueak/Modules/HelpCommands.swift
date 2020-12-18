@@ -98,9 +98,9 @@ class HelpCommands: IRCBotModule {
             return
         }
 
+
         message.replyPrivate(key: "help.commandtitle", fromCommand: command, map: [
-            "command": helpCommand.commands[0],
-            "params": helpCommand.paramText ?? "",
+            "command": helpCommand.usageDescription(command: nil),
             "example": helpCommand.example != nil
                 ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example!))"
                 : ""
@@ -120,6 +120,15 @@ class HelpCommands: IRCBotModule {
         let fullDescription = lingo.localize(commandIdentifier, locale: "en-GB")
         if fullDescription != commandIdentifier {
             message.replyPrivate(message: fullDescription)
+        }
+
+        if helpCommand.options.count > 0 {
+            message.replyPrivate(message: "Flags:")
+        }
+        for option in helpCommand.options {
+            print("help.command.\(helpCommand.commands[0]).\(option)")
+            let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
+            message.replyPrivate(message: " -\(option): \(optionDescription)")
         }
     }
 }

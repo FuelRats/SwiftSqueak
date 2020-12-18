@@ -46,6 +46,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         _ commands: [String],
         parameters: T,
         lastParameterIsContinous: Bool = false,
+        options: Set<Character> = [],
         category: HelpCategory?,
         description: String,
         paramText: String? = nil,
@@ -61,6 +62,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
             onCommand: self.wrappedValue,
             maxParameters: parameters.upper as? Int,
             lastParameterIsContinous: lastParameterIsContinous,
+            options: options,
             category: category,
             description: description,
             paramText: paramText,
@@ -77,6 +79,7 @@ struct IRCBotCommandDeclaration {
     let commands: [String]
     let minimumParameters: Int
     let maximumParameters: Int?
+    let options: Set<Character>
     let permission: AccountPermission?
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
@@ -93,6 +96,7 @@ struct IRCBotCommandDeclaration {
         onCommand: BotCommandFunction?,
         maxParameters: Int? = nil,
         lastParameterIsContinous: Bool = false,
+        options: Set<Character> = [],
         category: HelpCategory?,
         description: String,
         paramText: String? = nil,
@@ -103,6 +107,7 @@ struct IRCBotCommandDeclaration {
         self.commands = commands
         self.minimumParameters = minParameters
         self.maximumParameters = maxParameters
+        self.options = options
         self.lastParameterIsContinous = lastParameterIsContinous
         self.permission = permission
         self.onCommand = onCommand
@@ -111,6 +116,17 @@ struct IRCBotCommandDeclaration {
         self.description = description
         self.paramText = paramText
         self.example = example
+    }
+
+    func usageDescription (command: IRCBotCommand?) -> String {
+        if self.options.count > 0 {
+            return "\(command?.command ?? self.commands[0]) [-\(String(self.options))] \(self.paramText!)"
+        }
+        return "\(command?.command ?? self.commands[0]) \(self.paramText ?? "")"
+    }
+
+    func exampleDescription (command: IRCBotCommand?) -> String {
+        return "\(command?.command ?? self.commands[0]) \(self.example ?? "")"
     }
 
     var isDispatchingCommand: Bool {
@@ -164,6 +180,25 @@ class IRCBotModuleManager {
             return
         }
 
+        if ircBotCommand.options.contains("h") {
+            var helpCommand = ircBotCommand
+            helpCommand.command = "!help"
+            helpCommand.parameters = ["!\(ircBotCommand.command)"]
+            mecha.helpModule.didReceiveHelpCommand(helpCommand)
+            return
+        }
+
+        let illegalOptions = ircBotCommand.options.subtracting(command.options)
+        if illegalOptions.count > 0 {
+            message.error(key: "command.illegaloptions", fromCommand: ircBotCommand, map: [
+                "options": String(illegalOptions),
+                "command": ircBotCommand.command,
+                "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
+                "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
+            ])
+            return
+        }
+
         if message.user.hasPermission(permission: .RescueWrite) == false && message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
             message.error(key: "command.publiconly", fromCommand: ircBotCommand, map: [
                 "command": ircBotCommand.command
@@ -181,8 +216,8 @@ class IRCBotModuleManager {
         guard command.minimumParameters <= ircBotCommand.parameters.count else {
             message.error(key: "command.toofewparams", fromCommand: ircBotCommand, map: [
                 "command": ircBotCommand.command,
-                "usage": command.paramText != nil ? "Usage: !\(ircBotCommand.command) \(command.paramText!)" : "",
-                "example": command.example != nil ? "(Example: !\(ircBotCommand.command) \(command.example!))" : ""
+                "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
+                "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
             return
         }
@@ -212,8 +247,8 @@ class IRCBotModuleManager {
         if let maxParameters = command.maximumParameters, ircBotCommand.parameters.count > maxParameters {
             message.error(key: "command.toomanyparams", fromCommand: ircBotCommand, map: [
                 "command": ircBotCommand.command,
-                "usage": command.paramText != nil ? "Usage: !\(ircBotCommand.command) \(command.paramText!)" : "",
-                "example": command.example != nil ? "(Example: !\(ircBotCommand.command) \(command.example!))" : ""
+                "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
+                "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
             return
         }

@@ -55,31 +55,18 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["list"],
-        parameters: 0...1,
+        parameters: 0...0,
+        options: ["i", "a", "q", "r", "u", "@"],
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
-        paramText: "[-iaruq@]",
+        paramText: "",
         example: "-i",
         permission: .DispatchRead
     )
     var didReceiveListCommand = { command in
-        var arguments: [ListCommandArgument] = []
-        if command.parameters.count > 0 && command.parameters[0].starts(with: "-") {
-            var args = command.parameters[0]
-            args = String(args.suffix(from: args.index(after: args.startIndex))).lowercased()
-
-            arguments = args.compactMap({
-                return ListCommandArgument(rawValue: $0)
-            })
-        }
-
-        if arguments.contains(.displayHelpInfo) {
-            var helpCommand = command
-            helpCommand.command = "!help"
-            helpCommand.parameters = ["!list"]
-            mecha.helpModule.didReceiveHelpCommand(helpCommand)
-            return
-        }
+        var arguments: [ListCommandArgument] = command.options.compactMap({
+            return ListCommandArgument(rawValue: $0)
+        })
 
         let rescues = mecha.rescueBoard.rescues.filter({
             if arguments.contains(.showOnlyAssigned) && $0.rats.count == 0 && $0.unidentifiedRats.count == 0 {
@@ -455,7 +442,6 @@ enum ListCommandArgument: Character {
     case showOnlyAssigned = "r"
     case showOnlyUnassigned = "u"
     case includeCaseIds = "@"
-    case displayHelpInfo = "h"
 
     var description: String {
         let maps: [ListCommandArgument: String] = [

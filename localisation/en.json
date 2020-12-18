@@ -1,6 +1,7 @@
 {
   "command.publiconly": "!%{command} command can only be used in a public channel",
   "command.privateonly": "!%{command} command can only be used in private message",
+  "command.illegaloptions": "Unknown options \"%{options}\" given to !%{command} command. %{usage} %{example}",
   "command.toofewparams": "!%{command} command was given too few parameters. %{usage} %{example}",
   "command.toomanyparams": "!%{command} command was given too many parameters. %{usage} %{example}",
   "command.blacklist": "Janitors: A user on the dispatching blacklist (%{nick}) used the %{command} command!",
@@ -287,7 +288,7 @@
   "help.categoryerror": "%{category} is not in the categories list. To list all categories, do !help. To see help for a specific command, add a ! before the command.",
   "help.categorylist": "Showing commands in the %{category} category. To see see more information about the command, do !help !command (e.g !help !assign).",
   "help.commandlist": "\u0002!%{command}\u0002 %{params} - %{description}",
-  "help.commandtitle": "\u0002!%{command}\u0002 %{params} %{example}",
+  "help.commandtitle": "\u0002!%{command}\u0002 %{example}",
   "help.commandaliases": "Aliases: %{aliases}",
   "help.commanderror": "!%{command} is not a known command, it may be a fact (simple commands that tell you a piece of information) to see a list of those, use !facts.",
 
@@ -298,7 +299,12 @@
   "help.cateogory.management": "Admin Commands to manage the state of the bot",
   "help.category.other": "Commands that don't fit into any category",
 
-  "help.command.list": "Flags: -r: Show only with assigned rats, -u: Show only with no assigned rats, -a: Show only active cases. -i: Show only inactive cases, -@: Display case UUIDs.",
+  "help.command.list.r": "Show only with assigned rats",
+  "help.command.list.u": "Show only with no assigned rats",
+  "help.command.list.a": "Show only active cases",
+  "help.command.list.i": "Show only inactive cases",
+  "help.command.list.q": "Show only queued cases",
+  "help.command.list.@": "Display case UUIDs",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
   "help.command.clear": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be closed and when they should be deleted.",
   "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts.",
