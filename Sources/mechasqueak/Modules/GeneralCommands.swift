@@ -530,6 +530,14 @@ class GeneralCommands: IRCBotModule {
         let system = command.parameters[3]
         let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
 
+        command.message.reply(key: "announce.success", fromCommand: command, map: [
+            "channel": channel,
+            "client": clientName,
+            "system": system,
+            "platform": platform.ircRepresentable,
+            "crStatus": crStatus
+        ])
+
         let announcement = lingo.localize("announcement", locale: "en-GB", interpolations: [
             "client": clientName,
             "system": system,
