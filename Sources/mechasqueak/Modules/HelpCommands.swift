@@ -122,11 +122,15 @@ class HelpCommands: IRCBotModule {
             message.replyPrivate(message: fullDescription)
         }
 
-        if helpCommand.options.count > 0 {
+        if helpCommand.options.count > 0 || helpCommand.namedOptions.count > 0 {
             message.replyPrivate(message: "Options:")
         }
+        for option in helpCommand.namedOptions {
+            let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
+            message.replyPrivate(message: " --\(option): \(optionDescription)")
+        }
+
         for option in helpCommand.options {
-            print("help.command.\(helpCommand.commands[0]).\(option)")
             let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
             message.replyPrivate(message: " -\(option): \(optionDescription)")
         }

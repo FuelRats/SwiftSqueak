@@ -97,6 +97,8 @@ enum AccountPermission: String, Codable {
     case DispatchRead = "dispatch.read"
     case DispatchWrite = "dispatch.write"
 
+    case AnnouncementWrite = "announcements.write"
+
     case UnknownPermission = ""
 }
 

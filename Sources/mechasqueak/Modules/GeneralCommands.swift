@@ -503,6 +503,7 @@ class GeneralCommands: IRCBotModule {
         ["announce"],
         parameters: 4...4,
         lastParameterIsContinous: true,
+        namedOptions: ["cr"],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",
         paramText: "<channel> <client name> <PC/XB/PS> <system>",
@@ -510,6 +511,32 @@ class GeneralCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveAnnounceCommand = { command in
+        var channel = command.parameters[0].lowercased()
+        if channel.starts(with: "#") == false {
+            channel = "#" + channel
+        }
 
+        guard configuration.general.drillChannels.contains(channel) else {
+
+            return
+        }
+
+        let clientName = command.parameters[1]
+        var platformString = command.parameters[2]
+        guard let platform = GamePlatform.parsedFromText(text: platformString) else {
+            return
+        }
+        let system = command.parameters[3]
+        let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
+
+        let announcement = lingo.localize("announcement", locale: "en-GB", interpolations: [
+            "client": clientName,
+            "system": system,
+            "platform": platform.rawValue.uppercased(),
+            "crStatus": crStatus
+        ])
+        
+
+        command.message.client.sendMessage(toChannelName: "BotServ", contents: "SAY \(channel) \(announcement)")
     }
 }

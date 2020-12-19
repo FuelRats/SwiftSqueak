@@ -86,7 +86,8 @@ extension IRCUser {
                 .RescueWriteOwn,
                 .TwitterWrite,
                 .DispatchRead,
-                .DispatchWrite
+                .DispatchWrite,
+                .AnnouncementWrite
             ]
         }
 
@@ -104,7 +105,8 @@ extension IRCUser {
                 .RescueWriteOwn,
                 .TwitterWrite,
                 .DispatchRead,
-                .DispatchWrite
+                .DispatchWrite,
+                .AnnouncementWrite
             ]
         }
 

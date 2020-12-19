@@ -40,6 +40,7 @@ struct GeneralConfiguration: Codable {
     let reportingChannel: String
     @Default<False>
     var drillMode: Bool
+    let drillChannels: [String]
     let ratBlacklist: [String]
     let dispatchBlacklist: [String]
 
