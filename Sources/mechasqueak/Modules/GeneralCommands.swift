@@ -517,13 +517,14 @@ class GeneralCommands: IRCBotModule {
         }
 
         guard configuration.general.drillChannels.contains(channel) else {
-
+            command.message.error(key: "announce.invalidchannel", fromCommand: command)
             return
         }
 
         let clientName = command.parameters[1]
         var platformString = command.parameters[2]
         guard let platform = GamePlatform.parsedFromText(text: platformString) else {
+            command.message.error(key: "announce.invalidplatform", fromCommand: command)
             return
         }
         let system = command.parameters[3]
