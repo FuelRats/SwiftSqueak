@@ -35,6 +35,7 @@ class BoardAssignCommands: IRCBotModule {
     @BotCommand(
         ["go", "assign", "add"],
         parameters: 2...,
+        options: ["a"],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
         paramText: "<case id/client> ...rats",
@@ -58,12 +59,18 @@ class BoardAssignCommands: IRCBotModule {
 
         let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
 
-        sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
+        sendAssignMessages(
+            assigns: assigns,
+            forRescue: rescue,
+            fromCommand: command,
+            includeExistingAssigns: command.options.contains("a")
+        )
     }
 
     @BotCommand(
         ["gofr", "assignfr", "frgo"],
         parameters: 2...,
+        options: ["a"],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
         paramText: "<case id/client> ...rats",
@@ -87,7 +94,12 @@ class BoardAssignCommands: IRCBotModule {
 
         let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
 
-        sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
+        sendAssignMessages(
+            assigns: assigns,
+            forRescue: rescue,
+            fromCommand: command,
+            includeExistingAssigns: command.options.contains("a")
+        )
 
         var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
 
@@ -107,7 +119,12 @@ class BoardAssignCommands: IRCBotModule {
         }
     }
 
-    static func sendAssignMessages (assigns: RescueAssignments, forRescue rescue: LocalRescue, fromCommand command: IRCBotCommand) {
+    static func sendAssignMessages (
+        assigns: RescueAssignments,
+        forRescue rescue: LocalRescue,
+        fromCommand command: IRCBotCommand,
+        includeExistingAssigns: Bool = false
+    ) {
         if assigns.blacklisted.count > 0 {
             command.message.error(key: "board.assign.banned", fromCommand: command, map: [
                 "rats": assigns.blacklisted.joined(separator: ", ")
@@ -126,8 +143,12 @@ class BoardAssignCommands: IRCBotModule {
             ])
         }
 
-        let allRats = assigns.rats.union(assigns.duplicates).map({ $0.attributes.name.value })
+        var allRats = assigns.rats.union(assigns.duplicates).map({ $0.attributes.name.value })
             + assigns.unidentifiedRats.union(assigns.unidentifiedDuplicates)
+
+        if includeExistingAssigns {
+            allRats = rescue.rats.map({ $0.attributes.name.value }) + rescue.unidentifiedRats
+        }
         guard allRats.count > 0 else {
             return
         }
