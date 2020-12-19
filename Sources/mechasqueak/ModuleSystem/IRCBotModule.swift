@@ -119,7 +119,7 @@ struct IRCBotCommandDeclaration {
     }
 
     func usageDescription (command: IRCBotCommand?) -> String {
-        var usage = command?.command ?? self.commands[0]
+        var usage = "!" + (command?.command ?? self.commands[0])
 
         if self.options.count > 0 {
             usage += "[-\(String(self.options))]"
@@ -136,7 +136,7 @@ struct IRCBotCommandDeclaration {
     }
 
     func exampleDescription (command: IRCBotCommand?) -> String {
-        return "\(command?.command ?? self.commands[0]) \(self.example ?? "")"
+        return "!\(command?.command ?? self.commands[0]) \(self.example ?? "")"
     }
 
     var isDispatchingCommand: Bool {
