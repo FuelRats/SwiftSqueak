@@ -29,7 +29,7 @@ import IRCKit
 struct IRCBotCommand {
     var command: String
     var parameters: [String]
-    var options: Set<Character>
+    var options: OrderedSet<Character>
     let locale: Locale
     let message: IRCPrivateMessage
     private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
@@ -72,7 +72,7 @@ struct IRCBotCommand {
         self.message = channelMessage
         self.command = commandToken.identifier
         self.locale = Locale(identifier: commandToken.languageCode ?? "en")
-        self.options = Set(tokens.compactMap({
+        self.options = OrderedSet(tokens.compactMap({
             guard case let .Option(option) = $0 else {
                 return nil
             }

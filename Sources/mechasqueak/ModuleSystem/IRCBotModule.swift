@@ -46,7 +46,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         _ commands: [String],
         parameters: T,
         lastParameterIsContinous: Bool = false,
-        options: Set<Character> = [],
+        options: OrderedSet<Character> = [],
         category: HelpCategory?,
         description: String,
         paramText: String? = nil,
@@ -79,7 +79,7 @@ struct IRCBotCommandDeclaration {
     let commands: [String]
     let minimumParameters: Int
     let maximumParameters: Int?
-    let options: Set<Character>
+    let options: OrderedSet<Character>
     let permission: AccountPermission?
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
@@ -96,7 +96,7 @@ struct IRCBotCommandDeclaration {
         onCommand: BotCommandFunction?,
         maxParameters: Int? = nil,
         lastParameterIsContinous: Bool = false,
-        options: Set<Character> = [],
+        options: OrderedSet<Character> = [],
         category: HelpCategory?,
         description: String,
         paramText: String? = nil,
