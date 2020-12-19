@@ -508,7 +508,7 @@ class GeneralCommands: IRCBotModule {
         description: "Create a rescue announcement in a drill channel",
         paramText: "<channel> <client name> <PC/XB/PS> <system>",
         example: "#drillrats3 SpaceDawg PC NLTT 48288",
-        permission: .UserWrite
+        permission: .AnnouncementWrite
     )
     var didReceiveAnnounceCommand = { command in
         var channel = command.parameters[0].lowercased()
