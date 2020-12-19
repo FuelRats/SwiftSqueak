@@ -1,6 +1,7 @@
 {
   "command.publiconly": "!%{command} command can only be used in a public channel",
   "command.privateonly": "!%{command} command can only be used in private message",
+  "command.illegalnamedoptions": "Unknown named options %{options} given to !%{command} command. %{usage} %{example}",
   "command.illegaloptions": "Unknown options \"%{options}\" given to !%{command} command. %{usage} %{example}",
   "command.toofewparams": "!%{command} command was given too few parameters. %{usage} %{example}",
   "command.toomanyparams": "!%{command} command was given too many parameters. %{usage} %{example}",

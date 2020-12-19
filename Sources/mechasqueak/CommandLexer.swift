@@ -30,6 +30,7 @@ struct IRCBotCommand {
     var command: String
     var parameters: [String]
     var options: OrderedSet<Character>
+    var namedOptions: OrderedSet<String>
     let locale: Locale
     let message: IRCPrivateMessage
     private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
@@ -50,8 +51,10 @@ struct IRCBotCommand {
                     return [Token.Parameter(str)]
                 }
                 return [Token.Command(token)]
-            }
-            if str.starts(with: "-") && str.count > 1 && hasOptions == false {
+            } else if str.starts(with: "--") && str.count > 2 {
+                let option = String(str.dropFirst(2)).lowercased()
+                return [Token.NamedOption(option)]
+            } else if str.starts(with: "-") && str.count > 1 && hasOptions == false {
                 hasOptions = true
                 let optionChars = String(str.dropFirst())
                 return optionChars.map({ Token.Option($0) })
@@ -72,6 +75,14 @@ struct IRCBotCommand {
         self.message = channelMessage
         self.command = commandToken.identifier
         self.locale = Locale(identifier: commandToken.languageCode ?? "en")
+
+        self.namedOptions = OrderedSet(tokens.compactMap({
+            guard case let .NamedOption(option) = $0 else {
+                return nil
+            }
+            return option
+        }))
+
         self.options = OrderedSet(tokens.compactMap({
             guard case let .Option(option) = $0 else {
                 return nil
@@ -115,6 +126,7 @@ struct IRCBotCommand {
 enum Token {
     case Command(CommandToken)
     case Option(Character)
+    case NamedOption(String)
     case Label(String)
     case Parameter(String)
 }

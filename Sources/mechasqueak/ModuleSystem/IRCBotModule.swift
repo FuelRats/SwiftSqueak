@@ -47,6 +47,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         parameters: T,
         lastParameterIsContinous: Bool = false,
         options: OrderedSet<Character> = [],
+        namedOptions: OrderedSet<String> = [],
         category: HelpCategory?,
         description: String,
         paramText: String? = nil,
@@ -63,6 +64,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
             maxParameters: parameters.upper as? Int,
             lastParameterIsContinous: lastParameterIsContinous,
             options: options,
+            namedOptions: namedOptions,
             category: category,
             description: description,
             paramText: paramText,
@@ -80,6 +82,7 @@ struct IRCBotCommandDeclaration {
     let minimumParameters: Int
     let maximumParameters: Int?
     let options: OrderedSet<Character>
+    let namedOptions: OrderedSet<String>
     let permission: AccountPermission?
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
@@ -97,6 +100,7 @@ struct IRCBotCommandDeclaration {
         maxParameters: Int? = nil,
         lastParameterIsContinous: Bool = false,
         options: OrderedSet<Character> = [],
+        namedOptions: OrderedSet<String> = [],
         category: HelpCategory?,
         description: String,
         paramText: String? = nil,
@@ -108,6 +112,7 @@ struct IRCBotCommandDeclaration {
         self.minimumParameters = minParameters
         self.maximumParameters = maxParameters
         self.options = options
+        self.namedOptions = namedOptions
         self.lastParameterIsContinous = lastParameterIsContinous
         self.permission = permission
         self.onCommand = onCommand
@@ -119,10 +124,20 @@ struct IRCBotCommandDeclaration {
     }
 
     func usageDescription (command: IRCBotCommand?) -> String {
+        var usage = command?.command ?? self.commands[0]
+
         if self.options.count > 0 {
-            return "\(command?.command ?? self.commands[0]) [-\(String(self.options))] \(self.paramText!)"
+            usage += "[-\(String(self.options))]"
         }
-        return "\(command?.command ?? self.commands[0]) \(self.paramText ?? "")"
+
+        if self.namedOptions.count > 0 {
+            usage += " " + Array(self.namedOptions).map({ "[--\($0)]" }).joined(separator: " ")
+        }
+
+        if let paramText = self.paramText {
+            usage += " \(paramText)"
+        }
+        return usage
     }
 
     func exampleDescription (command: IRCBotCommand?) -> String {
@@ -185,6 +200,17 @@ class IRCBotModuleManager {
             helpCommand.command = "!help"
             helpCommand.parameters = ["!\(ircBotCommand.command)"]
             mecha.helpModule.didReceiveHelpCommand(helpCommand)
+            return
+        }
+
+        let illegalNamedOptions = ircBotCommand.namedOptions.subtracting(command.namedOptions)
+        if illegalNamedOptions.count > 0 {
+            message.error(key: "command.illegalnamedoptions", fromCommand: ircBotCommand, map: [
+                "options": Array(illegalNamedOptions).englishList,
+                "command": ircBotCommand.command,
+                "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
+                "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
+            ])
             return
         }
 
