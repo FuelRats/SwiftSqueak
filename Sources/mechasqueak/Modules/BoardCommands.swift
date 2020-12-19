@@ -303,7 +303,17 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard mecha.rescueBoard.rescues.first(where: { $0.status == .Open }) == nil else {
+        guard mecha.rescueBoard.rescues.first(where: { rescue in
+            return rescue.status != .Inactive && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
+                command.message.user.getRatRepresenting(platform: rescue.platform) != nil
+        }) == nil else {
+            command.message.reply(key: "board.quiet.currentcalljumps", fromCommand: command)
+            return
+        }
+
+        guard mecha.rescueBoard.rescues.first(where: { rescue in
+            return rescue.status != .Inactive
+        }) == nil else {
             command.message.reply(key: "board.quiet.current", fromCommand: command)
             return
         }
