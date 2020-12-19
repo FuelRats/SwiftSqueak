@@ -498,4 +498,18 @@ class GeneralCommands: IRCBotModule {
         ])
         command.message.client.sendActionMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
     }
+
+    @BotCommand(
+        ["announce"],
+        parameters: 4...4,
+        lastParameterIsContinous: true,
+        category: .utility,
+        description: "Create a rescue announcement in a drill channel",
+        paramText: "<channel> <client name> <PC/XB/PS> <system>",
+        example: "#drillrats3 SpaceDawg PC NLTT 48288",
+        permission: .UserWrite
+    )
+    var didReceiveAnnounceCommand = { command in
+
+    }
 }
