@@ -315,7 +315,7 @@
   "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option.",
   "help.command.announce.cr": "Announces the rescue as a code red",
 
-  "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: en (English)",
+  "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
   "announce.invalidchannel": "Invalid channel given to announce command",
   "announce.invalidplatform": "Invalid platform given to announce command",
   "announce.success": "Sending announcement to %{channel} for client %{client}, system \"%{system}\" on %{platform} and O2 status %{crStatus}"
