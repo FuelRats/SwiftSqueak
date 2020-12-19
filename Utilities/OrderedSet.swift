@@ -182,8 +182,8 @@ extension OrderedSet: SetAlgebra {
     }
 
     public mutating func formIntersection (_ other: OrderedSet<E>) {
-        for member in other {
-            if set.contains(member) == false {
+        for member in self {
+            if other.contains(member) == false {
                 set.remove(member)
                 array.removeAll(where: { $0 == member })
             }
