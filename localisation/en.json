@@ -46,6 +46,7 @@
   "board.clientjoin": "Client of case #%{caseId} (%{client}) has joined!",
   "board.clientjoinhost": "Caution: Client of case #%{caseId} (%{client}) has joined with a different name! (%{nick})",
   "board.clientquit": "Caution: Client of case #%{caseId} (%{client}) has left!",
+  "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",
   "board.synced": "Successfully synced board with %{api}. %{updates}",
   "board.synced.downstreamNew": {
       "one": "%{count} new rescue was downloaded from the server",

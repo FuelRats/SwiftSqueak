@@ -249,6 +249,19 @@ class MechaSqueak {
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
+        if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname) {
+            rescue.clientNick = nickChange.newNick
+            rescue.syncUpstream()
+
+            nickChange.raw.client.sendMessage(
+                toChannelName: rescue.channelName,
+                withKey: "board.clientnick", mapping: [
+                    "caseId": rescue.commandIdentifier,
+                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "newNick": nickChange.newNick
+            ])
+        }
+
         if let apiNickname = accounts.mapping[sender.nickname] {
             accounts.mapping.removeValue(forKey: sender.nickname)
             accounts.mapping[nickChange.newNick] = apiNickname
