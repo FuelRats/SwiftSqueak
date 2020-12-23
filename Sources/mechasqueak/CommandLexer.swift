@@ -77,7 +77,7 @@ struct IRCBotCommand {
             })
         } catch LexerError.noCommand {
             return nil
-        } catch LexerError.invalidParameter {
+        } catch LexerError.invalidOption {
             return nil
         } catch {
             return nil
@@ -119,7 +119,8 @@ enum Token {
 
 enum LexerError: Error {
     case noCommand
-    case invalidParameter
+    case invalidOption
+    case invalidArgument
     case unknown(String)
 }
 
@@ -161,7 +162,7 @@ struct Lexer {
                 state = .Parameters
                 return delimit()
             }
-            case (.Parameters,     _,     _,  _,    _): return lexArgument()
+            case (.Parameters,     _,     _,  _,    _): return try lexArgument()
             case (.Command,        _,     _,  _,    _): throw LexerError.noCommand
         }
     }
@@ -190,7 +191,7 @@ struct Lexer {
     private mutating func lexNamedOption () throws -> Token {
         _ = readWhile({ $0 == "-" })
         if peek()?.isWhitespace != false {
-            throw LexerError.invalidParameter
+            throw LexerError.invalidOption
         }
         return Token.NamedOption(readWhile({ $0.isWhitespace == false }))
     }
@@ -201,10 +202,15 @@ struct Lexer {
         return Token.Option(option!)
     }
 
-    private mutating func lexArgument () -> Token {
+    private mutating func lexArgument () throws -> Token {
         if peek() == "\"" {
             pop()
-            return Token.Parameter(readWhile({ $0 != "\"" }))
+            let arg = readWhile({ $0 != "\"" })
+            guard arg.count > 0 else {
+                throw LexerError.invalidArgument
+            }
+
+            return Token.Parameter(arg)
         }
         return Token.Parameter(readWhile({ $0.isWhitespace == false }))
     }
