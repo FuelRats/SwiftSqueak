@@ -363,6 +363,10 @@ class RescueBoard {
     }
 
     func syncBoard () {
+        if configuration.general.drillMode {
+            self.synced = true
+            return
+        }
         FuelRatsAPI.getOpenRescues(complete: { rescueDocument in
             self.merge(rescueDocument: rescueDocument)
         }, error: { error in
