@@ -124,6 +124,7 @@ enum LexerError: Error {
 }
 
 struct Lexer {
+    private static let identifierSet = CharacterSet.alphanumerics.union(["@"])
     private enum State {
         case Command
         case Parameters
@@ -144,8 +145,8 @@ struct Lexer {
     private mutating func nextToken () throws -> Token? {
         guard let current = self.peek() else { return nil }
         let next = self.peek(aheadBy: 1)
-        let isIdentifier = current.isAlphanumeric
-        let nextIsIdentifier = next?.isAlphanumeric
+        let isIdentifier = current.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
+        let nextIsIdentifier = next?.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
 
         switch  (state, current, isIdentifier, next, nextIsIdentifier) {
             case (.Command,      "!",    _,   _, true): return try lexCommand()
