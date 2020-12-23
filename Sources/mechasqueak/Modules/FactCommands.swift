@@ -292,7 +292,7 @@ class FactCommands: IRCBotModule {
             return
         }
 
-        var rescue = nil
+        var rescue: LocalRescue? = nil
         if command.parameters.count > 0 {
             rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0])
         }
