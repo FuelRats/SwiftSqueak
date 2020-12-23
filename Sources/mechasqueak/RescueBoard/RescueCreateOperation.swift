@@ -75,6 +75,11 @@ class RescueCreateOperation: Operation {
             self.isFinished = true
             return
         }
+        if configuration.general.drillMode {
+            self.isFinished = true
+            self.onCompletion?()
+            return
+        }
 
         self.isExecuting = true
 

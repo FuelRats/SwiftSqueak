@@ -163,7 +163,7 @@ class BoardAssignCommands: IRCBotModule {
             "count": allRats.count
         ])
 
-        if assigns.unidentifiedRats.count > 0 && configuration.general.drillMode == false {
+        if assigns.unidentifiedRats.count > 0 {
             command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
                 "platform": rescue.platform!.ircRepresentable,
                 "rats": assigns.unidentifiedRats.map({

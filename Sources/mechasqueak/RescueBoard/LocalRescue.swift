@@ -321,6 +321,11 @@ class LocalRescue: Codable {
             self.rats.append(firstLimpet)
         }
 
+        if configuration.general.drillMode {
+            onComplete()
+            return
+        }
+
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self.toApiRescue),
@@ -411,6 +416,11 @@ class LocalRescue: Codable {
         self.status = .Closed
         self.outcome = .Purge
         self.notes = reason
+
+        if configuration.general.drillMode {
+            onComplete()
+            return
+        }
 
         let patchDocument = SingleDocument(
             apiDescription: .none,
