@@ -24,6 +24,18 @@
 
 import Foundation
 
+extension Character {
+    var value: Int32 {
+        return Int32(String(self).unicodeScalars.first!.value)
+    }
+    var isSpace: Bool {
+        return isspace(value) != 0
+    }
+    var isAlphanumeric: Bool {
+        return isalnum(value) != 0 || self == "_"
+    }
+}
+
 extension String {
     subscript (index: Int) -> Character {
         return self[self.index(self.startIndex, offsetBy: index)]

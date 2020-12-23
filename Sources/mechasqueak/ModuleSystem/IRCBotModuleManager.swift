@@ -45,6 +45,10 @@ class IRCBotModuleManager {
 
     @IRCListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
+        guard channelMessage.raw.messageTags["batch"] == nil else {
+            // Do not interpret commands from playback of old messages
+            return
+        }
         guard let ircBotCommand = IRCBotCommand(from: channelMessage) else {
             return
         }
@@ -55,6 +59,10 @@ class IRCBotModuleManager {
 
     @IRCListener<IRCPrivateMessageNotification>
     var onPrivateMessage = { privateMessage in
+        guard privateMessage.raw.messageTags["batch"] == nil else {
+            // Do not interpret commands from playback of old messages
+            return
+        }
         guard let ircBotCommand = IRCBotCommand(from: privateMessage) else {
             return
         }
@@ -65,11 +73,6 @@ class IRCBotModuleManager {
     static func handleIncomingCommand (ircBotCommand: IRCBotCommand) {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
-
-        guard message.raw.messageTags["batch"] == nil else {
-            // Do not interpret commands from playback of old messages
-            return
-        }
 
         guard let command = MechaSqueak.commands.first(where: {
             $0.commands.contains(ircBotCommand.command)
