@@ -120,6 +120,19 @@ class RescueBoard {
         })
     }
 
+    func fuzzyFindRescue (forChannelMember member: IRCUser) -> LocalRescue? {
+        return self.rescues.first(where: { rescue in
+            let memberString = member.nickname
+            guard let client = rescue.client else {
+                return false
+            }
+            guard let nickname = rescue.clientNick else {
+                return client.lowercased().levenshtein(memberString) < 3
+            }
+            return client.lowercased().levenshtein(memberString) < 3 || nickname.lowercased().levenshtein(memberString) < 3
+        })
+    }
+
     func add (
         rescue: LocalRescue,
         fromMessage message: IRCPrivateMessage,

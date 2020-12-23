@@ -292,10 +292,27 @@ class FactCommands: IRCBotModule {
             return
         }
 
+        var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0])
+
+        if command.parameters.count > 0, rescue == nil, let member = message.destination.member(named: command.parameters[0]) {
+            if let correctedRescue = mecha.rescueBoard.fuzzyFindRescue(forChannelMember: member) {
+                let newNick = command.parameters[0]
+                correctedRescue.clientNick = newNick
+                rescue = correctedRescue
+
+                command.message.reply(key: "board.nickcorrected", fromCommand: command, map: [
+                    "caseId": correctedRescue.commandIdentifier,
+                    "client": correctedRescue.client ?? "u\u{200B}nknown client",
+                    "newNick": newNick
+                ])
+            }
+        }
+
+
         if platformFacts.contains(where: { $0 == command.command }) {
             guard
                 command.parameters.count > 0,
-                let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]),
+                let rescue = rescue,
                 let platform = rescue.platform
                 else {
                 return
