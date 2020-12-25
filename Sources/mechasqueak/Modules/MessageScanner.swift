@@ -141,6 +141,7 @@ class MessageScanner: IRCBotModule {
             ))
 
             rescue.syncUpstream()
+            return
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
