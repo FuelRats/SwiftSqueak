@@ -257,6 +257,7 @@ class RescueBoard {
             system.removeLast(systemBodiesMatches.matched.count)
             rescue.system = system
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
+            rescue.systemBody = body
             rescue.quotes.append(RescueQuote(
                 author: message.client.currentNick,
                 message: "Client indicated location in system near body \"\(body)\"",
@@ -311,6 +312,11 @@ class RescueBoard {
 //                            "correction": correction
 //                        ]))
 //                    }
+                }
+                if let systemBody = rescue.systemBody {
+                    message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
+                        "body": systemBody
+                    ]))
                 }
                 self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })

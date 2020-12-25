@@ -41,6 +41,7 @@ class LocalRescue: Codable {
     var permitName: String? = nil
     var landmark: SystemsAPILandmarkDocument.LandmarkResult?
     var jumpCalls = 0
+    var systemBody: String? = nil
 
     let id: UUID
 
