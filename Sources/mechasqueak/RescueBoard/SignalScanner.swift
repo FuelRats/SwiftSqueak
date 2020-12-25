@@ -30,7 +30,7 @@ struct SignalScanner {
     private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b".r!
     private static let oxygenExpression = "\\b(?:(?:o2|oxygen)(?:\\:)? )?(ok|not ok|code red|cr)\\b".r!
 
-    let system: String?
+    var system: String?
     let platform: String?
     let crStatus: String?
 
@@ -59,7 +59,6 @@ struct SignalScanner {
 
         if let platformMatch = SignalScanner.platformExpression.findFirst(in: message) {
             self.platform = platformMatch.group(at: 1)
-            debug(platformMatch.group(at: 0)!)
             message = message.replacingOccurrences(of: platformMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         } else {
             self.platform = nil
@@ -78,6 +77,12 @@ struct SignalScanner {
             self.system = String(message[range])
         } else {
             self.system = nil
+        }
+        if self.system == nil, let firstItem = message.firstIndex(of: "|") {
+            let probableSystem = message[message.startIndex...firstItem].dropLast().trimmingCharacters(in: .whitespaces)
+            if probableSystem.components(separatedBy: " ").count < 3 && probableSystem.count > 2 {
+                self.system = String(probableSystem)
+            }
         }
     }
 }
