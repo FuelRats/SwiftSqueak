@@ -122,7 +122,7 @@ struct IRCBotCommandDeclaration {
         var usage = "!" + (command?.command ?? self.commands[0])
 
         if self.options.count > 0 {
-            usage += "[-\(String(self.options))]"
+            usage += " [-\(String(self.options))]"
         }
 
         if self.namedOptions.count > 0 {
