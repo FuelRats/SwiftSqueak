@@ -141,13 +141,12 @@ class RescueBoard {
         if let existingRescue = self.rescues.first(where: {
             $0.client?.lowercased() == rescue.client?.lowercased() || ($0.clientNick != nil && $0.clientNick?.lowercased() == rescue.clientNick?.lowercased())
         }) {
-
             let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
             if initiated == .signal {
                 message.reply(message: lingo.localize("board.signal.helpyou", locale: "en", interpolations: [
                     "client": rescue.clientNick ?? rescue.client ?? ""
                 ]))
-            } else {
+            } else if initiated == .insertion {
                 message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
                     "client": existingRescue.client ?? "unknown client",
                     "system": existingRescue.system ?? "unknown system",
