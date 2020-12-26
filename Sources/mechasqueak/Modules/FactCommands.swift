@@ -297,6 +297,11 @@ class FactCommands: IRCBotModule {
             rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0])
         }
 
+
+        if let rescue = rescue, let nick = rescue.clientNick {
+            command.parameters[0] = nick
+        }
+
         if command.parameters.count > 0, rescue == nil, let member = message.destination.member(named: command.parameters[0]) {
             if let correctedRescue = mecha.rescueBoard.fuzzyFindRescue(forChannelMember: member) {
                 let newNick = command.parameters[0]
@@ -310,6 +315,7 @@ class FactCommands: IRCBotModule {
                 ])
             }
         }
+
 
 
         if platformFacts.contains(where: { $0 == command.command }) {
