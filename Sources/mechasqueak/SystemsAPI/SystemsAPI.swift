@@ -313,10 +313,10 @@ struct SystemsAPISearchDocument: Codable {
         var textRepresentation: String {
             if self.permitRequired {
                 if let permitName = self.permitName {
-                    let permitReq = IRCFormat.color(.LightRed, "(\(permitName) Permit Required)")
+                    let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
                     return "\"\(self.name)\" [\(self.searchSimilarityText)] \(permitReq)"
                 }
-                let permitReq = IRCFormat.color(.LightRed, "(Permit Required)")
+                let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
                 return "\"\(self.name)\" [\(self.searchSimilarityText)] \(permitReq)"
             }
             return "\"\(self.name)\" [\(self.searchSimilarityText)]"
