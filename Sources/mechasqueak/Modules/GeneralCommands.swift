@@ -212,9 +212,9 @@ class GeneralCommands: IRCBotModule {
         }
 
         var seconds = 0.0
-        if distance < 500000 {
+        if distance < 308639 {
             seconds = 4.4708*pow(distance, 0.3899)
-        } else if distance > 5100000 {
+        } else if distance > 579427 {
             seconds = (distance - 5100000.0) / 2001 + 3420
         }
         else {
