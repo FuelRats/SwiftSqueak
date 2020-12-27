@@ -55,6 +55,6 @@ extension Int {
 
 extension Double {
     var clean: String {
-       return String(format: "%.0f", self)
+       return String(format: "%.0f", floor(self))
     }
 }
