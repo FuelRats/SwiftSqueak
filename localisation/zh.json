@@ -1,0 +1,12 @@
+{
+    "board.assign.go": {
+       "one": "%{client}: 請把以下的老鼠添加到您的朋友列表： %{rats}",
+       "few": "%{client}: 請把以下的%{count}隻老鼠添加到您的朋友列表： %{rats}",
+       "other": "%{client}: 請把以下的%{count}隻老鼠添加到您的朋友列表： %{rats}"
+    },
+    "board.assign.gocr": {
+       "one": "%{client}: 請留在主菜單上並把以下的老鼠添加到您的朋友列表： %{rats}",
+       "few": "%{client}: 請留在主菜單上並把以下的%{count}隻老鼠添加到您的朋友列表： %{rats}",
+       "other": "%{client}: 請留在主菜單上並把以下的%{count}隻老鼠添加到您的朋友列表： %{rats}"
+    }
+}
