@@ -326,10 +326,10 @@ struct SystemsAPISearchDocument: Codable {
         func correctionRepresentation (index: Int) -> String {
             if self.permitRequired {
                 if let permitName = self.permitName {
-                    let permitReq = IRCFormat.color(.LightRed, "(\(permitName) Permit Required)")
+                    let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
                     return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
                 }
-                let permitReq = IRCFormat.color(.LightRed, "(Permit Required)")
+                let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
                 return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
             }
             return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
