@@ -406,33 +406,6 @@ class BoardCommands: IRCBotModule {
         })
     }
 
-    @BotCommand(
-        ["prep", "psquit", "pcquit", "xquit", "prepcr"],
-        parameters: 0...,
-        category: nil,
-        description: ""
-    )
-    var didReceivePrepCommand = { command in
-        guard command.parameters.count > 0 else {
-            return
-        }
-
-        for param in command.parameters {
-            let nick = param.lowercased()
-
-            guard let rescue = mecha.rescueBoard.rescues.first(where: {
-                $0.client?.lowercased() == nick || $0.clientNick?.lowercased() == nick
-            }) else {
-                continue
-            }
-
-            if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
-                timer?.cancel()
-                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-            }
-        }
-    }
-
     static func assertGetRescueId (command: IRCBotCommand) -> LocalRescue? {
         guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]) else {
             command.message.error(key: "board.casenotfound", fromCommand: command, map: [

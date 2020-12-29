@@ -33,6 +33,7 @@ class FactCommands: IRCBotModule {
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
     private var platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules"]
+    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr"]
 
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
@@ -292,6 +293,8 @@ class FactCommands: IRCBotModule {
             return
         }
 
+        var isPrepFact = prepFacts.contains(where: { $0 == command.command })
+
         if command.parameters.count > 0 {
             let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
                 var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
@@ -310,6 +313,10 @@ class FactCommands: IRCBotModule {
                 }
 
                 if let rescue = rescue {
+                    if isPrepFact, let timer = mecha.rescueBoard.prepTimers[rescue.id] {
+                        timer?.cancel()
+                        mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+                    }
                     return (rescue.clientNick ?? target, rescue)
                 }
                 return (target, nil)
