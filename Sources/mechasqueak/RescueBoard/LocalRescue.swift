@@ -477,6 +477,22 @@ class LocalRescue: Codable {
         return mecha.rescueBoard.prepTimers[self.id] == nil
     }
 
+    var systemIsIncomplete: Bool {
+        if self.systemManuallyCorrected || self.landmark != nil {
+            return false
+        }
+
+        if self.system?.hasSuffix("SECTOR") == true {
+            return true
+        }
+
+        if self.system?.components(separatedBy: " ").count ?? 0 < 3 {
+            return true
+        }
+
+        return true
+    }
+
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }
