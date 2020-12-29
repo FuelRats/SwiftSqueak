@@ -29,4 +29,9 @@ extension Locale {
         let englishLocale = Locale(identifier: "en-GB")
         return englishLocale.localizedString(forIdentifier: self.identifier) ?? "u\u{200B}nknown locale"
     }
+
+    var isValid: Bool {
+        let englishLocale = Locale(identifier: "en-GB")
+        return englishLocale.localizedString(forIdentifier: self.identifier) != nil
+    }
 }

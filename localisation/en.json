@@ -94,6 +94,9 @@
   "board.syschange.notindb": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (Not in galaxy database).",
   "board.syschange.landmark": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}).",
   "board.syschange.permit": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}) %{permit}.",
+
+  "board.languagechange": "Language for case #%{caseId} (%{client}) has now been changed to %{language}",
+  "board.languagechange.error": "Case language could not be changed as %{language} is not a valid language",
   
   "board.clientchange": "Client name for case #%{caseId} (%{oldClient}) has been changed to: %{client}.",
   "board.clientchange.exists": "CAUTION \"%{client}\" is already the client of another case (#%{caseId}).",

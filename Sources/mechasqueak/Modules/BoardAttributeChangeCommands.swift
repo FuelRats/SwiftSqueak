@@ -260,6 +260,41 @@ class BoardAttributeCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["lang", "language"],
+        parameters: 2...2,
+        lastParameterIsContinous: true,
+        category: .board,
+        description: "Change the language of the client of this rescue.",
+        paramText: "<case id/client> <language code>",
+        example: "4 de",
+        permission: .RescueWriteOwn,
+        allowedDestinations: .Channel
+    )
+    var didReceiveLanguageChangeCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        let newLanguage = Locale(identifier: command.parameters[1])
+        guard newLanguage.isValid else {
+            command.message.error(key: "board.languagechange.error", fromCommand: command, map: [
+                "language": command.parameters[1]
+            ])
+            return
+        }
+
+        rescue.clientLanguage = newLanguage
+
+        command.message.reply(key: "board.languagechange", fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier,
+            "client": rescue.client!,
+            "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
+        ])
+
+        rescue.syncUpstream()
+    }
+
+    @BotCommand(
         ["cr", "codered", "casered"],
         parameters: 1...1,
         category: .board,
