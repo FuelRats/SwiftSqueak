@@ -292,44 +292,52 @@ class FactCommands: IRCBotModule {
             return
         }
 
-        var rescue: LocalRescue? = nil
         if command.parameters.count > 0 {
-            rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0])
-        }
+            let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
+                var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
+                if rescue == nil, let member = message.destination.member(named: target) {
+                    if let correctedRescue = mecha.rescueBoard.fuzzyFindRescue(forChannelMember: member) {
+                        let newNick = command.parameters[0]
+                        correctedRescue.clientNick = newNick
+                        rescue = correctedRescue
+
+                        command.message.reply(key: "board.nickcorrected", fromCommand: command, map: [
+                            "caseId": correctedRescue.commandIdentifier,
+                            "client": correctedRescue.client ?? "u\u{200B}nknown client",
+                            "newNick": newNick
+                        ])
+                    }
+                }
+
+                if let rescue = rescue {
+                    return (rescue.clientNick ?? target, rescue)
+                }
+                return (target, nil)
+            })
 
 
-        if let rescue = rescue, let nick = rescue.clientNick {
-            command.parameters[0] = nick
-        }
+            if platformFacts.contains(where: { $0 == command.command }) {
+                for platform in GamePlatform.allCases {
+                    let platformTargets = targets.filter({ $0.1?.platform == platform })
+                    if platformTargets.count == 0 {
+                        continue
+                    }
 
-        if command.parameters.count > 0, rescue == nil, let member = message.destination.member(named: command.parameters[0]) {
-            if let correctedRescue = mecha.rescueBoard.fuzzyFindRescue(forChannelMember: member) {
-                let newNick = command.parameters[0]
-                correctedRescue.clientNick = newNick
-                rescue = correctedRescue
-
-                command.message.reply(key: "board.nickcorrected", fromCommand: command, map: [
-                    "caseId": correctedRescue.commandIdentifier,
-                    "client": correctedRescue.client ?? "u\u{200B}nknown client",
-                    "newNick": newNick
-                ])
+                    var smartCommand = command
+                    smartCommand.command = "\(platform.factPrefix)\(command.command)"
+                    smartCommand.parameters = platformTargets.map({ $0.0 })
+                    sendFact(command: smartCommand, message: message)
+                }
+            } else {
+                command.parameters = targets.map({ $0.0 })
+                sendFact(command: command, message: message)
             }
+        } else {
+            sendFact(command: command, message: message)
         }
+    }
 
-
-
-        if platformFacts.contains(where: { $0 == command.command }) {
-            guard
-                command.parameters.count > 0,
-                let rescue = rescue,
-                let platform = rescue.platform
-                else {
-                return
-            }
-
-            command.command = "\(platform.factPrefix)\(command.command)"
-        }
-
+    func sendFact (command: IRCBotCommand, message: IRCPrivateMessage) {
         if message.destination.isPrivateMessage == false {
             let factHash = hashFact(command: command)
 

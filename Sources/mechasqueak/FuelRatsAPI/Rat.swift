@@ -49,7 +49,7 @@ struct RatDataObject: Codable, Equatable {
 
 }
 
-enum GamePlatform: String, Codable {
+enum GamePlatform: String, Codable, CaseIterable {
     case PC = "pc"
     case Xbox = "xb"
     case PS = "ps"
