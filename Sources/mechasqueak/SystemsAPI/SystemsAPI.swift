@@ -302,9 +302,9 @@ struct SystemsAPISearchDocument: Codable {
         var permitText: String? {
             if self.permitRequired {
                 if let permitName = self.permitName {
-                    return IRCFormat.color(.LightRed, "(\(permitName) Permit Required)")
+                    return IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
                 } else {
-                    return IRCFormat.color(.LightRed, "(Permit Required)")
+                    return IRCFormat.color(.Orange, "(Permit Required)")
                 }
             }
             return nil
