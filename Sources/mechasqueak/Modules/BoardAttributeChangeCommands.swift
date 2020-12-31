@@ -33,11 +33,11 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
-        parameters: 1...1,
+        parameters: 1...2,
         category: .board,
-        description: "Toggle a case between active or inactive.",
-        paramText: "<case id/client>",
-        example: "4",
+        description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
+        paramText: "<case id/client> [message]",
+        example: "4 client left irc",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -50,6 +50,17 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
+        }
+
+        if command.parameters.count > 1 {
+            let message = command.parameters[1]
+            rescue.quotes.append(RescueQuote(
+                author: command.message.user.nickname,
+                message: message,
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: command.message.user.nickname
+            ))
         }
 
         command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
