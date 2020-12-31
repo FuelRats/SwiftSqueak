@@ -67,6 +67,10 @@ extension IRCUser {
         })
     }
 
+    func isAssociatedWith (rescue: LocalRescue) -> Bool {
+        return isAssignedTo(rescue: rescue) || rescue.clientNick == self.nickname
+    }
+
     func hostPermissions () -> [AccountPermission] {
         if self.hostmask.hasSuffix("i.see.all")
             || self.hostmask.hasSuffix("netadmin.fuelrats.com")

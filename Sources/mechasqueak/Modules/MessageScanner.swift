@@ -176,7 +176,7 @@ class MessageScanner: IRCBotModule {
 
         if
             let rescue = caseMentionedInMessage(message: channelMessage),
-            (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel) &&
+            (channelMessage.user.isAssociatedWith(rescue: rescue) || channelMessage.destination == rescue.channel) &&
             rescue.systemManuallyCorrected == false
         {
             if let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression) {
