@@ -1,0 +1,11 @@
+{
+    "board.assign.go": {
+       "one": "%{client}: prosím přidej si následující krysu do seznamu přátel: %{rats}",
+       "other": "%{client}: prosím přidej si následující %{count} krysy do seznamu přátel: %{rats}"
+    },
+    "board.assign.gocr": {
+       "one": "%{client}: Prosím ZŮSTAŇ v hlavním menu a přidej si tuto krysu do svého seznamu přátel: %{rats}",
+       "other": "%{client}: Prosím ZŮSTAŇ v hlavním menu a následující %{count} krysy si přidej do seznamu přátel: %{rats}"
+    }
+}
+
