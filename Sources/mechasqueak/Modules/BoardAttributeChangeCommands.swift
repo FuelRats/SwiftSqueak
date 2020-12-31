@@ -94,7 +94,7 @@ class BoardAttributeCommands: IRCBotModule {
             ])
             return
         }
-        // rescue.status = .Queued
+        rescue.status = .Queued
 
         Fact.getWithFallback(name: "pqueue", forLcoale: command.locale).whenSuccess { fact in
             guard let fact = fact else {
