@@ -110,6 +110,10 @@ class BoardAssignCommands: IRCBotModule {
             includeExistingAssigns: command.options.contains("a")
         )
 
+        guard assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 else {
+            return
+        }
+
         var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
 
         Fact.get(name: factName, forLocale: command.locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
