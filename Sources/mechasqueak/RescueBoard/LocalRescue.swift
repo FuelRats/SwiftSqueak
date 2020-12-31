@@ -401,6 +401,9 @@ class LocalRescue: Codable {
         })
 
         if assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 {
+            if self.status == .Queued {
+                self.status = .Open
+            }
             self.rats.append(contentsOf: assigns.rats)
             self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
             self.syncUpstream()
