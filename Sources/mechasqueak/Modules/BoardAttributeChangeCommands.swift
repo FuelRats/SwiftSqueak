@@ -34,6 +34,7 @@ class BoardAttributeCommands: IRCBotModule {
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
         parameters: 1...2,
+        lastParameterIsContinous: true,
         category: .board,
         description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
         paramText: "<case id/client> [message]",
