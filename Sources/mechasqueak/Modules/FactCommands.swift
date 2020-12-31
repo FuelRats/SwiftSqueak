@@ -293,7 +293,7 @@ class FactCommands: IRCBotModule {
             return
         }
 
-        var isPrepFact = prepFacts.contains(where: { $0 == command.command })
+        let isPrepFact = prepFacts.contains(where: { $0 == command.command })
 
         if command.parameters.count > 0 {
             let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
@@ -321,6 +321,10 @@ class FactCommands: IRCBotModule {
                 }
                 return (target, nil)
             })
+
+            if command.locale.identifier == "auto", targets.count > 0, let firstRescue = targets[0].1 {
+                command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en-GB")
+            }
 
 
             if platformFacts.contains(where: { $0 == command.command }) {

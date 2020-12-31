@@ -33,7 +33,7 @@ struct IRCBotCommand {
     var parameters: [String]
     var options: OrderedSet<Character>
     var namedOptions: OrderedSet<String>
-    let locale: Locale
+    var locale: Locale
     let message: IRCPrivateMessage
     private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
 
@@ -267,7 +267,7 @@ struct Lexer {
 }
 
 struct CommandToken {
-    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{2}))?".r!
+    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{2,}))?".r!
 
     let declaration: String
     let identifier: String

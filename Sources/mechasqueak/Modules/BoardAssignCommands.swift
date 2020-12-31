@@ -50,6 +50,10 @@ class BoardAssignCommands: IRCBotModule {
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
+        var command = command
+        if command.locale.identifier == "auto" {
+            command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
+        }
 
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
@@ -84,6 +88,11 @@ class BoardAssignCommands: IRCBotModule {
         // Find case by rescue ID or client name
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
+        }
+
+        var command = command
+        if command.locale.identifier == "auto" {
+            command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
 
         // Disallow assigns on rescues without a platform set
