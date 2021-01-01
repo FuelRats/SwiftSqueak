@@ -53,21 +53,27 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Inactive
         }
 
+        let status = String(describing: rescue.status)
+
+        var message = ""
         if command.parameters.count > 1 {
-            let message = command.parameters[1]
+            message = command.parameters[1]
             rescue.quotes.append(RescueQuote(
                 author: command.message.user.nickname,
-                message: message,
+                message: "(Set \(status)) \(message)",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: command.message.user.nickname
             ))
         }
 
+        let key = command.parameters.count > 1 ? "board.toggleactive" : "board.toggleactivemsg"
+
         command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
-            "status": String(describing: rescue.status),
+            "status": status,
             "caseId": rescue.commandIdentifier,
-            "client": rescue.client!
+            "client": rescue.client!,
+            "message": message
         ])
 
         rescue.syncUpstream()

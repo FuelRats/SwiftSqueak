@@ -90,6 +90,7 @@
   "board.casenotfound": "Could not find a case ID or client name matching \"%{caseIdentifier}\".",
   "board.platformset": "Platform for case #%{caseId} (%{client}) set to: %{platform}.",
   "board.toggleactive": "Status of case #%{caseId} (%{client}) set to: %{status}.",
+  "board.toggleactivemsg": "Status of case #%{caseId} (%{client}) set to: %{status} with message \"%{message}\"",
   "board.nopermission": "You do not have permission to perform this command.",
   
   "board.syschange.notindb": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (Not in galaxy database).",
