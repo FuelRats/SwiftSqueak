@@ -155,6 +155,7 @@ extension OrderedSet: SetAlgebra {
         return newSet
     }
 
+    @discardableResult
     public mutating func insert (_ newMember: __owned E) -> (inserted: Bool, memberAfterInsert: E) {
         let result = set.insert(newMember)
         if result.inserted == false {

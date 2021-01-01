@@ -509,11 +509,11 @@ class LocalRescue: Codable {
 }
 
 struct RescueAssignments {
-    var rats = Set<Rat>()
-    var unidentifiedRats = Set<String>()
-    var duplicates = Set<Rat>()
-    var unidentifiedDuplicates = Set<String>()
-    var blacklisted = Set<String>()
-    var notFound = Set<String>()
-    var invalid = Set<String>()
+    var rats = OrderedSet<Rat>()
+    var unidentifiedRats = OrderedSet<String>()
+    var duplicates = OrderedSet<Rat>()
+    var unidentifiedDuplicates = OrderedSet<String>()
+    var blacklisted = OrderedSet<String>()
+    var notFound = OrderedSet<String>()
+    var invalid = OrderedSet<String>()
 }
