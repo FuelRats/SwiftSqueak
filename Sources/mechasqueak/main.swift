@@ -252,7 +252,8 @@ class MechaSqueak {
             return
         }
 
-        if channelMessage.user.nickname.starts(with: "Delta_RC_2526") {
+        if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
+            && channelMessage.destination.name.lowercased() != configuration.general.rescueChannel.lowercased() {
             if let deltaInterval = lastDeltaMessageTime, Date().timeIntervalSince(deltaInterval) < 0.5 {
                 lastDeltaMessageTime = nil
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
