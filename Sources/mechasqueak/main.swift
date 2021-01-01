@@ -255,7 +255,9 @@ class MechaSqueak {
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526") {
             if let deltaInterval = lastDeltaMessageTime, Date().timeIntervalSince(deltaInterval) < 0.5 {
                 lastDeltaMessageTime = nil
-                channelMessage.reply(message: "Delta Wall detected! Dispensing drinks")
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+                    channelMessage.client.sendActionMessage(toChannel: channelMessage.destination, contents: "drinks")
+                })
             } else if channelMessage.message.count > 410 {
                 lastDeltaMessageTime = Date()
             }
