@@ -71,6 +71,7 @@ class MechaSqueak {
     let startupTime: Date
     let version = "3.0.0"
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
+    static var lastDeltaMessageTime: Date? = nil
 
     init () {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -242,6 +243,22 @@ class MechaSqueak {
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.client ?? "u\u{200B}nknown client"
             ])
+        }
+    }
+
+    @IRCListener<IRCChannelMessageNotification>
+    var onChannelMessage = { channelMessage in
+        guard channelMessage.raw.messageTags["batch"] == nil else {
+            return
+        }
+
+        if channelMessage.user.nickname.starts(with: "Delta_RC_2526") {
+            if let deltaInterval = lastDeltaMessageTime, Date().timeIntervalSince(deltaInterval) < 0.5 {
+                lastDeltaMessageTime = nil
+                channelMessage.reply(message: "Delta Wall detected! Dispensing drinks")
+            } else if channelMessage.message.count > 410 {
+                lastDeltaMessageTime = Date()
+            }
         }
     }
 
