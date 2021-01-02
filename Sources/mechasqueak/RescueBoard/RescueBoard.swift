@@ -122,7 +122,7 @@ class RescueBoard {
 
     func fuzzyFindRescue (forChannelMember member: IRCUser) -> LocalRescue? {
         return self.rescues.first(where: { rescue in
-            let memberString = member.nickname
+            let memberString = member.nickname.lowercased()
             guard let client = rescue.client else {
                 return false
             }
