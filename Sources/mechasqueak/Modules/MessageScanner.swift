@@ -176,14 +176,14 @@ class MessageScanner: IRCBotModule {
 
         if
             let rescue = caseMentionedInMessage(message: channelMessage) ?? mecha.rescueBoard.findRescue(withCaseIdentifier: channelMessage.user.nickname),
-            (channelMessage.user.isAssociatedWith(rescue: rescue) || channelMessage.destination == rescue.channel) &&
-            rescue.systemManuallyCorrected == false
+            (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel)
         {
             if let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression) {
                 var system = String(channelMessage.message[systemRange])
                 guard
                     let sector = sectors.first(where: { system.lowercased().contains($0.name.lowercased()) }),
-                    let sectorRange = system.range(of: sector.name, options: .caseInsensitive)
+                    let sectorRange = system.range(of: sector.name, options: .caseInsensitive),
+                    rescue.systemManuallyCorrected == false
                 else {
                     return
                 }
