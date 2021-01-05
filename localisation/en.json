@@ -165,6 +165,7 @@
   
   "board.trash.success": "Successfully added case #%{caseId} (%{client}) to the trash.",
   "board.trash.error": "Failed to add case #%{caseId} to the trash due to an error in the rescue server.",
+  "board.trash.assigned": "Refusing to add case #%{caseId} to the trash as there are rats assigned to the case, did you mean to !close?",
   
   "board.title.set": "Title for case #%{caseId} set to \"%{title}\".",
   

@@ -243,6 +243,13 @@ class BoardCommands: IRCBotModule {
             return
         }
 
+        guard rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 else {
+            command.message.reply(key: "board.trash.assigned", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier
+            ])
+            return
+        }
+
         let reason = command.parameters[1]
 
         rescue.trash(fromBoard: mecha.rescueBoard, reason: reason, onComplete: {
