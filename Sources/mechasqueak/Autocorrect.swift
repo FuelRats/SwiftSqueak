@@ -26,7 +26,7 @@ import Foundation
 import Regex
 
 class Autocorrect {
-    private static let proceduralSystemExpression =
+    static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
     private static let numberSubstitutions: [Character: Character] = [
         "1": "I",

@@ -338,10 +338,14 @@ struct SystemsAPISearchDocument: Codable {
         func canBeAutomaticCorrectionFor(system: String) -> Bool {
             let system = system.lowercased()
             let correctionName = self.name.lowercased()
-            return correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric
-                || correctionName == Autocorrect.check(system: system)?.lowercased()
-                || (correctionName == system.dropLast(1) && system.last!.isLetter)
-                || (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
+
+            let isSymbolOnlyCorrection = correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric
+            let isAutoCorrection = correctionName == Autocorrect.check(system: system)?.lowercased()
+            let isBodyRemoval = (correctionName == system.dropLast(1) && system.last!.isLetter)
+            let isWithinReasonableEditDistance = (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
+            let originalIsProceduralSystem = Autocorrect.proceduralSystemExpression.matches(system)
+
+            return isSymbolOnlyCorrection || isAutoCorrection || isBodyRemoval || (isWithinReasonableEditDistance && !originalIsProceduralSystem)
         }
     }
 }
