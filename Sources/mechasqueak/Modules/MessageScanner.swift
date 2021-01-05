@@ -178,44 +178,6 @@ class MessageScanner: IRCBotModule {
             let rescue = caseMentionedInMessage(message: channelMessage) ?? mecha.rescueBoard.findRescue(withCaseIdentifier: channelMessage.user.nickname),
             (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel)
         {
-            if let systemRange = channelMessage.message.range(of: systemExpression, options: .regularExpression) {
-                var system = String(channelMessage.message[systemRange])
-                guard
-                    let sector = sectors.first(where: { system.lowercased().contains($0.name.lowercased()) }),
-                    let sectorRange = system.range(of: sector.name, options: .caseInsensitive),
-                    rescue.systemManuallyCorrected == false
-                else {
-                    return
-                }
-                system = String(system[sectorRange.lowerBound...])
-
-                SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
-                    guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
-                        return
-                    }
-
-
-                    rescue.system = searchResult.name.uppercased()
-                    rescue.permitRequired = searchResult.permitRequired
-                    rescue.permitName = searchResult.permitName
-                    rescue.syncUpstream()
-
-                    let distance = NumberFormatter.englishFormatter().string(
-                        from: NSNumber(value: landmarkResult.distance)
-                    )!
-
-                    let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
-                    channelMessage.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
-                        "caseId": rescue.commandIdentifier,
-                        "client": rescue.client!,
-                        "system": searchResult.name,
-                        "distance": distance,
-                        "landmark": landmarkResult.name,
-                        "permit": searchResult.permitText ?? ""
-                    ]))
-                })
-            }
-
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
                 return
             }
