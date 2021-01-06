@@ -11,6 +11,33 @@
         }
       },
       {
+        "package": "Cryptor",
+        "repositoryURL": "https://github.com/IBM-Swift/BlueCryptor.git",
+        "state": {
+          "branch": null,
+          "revision": "ee5880e031da4c609f372cf7472476ab51d5dd19",
+          "version": "1.0.200"
+        }
+      },
+      {
+        "package": "Socket",
+        "repositoryURL": "https://github.com/Kitura/BlueSocket.git",
+        "state": {
+          "branch": null,
+          "revision": "c9894fd117457f1d006575fbfb2fdfd6f79eac03",
+          "version": "1.0.200"
+        }
+      },
+      {
+        "package": "SSLService",
+        "repositoryURL": "https://github.com/IBM-Swift/BlueSSLService.git",
+        "state": {
+          "branch": null,
+          "revision": "ae5889d2a8b068d2d3ab91ec73aa8f557c03cd8a",
+          "version": "1.0.200"
+        }
+      },
+      {
         "package": "CryptoSwift",
         "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
         "state": {
@@ -38,6 +65,24 @@
         }
       },
       {
+        "package": "Kitura-NIO",
+        "repositoryURL": "https://github.com/IBM-Swift/Kitura-NIO.git",
+        "state": {
+          "branch": null,
+          "revision": "69bd82be54207512bee5baf374f461fe83190b2e",
+          "version": "2.4.0"
+        }
+      },
+      {
+        "package": "KituraWebSocket",
+        "repositoryURL": "https://github.com/Kitura/Kitura-WebSocket-NIO.git",
+        "state": {
+          "branch": null,
+          "revision": "d62af8747043bcf5193ff59d47df5faf3ea4f8c1",
+          "version": "2.1.1"
+        }
+      },
+      {
         "package": "KituraContracts",
         "repositoryURL": "https://github.com/IBM-Swift/KituraContracts.git",
         "state": {
@@ -48,11 +93,11 @@
       },
       {
         "package": "Lingo",
-        "repositoryURL": "https://github.com/miroslavkovac/Lingo.git",
+        "repositoryURL": "https://github.com/xlexi/Lingo.git",
         "state": {
           "branch": null,
-          "revision": "f21f388b04239641b3e88d14f21762125faa9857",
-          "version": "3.0.5"
+          "revision": "a00091e90eaff92644b6bcf336bfe8d9b10be424",
+          "version": "3.0.6"
         }
       },
       {
