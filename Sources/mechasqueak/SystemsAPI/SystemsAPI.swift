@@ -127,7 +127,10 @@ class SystemsAPI {
             }
 
             SystemsAPI.performSearch(forSystem: system, onComplete: { result in
-                guard rescue.systemManuallyCorrected == false else {
+                guard
+                    rescue.systemManuallyCorrected == false,
+                    Autocorrect.proceduralSystemExpression.matches(system) == false
+                else {
                     return
                 }
                 
