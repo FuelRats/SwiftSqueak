@@ -306,7 +306,7 @@ class FactCommands: IRCBotModule {
 
                         command.message.reply(key: "board.nickcorrected", fromCommand: command, map: [
                             "caseId": correctedRescue.commandIdentifier,
-                            "client": correctedRescue.client ?? "u\u{200B}nknown client",
+                            "client": correctedRescue.clientDescription,
                             "newNick": newNick
                         ])
                     }

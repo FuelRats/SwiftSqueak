@@ -139,7 +139,7 @@ class SystemsAPI {
                         guard var results = data.data else {
                             mecha.reportingChannel?.send(key: "sysc.noresults", map: [
                                 "caseId": rescue.commandIdentifier,
-                                "client": rescue.client ?? "u\u{200B}nknown client"
+                                "client": rescue.clientDescription
                             ])
                             return
                         }
@@ -194,14 +194,14 @@ class SystemsAPI {
 
                         rescue.channel?.send(key: "sysc.nearestmatches", map: [
                             "caseId": rescue.commandIdentifier,
-                            "client": rescue.client ?? "u\u{200B}nknown client",
+                            "client": rescue.clientDescription,
                             "systems": resultString
                         ])
 
                     case .failure:
                         mecha.reportingChannel?.send(key: "sysc.noresults", map: [
                             "caseId": rescue.commandIdentifier,
-                            "client": rescue.client ?? "u\u{200B}nknown client"
+                            "client": rescue.clientDescription
                         ])
                 }
             })

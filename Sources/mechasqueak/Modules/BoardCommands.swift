@@ -177,7 +177,7 @@ class BoardCommands: IRCBotModule {
 
             command.message.reply(key: "board.close.success", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
-                "client": rescue.client ?? "u\u{200B}nknown client"
+                "client": rescue.clientDescription
             ])
 
             guard configuration.general.drillMode == false else {
@@ -194,7 +194,7 @@ class BoardCommands: IRCBotModule {
                         mapping: [
                             "caseId": rescue.commandIdentifier,
                             "firstLimpet": firstLimpet.attributes.name.value,
-                            "client": rescue.client ?? "u\u{200B}nknown client",
+                            "client": rescue.clientDescription,
                             "link": shortUrl
                         ]
                     )
@@ -204,7 +204,7 @@ class BoardCommands: IRCBotModule {
                         withKey: "board.close.firstLimpetPaperwork",
                         mapping: [
                             "caseId": rescue.commandIdentifier,
-                            "client": rescue.client ?? "u\u{200B}nknown client",
+                            "client": rescue.clientDescription,
                             "link": shortUrl
                         ]
                     )
@@ -216,7 +216,7 @@ class BoardCommands: IRCBotModule {
                     mapping: [
                         "caseId": rescue.commandIdentifier,
                         "link": shortUrl,
-                        "client": rescue.client ?? "unknown client"
+                        "client": rescue.clientDescription
                     ]
                 )
             })
@@ -260,7 +260,7 @@ class BoardCommands: IRCBotModule {
 
             command.message.reply(key: "board.trash.success", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
-                "client": rescue.client ?? "u\u{200B}nknown client"
+                "client": rescue.clientDescription
             ])
             if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
                 timer?.cancel()
@@ -366,7 +366,7 @@ class BoardCommands: IRCBotModule {
         guard let corrections = rescue.systemCorrections, corrections.count > 0 else {
             command.message.error(key: "sysc.nocorrections", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
-                "client": rescue.client ?? "u\u{200B}nknown client"
+                "client": rescue.clientDescription
             ])
             return
         }
@@ -396,7 +396,7 @@ class BoardCommands: IRCBotModule {
                     )!
                     command.message.reply(key: format, fromCommand: command, map: [
                         "caseId": rescue.commandIdentifier,
-                        "client": rescue.client ?? "u\u{200B}nknown client",
+                        "client": rescue.clientDescription,
                         "system": selectedCorrection.name,
                         "distance": distance,
                         "landmark": landmarkResult.name,
@@ -407,7 +407,7 @@ class BoardCommands: IRCBotModule {
                     command.message.error(key: "sysc.seterror", fromCommand: command, map: [
                         "system": selectedCorrection,
                         "caseId": rescue.commandIdentifier,
-                        "client": rescue.client ?? "u\u{200B}nknown client"
+                        "client": rescue.clientDescription
                     ])
             }
         })

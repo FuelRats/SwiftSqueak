@@ -52,7 +52,7 @@ class BoardQuoteCommands: IRCBotModule {
         command.message.replyPrivate(key: format, fromCommand: command, map: [
             "title": rescue.title ?? "",
             "caseId": rescue.commandIdentifier,
-            "client": rescue.client ?? "u\u{200B}nknown client",
+            "client": rescue.clientDescription,
             "system": rescue.system ?? "u\u{200B}nknown system",
             "platform": rescue.platform.ircRepresentable,
             "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
