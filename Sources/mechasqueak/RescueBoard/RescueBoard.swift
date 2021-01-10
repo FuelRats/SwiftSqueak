@@ -177,7 +177,7 @@ class RescueBoard {
                         
                         let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
                         message.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
-                            "caseId": rescue.commandIdentifier,
+                            "caseId": existingRescue.commandIdentifier,
                             "client": rescue.client!,
                             "system": system,
                             "distance": distance,
