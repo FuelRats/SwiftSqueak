@@ -11,33 +11,6 @@
         }
       },
       {
-        "package": "Cryptor",
-        "repositoryURL": "https://github.com/IBM-Swift/BlueCryptor.git",
-        "state": {
-          "branch": null,
-          "revision": "ee5880e031da4c609f372cf7472476ab51d5dd19",
-          "version": "1.0.200"
-        }
-      },
-      {
-        "package": "Socket",
-        "repositoryURL": "https://github.com/Kitura/BlueSocket.git",
-        "state": {
-          "branch": null,
-          "revision": "c9894fd117457f1d006575fbfb2fdfd6f79eac03",
-          "version": "1.0.200"
-        }
-      },
-      {
-        "package": "SSLService",
-        "repositoryURL": "https://github.com/IBM-Swift/BlueSSLService.git",
-        "state": {
-          "branch": null,
-          "revision": "ae5889d2a8b068d2d3ab91ec73aa8f557c03cd8a",
-          "version": "1.0.200"
-        }
-      },
-      {
         "package": "CryptoSwift",
         "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
         "state": {
@@ -62,24 +35,6 @@
           "branch": null,
           "revision": "51cb140ebf27949d1185227e3eaef5a54d9a3bee",
           "version": "4.0.0"
-        }
-      },
-      {
-        "package": "Kitura-NIO",
-        "repositoryURL": "https://github.com/IBM-Swift/Kitura-NIO.git",
-        "state": {
-          "branch": null,
-          "revision": "69bd82be54207512bee5baf374f461fe83190b2e",
-          "version": "2.4.0"
-        }
-      },
-      {
-        "package": "KituraWebSocket",
-        "repositoryURL": "https://github.com/Kitura/Kitura-WebSocket-NIO.git",
-        "state": {
-          "branch": null,
-          "revision": "d62af8747043bcf5193ff59d47df5faf3ea4f8c1",
-          "version": "2.1.1"
         }
       },
       {
@@ -125,6 +80,15 @@
           "branch": null,
           "revision": "166728756082a9cac6e4aed3ebbce8e41cb3a945",
           "version": "1.2.0"
+        }
+      },
+      {
+        "package": "Starscream",
+        "repositoryURL": "https://github.com/daltoniam/Starscream.git",
+        "state": {
+          "branch": null,
+          "revision": "e6b65c6d9077ea48b4a7bdda8994a1d3c6969c8d",
+          "version": "3.1.1"
         }
       },
       {
@@ -197,6 +161,15 @@
           "branch": null,
           "revision": "bb56586c4cab9a79dce6ec4738baddb5802c5de7",
           "version": "1.9.0"
+        }
+      },
+      {
+        "package": "swift-nio-zlib-support",
+        "repositoryURL": "https://github.com/apple/swift-nio-zlib-support.git",
+        "state": {
+          "branch": null,
+          "revision": "37760e9a52030bb9011972c5213c3350fa9d41fd",
+          "version": "1.0.0"
         }
       },
       {

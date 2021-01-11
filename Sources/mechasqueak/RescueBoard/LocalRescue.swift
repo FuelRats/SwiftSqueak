@@ -500,6 +500,10 @@ class LocalRescue: Codable {
         return self.client ?? "u\u{200B}nknown client"
     }
 
+    var systemDescription: String {
+        return self.system ?? "u\u{200B}nknown system"
+    }
+
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }

@@ -72,6 +72,7 @@ class MechaSqueak {
     let version = "3.0.0"
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
+    let ratSocket = RatSocket()
 
     init () {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -250,6 +251,10 @@ class MechaSqueak {
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil else {
             return
+        }
+
+        if channelMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
+            mecha.ratSocket.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
         }
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")

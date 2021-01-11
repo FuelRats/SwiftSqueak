@@ -53,7 +53,7 @@ class BoardQuoteCommands: IRCBotModule {
             "title": rescue.title ?? "",
             "caseId": rescue.commandIdentifier,
             "client": rescue.clientDescription,
-            "system": rescue.system ?? "u\u{200B}nknown system",
+            "system": rescue.systemDescription,
             "platform": rescue.platform.ircRepresentable,
             "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         ])

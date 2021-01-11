@@ -18,9 +18,9 @@ let package = Package(
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(4, 0, 0)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 1)),
-        //.package(path: "../IRCKit"),
-        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 7))
-        .package(name: "KituraWebSocket", url: "https://github.com/Kitura/Kitura-WebSocket-NIO.git", from: Version(2, 1, 0))
+        .package(path: "../IRCKit"),
+        //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 7)),
+        .package(url: "https://github.com/daltoniam/Starscream.git", from: Version(3, 1, 0))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -39,7 +39,7 @@ let package = Package(
                 .product(name: "Regex", package: "Regex"),
                 .product(name: "JSONAPI", package: "JSONAPI"),
                 .product(name: "IRCKit", package: "IRCKit"),
-                .product(name: "Kitura-WebSocket", package: "KituraWebSocket")
+                "Starscream"
             ]
         ),
         .testTarget(
