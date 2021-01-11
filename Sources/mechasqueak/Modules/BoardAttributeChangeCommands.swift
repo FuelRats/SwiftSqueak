@@ -339,7 +339,7 @@ class BoardAttributeCommands: IRCBotModule {
 
             if rescue.rats.count > 0 {
                 let rats = rescue.rats.map({
-                    $0.attributes.name.value
+                    $0.currentNick(inIRCChannel: command.message.destination) ?? $0.attributes.name.value
                 }).joined(separator: ", ")
 
                 command.message.reply(key: "board.codered.attention", fromCommand: command, map: [

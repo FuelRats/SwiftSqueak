@@ -45,6 +45,31 @@ enum RatDescription: ResourceObjectDescription {
 }
 typealias Rat = JSONEntity<RatDescription>
 
+extension Rat {
+    func presence (inIRCChannel channel: IRCChannel) -> [IRCUser] {
+        guard let userId = self.relationships.user?.id?.rawValue else {
+            return []
+        }
+        return channel.members.filter({
+            return $0.associatedAPIData?.user?.id.rawValue == userId
+        })
+    }
+
+    func currentNick (inIRCChannel channel: IRCChannel) -> String? {
+        var users = self.presence(inIRCChannel: channel)
+        if users.count < 1 {
+            return nil
+        }
+        let ratName = self.attributes.name.value.lowercased()
+
+        users.sort(by: { user1, user2 in
+            return user1.nickname.lowercased().levenshtein(ratName) < user2.nickname.lowercased().levenshtein(ratName)
+        })
+
+        return users[0].nickname
+    }
+}
+
 struct RatDataObject: Codable, Equatable {
 
 }
