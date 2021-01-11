@@ -386,21 +386,13 @@ class BoardCommands: IRCBotModule {
                         return
                     }
 
-                    rescue.system = selectedCorrection.name.uppercased()
+                    rescue.setSystemData(searchResult: selectedCorrection, landmark: landmarkResults.landmarks[0])
                     rescue.syncUpstream()
 
-                    let landmarkResult = landmarkResults.landmarks[0]
-                    let format = selectedCorrection.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
-                    let distance = NumberFormatter.englishFormatter().string(
-                        from: NSNumber(value: landmarkResult.distance) 
-                    )!
-                    command.message.reply(key: format, fromCommand: command, map: [
+                    command.message.reply(key: "board.syschange", fromCommand: command, map: [
                         "caseId": rescue.commandIdentifier,
                         "client": rescue.clientDescription,
-                        "system": selectedCorrection.name,
-                        "distance": distance,
-                        "landmark": landmarkResult.name,
-                        "permit": selectedCorrection.permitText ?? ""
+                        "systemInfo": rescue.systemInfoDescription
                     ])
 
                 case .failure:

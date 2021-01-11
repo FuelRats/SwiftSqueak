@@ -188,10 +188,7 @@ class BoardAttributeCommands: IRCBotModule {
                 command.message.reply(key: format, fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.client!,
-                    "system": system,
-                    "distance": distance,
-                    "landmark": landmarkResult.name,
-                    "permit": searchResult.permitText ?? ""
+                    "system": rescue.systemInfoDescription
                 ])
             }
         )

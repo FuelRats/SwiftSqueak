@@ -91,34 +91,16 @@ class GeneralCommands: IRCBotModule {
 
         var formattedCases = needsRats.map({ (rescue: LocalRescue) -> String in
             var format = "needsrats.case"
-            if rescue.landmark != nil {
-                format = "needsrats.landmark"
-            }
-            if rescue.permitRequired {
-                format = "needsrats.permit"
-            }
 
             if rescue.codeRed {
                 format += "cr"
-            }
-
-            var permitText = ""
-            if rescue.permitRequired {
-                permitText = IRCFormat.color(.LightRed, rescue.permitName != nil ? "\(rescue.permitName!) Permit Required" : "Permit Required")
-            }
-            var distance = ""
-            if let distanceNumber = rescue.landmark?.distance  {
-                distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: distanceNumber))!
             }
 
             return lingo.localize(format, locale: "en-GB", interpolations: [
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "?",
                 "platform": rescue.platform.ircRepresentable,
-                "system": rescue.system ?? "?",
-                "distance": distance,
-                "landmark": rescue.landmark?.name ?? "?",
-                "permit": permitText
+                "systemInfo": rescue.systemInfoDescription
             ])
         })
 

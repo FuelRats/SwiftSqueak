@@ -70,16 +70,10 @@
       "other": "%{count} case numbers were altered due to a conflict"
   },
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
-  
-  "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.notindb": "%{signal} - CMDR %{client} - Reported System: %{system} (not in galaxy database) - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.landmark": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  
-  "board.signal.nosystem": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} Case \u0002#%{caseId}\u0002 %{cr} %{platformSignal}",
-  "board.signal.notindb": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (not in galaxy database) %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.signal.landmark": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.signal.permit": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %{permit} %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
+
+  "board.announce": "%{signal} - CMDR %{client} - Reported System: %{systemInfo} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
+
+  "board.signal": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in %{systemInfo} %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
   "board.signal.exists": "CMDR %{client} belongs to existing %{platform} %{cr} \u0002case #%{caseId}\u0002 in %{system}.",
   "board.signal.helpyou": "%{client} You already sent a Signal! Please stand by, someone will help you soon!",
   "board.signal.oxygen": "%{client} Are you on emergency oxygen? (\"oxygen depleted in xx.xx\" timer counting down in the top right of your cockpit)",
@@ -93,9 +87,7 @@
   "board.toggleactivemsg": "Status of case #%{caseId} (%{client}) set to: %{status} with message \"%{message}\"",
   "board.nopermission": "You do not have permission to perform this command.",
   
-  "board.syschange.notindb": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (Not in galaxy database).",
-  "board.syschange.landmark": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}).",
-  "board.syschange.permit": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}) %{permit}.",
+  "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}.",
 
   "board.languagechange": "Language for case #%{caseId} (%{client}) has now been changed to %{language}",
   "board.languagechange.error": "Case language could not be changed as %{language} is not a valid language",
@@ -281,12 +273,8 @@
   "birthday": "\u0002Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈\u0002",
 
   "needsrats.none": "There does not appear to be any cases that require rats to call jumps right now.",
-  "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" (%{platform})",
-  "needsrats.landmark": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance}ly from %{landmark} (%{platform})",
-  "needsrats.permit": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance}ly from %{landmark} (%{permit}) (%{platform})",
-  "needsrats.casecr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" (%{platform})",
-  "needsrats.landmarkcr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" %{distance}ly from %{landmark} (%{platform})",
-  "needsrats.permitcr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" %{distance}ly from %{landmark} (%{permit}) (%{platform})",
+  "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in %{systemInfo} (%{platform})",
+  "needsrats.casecr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in %{systemInfo} (%{platform})",
   "needsrats.message": "Cases that require jump calls right now: %{cases}",
 
   "activerat.invalidplatform": "Invalid platform given to command. Please give a platform such as PC, XB, or PS.",
