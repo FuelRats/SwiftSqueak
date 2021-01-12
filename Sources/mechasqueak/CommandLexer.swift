@@ -46,7 +46,7 @@ struct IRCBotCommand {
         do {
             let tokens = try lexer.lex()
 
-            guard case let .Command(commandToken) = tokens[0] else {
+            guard tokens.count > 0, case let .Command(commandToken) = tokens[0] else {
                 return nil
             }
 
