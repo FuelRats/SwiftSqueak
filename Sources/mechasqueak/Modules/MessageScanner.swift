@@ -175,7 +175,7 @@ class MessageScanner: IRCBotModule {
         }
 
         if
-            let rescue = caseMentionedInMessage(message: channelMessage) ?? mecha.rescueBoard.findRescue(withCaseIdentifier: channelMessage.user.nickname),
+            let rescue = caseMentionedInMessage(message: channelMessage),
             (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel)
         {
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
