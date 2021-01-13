@@ -150,7 +150,11 @@ class SystemsAPI {
                             return
                         }
 
-                        if let autoCorrectableResult = results.first(where: { $0.canBeAutomaticCorrectionFor(system: system) }) {
+                        let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system)) })
+                        var approvedCorrections = ratedCorrections.filter({ $1 != nil })
+                        approvedCorrections.sort(by: { $0.1! < $1.1! })
+
+                        if let autoCorrectableResult = approvedCorrections.first?.0 {
                             SystemsAPI.performLandmarkCheck(forSystem: autoCorrectableResult.name, onComplete: { result in
                                 switch result {
                                     case .success(let landmarkResult):
@@ -338,17 +342,34 @@ struct SystemsAPISearchDocument: Codable {
             return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
         }
 
-        func canBeAutomaticCorrectionFor(system: String) -> Bool {
+        func rateCorrectionFor (system: String) -> Int? {
             let system = system.lowercased()
             let correctionName = self.name.lowercased()
 
-            let isSymbolOnlyCorrection = correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric
-            let isAutoCorrection = correctionName == Autocorrect.check(system: system)?.lowercased()
-            let isBodyRemoval = (correctionName == system.dropLast(1) && system.last!.isLetter)
+
             let isWithinReasonableEditDistance = (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
             let originalIsProceduralSystem = Autocorrect.proceduralSystemExpression.matches(system)
 
-            return isSymbolOnlyCorrection || isAutoCorrection || isBodyRemoval || (isWithinReasonableEditDistance && !originalIsProceduralSystem)
+            if correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric {
+                return 0
+            }
+
+            if correctionName == Autocorrect.check(system: system)?.lowercased() {
+                return 1
+            }
+
+            if correctionName == system.dropLast(1) && system.last!.isLetter {
+                return 2
+            }
+
+            if system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters {
+                return 3
+            }
+
+            if isWithinReasonableEditDistance && !originalIsProceduralSystem {
+                return 4
+            }
+            return nil
         }
     }
 }
