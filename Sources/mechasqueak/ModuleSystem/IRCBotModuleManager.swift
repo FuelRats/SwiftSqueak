@@ -43,7 +43,7 @@ class IRCBotModuleManager {
         MechaSqueak.commands.append(command)
     }
 
-    @IRCListener<IRCChannelMessageNotification>
+    @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
@@ -57,7 +57,7 @@ class IRCBotModuleManager {
     }
 
 
-    @IRCListener<IRCPrivateMessageNotification>
+    @EventListener<IRCPrivateMessageNotification>
     var onPrivateMessage = { privateMessage in
         guard privateMessage.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages

@@ -33,7 +33,7 @@ class RatAnniversary: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @IRCListener<IRCChannelMessageNotification>
+    @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination == mecha.reportingChannel else {
             // Do not interpret commands from playback of old messages or in secret channels

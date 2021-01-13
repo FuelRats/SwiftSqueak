@@ -29,8 +29,8 @@ import IRCKit
 
 enum RatSocketEventType: String {
     case connection
-    case rescueCreated = "fuelrats.rescueupdate"
-    case rescueUpdated = "fuelrats.rescuecreate"
+    case rescueCreated = "fuelrats.rescuecreate"
+    case rescueUpdated = "fuelrats.rescueupdate"
     case rescueDeleted = "fuelrats.rescuedelete"
     case channelMessage = "mechasqueak.channelmessage"
 }
@@ -89,7 +89,6 @@ class RatSocket: WebSocketDelegate {
                 case .connection:
                     connectedAndAuthenticated = true
                     debug("Received welcome from Websocket connection")
-                    RatSocket.getEventAndPost(notification: RatSocketConnectedNotification.self, from: data)
 
                 case .rescueCreated:
                     RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
@@ -113,7 +112,7 @@ class RatSocket: WebSocketDelegate {
     static func getEventAndPost<Notification: NotificationDescriptor, Event: Decodable>
     (notification: Notification.Type, from data: Data) -> RatSocketEvent<Event>?
     where Notification.Payload == RatSocketEvent<Event> {
-
+        try! RatSocketEvent<Event>.from(data)
         guard let event = try? RatSocketEvent<Event>.from(data) else {
             return nil
         }
@@ -147,6 +146,7 @@ struct GenericSocketData: Decodable {
 struct RatSocketEvent<Body: Decodable>: Decodable {
     let event: String
     let sender: UUID
+    let resourceIdentifier: String?
     let body: Body?
 
     init (from decoder: Decoder) throws {
@@ -154,11 +154,18 @@ struct RatSocketEvent<Body: Decodable>: Decodable {
 
         self.event = try container.decode(String.self)
         self.sender = try container.decode(UUID.self)
-        self.body = try? container.decode(Body.self)
+        if let resourceIdentifier = try? container.decode(String.self) {
+            self.resourceIdentifier = resourceIdentifier
+            self.body = try container.decode(Body.self)
+        } else {
+            self.resourceIdentifier = nil
+            self.body = try container.decode(Body.self)
+        }
     }
 
     static func from (_ data: Data) throws -> RatSocketEvent<Body> {
         let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(.iso8601Full)
         return try decoder.decode(RatSocketEvent<Body>.self, from: data)
     }
 }

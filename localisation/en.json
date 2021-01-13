@@ -70,6 +70,10 @@
       "other": "%{count} case numbers were altered due to a conflict"
   },
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
+  "board.remotecreation": "ATTENTION: A new rescue (#%{caseId} (%{client})) was created remotely, performing a sync with the rescue server",
+  "board.remoteclose": "ATTENTION: Rescue #%{caseId} (%{client}) was closed remotely and is removed from the board",
+  "board.remoteupdate": "ATTENTION: Rescue #%{caseId} (%{client}) was updated remotely, performing a sync with the rescue server",
+  "board.remotedeletion": "ATTENTION: Rescue #%{caseId} (%{client}) was deleted remotely and is removed from the board",
 
   "board.announce": "%{signal} - CMDR %{client} - Reported System: %{systemInfo} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
 

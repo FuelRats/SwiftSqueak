@@ -539,6 +539,67 @@ class RescueBoard {
             }
         }
     }
+
+    @EventListener<RatSocketRescueCreatedNotification>
+    var onRemoteRescueCreated = { rescueCreation in
+        guard
+            rescueCreation.sender != configuration.api.userId,
+            let remoteRescue = rescueCreation.body?.body.data?.primary.value
+        else {
+            return
+        }
+        mecha.reportingChannel?.send(key: "board.remotecreation", map: [
+            "caseId": remoteRescue.attributes.commandIdentifier.value,
+            "client": remoteRescue.attributes.client.value ?? "?"
+        ])
+        mecha.rescueBoard.syncBoard()
+    }
+
+    @EventListener<RatSocketRescueUpdatedNotification>
+    var onRemoteRescueUpdated = { rescueUpdate in
+        guard
+            rescueUpdate.sender != configuration.api.userId,
+            let remoteRescue = rescueUpdate.body?.body.data?.primary.value
+        else {
+            return
+        }
+
+        if remoteRescue.attributes.status.value == .Closed {
+            if let rescue = mecha.rescueBoard.rescues.first(where: { $0.id == remoteRescue.id.rawValue }) {
+                mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
+                mecha.reportingChannel?.send(key: "board.remoteclose", map: [
+                    "caseId": rescue.commandIdentifier,
+                    "client": rescue.clientDescription
+                ])
+            }
+            return
+        }
+        mecha.reportingChannel?.send(key: "board.remoteupdate", map: [
+            "caseId": remoteRescue.attributes.commandIdentifier.value,
+            "client": remoteRescue.attributes.client.value ?? "?"
+        ])
+        mecha.rescueBoard.syncBoard()
+    }
+
+    @EventListener<RatSocketRescueDeletedNotification>
+    var onRemoteRescueDeleted = { rescueDeletion in
+        print(rescueDeletion.resourceIdentifier)
+        guard
+            rescueDeletion.sender != configuration.api.userId,
+            let rescueIdString = rescueDeletion.resourceIdentifier,
+            let rescueId = UUID(uuidString: rescueIdString)
+        else {
+            return
+        }
+
+        if let rescue = mecha.rescueBoard.rescues.first(where: { $0.id == rescueId }) {
+            mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescueId })
+            mecha.reportingChannel?.send(key: "board.remotedeletion", map: [
+                "caseId": rescue.commandIdentifier,
+                "client": rescue.clientDescription
+            ])
+        }
+    }
 }
 
 enum RescueInitiationType {

@@ -116,7 +116,7 @@ class MechaSqueak {
     }
 
 
-    @IRCListener<IRCUserAccountChangeNotification>
+    @EventListener<IRCUserAccountChangeNotification>
     var onAccountChange = { accountChange in
         let user = accountChange.user
 
@@ -130,7 +130,7 @@ class MechaSqueak {
         }
     }
 
-    @IRCListener<IRCUserJoinedChannelNotification>
+    @EventListener<IRCUserJoinedChannelNotification>
     var onUserJoin = { userJoin in
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
@@ -183,7 +183,7 @@ class MechaSqueak {
         }
     }
 
-    @IRCListener<IRCUserLeftChannelNotification>
+    @EventListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
         if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
             guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
@@ -214,7 +214,7 @@ class MechaSqueak {
 
     }
 
-    @IRCListener<IRCUserQuitNotification>
+    @EventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
         accounts.mapping.removeValue(forKey: userQuit.sender!.nickname)
 
@@ -247,7 +247,7 @@ class MechaSqueak {
         }
     }
 
-    @IRCListener<IRCChannelMessageNotification>
+    @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil else {
             return
@@ -270,7 +270,7 @@ class MechaSqueak {
         }
     }
 
-    @IRCListener<IRCUserChangedNickNotification>
+    @EventListener<IRCUserChangedNickNotification>
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
@@ -294,7 +294,7 @@ class MechaSqueak {
     }
 
 
-    @IRCListener<IRCUserHostChangeNotification>
+    @EventListener<IRCUserHostChangeNotification>
     var onUserHostChange = { hostChange in
         let sender = hostChange.sender!
         accounts.mapping.removeValue(forKey: sender.nickname)

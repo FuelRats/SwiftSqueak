@@ -36,20 +36,24 @@ struct RatSocketConnectedNotification: NotificationDescriptor {
 struct RatSocketRescueCreatedNotification: NotificationDescriptor {
     init () {}
 
-    typealias Payload = RatSocketEvent<RescueGetDocument>
+    typealias Payload = RatSocketEvent<RescueEventDocument>
     let name = Notification.Name("RatSocketRescueCreated")
 }
 
 struct RatSocketRescueUpdatedNotification: NotificationDescriptor {
     init () {}
 
-    typealias Payload = RatSocketEvent<RescueGetDocument>
+    typealias Payload = RatSocketEvent<RescueEventDocument>
     let name = Notification.Name("RatSocketRescueUpdated")
 }
 
 struct RatSocketRescueDeletedNotification: NotificationDescriptor {
     init () {}
 
-    typealias Payload = RatSocketEvent<RescueGetDocument>
+    typealias Payload = RatSocketEvent<EmptyBody>
     let name = Notification.Name("RatSocketRescueDeleted")
+}
+
+struct EmptyBody: Codable {
+
 }

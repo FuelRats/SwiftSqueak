@@ -51,6 +51,7 @@ struct GeneralConfiguration: Codable {
 
 struct FuelRatsAPIConfiguration: Codable {
     let url: String
+    let userId: UUID
     let token: String
 }
 
