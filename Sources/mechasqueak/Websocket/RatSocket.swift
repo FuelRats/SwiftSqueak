@@ -112,7 +112,6 @@ class RatSocket: WebSocketDelegate {
     static func getEventAndPost<Notification: NotificationDescriptor, Event: Decodable>
     (notification: Notification.Type, from data: Data) -> RatSocketEvent<Event>?
     where Notification.Payload == RatSocketEvent<Event> {
-        try! RatSocketEvent<Event>.from(data)
         guard let event = try? RatSocketEvent<Event>.from(data) else {
             return nil
         }
