@@ -121,13 +121,16 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        rescue.quotes.append(RescueQuote(
-            author: message.user.nickname,
-            message: "<\(clientUser.nickname)> \(lastMessage)",
-            createdAt: Date(),
-            updatedAt: Date(),
-            lastAuthor: message.user.nickname
-        ))
+        let quoteMessage = "<\(clientUser.nickname)> \(lastMessage)"
+        if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
+            rescue.quotes.append(RescueQuote(
+                author: message.user.nickname,
+                message: "<\(clientUser.nickname)> \(lastMessage)",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: message.user.nickname
+            ))
+        }
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
             "clientId": rescue.commandIdentifier,
