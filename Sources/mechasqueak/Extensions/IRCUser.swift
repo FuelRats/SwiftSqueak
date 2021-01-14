@@ -34,10 +34,8 @@ extension IRCUser {
         guard let userId = self.associatedAPIData?.user?.id.rawValue else {
             return nil
         }
-        print(userId)
         return mecha.rescueBoard.rescues.first(where: {
             $0.rats.contains(where: {
-                print($0.relationships.user?.id?.rawValue)
                 return $0.relationships.user?.id?.rawValue == userId
             }) ||
             $0.unidentifiedRats.contains(self.nickname)

@@ -144,6 +144,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["inject"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        options: ["f"],
         category: .board,
         description: "Add some new information to the case, if one does not exist, create one with this information",
         paramText: "<case id/client> <text>",
@@ -152,6 +153,7 @@ class BoardQuoteCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveInjectCommand = { command in
+        var forceInject = command.options.contains("f")
         let message = command.message
         let clientParam = command.parameters[0]
 
@@ -169,7 +171,11 @@ class BoardQuoteCommands: IRCBotModule {
 
         let injectMessage = command.parameters[1]
         if rescue == nil {
-            guard isLikelyAccidentalInject(clientParam: clientParam) == false || injectRepeatCache.contains(clientParam.lowercased()) else {
+            guard
+                isLikelyAccidentalInject(clientParam: clientParam) == false ||
+                injectRepeatCache.contains(clientParam.lowercased()) ||
+                forceInject
+            else {
                 injectRepeatCache.insert(clientParam.lowercased())
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(60), execute: {
                     injectRepeatCache.remove(clientParam.lowercased())
