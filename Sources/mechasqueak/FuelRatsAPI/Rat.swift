@@ -79,6 +79,18 @@ enum GamePlatform: String, Codable, CaseIterable {
     case Xbox = "xb"
     case PS = "ps"
 
+    init (from decoder: Decoder) throws {
+        let rawValue = try decoder.singleValueContainer().decode(String.self)
+        if let value = GamePlatform.parsedFromText(text: rawValue) {
+            self = value
+        } else {
+            throw DecodingError.dataCorrupted(DecodingError.Context.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Invalid Enum Raw Value"
+            ))
+        }
+    }
+
     var ircRepresentable: String {
         let platformMap: [GamePlatform: IRCColor] = [
             .PC: .Purple,
