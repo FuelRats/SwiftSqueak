@@ -23,53 +23,23 @@
  */
 
 import Foundation
-import IRCKit
-import DefaultCodable
+import NIO
+import AsyncHTTPClient
 
-struct MechaConfiguration: Codable {
-    let general: GeneralConfiguration
-    let connections: [IRCClientConfiguration]
-    let api: FuelRatsAPIConfiguration
-    let queue: QueueConfiguration
-    let database: DatabaseConfiguration
-    let shortener: URLShortenerConfiguration
+class QueueAPI {
+    static var decoder: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(.iso8601Full)
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return decoder
+    }
+
+    static func fetchQueue () -> EventLoopFuture<[QueueParticipant]> {
+        let requestUrl = configuration.queue.url.appendingPathComponent("/queue")
+        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        return httpClient.execute(request: request, forDecodable: [QueueParticipant].self)
+    }
 }
 
-struct GeneralConfiguration: Codable {
-    let signal: String
-    let rescueChannel: String
-    let reportingChannel: String
-    @Default<False>
-    var drillMode: Bool
-    let drillChannels: [String]
-    let ratBlacklist: [String]
-    let dispatchBlacklist: [String]
-
-    let operLogin: [String]?
-    @Default<False>
-    var debug: Bool
-}
-
-struct QueueConfiguration: Codable {
-    let url: URL
-}
-
-struct FuelRatsAPIConfiguration: Codable {
-    let url: URL
-    let userId: UUID
-    let token: String
-}
-
-struct DatabaseConfiguration: Codable {
-    let host: String
-    let port: Int32
-    let database: String
-
-    let username: String
-    let password: String?
-}
-
-struct URLShortenerConfiguration: Codable {
-    let url: URL
-    let signature: String
-}

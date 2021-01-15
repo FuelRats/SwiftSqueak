@@ -23,53 +23,40 @@
  */
 
 import Foundation
-import IRCKit
-import DefaultCodable
+import NIO
+import AsyncHTTPClient
 
-struct MechaConfiguration: Codable {
-    let general: GeneralConfiguration
-    let connections: [IRCClientConfiguration]
-    let api: FuelRatsAPIConfiguration
-    let queue: QueueConfiguration
-    let database: DatabaseConfiguration
-    let shortener: URLShortenerConfiguration
-}
+struct QueueParticipant: Codable, Hashable {
+    let uuid: UUID
+    let arrivalTime: Date
+    let pending: Bool
+    let client: QueueClient
 
-struct GeneralConfiguration: Codable {
-    let signal: String
-    let rescueChannel: String
-    let reportingChannel: String
-    @Default<False>
-    var drillMode: Bool
-    let drillChannels: [String]
-    let ratBlacklist: [String]
-    let dispatchBlacklist: [String]
+    struct QueueClient: Codable, Hashable {
+        private enum CodingKeys: String, CodingKey {
+            case id
+            case name = "client_name"
+            case system = "client_system"
+            case platform
+            case locale
+            case o2Status = "o2_status"
+        }
+        let id: Int
+        let name: String
+        let system: String
+        let platform: GamePlatform
+        let locale: Locale
+        let o2Status: Bool
+    }
 
-    let operLogin: [String]?
-    @Default<False>
-    var debug: Bool
-}
+    func dequeue () -> EventLoopFuture<QueueParticipant> {
+        var requestUrl = configuration.queue.url.appendingPathComponent("/queue")
+        requestUrl.appendPathComponent(self.uuid.uuidString)
+        requestUrl.appendPathComponent("/dequeue")
 
-struct QueueConfiguration: Codable {
-    let url: URL
-}
+        var request = try! HTTPClient.Request(url: requestUrl, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
-struct FuelRatsAPIConfiguration: Codable {
-    let url: URL
-    let userId: UUID
-    let token: String
-}
-
-struct DatabaseConfiguration: Codable {
-    let host: String
-    let port: Int32
-    let database: String
-
-    let username: String
-    let password: String?
-}
-
-struct URLShortenerConfiguration: Codable {
-    let url: URL
-    let signature: String
+        return httpClient.execute(request: request, forDecodable: QueueParticipant.self)
+    }
 }
