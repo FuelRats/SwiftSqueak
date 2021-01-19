@@ -274,6 +274,12 @@
   "addgroup.success": "Successfully added group %{group} (%{groupId}) for user ID %{userId}",
   "addgroup.error": "Unable to add group to user due to an unknown error",
 
+  "suspend.noid": "Unable to suspend user as %{param} is not a logged in nick or user id",
+  "suspend.invalidspan": "Unable to suspend user as %{param} is not a valid timespan",
+  "suspend.nouser": "Unable to suspend user as the user ID could not be found",
+  "suspend.error": "Unable to suspend user due to an unknown error",
+  "suspend.success": "User %{userId} has been suspended until %{date}",
+
   "flushall.response": "Cleared local cache and fetching user data for all logged in users..",
   "flush.notfound": "%{name} was not found in the account data cache.",
   "flush.nouser": "Cleared local cache for %{name} but I was unable to fetch a new copy as no online user for them could be found.",

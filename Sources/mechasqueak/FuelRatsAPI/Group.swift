@@ -132,7 +132,6 @@ extension Group {
         url.appendPathComponent("/users")
         url.appendPathComponent(id.uuidString)
         url.appendPathComponent("/relationships/groups")
-        print(url.absoluteString)
 
         let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
             type: "groups",
@@ -145,7 +144,6 @@ extension Group {
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try! .encodable(relationship)
 
-        print(String(data: try! JSONEncoder().encode(relationship), encoding: .utf8)!)
         httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
             switch result {
                 case .success(_):

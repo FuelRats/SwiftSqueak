@@ -63,6 +63,44 @@ extension Date {
         let dateString = formatter.string(from: self)
         let year = Calendar.current.component(.year, from: self)
         return "\(dateString), \(year + 1286)"
+    }
+}
 
+extension TimeInterval {
+    static func from (string: String) -> TimeInterval? {
+        var string = string
+
+        if string == "0" {
+            return 3.154 * pow(10, 10)
+        }
+        let suffix = string.removeLast().lowercased()
+        guard let num = Int(string) else {
+            return nil
+        }
+
+        let seconds = Double(num)
+
+        switch suffix {
+            case "s":
+                return seconds
+
+            case "m":
+                return seconds * 60
+
+            case "h":
+                return seconds * 3600
+
+            case "d":
+                return seconds * 86400
+
+            case "w":
+                return seconds * 604800
+
+            case "y":
+                return seconds * 220903200
+
+            default:
+                return nil
+        }
     }
 }

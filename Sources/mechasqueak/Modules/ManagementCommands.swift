@@ -166,6 +166,61 @@ class ManagementCommands: IRCBotModule {
         })
     }
 
+    @BotCommand(
+        ["suspend"],
+        parameters: 2...2,
+        category: .management,
+        description: "Suspend a user account, accepts IRC style timespans (0 for indefinite).",
+        paramText: "<nick/user id> <timespan>",
+        example: "SpaceDawg 7d",
+        permission: .UserWrite
+    )
+    var didReceiveSuspendCommand = { command in
+        var getUserId = UUID(uuidString: command.parameters[0])
+        if getUserId == nil {
+            getUserId = command.message.client.user(withName: command.parameters[0])?.associatedAPIData?.user?.id.rawValue
+        }
+
+        guard let userId = getUserId else {
+            command.message.error(key: "suspend.noid", fromCommand: command, map: [
+                "param": command.parameters[0]
+            ])
+            return
+        }
+
+        guard let timespan = TimeInterval.from(string: command.parameters[1]) else {
+            command.message.error(key: "suspend.invalidspan", fromCommand: command, map: [
+                "param": command.parameters[1]
+            ])
+            return
+        }
+
+        let date = Date().addingTimeInterval(timespan)
+
+        User.get(id: userId).whenComplete({ result in
+            switch result {
+                case .failure(_):
+                    command.message.error(key: "suspend.nouser", fromCommand: command)
+
+                case .success(let userDocument):
+                    userDocument.body.primaryResource?.value.suspend(date: date).whenComplete({ result in
+                        switch result {
+                            case .failure(let error):
+                                debug(String(describing: error))
+                                command.message.error(key: "suspend.error", fromCommand: command)
+
+                            case .success(_):
+                                command.message.reply(key: "suspend.success", fromCommand: command, map: [
+                                    "userId": userId.ircRepresentation,
+                                    "date": date.ircRepresentable
+                                ])
+                        }
+                    })
+
+            }
+        })
+    }
+
 
     @BotCommand(
         ["msg", "say"],
