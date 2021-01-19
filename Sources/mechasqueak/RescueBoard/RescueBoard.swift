@@ -583,7 +583,6 @@ class RescueBoard {
 
     @EventListener<RatSocketRescueDeletedNotification>
     var onRemoteRescueDeleted = { rescueDeletion in
-        print(rescueDeletion.resourceIdentifier)
         guard
             rescueDeletion.sender != configuration.api.userId,
             let rescueIdString = rescueDeletion.resourceIdentifier,

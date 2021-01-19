@@ -443,44 +443,6 @@ class GeneralCommands: IRCBotModule {
         ])
     }
 
-
-
-    @BotCommand(
-        ["msg", "say"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
-        category: .utility,
-        description: "Make the bot send an IRC message somewhere.",
-        paramText: "<destination> <message>",
-        example: "#ratchat Squeak!",
-        permission: .UserWrite
-    )
-    var didReceiveSayCommand = { command in
-        command.message.reply(key: "say.sending", fromCommand: command, map: [
-            "target": command.parameters[0],
-            "contents": command.parameters[1]
-        ])
-        command.message.client.sendMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
-    }
-
-    @BotCommand(
-        ["me", "action", "emote"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
-        category: .utility,
-        description: "Make the bot send an IRC action (/me) somewhere.",
-        paramText: "<destination> <action message>",
-        example: "#ratchat noms popcorn.",
-        permission: .UserWrite
-    )
-    var didReceiveMeCommand = { command in
-        command.message.reply(key: "me.sending", fromCommand: command, map: [
-            "target": command.parameters[0],
-            "contents": command.parameters[1]
-        ])
-        command.message.client.sendActionMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
-    }
-
 //    @BotCommand(
 //        ["announce"],
 //        parameters: 4...4,

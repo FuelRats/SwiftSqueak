@@ -24,6 +24,8 @@
 
 import Foundation
 import JSONAPI
+import NIO
+import AsyncHTTPClient
 
 enum GroupDescription: ResourceObjectDescription {
     public static var jsonType: String { return "groups" }
@@ -110,3 +112,49 @@ extension AccountPermission {
 }
 
 typealias Group = JSONEntity<GroupDescription>
+typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
+
+extension Group {
+    static func list () -> EventLoopFuture<GroupSearchDocument> {
+        var url = configuration.api.url
+        url.appendPathComponent("/groups")
+        var request = try! HTTPClient.Request(url: url, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+
+        return httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
+    }
+
+    func addUser (id: UUID) -> EventLoopFuture<Void> {
+        let promise = loop.next().makePromise(of: Void.self)
+
+        var url = configuration.api.url
+        url.appendPathComponent("/users")
+        url.appendPathComponent(id.uuidString)
+        url.appendPathComponent("/relationships/groups")
+        print(url.absoluteString)
+
+        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
+            type: "groups",
+            id: self.id.rawValue
+        )])
+
+        var request = try! HTTPClient.Request(url: url, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = try! .encodable(relationship)
+
+        print(String(data: try! JSONEncoder().encode(relationship), encoding: .utf8)!)
+        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
+            switch result {
+                case .success(_):
+                    promise.succeed(())
+
+                case .failure(let error):
+                    promise.fail(error)
+            }
+        })
+        return promise.futureResult
+    }
+}

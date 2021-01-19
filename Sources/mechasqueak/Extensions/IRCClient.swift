@@ -32,4 +32,10 @@ extension IRCClient {
             contents: lingo.localize(key, locale: "en-GB", interpolations: map)
         )
     }
+
+    func user (withName name: String) -> IRCUser? {
+        return self.channels.compactMap({ channel in
+            return channel.member(named: name)
+        }).first
+    }
 }

@@ -269,6 +269,10 @@
   
   "say.sending": "Sending message \"%{contents}\" to %{target}",
   "me.sending": "Emoting \"%{contents}\" to %{target}",
+  "addgroup.noid": "Could not add group as %{param} is not a logged in nick or a user id",
+  "addgroup.nogroup": "Could not add group as %{param} is not a valid group name",
+  "addgroup.success": "Successfully added group %{group} (%{groupId}) for user ID %{userId}",
+  "addgroup.error": "Unable to add group to user due to an unknown error",
 
   "flushall.response": "Cleared local cache and fetching user data for all logged in users..",
   "flush.notfound": "%{name} was not found in the account data cache.",
@@ -300,7 +304,7 @@
   "help.category.rescues": "View, edit and manage rescues that have already been completed.",
   "help.category.facts": "View, edit and manage the list of information commands such as !prep",
   "help.category.utility": "Various commands that provide utility for rats and dispatches, such as tweeting a case or looking up a star system",
-  "help.cateogory.management": "Admin Commands to manage the state of the bot",
+  "help.cateogory.management": "Admin Commands to manage MechaSqueak and the API",
   "help.category.other": "Commands that don't fit into any category",
 
   "help.command.list.r": "Show only with assigned rats",
