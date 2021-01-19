@@ -37,8 +37,7 @@ let package = Package(
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
                 .product(name: "Regex", package: "Regex"),
                 .product(name: "JSONAPI", package: "JSONAPI"),
-                .product(name: "IRCKit", package: "IRCKit"),
-                "Starscream"
+                .product(name: "IRCKit", package: "IRCKit")
             ]
         ),
         .testTarget(
