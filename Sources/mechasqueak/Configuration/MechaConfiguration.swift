@@ -51,7 +51,7 @@ struct GeneralConfiguration: Codable {
 }
 
 struct QueueConfiguration: Codable {
-    let url: URL
+    let url: URL?
 }
 
 struct FuelRatsAPIConfiguration: Codable {

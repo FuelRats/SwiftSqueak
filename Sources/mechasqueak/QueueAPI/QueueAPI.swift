@@ -35,7 +35,7 @@ class QueueAPI {
     }
 
     static func fetchQueue () -> EventLoopFuture<[QueueParticipant]> {
-        let requestUrl = configuration.queue.url.appendingPathComponent("/queue")
+        let requestUrl = configuration.queue.url!.appendingPathComponent("/queue")
         var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 

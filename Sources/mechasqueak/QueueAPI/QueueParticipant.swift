@@ -50,7 +50,7 @@ struct QueueParticipant: Codable, Hashable {
     }
 
     func dequeue () -> EventLoopFuture<QueueParticipant> {
-        var requestUrl = configuration.queue.url.appendingPathComponent("/queue")
+        var requestUrl = configuration.queue.url!.appendingPathComponent("/queue")
         requestUrl.appendPathComponent(self.uuid.uuidString)
         requestUrl.appendPathComponent("/dequeue")
 
