@@ -94,6 +94,31 @@ extension User {
             "suspended": DateFormatter.iso8601Full.string(from: date)
         ])
     }
+
+    func changeEmail (to email: String) -> EventLoopFuture<UserGetDocument> {
+        let body: [String: Any] = [
+            "data": [
+                "type": "email-changes",
+                "id": self.id.rawValue.uuidString,
+                "attributes": [
+                    "email": email
+                ]
+            ]
+        ]
+
+        var url = configuration.api.url
+        url.appendPathComponent("/users")
+        url.appendPathComponent(self.id.rawValue.uuidString)
+        url.appendPathComponent("/email")
+
+        var request = try! HTTPClient.Request(url: url, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
+
+        return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
 }
 
 enum UserStatus: String, Codable {

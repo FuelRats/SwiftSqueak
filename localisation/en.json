@@ -296,6 +296,10 @@
   "activerat.none": "No CMDRs were found for you on %{platform}. Use !whoami to list all your CMDRs.",
   "activerat.response": "Your active rat on %{platform} is CMDR %{name}. ID: %{id}.",
 
+  "changemail.notloggedin": "Could not change email as you are not currently logged into an IRC nickname associated with a Fuel Rats Account",
+  "changemail.error": "Unable to change email address, please verify that you entered a valid email address",
+  "changemail.success": "The email address of your Fuel Rats account has been changed. A verification email has been sent to %{email} with steps to complete the process",
+
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.nofacts": "Information commands such as !prep and !pcwing are not listed here, to see a list of those, use !facts.",

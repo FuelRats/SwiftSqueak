@@ -192,4 +192,34 @@ class AccountCommands: IRCBotModule {
             "name": rat.attributes.name.value
         ])
     }
+
+    @BotCommand(
+        ["changeemail", "changemail"],
+        parameters: 1...1,
+        category: .account,
+        description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
+        paramText: "<email address>",
+        example: "spacedawg@fuelrats.com",
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveChangeEmailCommand = { command in
+        guard let user = command.message.user.associatedAPIData?.user else {
+            command.message.error(key: "changemail.notloggedin", fromCommand: command)
+            return
+        }
+
+        user.changeEmail(to: command.parameters[0]).whenComplete({ result in
+            switch result {
+                case .failure(let error):
+                    print(String(describing: error))
+                    command.message.error(key: "changemail.error", fromCommand: command)
+
+                case .success(_):
+                    command.message.reply(key: "changemail.success", fromCommand: command, map: [
+                        "email": command.parameters[0]
+                    ])
+            }
+        })
+    }
 }
