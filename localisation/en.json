@@ -225,6 +225,7 @@
 
   "rescue.clientpw.error": "Unable to find any previous cases for \"%{client}\".",
   "rescue.clientpw.response": "Latest previous case for client \"%{client}\" (created %{created}) is available here: %{link}",
+  "rescue.clientpw.entry": "%{index}) in %{system} created %{created} (Link: %{link})",
   
   "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
   "shorten.error": "Was unable to shorten URL due to a request error.",
@@ -332,6 +333,7 @@
   "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts.",
   "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option.",
   "help.command.announce.cr": "Announces the rescue as a code red",
+  "help.command.clientpw.all": "Lists ALL previous cases for this client",
 
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
   "announce.invalidchannel": "Invalid channel given to announce command",

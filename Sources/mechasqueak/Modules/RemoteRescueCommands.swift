@@ -422,6 +422,7 @@ class RemoteRescueCommands: IRCBotModule {
         ["clientpw", "pwclient"],
         parameters: 1...1,
         lastParameterIsContinous: true,
+        namedOptions: ["all"],
         category: .rescues,
         description: "Get paperwork link for a previous client by name.",
         paramText: "<client name>",
@@ -437,6 +438,20 @@ class RemoteRescueCommands: IRCBotModule {
                 ])
                 return
             }
+
+            if command.namedOptions.contains("all") {
+                for (index, rescue) in rescues.enumerated() {
+                    let url = "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
+                    command.message.replyPrivate(key: "rescue.clientpw.entry", fromCommand: command, map: [
+                        "index": index,
+                        "system": rescue.attributes.system.value ?? "?",
+                        "created": rescue.attributes.createdAt.value.ircRepresentable,
+                        "link": url
+                    ])
+                }
+                return
+            }
+
             let rescue = rescues[0]
 
             URLShortener.attemptShorten(
