@@ -312,6 +312,7 @@
   "help.category.utility": "Various commands that provide utility for rats and dispatches, such as tweeting a case or looking up a star system",
   "help.cateogory.management": "Admin Commands to manage MechaSqueak and the API",
   "help.category.other": "Commands that don't fit into any category",
+  "help.category.account": "Commands to manage your Fuel Rats account",
 
   "help.command.list.r": "Show only with assigned rats",
   "help.command.list.u": "Show only with no assigned rats",

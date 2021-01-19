@@ -143,5 +143,6 @@ enum HelpCategory: String, CaseIterable {
     case facts
     case utility
     case management
+    case account
     case other
 }

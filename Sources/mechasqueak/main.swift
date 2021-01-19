@@ -117,7 +117,8 @@ class MechaSqueak {
             ShortenURLCommands(moduleManager),
             TweetCommands(moduleManager),
             ManagementCommands(moduleManager),
-            RatAnniversary(moduleManager)
+            RatAnniversary(moduleManager),
+            AccountCommands(moduleManager)
         ]
     }
 

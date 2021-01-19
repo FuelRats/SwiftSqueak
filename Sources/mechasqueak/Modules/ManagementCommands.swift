@@ -221,7 +221,6 @@ class ManagementCommands: IRCBotModule {
         })
     }
 
-
     @BotCommand(
         ["msg", "say"],
         parameters: 2...2,

@@ -66,14 +66,12 @@ extension User {
     }
 
     @discardableResult
-    func suspend (date: Date) -> EventLoopFuture<UserGetDocument> {
+    func update (attributes: [String: Any]) throws -> EventLoopFuture<UserGetDocument> {
         let body: [String: Any] = [
             "data": [
                 "type": "users",
                 "id": self.id.rawValue.uuidString,
-                "attributes": [
-                    "suspended": DateFormatter.iso8601Full.string(from: date)
-                ]
+                "attributes": attributes
             ]
         ]
 
@@ -85,9 +83,16 @@ extension User {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
+        request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 
         return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+
+    @discardableResult
+    func suspend (date: Date) -> EventLoopFuture<UserGetDocument> {
+        return try! self.update(attributes: [
+            "suspended": DateFormatter.iso8601Full.string(from: date)
+        ])
     }
 }
 
