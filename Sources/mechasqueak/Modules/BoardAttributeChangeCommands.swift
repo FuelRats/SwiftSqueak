@@ -171,21 +171,7 @@ class BoardAttributeCommands: IRCBotModule {
         SystemsAPI.performSearchAndLandmarkCheck(
             forSystem: system,
             onComplete: { searchResult, landmarkResult, _ in
-                guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
-                    command.message.reply(key: "board.syschange.notindb", fromCommand: command, map: [
-                        "caseId": rescue.commandIdentifier,
-                        "client": rescue.client!,
-                        "system": system
-                    ])
-                    return
-                }
-
-                let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
-
-                let distance = NumberFormatter.englishFormatter().string(
-                    from: NSNumber(value: landmarkResult.distance)
-                )!
-                command.message.reply(key: format, fromCommand: command, map: [
+                command.message.reply(key: "board.syschange", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.client!,
                     "system": rescue.systemInfoDescription
