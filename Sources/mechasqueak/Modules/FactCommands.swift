@@ -306,7 +306,7 @@ class FactCommands: IRCBotModule {
 
                         command.message.reply(key: "board.nickcorrected", fromCommand: command, map: [
                             "caseId": correctedRescue.commandIdentifier,
-                            "client": correctedRescue.client ?? "u\u{200B}nknown client",
+                            "client": correctedRescue.clientDescription,
                             "newNick": newNick
                         ])
                     }
@@ -343,6 +343,8 @@ class FactCommands: IRCBotModule {
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }
+        } else if platformFacts.contains(where: { $0 == command.command }) {
+            command.message.error(key: "facts.noclienterror", fromCommand: command)
         } else {
             sendFact(command: command, message: message)
         }

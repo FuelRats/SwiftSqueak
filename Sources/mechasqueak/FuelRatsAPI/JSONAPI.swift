@@ -74,3 +74,21 @@ typealias Document<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType
     APIDescription<JSONAPIDescriptionMetaData>,
     BasicJSONAPIError<String>
 >
+
+typealias EventDocument<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include> = JSONAPI.Document<
+    PrimaryResourceBody,
+    JSONAPIDescriptionMetaData,
+    JSONAPILinks,
+    IncludeType,
+    APIDescription<JSONAPIDescriptionMetaData>,
+    BasicJSONAPIError<String>
+>
+
+struct ManyRelationshipBody: Codable {
+    let data: [ManyRelationshipBodyDataItem]
+    
+    struct ManyRelationshipBodyDataItem: Codable {
+        let type: String
+        let id: UUID
+    }
+}

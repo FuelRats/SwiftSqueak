@@ -188,10 +188,7 @@ class BoardAttributeCommands: IRCBotModule {
                 command.message.reply(key: format, fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.client!,
-                    "system": system,
-                    "distance": distance,
-                    "landmark": landmarkResult.name,
-                    "permit": searchResult.permitText ?? ""
+                    "system": rescue.systemInfoDescription
                 ])
             }
         )
@@ -342,7 +339,7 @@ class BoardAttributeCommands: IRCBotModule {
 
             if rescue.rats.count > 0 {
                 let rats = rescue.rats.map({
-                    $0.attributes.name.value
+                    $0.currentNick(inIRCChannel: command.message.destination) ?? $0.attributes.name.value
                 }).joined(separator: ", ")
 
                 command.message.reply(key: "board.codered.attention", fromCommand: command, map: [

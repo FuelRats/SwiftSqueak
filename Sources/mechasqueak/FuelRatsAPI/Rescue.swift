@@ -98,6 +98,7 @@ enum RescueOutcome: String, Codable {
 
 typealias RescueSearchDocument = Document<ManyResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
 typealias RescueGetDocument = Document<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueEventDocument = EventDocument<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,
     NoMetadata,

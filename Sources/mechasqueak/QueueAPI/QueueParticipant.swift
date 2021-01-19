@@ -23,19 +23,40 @@
  */
 
 import Foundation
-import IRCKit
+import NIO
+import AsyncHTTPClient
 
-extension IRCClient {
-    func sendMessage (toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]) {
-        self.sendMessage(
-            toChannelName: channelName,
-            contents: lingo.localize(key, locale: "en-GB", interpolations: map)
-        )
+struct QueueParticipant: Codable, Hashable {
+    let uuid: UUID
+    let arrivalTime: Date
+    let pending: Bool
+    let client: QueueClient
+
+    struct QueueClient: Codable, Hashable {
+        private enum CodingKeys: String, CodingKey {
+            case id
+            case name = "client_name"
+            case system = "client_system"
+            case platform
+            case locale
+            case o2Status = "o2_status"
+        }
+        let id: Int
+        let name: String
+        let system: String
+        let platform: GamePlatform
+        let locale: Locale
+        let o2Status: Bool
     }
 
-    func user (withName name: String) -> IRCUser? {
-        return self.channels.compactMap({ channel in
-            return channel.member(named: name)
-        }).first
+    func dequeue () -> EventLoopFuture<QueueParticipant> {
+        var requestUrl = configuration.queue.url!.appendingPathComponent("/queue")
+        requestUrl.appendPathComponent(self.uuid.uuidString)
+        requestUrl.appendPathComponent("/dequeue")
+
+        var request = try! HTTPClient.Request(url: requestUrl, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        return httpClient.execute(request: request, forDecodable: QueueParticipant.self)
     }
 }

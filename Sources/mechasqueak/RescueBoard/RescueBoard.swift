@@ -148,8 +148,8 @@ class RescueBoard {
                 ]))
             } else if initiated == .insertion {
                 message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
-                    "client": existingRescue.client ?? "unknown client",
-                    "system": existingRescue.system ?? "unknown system",
+                    "client": existingRescue.clientDescription,
+                    "system": existingRescue.systemDescription,
                     "caseId": existingRescue.commandIdentifier,
                     "platform": existingRescue.platform.ircRepresentable,
                     "cr": crStatus
@@ -171,18 +171,10 @@ class RescueBoard {
                         existingRescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
                         existingRescue.syncUpstream()
 
-                        let distance = NumberFormatter.englishFormatter().string(
-                            from: NSNumber(value: landmarkResult.distance)
-                        )!
-                        
-                        let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
-                        message.reply(message: lingo.localize(format, locale: "en-GB", interpolations: [
-                            "caseId": rescue.commandIdentifier,
+                        message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
+                            "caseId": existingRescue.commandIdentifier,
                             "client": rescue.client!,
-                            "system": system,
-                            "distance": distance,
-                            "landmark": landmarkResult.name,
-                            "permit": searchResult.permitText ?? ""
+                            "systemInfo": rescue.systemInfoDescription
                         ]))
                     })
                 }
@@ -271,34 +263,28 @@ class RescueBoard {
             inRescue: rescue,
             onComplete: { searchResult, landmarkResult, correction in
                 if let searchResult = searchResult, let landmarkResult = landmarkResult {
-                    let distance = self.distanceFormatter.string(from: NSNumber(value: landmarkResult.distance))!
-
-                    let format = searchResult.permitRequired ? "board.\(announceType).permit" : "board.\(announceType).landmark"
                     rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
 
-                    message.reply(message: lingo.localize(format, locale: "en", interpolations: [
+                    message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
                         "signal": configuration.general.signal.uppercased(),
                         "client": rescue.client ?? "u\u{200B}nknown",
                         "platform": rescue.platform.ircRepresentable,
                         "oxygen": rescue.ircOxygenStatus,
                         "caseId": caseId,
-                        "system": system,
-                        "distance": distance,
-                        "landmark": landmarkResult.name,
-                        "permit": searchResult.permitText ?? "",
+                        "systemInfo": rescue.systemInfoDescription,
                         "platformSignal": rescue.platform?.signal ?? "",
                         "cr": crStatus,
                         "language": language,
                         "langCode": languageCode
                     ]))
                 } else {
-                    message.reply(message: lingo.localize("board.\(announceType).notindb", locale: "en", interpolations: [
+                    message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
                         "signal": configuration.general.signal.uppercased(),
                         "client": rescue.client ?? "u\u{200B}nknown",
                         "platform": rescue.platform.ircRepresentable,
                         "oxygen": rescue.ircOxygenStatus,
                         "caseId": caseId,
-                        "system": system,
+                        "systemInfo": rescue.systemInfoDescription,
                         "platformSignal": rescue.platform?.signal ?? "",
                         "cr": crStatus,
                         "language": language,
@@ -551,6 +537,66 @@ class RescueBoard {
                 ])
                 rescueChannel.send(message: syncMessage)
             }
+        }
+    }
+
+    @EventListener<RatSocketRescueCreatedNotification>
+    var onRemoteRescueCreated = { rescueCreation in
+        guard
+            rescueCreation.sender != configuration.api.userId,
+            let remoteRescue = rescueCreation.body?.body.data?.primary.value
+        else {
+            return
+        }
+        mecha.reportingChannel?.send(key: "board.remotecreation", map: [
+            "caseId": remoteRescue.attributes.commandIdentifier.value,
+            "client": remoteRescue.attributes.client.value ?? "?"
+        ])
+        mecha.rescueBoard.syncBoard()
+    }
+
+    @EventListener<RatSocketRescueUpdatedNotification>
+    var onRemoteRescueUpdated = { rescueUpdate in
+        guard
+            rescueUpdate.sender != configuration.api.userId,
+            let remoteRescue = rescueUpdate.body?.body.data?.primary.value
+        else {
+            return
+        }
+
+        if remoteRescue.attributes.status.value == .Closed {
+            if let rescue = mecha.rescueBoard.rescues.first(where: { $0.id == remoteRescue.id.rawValue }) {
+                mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
+                mecha.reportingChannel?.send(key: "board.remoteclose", map: [
+                    "caseId": rescue.commandIdentifier,
+                    "client": rescue.clientDescription
+                ])
+            }
+            return
+        }
+        mecha.reportingChannel?.send(key: "board.remoteupdate", map: [
+            "caseId": remoteRescue.attributes.commandIdentifier.value,
+            "client": remoteRescue.attributes.client.value ?? "?"
+        ])
+        mecha.rescueBoard.syncBoard()
+    }
+
+    @EventListener<RatSocketRescueDeletedNotification>
+    var onRemoteRescueDeleted = { rescueDeletion in
+        guard
+            rescueDeletion.sender != configuration.api.userId,
+            let rescueIdString = rescueDeletion.resourceIdentifier,
+            let rescueId = UUID(uuidString: rescueIdString)
+        else {
+            return
+        }
+
+        if let rescue = mecha.rescueBoard.rescues.first(where: { $0.id == rescueId }) {
+            mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescueId })
+            mecha.reportingChannel?.send(key: "board.remotedeletion", map: [
+                "caseId": rescue.commandIdentifier,
+                "client": rescue.clientDescription
+            ])
         }
     }
 }

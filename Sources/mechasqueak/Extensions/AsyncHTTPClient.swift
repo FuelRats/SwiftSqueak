@@ -26,6 +26,36 @@ import Foundation
 import AsyncHTTPClient
 import NIO
 
+extension HTTPClient {
+    static var defaultJsonDecoder: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(.iso8601Full)
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return decoder
+    }
+
+    func execute<D> (request: Request, forDecodable decodable: D.Type, withDecoder decoder: JSONDecoder = defaultJsonDecoder) -> EventLoopFuture<D> where D: Decodable {
+        let promise = loop.next().makePromise(of: D.self)
+
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+            switch result {
+                case .success(let response):
+
+                    do {
+                        let result = try decoder.decode(D.self, from: Data(buffer: response.body!))
+                        promise.succeed(result)
+                    } catch {
+                        promise.fail(error)
+                    }
+                case .failure(let restError):
+                    promise.fail(restError)
+            }
+        }
+
+        return promise.futureResult
+    }
+}
+
 extension EventLoopFuture where Value == HTTPClient.Response {
     func whenCompleteExpecting(status: Int, complete: @escaping (Result<HTTPClient.Response, Error>) -> Void) {
         self.whenComplete { result in

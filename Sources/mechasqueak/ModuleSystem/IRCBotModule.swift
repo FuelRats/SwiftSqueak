@@ -146,7 +146,7 @@ struct IRCBotCommandDeclaration {
 
 
 
-@propertyWrapper struct IRCListener<T: NotificationDescriptor> {
+@propertyWrapper struct EventListener<T: NotificationDescriptor> {
     var wrappedValue: (T.Payload) -> Void
     let token: NotificationToken
 

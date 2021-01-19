@@ -70,16 +70,14 @@
       "other": "%{count} case numbers were altered due to a conflict"
   },
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
-  
-  "board.announce.nosystem": "%{signal} - CMDR %{client} - Reported System: None - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.notindb": "%{signal} - CMDR %{client} - Reported System: %{system} (not in galaxy database) - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.landmark": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.permit": "%{signal} - CMDR %{client} - Reported System: %{system} (%{distance} LY from %{landmark}) %{permit} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  
-  "board.signal.nosystem": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} Case \u0002#%{caseId}\u0002 %{cr} %{platformSignal}",
-  "board.signal.notindb": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (not in galaxy database) %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.signal.landmark": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.signal.permit": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in \"%{system}\" (%{distance} LY from %{landmark}) %{permit} %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
+  "board.remotecreation": "ATTENTION: A new rescue (#%{caseId} (%{client})) was created remotely, performing a sync with the rescue server",
+  "board.remoteclose": "ATTENTION: Rescue #%{caseId} (%{client}) was closed remotely and is removed from the board",
+  "board.remoteupdate": "ATTENTION: Rescue #%{caseId} (%{client}) was updated remotely, performing a sync with the rescue server",
+  "board.remotedeletion": "ATTENTION: Rescue #%{caseId} (%{client}) was deleted remotely and is removed from the board",
+
+  "board.announce": "%{signal} - CMDR %{client} - Reported System: %{systemInfo} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
+
+  "board.signal": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in %{systemInfo} %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
   "board.signal.exists": "CMDR %{client} belongs to existing %{platform} %{cr} \u0002case #%{caseId}\u0002 in %{system}.",
   "board.signal.helpyou": "%{client} You already sent a Signal! Please stand by, someone will help you soon!",
   "board.signal.oxygen": "%{client} Are you on emergency oxygen? (\"oxygen depleted in xx.xx\" timer counting down in the top right of your cockpit)",
@@ -93,9 +91,7 @@
   "board.toggleactivemsg": "Status of case #%{caseId} (%{client}) set to: %{status} with message \"%{message}\"",
   "board.nopermission": "You do not have permission to perform this command.",
   
-  "board.syschange.notindb": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (Not in galaxy database).",
-  "board.syschange.landmark": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}).",
-  "board.syschange.permit": "System for case #%{caseId} (%{client}) has been changed to \"%{system}\" (%{distance} LY from %{landmark}) %{permit}.",
+  "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}.",
 
   "board.languagechange": "Language for case #%{caseId} (%{client}) has now been changed to %{language}",
   "board.languagechange.error": "Case language could not be changed as %{language} is not a valid language",
@@ -111,7 +107,7 @@
   "board.caseopened": "Case #%{caseId} opened for %{client} with \"%{message}\".",
 
   "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. To override send the same command again within the next 60 seconds.",
-  "board.grab.noclient": "Could not find the client for case %{caseId} in the channel.",
+  "board.grab.noclient": "Could not find the client or rat for case %{caseId} in the channel.",
   "board.grab.nomessage": "Could not find any messages by %{client} in the channel.",
   "board.grab.notcreated": "Could not find an existing case for %{client} and could not create one from the contents of this message.",
   "board.grab.updated": "Updated case #%{clientId} with \"%{text}\".",
@@ -147,7 +143,7 @@
   "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} \u000315(Inactive)\u0003 %{assigned}",
   "board.list.queuedcase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} \u000307(Queued)\u0003 %{assigned}",
   
-  "board.quote.title": "Case #%{caseId} CMDR %{client} in %{system} (%{platform}) %{cr}",
+  "board.quote.title": "Case #%{caseId} CMDR %{client} (IRC Nick: %{nick}) in %{system} (%{platform}) %{cr}",
   "board.quote.operation": "\"Operation %{title}\" (Case #%{caseId}) (%{client}) in %{system} (%{platform}) %{cr}",
   "board.quote.dates": "Opened %{created}, last updated %{updated}",
   
@@ -229,6 +225,7 @@
 
   "rescue.clientpw.error": "Unable to find any previous cases for \"%{client}\".",
   "rescue.clientpw.response": "Latest previous case for client \"%{client}\" (created %{created}) is available here: %{link}",
+  "rescue.clientpw.entry": "%{index}) in %{system} created %{created} (Link: %{link})",
   
   "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
   "shorten.error": "Was unable to shorten URL due to a request error.",
@@ -269,9 +266,20 @@
   "facts.info.message": "Info for !%{fact} (%{locale} locale): Created at %{created}, last updated by %{author} at %{updated}. Contents: \"%{excerpt}\"",
   "facts.locales": "Listing all locales in the database: %{locales}",
   "fact.fallback": "!%{fact} is not available in %{language} (%{identifier}), falling back to English",
+  "facts.noclienterror": "Facts that automatically detect platform does not work without a client as target as there is no way to determine the platform",
   
   "say.sending": "Sending message \"%{contents}\" to %{target}",
   "me.sending": "Emoting \"%{contents}\" to %{target}",
+  "addgroup.noid": "Could not add group as %{param} is not a logged in nick or a user id",
+  "addgroup.nogroup": "Could not add group as %{param} is not a valid group name",
+  "addgroup.success": "Successfully added group %{group} (%{groupId}) for user ID %{userId}",
+  "addgroup.error": "Unable to add group to user due to an unknown error",
+
+  "suspend.noid": "Unable to suspend user as %{param} is not a logged in nick or user id",
+  "suspend.invalidspan": "Unable to suspend user as %{param} is not a valid timespan",
+  "suspend.nouser": "Unable to suspend user as the user ID could not be found",
+  "suspend.error": "Unable to suspend user due to an unknown error",
+  "suspend.success": "User %{userId} has been suspended until %{date}",
 
   "flushall.response": "Cleared local cache and fetching user data for all logged in users..",
   "flush.notfound": "%{name} was not found in the account data cache.",
@@ -281,17 +289,17 @@
   "birthday": "\u0002Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈\u0002",
 
   "needsrats.none": "There does not appear to be any cases that require rats to call jumps right now.",
-  "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" (%{platform})",
-  "needsrats.landmark": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance}ly from %{landmark} (%{platform})",
-  "needsrats.permit": "Case \u0002#%{caseId}\u0002 (%{client}) in \"%{system}\" %{distance}ly from %{landmark} (%{permit}) (%{platform})",
-  "needsrats.casecr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" (%{platform})",
-  "needsrats.landmarkcr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" %{distance}ly from %{landmark} (%{platform})",
-  "needsrats.permitcr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in \"%{system}\" %{distance}ly from %{landmark} (%{permit}) (%{platform})",
+  "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in %{systemInfo} (%{platform})",
+  "needsrats.casecr": "Case \u0002#%{caseId}\u0002 (%{client}) \u000304(CR)\u0003 in %{systemInfo} (%{platform})",
   "needsrats.message": "Cases that require jump calls right now: %{cases}",
 
   "activerat.invalidplatform": "Invalid platform given to command. Please give a platform such as PC, XB, or PS.",
   "activerat.none": "No CMDRs were found for you on %{platform}. Use !whoami to list all your CMDRs.",
   "activerat.response": "Your active rat on %{platform} is CMDR %{name}. ID: %{id}.",
+
+  "changemail.notloggedin": "Could not change email as you are not currently logged into an IRC nickname associated with a Fuel Rats Account",
+  "changemail.error": "Unable to change email address, please verify that you entered a valid email address",
+  "changemail.success": "The email address of your Fuel Rats account has been changed. A verification email has been sent to %{email} with steps to complete the process",
 
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
@@ -307,8 +315,9 @@
   "help.category.rescues": "View, edit and manage rescues that have already been completed.",
   "help.category.facts": "View, edit and manage the list of information commands such as !prep",
   "help.category.utility": "Various commands that provide utility for rats and dispatches, such as tweeting a case or looking up a star system",
-  "help.cateogory.management": "Admin Commands to manage the state of the bot",
+  "help.cateogory.management": "Admin Commands to manage MechaSqueak and the API",
   "help.category.other": "Commands that don't fit into any category",
+  "help.category.account": "Commands to manage your Fuel Rats account",
 
   "help.command.list.r": "Show only with assigned rats",
   "help.command.list.u": "Show only with no assigned rats",
@@ -324,6 +333,7 @@
   "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts.",
   "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option.",
   "help.command.announce.cr": "Announces the rescue as a code red",
+  "help.command.clientpw.all": "Lists ALL previous cases for this client",
 
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
   "announce.invalidchannel": "Invalid channel given to announce command",

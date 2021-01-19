@@ -31,7 +31,7 @@ class URLShortener {
         complete: @escaping (ShortURLResponse) -> Void,
         error: @escaping (Error?) -> Void
     ) {
-        var requestUrl = URLComponents(string: configuration.shortener.url)!
+        var requestUrl = URLComponents(url: configuration.shortener.url, resolvingAgainstBaseURL: false)!
         requestUrl.queryItems = [
             URLQueryItem(name: "action", value: "shorturl"),
             URLQueryItem(name: "format", value: "json"),

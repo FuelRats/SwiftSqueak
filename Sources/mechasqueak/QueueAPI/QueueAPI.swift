@@ -23,19 +23,23 @@
  */
 
 import Foundation
-import IRCKit
+import NIO
+import AsyncHTTPClient
 
-extension IRCClient {
-    func sendMessage (toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]) {
-        self.sendMessage(
-            toChannelName: channelName,
-            contents: lingo.localize(key, locale: "en-GB", interpolations: map)
-        )
+class QueueAPI {
+    static var decoder: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(.iso8601Full)
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return decoder
     }
 
-    func user (withName name: String) -> IRCUser? {
-        return self.channels.compactMap({ channel in
-            return channel.member(named: name)
-        }).first
+    static func fetchQueue () -> EventLoopFuture<[QueueParticipant]> {
+        let requestUrl = configuration.queue.url!.appendingPathComponent("/queue")
+        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        return httpClient.execute(request: request, forDecodable: [QueueParticipant].self)
     }
 }
+

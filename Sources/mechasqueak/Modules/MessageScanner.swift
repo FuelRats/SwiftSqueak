@@ -46,7 +46,7 @@ class MessageScanner: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @IRCListener<IRCChannelMessageNotification>
+    @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination.channelModes.keys.contains(.isSecret) == false else {
             // Do not interpret commands from playback of old messages or in secret channels
@@ -175,7 +175,7 @@ class MessageScanner: IRCBotModule {
         }
 
         if
-            let rescue = caseMentionedInMessage(message: channelMessage) ?? mecha.rescueBoard.findRescue(withCaseIdentifier: channelMessage.user.nickname),
+            let rescue = caseMentionedInMessage(message: channelMessage),
             (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel)
         {
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {

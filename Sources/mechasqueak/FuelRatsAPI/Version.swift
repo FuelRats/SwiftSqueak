@@ -23,19 +23,21 @@
  */
 
 import Foundation
-import IRCKit
+import JSONAPI
 
-extension IRCClient {
-    func sendMessage (toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]) {
-        self.sendMessage(
-            toChannelName: channelName,
-            contents: lingo.localize(key, locale: "en-GB", interpolations: map)
-        )
+enum VersionDescription: ResourceObjectDescription {
+    public static var jsonType: String { return "versions" }
+
+    public struct Attributes: JSONAPI.Attributes {
+        public let version: Attribute<String>
+        public let commit: Attribute<String?>
+        public let branch: Attribute<[String]>
+        public let tags: Attribute<[String]>
+        public let date: Attribute<Date>
     }
 
-    func user (withName name: String) -> IRCUser? {
-        return self.channels.compactMap({ channel in
-            return channel.member(named: name)
-        }).first
+    public struct Relationships: JSONAPI.Relationships {
     }
 }
+typealias Version = JSONEntity<VersionDescription>
+typealias VersionGetDocument = Document<SingleResourceBody<Version>, NoIncludes>

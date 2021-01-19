@@ -48,11 +48,11 @@
       },
       {
         "package": "Lingo",
-        "repositoryURL": "https://github.com/miroslavkovac/Lingo.git",
+        "repositoryURL": "https://github.com/xlexi/Lingo.git",
         "state": {
           "branch": null,
-          "revision": "f21f388b04239641b3e88d14f21762125faa9857",
-          "version": "3.0.5"
+          "revision": "a00091e90eaff92644b6bcf336bfe8d9b10be424",
+          "version": "3.0.6"
         }
       },
       {
@@ -80,6 +80,15 @@
           "branch": null,
           "revision": "166728756082a9cac6e4aed3ebbce8e41cb3a945",
           "version": "1.2.0"
+        }
+      },
+      {
+        "package": "Starscream",
+        "repositoryURL": "https://github.com/daltoniam/Starscream.git",
+        "state": {
+          "branch": null,
+          "revision": "e6b65c6d9077ea48b4a7bdda8994a1d3c6969c8d",
+          "version": "3.1.1"
         }
       },
       {
@@ -152,6 +161,15 @@
           "branch": null,
           "revision": "bb56586c4cab9a79dce6ec4738baddb5802c5de7",
           "version": "1.9.0"
+        }
+      },
+      {
+        "package": "swift-nio-zlib-support",
+        "repositoryURL": "https://github.com/apple/swift-nio-zlib-support.git",
+        "state": {
+          "branch": null,
+          "revision": "37760e9a52030bb9011972c5213c3350fa9d41fd",
+          "version": "1.0.0"
         }
       },
       {

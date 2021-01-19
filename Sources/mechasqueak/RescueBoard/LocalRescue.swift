@@ -496,6 +496,30 @@ class LocalRescue: Codable {
         return true
     }
 
+    var clientDescription: String {
+        return self.client ?? "u\u{200B}nknown client"
+    }
+
+    var systemDescription: String {
+        return self.system ?? "u\u{200B}nknown system"
+    }
+
+    var systemInfoDescription: String {
+        var systemInfo = "\"\(self.systemDescription)\""
+        if let landmark = self.landmark {
+            let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!
+            systemInfo += " (\(distance) LY from \(landmark.name))"
+        }
+        if self.permitRequired {
+            if let permitName = self.permitName {
+                systemInfo += " " + IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+            } else {
+                return " " + IRCFormat.color(.Orange, "(Permit Required)")
+            }
+        }
+        return systemInfo
+    }
+
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }

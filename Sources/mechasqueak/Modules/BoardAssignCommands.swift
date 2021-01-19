@@ -218,11 +218,21 @@ class BoardAssignCommands: IRCBotModule {
                 let nick = message.destination.member(named: unassign),
                 let apiData = nick.associatedAPIData,
                 let user = apiData.user {
-                if let rat = apiData.ratsBelongingTo(user: user).first(where: { rat in
+                var rats = apiData.ratsBelongingTo(user: user).filter({ rat in
                     return rescue.rats.contains(where: {
                         $0.id.rawValue == rat.id.rawValue
                     })
-                }), let ratIndex = rescue.rats.firstIndex(of: rat) {
+                })
+
+                if rats.count == 0 {
+                    continue
+                }
+
+                let nickname = unassign.lowercased()
+                rats.sort(by: { nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased()) })
+                let rat = rats[0]
+
+                if let ratIndex = rescue.rats.firstIndex(of: rat) {
                     rescue.rats.remove(at: ratIndex)
                     removed.append(rat.attributes.name.value)
                     continue

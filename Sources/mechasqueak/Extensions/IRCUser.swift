@@ -30,6 +30,18 @@ extension IRCUser {
         return MechaSqueak.accounts.mapping[self.nickname]
     }
 
+    var assignedRescue: LocalRescue? {
+        guard let userId = self.associatedAPIData?.user?.id.rawValue else {
+            return nil
+        }
+        return mecha.rescueBoard.rescues.first(where: {
+            $0.rats.contains(where: {
+                return $0.relationships.user?.id?.rawValue == userId
+            }) ||
+            $0.unidentifiedRats.contains(self.nickname)
+        })
+    }
+
     func hasPermission (permission: AccountPermission) -> Bool {
         guard let permissions = self.associatedAPIData?.permissions else {
             return self.hostPermissions().contains(permission)

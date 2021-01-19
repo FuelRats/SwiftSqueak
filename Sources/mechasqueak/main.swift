@@ -72,6 +72,7 @@ class MechaSqueak {
     let version = "3.0.0"
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
+    let ratSocket: RatSocket?
 
     init () {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -79,6 +80,12 @@ class MechaSqueak {
             configPath = URL(fileURLWithPath: CommandLine.arguments[1])
         }
         self.configPath = configPath
+
+        if configuration.general.drillMode == false {
+            ratSocket = RatSocket()
+        } else {
+            ratSocket = nil
+        }
 
         self.startupTime = Date()
         self.rescueBoard = RescueBoard()
@@ -110,12 +117,13 @@ class MechaSqueak {
             ShortenURLCommands(moduleManager),
             TweetCommands(moduleManager),
             ManagementCommands(moduleManager),
-            RatAnniversary(moduleManager)
+            RatAnniversary(moduleManager),
+            AccountCommands(moduleManager)
         ]
     }
 
 
-    @IRCListener<IRCUserAccountChangeNotification>
+    @EventListener<IRCUserAccountChangeNotification>
     var onAccountChange = { accountChange in
         let user = accountChange.user
 
@@ -129,7 +137,7 @@ class MechaSqueak {
         }
     }
 
-    @IRCListener<IRCUserJoinedChannelNotification>
+    @EventListener<IRCUserJoinedChannelNotification>
     var onUserJoin = { userJoin in
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
@@ -155,7 +163,7 @@ class MechaSqueak {
                 rescue.clientHost = userJoin.user.hostmask
                 userJoin.channel.send(key: "board.clientjoin", map: [
                     "caseId": rescue.commandIdentifier,
-                    "client": rescue.client ?? "u\u{200B}nknown client"
+                    "client": rescue.clientDescription
                 ])
             } else if let rescue = mecha.rescueBoard.rescues.first(where: {
                 $0.clientHost == userJoin.user.hostmask
@@ -175,14 +183,14 @@ class MechaSqueak {
                 rescue.clientNick = userJoin.user.nickname
                 userJoin.channel.send(key: "board.clientjoinhost", map: [
                     "caseId": rescue.commandIdentifier,
-                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "client": rescue.clientDescription,
                     "nick": userJoin.user.nickname
                 ])
             }
         }
     }
 
-    @IRCListener<IRCUserLeftChannelNotification>
+    @EventListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
         if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
             guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
@@ -207,13 +215,13 @@ class MechaSqueak {
 
             userPart.channel.send(key: "board.clientquit", map: [
                 "caseId": rescue.commandIdentifier,
-                "client": rescue.client ?? "u\u{200B}nknown client"
+                "client": rescue.clientDescription
             ])
         }
 
     }
 
-    @IRCListener<IRCUserQuitNotification>
+    @EventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
         accounts.mapping.removeValue(forKey: userQuit.sender!.nickname)
 
@@ -241,15 +249,19 @@ class MechaSqueak {
                 toChannelName: rescue.channelName,
                 withKey: "board.clientquit", mapping: [
                     "caseId": rescue.commandIdentifier,
-                    "client": rescue.client ?? "u\u{200B}nknown client"
+                    "client": rescue.clientDescription
             ])
         }
     }
 
-    @IRCListener<IRCChannelMessageNotification>
+    @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil else {
             return
+        }
+
+        if channelMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
+            mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
         }
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
@@ -265,7 +277,7 @@ class MechaSqueak {
         }
     }
 
-    @IRCListener<IRCUserChangedNickNotification>
+    @EventListener<IRCUserChangedNickNotification>
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
@@ -277,7 +289,7 @@ class MechaSqueak {
                 toChannelName: rescue.channelName,
                 withKey: "board.clientnick", mapping: [
                     "caseId": rescue.commandIdentifier,
-                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "client": rescue.clientDescription,
                     "newNick": nickChange.newNick
             ])
         }
@@ -289,7 +301,7 @@ class MechaSqueak {
     }
 
 
-    @IRCListener<IRCUserHostChangeNotification>
+    @EventListener<IRCUserHostChangeNotification>
     var onUserHostChange = { hostChange in
         let sender = hostChange.sender!
         accounts.mapping.removeValue(forKey: sender.nickname)

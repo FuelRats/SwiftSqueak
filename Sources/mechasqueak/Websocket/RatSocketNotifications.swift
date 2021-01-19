@@ -25,17 +25,35 @@
 import Foundation
 import IRCKit
 
-extension IRCClient {
-    func sendMessage (toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]) {
-        self.sendMessage(
-            toChannelName: channelName,
-            contents: lingo.localize(key, locale: "en-GB", interpolations: map)
-        )
-    }
 
-    func user (withName name: String) -> IRCUser? {
-        return self.channels.compactMap({ channel in
-            return channel.member(named: name)
-        }).first
-    }
+struct RatSocketConnectedNotification: NotificationDescriptor {
+    init () {}
+
+    typealias Payload = RatSocketEvent<VersionGetDocument>
+    let name = Notification.Name("RatSocketDidConnect")
+}
+
+struct RatSocketRescueCreatedNotification: NotificationDescriptor {
+    init () {}
+
+    typealias Payload = RatSocketEvent<RescueEventDocument>
+    let name = Notification.Name("RatSocketRescueCreated")
+}
+
+struct RatSocketRescueUpdatedNotification: NotificationDescriptor {
+    init () {}
+
+    typealias Payload = RatSocketEvent<RescueEventDocument>
+    let name = Notification.Name("RatSocketRescueUpdated")
+}
+
+struct RatSocketRescueDeletedNotification: NotificationDescriptor {
+    init () {}
+
+    typealias Payload = RatSocketEvent<EmptyBody>
+    let name = Notification.Name("RatSocketRescueDeleted")
+}
+
+struct EmptyBody: Codable {
+
 }

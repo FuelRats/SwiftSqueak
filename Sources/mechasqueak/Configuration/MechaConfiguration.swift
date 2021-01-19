@@ -30,6 +30,7 @@ struct MechaConfiguration: Codable {
     let general: GeneralConfiguration
     let connections: [IRCClientConfiguration]
     let api: FuelRatsAPIConfiguration
+    let queue: QueueConfiguration
     let database: DatabaseConfiguration
     let shortener: URLShortenerConfiguration
 }
@@ -49,8 +50,13 @@ struct GeneralConfiguration: Codable {
     var debug: Bool
 }
 
+struct QueueConfiguration: Codable {
+    let url: URL?
+}
+
 struct FuelRatsAPIConfiguration: Codable {
-    let url: String
+    let url: URL
+    let userId: UUID
     let token: String
 }
 
@@ -64,6 +70,6 @@ struct DatabaseConfiguration: Codable {
 }
 
 struct URLShortenerConfiguration: Codable {
-    let url: String
+    let url: URL
     let signature: String
 }

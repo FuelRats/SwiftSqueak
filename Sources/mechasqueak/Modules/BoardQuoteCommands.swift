@@ -52,8 +52,9 @@ class BoardQuoteCommands: IRCBotModule {
         command.message.replyPrivate(key: format, fromCommand: command, map: [
             "title": rescue.title ?? "",
             "caseId": rescue.commandIdentifier,
-            "client": rescue.client ?? "u\u{200B}nknown client",
-            "system": rescue.system ?? "u\u{200B}nknown system",
+            "client": rescue.clientDescription,
+            "nick": rescue.clientNick ?? "?",
+            "system": rescue.systemDescription,
             "platform": rescue.platform.ircRepresentable,
             "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         ])
@@ -95,11 +96,17 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        var getRescue: LocalRescue? = command.message.destination.member(named: clientParam)?.assignedRescue
+        var isClient = false
+        if getRescue == nil {
+            isClient = true
+            getRescue = BoardCommands.assertGetRescueId(command: command)
+        }
+        guard let rescue = getRescue else {
             return
         }
 
-        let clientNick = rescue.clientNick ?? clientParam
+        let clientNick = isClient ? rescue.clientNick ?? clientParam : clientParam
 
         guard let clientUser = message.destination.member(named: clientNick) else {
             command.message.reply(key: "board.grab.noclient", fromCommand: command, map: [
@@ -115,13 +122,16 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        rescue.quotes.append(RescueQuote(
-            author: message.user.nickname,
-            message: "<\(clientUser.nickname)> \(lastMessage)",
-            createdAt: Date(),
-            updatedAt: Date(),
-            lastAuthor: message.user.nickname
-        ))
+        let quoteMessage = "<\(clientUser.nickname)> \(lastMessage)"
+        if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
+            rescue.quotes.append(RescueQuote(
+                author: message.user.nickname,
+                message: "<\(clientUser.nickname)> \(lastMessage)",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: message.user.nickname
+            ))
+        }
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
             "clientId": rescue.commandIdentifier,
@@ -135,6 +145,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["inject"],
         parameters: 2...2,
         lastParameterIsContinous: true,
+        options: ["f"],
         category: .board,
         description: "Add some new information to the case, if one does not exist, create one with this information",
         paramText: "<case id/client> <text>",
@@ -143,6 +154,7 @@ class BoardQuoteCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveInjectCommand = { command in
+        var forceInject = command.options.contains("f")
         let message = command.message
         let clientParam = command.parameters[0]
 
@@ -160,7 +172,11 @@ class BoardQuoteCommands: IRCBotModule {
 
         let injectMessage = command.parameters[1]
         if rescue == nil {
-            guard isLikelyAccidentalInject(clientParam: clientParam) == false || injectRepeatCache.contains(clientParam.lowercased()) else {
+            guard
+                isLikelyAccidentalInject(clientParam: clientParam) == false ||
+                injectRepeatCache.contains(clientParam.lowercased()) ||
+                forceInject
+            else {
                 injectRepeatCache.insert(clientParam.lowercased())
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(60), execute: {
                     injectRepeatCache.remove(clientParam.lowercased())
