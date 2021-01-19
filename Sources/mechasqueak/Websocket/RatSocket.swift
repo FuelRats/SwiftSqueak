@@ -24,7 +24,6 @@
 
 import Foundation
 import NIOHTTP1
-import Starscream
 import IRCKit
 
 enum RatSocketEventType: String {
@@ -35,7 +34,7 @@ enum RatSocketEventType: String {
     case channelMessage = "mechasqueak.channelmessage"
 }
 
-
+/*
 class RatSocket: WebSocketDelegate {
     var connectedAndAuthenticated = false
     let socket: WebSocket
@@ -128,6 +127,7 @@ class RatSocket: WebSocketDelegate {
         return genericResponse.originField
     }
 }
+*/
 
 struct BroadcastQuery: Encodable {
     let event: String
