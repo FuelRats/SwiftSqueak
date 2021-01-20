@@ -174,7 +174,7 @@ class BoardAttributeCommands: IRCBotModule {
                 command.message.reply(key: "board.syschange", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.client!,
-                    "system": rescue.systemInfoDescription
+                    "systemInfo": rescue.systemInfoDescription
                 ])
             }
         )

@@ -362,7 +362,9 @@ class RemoteRescueCommands: IRCBotModule {
                 "caseId": rescue.commandIdentifier
             ])
         }, error: { _ in
-            command.message.error(key: "rescue.reopen.error", fromCommand: command)
+            command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
+                "id": id.ircRepresentation
+            ])
         })
     }
 

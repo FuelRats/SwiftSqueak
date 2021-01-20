@@ -229,7 +229,7 @@ class RescueBoard {
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
 
         guard var system = rescue.system else {
-            message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
+            message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "u\u{200B}nknown",
                 "platform": rescue.platform.ircRepresentable,
@@ -238,7 +238,8 @@ class RescueBoard {
                 "platformSignal": rescue.platform?.signal ?? "",
                 "cr": crStatus,
                 "language": language,
-                "langCode": languageCode
+                "langCode": languageCode,
+                "systemInfo": rescue.systemInfoDescription
             ]))
             rescue.createUpstream()
             return
