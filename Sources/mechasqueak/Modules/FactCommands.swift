@@ -300,7 +300,7 @@ class FactCommands: IRCBotModule {
                 var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
                 if rescue == nil, let member = message.destination.member(named: target) {
                     if let correctedRescue = mecha.rescueBoard.fuzzyFindRescue(forChannelMember: member) {
-                        let newNick = command.parameters[0]
+                        let newNick = target
                         correctedRescue.clientNick = newNick
                         rescue = correctedRescue
 
