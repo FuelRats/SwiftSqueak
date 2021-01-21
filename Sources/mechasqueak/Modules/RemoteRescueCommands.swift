@@ -442,6 +442,9 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             if command.namedOptions.contains("all") {
+                command.message.replyPrivate(key: "rescue.clientpw.heading", fromCommand: command, map: [
+                    "client": command.parameters[0]
+                ])
                 for (index, rescue) in rescues.enumerated() {
                     let url = "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
                     command.message.replyPrivate(key: "rescue.clientpw.entry", fromCommand: command, map: [

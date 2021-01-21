@@ -225,6 +225,7 @@
 
   "rescue.clientpw.error": "Unable to find any previous cases for \"%{client}\".",
   "rescue.clientpw.response": "Latest previous case for client \"%{client}\" (created %{created}) is available here: %{link}",
+  "rescue.clientpw.heading": "Listing all previouses cases for client \"%{client}\":",
   "rescue.clientpw.entry": "%{index}) in %{system} created %{created} (Link: %{link})",
   
   "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
