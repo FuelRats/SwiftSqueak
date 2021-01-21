@@ -66,7 +66,7 @@ class FuelRatsAPI {
     static func rescueSearch (
         query: [URLQueryItem],
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error?) -> Void
+        error: ((Error?) -> Void)?
     ) {
         var url = URLComponents(string: "\(configuration.api.url)/rescues")!
         url.queryItems = query
@@ -81,13 +81,13 @@ class FuelRatsAPI {
                         let document = try? RescueSearchDocument.from(data: Data(buffer: response.body!)),
                         document.body.data != nil
                     else {
-                        error(nil)
+                        error?(nil)
                         return
                     }
 
                     complete(document)
                 case .failure(let restError):
-                    error(restError)
+                    error?(restError)
             }
         }
     }
@@ -162,7 +162,7 @@ class FuelRatsAPI {
     static func getRescuesForClient (
         client: String,
         complete: @escaping (RescueSearchDocument) -> Void,
-        error: @escaping (Error?) -> Void
+        error: ((Error?) -> Void)? = nil
     ) {
         let query = [
             URLQueryItem(name: "filter", value: [

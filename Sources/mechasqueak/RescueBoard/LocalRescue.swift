@@ -510,9 +510,9 @@ class LocalRescue: Codable {
             let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!
             systemInfo += " (\(distance) LY from \(landmark.name))"
         } else if let systemName = self.system, Autocorrect.proceduralSystemExpression.matches(systemName) {
-            systemInfo += " (valid system name)"
+            systemInfo += " (Valid system name)"
         } else {
-            systemInfo += " (not found in galaxy database)"
+            systemInfo += " (Not found in galaxy database)"
         }
         if self.permitRequired {
             if let permitName = self.permitName {

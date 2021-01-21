@@ -228,6 +228,22 @@ class RescueBoard {
         let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
 
+        if let clientName = rescue.client, configuration.general.drillMode == false {
+            FuelRatsAPI.getRescuesForClient(client: clientName, complete: { result in
+                let recencyDate = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
+                let recentRescues = result.body.data?.primary.values.filter({
+                    $0.attributes.createdAt.value > recencyDate
+                }) ?? []
+                if recentRescues.count >= 3 {
+                    mecha.reportingChannel?.send(key: "board.frequentclient", map: [
+                        "client": clientName,
+                        "caseId": rescue.commandIdentifier,
+                        "count": recentRescues.count
+                    ])
+                }
+            })
+        }
+
         guard var system = rescue.system else {
             message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
