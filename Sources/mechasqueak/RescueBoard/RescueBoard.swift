@@ -235,11 +235,15 @@ class RescueBoard {
                     $0.attributes.createdAt.value > recencyDate
                 }) ?? []
                 if recentRescues.count >= 3 {
-                    mecha.reportingChannel?.send(key: "board.frequentclient", map: [
-                        "client": clientName,
-                        "caseId": rescue.commandIdentifier,
-                        "count": recentRescues.count
-                    ])
+                    mecha.reportingChannel?.client.sendMessage(
+                        toChannelName: "#doersofstuff",
+                        withKey: "board.frequentclient",
+                        mapping: [
+                            "client": clientName,
+                            "caseId": rescue.commandIdentifier,
+                            "count": recentRescues.count
+                        ]
+                    )
                 }
             })
         }
