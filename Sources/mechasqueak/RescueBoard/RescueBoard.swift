@@ -236,7 +236,7 @@ class RescueBoard {
                 }) ?? []
                 if recentRescues.count >= 3 {
                     mecha.reportingChannel?.client.sendMessage(
-                        toChannelName: "#doersofstuff",
+                        toChannelName: "#operations",
                         withKey: "board.frequentclient",
                         mapping: [
                             "client": clientName,
