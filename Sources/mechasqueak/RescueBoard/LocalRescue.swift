@@ -518,7 +518,7 @@ class LocalRescue: Codable {
             if let permitName = self.permitName {
                 systemInfo += " " + IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
             } else {
-                return " " + IRCFormat.color(.Orange, "(Permit Required)")
+                systemInfo += " " + IRCFormat.color(.Orange, "(Permit Required)")
             }
         }
         return systemInfo
