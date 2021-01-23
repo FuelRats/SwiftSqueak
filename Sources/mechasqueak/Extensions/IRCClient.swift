@@ -28,7 +28,7 @@ import IRCKit
 extension IRCClient {
     func sendMessage (toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]) {
         self.sendMessage(
-            toChannelName: channelName,
+            toTarget: channelName,
             contents: lingo.localize(key, locale: "en-GB", interpolations: map)
         )
     }

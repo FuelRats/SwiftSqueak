@@ -236,7 +236,7 @@ class ManagementCommands: IRCBotModule {
             "target": command.parameters[0],
             "contents": command.parameters[1]
         ])
-        command.message.client.sendMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
+        command.message.client.sendMessage(toTarget: command.parameters[0], contents: command.parameters[1])
     }
 
     @BotCommand(
