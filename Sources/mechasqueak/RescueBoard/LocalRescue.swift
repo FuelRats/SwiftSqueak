@@ -35,11 +35,11 @@ class LocalRescue: Codable {
     var isClosing = false
     var clientHost: String?
     var channelName: String
-    var systemCorrections: [SystemsAPISearchDocument.SearchResult]?
+    var systemCorrections: [SystemsAPI.SearchDocument.SearchResult]?
     var systemManuallyCorrected = false
     var permitRequired = false
     var permitName: String? = nil
-    var landmark: SystemsAPILandmarkDocument.LandmarkResult?
+    var landmark: SystemsAPI.LandmarkDocument.LandmarkResult?
     var jumpCalls = 0
     var systemBody: String? = nil
 
@@ -528,7 +528,7 @@ class LocalRescue: Codable {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }
 
-    func setSystemData (searchResult: SystemsAPISearchDocument.SearchResult, landmark: SystemsAPILandmarkDocument.LandmarkResult) {
+    func setSystemData (searchResult: SystemsAPI.SearchDocument.SearchResult, landmark: SystemsAPI.LandmarkDocument.LandmarkResult) {
         self.system = searchResult.name.uppercased()
         self.permitRequired = searchResult.permitRequired
         self.permitName = searchResult.permitName

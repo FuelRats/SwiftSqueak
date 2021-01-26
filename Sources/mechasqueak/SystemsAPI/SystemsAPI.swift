@@ -31,7 +31,7 @@ class SystemsAPI {
     static func performSearch (
         forSystem systemName: String,
         quickSearch: Bool = false,
-        onComplete: @escaping (Result<SystemsAPISearchDocument, Error>) -> Void
+        onComplete: @escaping (Result<SearchDocument, Error>) -> Void
     ) {
         var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
@@ -52,7 +52,7 @@ class SystemsAPI {
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
                     do {
-                        let searchResult = try decoder.decode(SystemsAPISearchDocument.self, from: Data(buffer: response.body!))
+                        let searchResult = try decoder.decode(SearchDocument.self, from: Data(buffer: response.body!))
                         onComplete(Result.success(searchResult))
                     } catch {
                         debug(String(describing: error))
@@ -68,8 +68,8 @@ class SystemsAPI {
     static func performSearchAndLandmarkCheck (
         forSystem systemName: String,
         onComplete: @escaping (
-            SystemsAPISearchDocument.SearchResult?,
-            SystemsAPILandmarkDocument.LandmarkResult?,
+            SearchDocument.SearchResult?,
+            LandmarkDocument.LandmarkResult?,
             String?
         ) -> Void) {
         self.performSearch(forSystem: systemName, quickSearch: true, onComplete: { request in
@@ -104,8 +104,8 @@ class SystemsAPI {
     }
 
     static func performCaseLookup (forSystem system: String, inRescue rescue: LocalRescue, onComplete: @escaping (
-        SystemsAPISearchDocument.SearchResult?,
-        SystemsAPILandmarkDocument.LandmarkResult?,
+        SearchDocument.SearchResult?,
+        LandmarkDocument.LandmarkResult?,
         String?
     ) -> Void) {
         SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, correction in
@@ -214,7 +214,7 @@ class SystemsAPI {
 
     static func performLandmarkCheck (
         forSystem systemName: String,
-        onComplete: @escaping (Result<SystemsAPILandmarkDocument, Error>) -> Void) {
+        onComplete: @escaping (Result<LandmarkDocument, Error>) -> Void) {
         var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
         url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
@@ -231,7 +231,7 @@ class SystemsAPI {
 
                     do {
                         let searchResult = try decoder.decode(
-                            SystemsAPILandmarkDocument.self,
+                            LandmarkDocument.self,
                             from: Data(buffer: response.body!)
                         )
                         onComplete(Result.success(searchResult))
@@ -247,7 +247,7 @@ class SystemsAPI {
     }
 
     static func performStatisticsQuery (
-        onComplete: @escaping (SystemsAPIStatisticsDocument) -> Void,
+        onComplete: @escaping (StatisticsDocument) -> Void,
         onError: @escaping (Error?) -> Void
     ) {
         let url = URLComponents(string: "https://system.api.fuelrats.com/api/stats")!
@@ -262,7 +262,7 @@ class SystemsAPI {
 
                     do {
                         let result = try decoder.decode(
-                            SystemsAPIStatisticsDocument.self,
+                            StatisticsDocument.self,
                             from: Data(buffer: response.body!)
                         )
                         onComplete(result)
@@ -275,132 +275,139 @@ class SystemsAPI {
             }
         }
     }
-}
 
-struct SystemsAPISearchDocument: Codable {
-    let meta: Meta
-    let data: [SearchResult]?
 
-    struct Meta: Codable {
-        let name: String?
-        let error: String?
-        let type: String?
+    struct LandmarkDocument: Codable {
+        let meta: Meta
+        let landmarks: [LandmarkResult]
+
+        struct Meta: Codable {
+            let name: String
+            let error: String?
+        }
+
+        struct LandmarkResult: Codable {
+            let name: String
+            let distance: Double
+        }
     }
 
-    struct SearchResult: Codable {
-        let name: String
-        let id64: Int64
-
-        let similarity: Double?
-        let distance: Int?
-        let permitRequired: Bool
-        let permitName: String?
-
-        var searchSimilarityText: String {
-            if let distance = self.distance {
-                return String(distance)
-            } else if let similarity = self.similarity {
-                return "\(String(Int(similarity * 100)))%"
-            } else {
-                return "?"
+    struct StatisticsDocument: Codable {
+        struct SystemsAPIStatistic: Codable {
+            struct SystemsAPIStatisticAttributes: Codable {
+                let syscount: Int64
+                let starcount: Int64
+                let bodycount: Int64
             }
+
+            let id: String
+            let type: String
+            let attributes: SystemsAPIStatisticAttributes
         }
 
-        var permitText: String? {
-            if self.permitRequired {
-                if let permitName = self.permitName {
-                    return IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+        let data: [SystemsAPIStatistic]
+    }
+
+    struct ProceduralCheckDocument: Codable {
+        let isPgSystem: Bool
+    }
+
+    struct SearchDocument: Codable {
+        let meta: Meta
+        let data: [SearchResult]?
+
+        struct Meta: Codable {
+            let name: String?
+            let error: String?
+            let type: String?
+        }
+
+        struct SearchResult: Codable {
+            let name: String
+            let id64: Int64
+
+            let similarity: Double?
+            let distance: Int?
+            let permitRequired: Bool
+            let permitName: String?
+
+            var searchSimilarityText: String {
+                if let distance = self.distance {
+                    return String(distance)
+                } else if let similarity = self.similarity {
+                    return "\(String(Int(similarity * 100)))%"
                 } else {
-                    return IRCFormat.color(.Orange, "(Permit Required)")
+                    return "?"
                 }
             }
-            return nil
-        }
 
-        var textRepresentation: String {
-            if self.permitRequired {
-                if let permitName = self.permitName {
-                    let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+            var permitText: String? {
+                if self.permitRequired {
+                    if let permitName = self.permitName {
+                        return IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+                    } else {
+                        return IRCFormat.color(.Orange, "(Permit Required)")
+                    }
+                }
+                return nil
+            }
+
+            var textRepresentation: String {
+                if self.permitRequired {
+                    if let permitName = self.permitName {
+                        let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+                        return "\"\(self.name)\" [\(self.searchSimilarityText)] \(permitReq)"
+                    }
+                    let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
                     return "\"\(self.name)\" [\(self.searchSimilarityText)] \(permitReq)"
                 }
-                let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
-                return "\"\(self.name)\" [\(self.searchSimilarityText)] \(permitReq)"
+                return "\"\(self.name)\" [\(self.searchSimilarityText)]"
             }
-            return "\"\(self.name)\" [\(self.searchSimilarityText)]"
-        }
 
 
-        func correctionRepresentation (index: Int) -> String {
-            if self.permitRequired {
-                if let permitName = self.permitName {
-                    let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+            func correctionRepresentation (index: Int) -> String {
+                if self.permitRequired {
+                    if let permitName = self.permitName {
+                        let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
+                        return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
+                    }
+                    let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
                     return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
                 }
-                let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
-                return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
-            }
-            return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
-        }
-
-        func rateCorrectionFor (system: String) -> Int? {
-            let system = system.lowercased()
-            let correctionName = self.name.lowercased()
-
-
-            let isWithinReasonableEditDistance = (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
-            let originalIsProceduralSystem = Autocorrect.proceduralSystemExpression.matches(system)
-
-            if correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric {
-                return 0
+                return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
             }
 
-            if correctionName == Autocorrect.check(system: system)?.lowercased() {
-                return 1
-            }
+            func rateCorrectionFor (system: String) -> Int? {
+                let system = system.lowercased()
+                let correctionName = self.name.lowercased()
 
-            if correctionName == system.dropLast(1) && system.last!.isLetter {
-                return 2
-            }
 
-            if system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters {
-                return 3
-            }
+                let isWithinReasonableEditDistance = (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
+                let originalIsProceduralSystem = Autocorrect.proceduralSystemExpression.matches(system)
 
-            if isWithinReasonableEditDistance && !originalIsProceduralSystem {
-                return 4
+                if correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric {
+                    return 0
+                }
+
+                if correctionName == Autocorrect.check(system: system)?.lowercased() {
+                    return 1
+                }
+
+                if correctionName == system.dropLast(1) && system.last!.isLetter {
+                    return 2
+                }
+
+                if system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters {
+                    return 3
+                }
+
+                if isWithinReasonableEditDistance && !originalIsProceduralSystem {
+                    return 4
+                }
+                return nil
             }
-            return nil
         }
     }
-}
 
-struct SystemsAPILandmarkDocument: Codable {
-    let meta: Meta
-    let landmarks: [LandmarkResult]
 
-    struct Meta: Codable {
-        let name: String
-        let error: String?
-    }
-
-    struct LandmarkResult: Codable {
-        let name: String
-        let distance: Double
-    }
-}
-
-struct SystemsAPIStatisticsDocument: Codable {
-    struct SystemsAPIStatistic: Codable {
-        struct SystemsAPIStatisticAttributes: Codable {
-            let syscount: Int64
-            let starcount: Int64
-            let bodycount: Int64
-        }
-
-        let id: String
-        let type: String
-        let attributes: SystemsAPIStatisticAttributes
-    }
-
-    let data: [SystemsAPIStatistic]
 }
