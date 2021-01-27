@@ -34,10 +34,15 @@ extension HTTPClient {
         return decoder
     }
 
-    func execute<D> (request: Request, forDecodable decodable: D.Type, withDecoder decoder: JSONDecoder = defaultJsonDecoder) -> EventLoopFuture<D> where D: Decodable {
+    func execute<D> (
+        request: Request,
+        forDecodable decodable: D.Type,
+        deadline: NIODeadline? = nil,
+        withDecoder decoder: JSONDecoder = defaultJsonDecoder
+    ) -> EventLoopFuture<D> where D: Decodable {
         let promise = loop.next().makePromise(of: D.self)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+        httpClient.execute(request: request, deadline: deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
 

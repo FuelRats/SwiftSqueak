@@ -363,7 +363,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard let corrections = rescue.systemCorrections, corrections.count > 0 else {
+        guard let corrections = rescue.system?.availableCorrections, corrections.count > 0 else {
             command.message.error(key: "sysc.nocorrections", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.clientDescription
@@ -379,27 +379,33 @@ class BoardCommands: IRCBotModule {
         }
         let selectedCorrection = corrections[index - 1]
 
-        SystemsAPI.performLandmarkCheck(forSystem: selectedCorrection.name, onComplete: { result in
+        SystemsAPI.performLandmarkCheck(forSystem: selectedCorrection.name).whenComplete({ result in
             switch result {
+                case .failure(_):
+                    command.message.error(key: "sysc.seterror", fromCommand: command, map: [
+                        "system": selectedCorrection,
+                        "caseId": rescue.commandIdentifier,
+                        "client": rescue.clientDescription
+                    ])
+
                 case .success(let landmarkResults):
                     guard landmarkResults.landmarks.count > 0 else {
                         return
                     }
 
-                    rescue.setSystemData(searchResult: selectedCorrection, landmark: landmarkResults.landmarks[0])
+                    let newSystem = StarSystem(
+                        name: selectedCorrection.name,
+                        manuallyCorrected: true,
+                        permit: StarSystem.Permit(fromSearchResult: selectedCorrection),
+                        landmark: landmarkResults.landmarks[0]
+                    )
+                    rescue.system?.merge(newSystem)
                     rescue.syncUpstream()
 
                     command.message.reply(key: "board.syschange", fromCommand: command, map: [
                         "caseId": rescue.commandIdentifier,
                         "client": rescue.clientDescription,
-                        "systemInfo": rescue.systemInfoDescription
-                    ])
-
-                case .failure:
-                    command.message.error(key: "sysc.seterror", fromCommand: command, map: [
-                        "system": selectedCorrection,
-                        "caseId": rescue.commandIdentifier,
-                        "client": rescue.clientDescription
+                        "systemInfo": rescue.system.description
                     ])
             }
         })

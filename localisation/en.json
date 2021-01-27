@@ -34,7 +34,7 @@
   "sysc.nocorrections": "There are no corrections known for case #%{caseId} (%{client})",
   "sysc.invalidindex": "%{index} is not a valid system correction index number.",
   "sysc.seterror": "Unable to set system for case #%{caseId} (%{client}) to \"%{system}\" due to an error with the systems API.",
-  "sysc.autocorrect": "\u0002ATTENTION:\u0002 System for case #%{caseId} (%{client}) has been automatically corrected to \"%{system}\" (%{distance} LY from %{landmark}).",
+  "sysc.autocorrect": "\u0002ATTENTION:\u0002 System for case #%{caseId} (%{client}) has been automatically corrected to %{system}.",
   "landmark.noresults": "%{system} was not found in the galaxy database.",
   "landmark.response": "%{system} is %{distance}ly from %{landmark}.",
 

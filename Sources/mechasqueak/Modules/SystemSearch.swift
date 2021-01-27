@@ -44,7 +44,7 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
-        SystemsAPI.performSearch(forSystem: system, onComplete: { request in
+        SystemsAPI.performSearch(forSystem: system).whenComplete({ request in
             switch request {
                 case .success(let searchResults):
                     guard var results = searchResults.data else {
@@ -69,7 +69,6 @@ class SystemSearch: IRCBotModule {
                 case .failure:
                     command.message.error(key: "systemsearch.error", fromCommand: command)
             }
-
         })
     }
 
@@ -88,19 +87,19 @@ class SystemSearch: IRCBotModule {
             system.removeFirst(5)
         }
 
-        SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { (searchResult, landmark, _) in
-            guard let landmark = landmark, let searchResult = searchResult else {
+        SystemsAPI.performSystemCheck(forSystem: system).whenSuccess({ result in
+            guard let landmark = result.landmark else {
                 command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
                     "system": system
                 ])
                 return
             }
-
             command.message.reply(key: "landmark.response", fromCommand: command, map: [
-                "system": searchResult.name,
+                "system": result.name,
                 "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
                 "landmark": landmark.name
             ])
+
         })
     }
 }

@@ -51,7 +51,7 @@ class TweetCommands: IRCBotModule {
         }
         if mecha.rescueBoard.rescues.first(where: { rescue in
             if let system = rescue.system {
-                if contents.lowercased().contains(system.lowercased()) {
+                if contents.lowercased().contains(system.name.lowercased()) {
                     return true
                 }
             }
@@ -104,58 +104,29 @@ class TweetCommands: IRCBotModule {
 
         let shortId = rescue.id.uuidString.suffix(10)
 
-        generateSystemDescription(system: system, complete: { description in
-            var format = description != nil  ? "tweetcase.system" : "tweetcase.nosystem"
-            if rescue.codeRed {
-                format += "cr"
-            }
+        let description = rescue.system?.twitterDescription
+        var format = description != nil  ? "tweetcase.system" : "tweetcase.nosystem"
+        if rescue.codeRed {
+            format += "cr"
+        }
 
-            let url = URL(string: "https://fuelrats.com/paperwork/\(rescue.id)")!
-            let tweet = lingo.localize(format, locale: "en-GB", interpolations: [
-                "platform": platform,
-                "systemDescription": description ?? "",
-                "caseId": rescue.commandIdentifier,
-                "id": shortId.lowercased(),
-                "link": url.absoluteString
+        let url = URL(string: "https://fuelrats.com/paperwork/\(rescue.id)")!
+        let tweet = lingo.localize(format, locale: "en-GB", interpolations: [
+            "platform": platform,
+            "systemDescription": description ?? "",
+            "caseId": rescue.commandIdentifier,
+            "id": shortId.lowercased(),
+            "link": url.absoluteString
+        ])
+
+        Twitter.tweet(message: tweet, complete: {
+            command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier
             ])
-
-            Twitter.tweet(message: tweet, complete: {
-                command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier
-                ])
-            }, error: { _ in
-                command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier
-                ])
-            })
+        }, error: { _ in
+            command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier
+            ])
         })
-    }
-
-    static func generateSystemDescription (system: String, complete: @escaping (String?) -> Void) {
-        SystemsAPI.performSearchAndLandmarkCheck(
-                forSystem: system, onComplete: { _, landmarkResult, _ in
-                guard let result = landmarkResult else {
-                    complete(nil)
-                    return
-                }
-
-                if result.distance < 50 {
-                    complete("near \(result.name)")
-                    return
-                }
-
-                if result.distance < 500 {
-                    complete("~\(ceil(result.distance / 10) * 10)LY from \(result.name)")
-                    return
-                }
-
-                if result.distance < 2000 {
-                    complete("~\(ceil(result.distance / 100) * 100)LY from \(result.name)")
-                    return
-                }
-
-                complete("~\(ceil(result.distance / 1000))kLY from \(result.name)")
-            }
-        )
     }
 }

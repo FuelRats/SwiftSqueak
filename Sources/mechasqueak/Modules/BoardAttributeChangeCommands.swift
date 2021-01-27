@@ -166,26 +166,20 @@ class BoardAttributeCommands: IRCBotModule {
             system.removeLast(7)
         }
 
-        SystemsAPI.performSearchAndLandmarkCheck(
-            forSystem: system,
-            onComplete: { searchResult, landmarkResult, _ in
+        SystemsAPI.performSystemCheck(forSystem: system).whenSuccess({ system in
+            if rescue.system != nil {
+                rescue.system?.merge(system)
+            } else {
                 rescue.system = system
-                if let searchResult = searchResult, let landmarkResult = landmarkResult {
-                    rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
-                } else {
-                    rescue.landmark = nil
-                    rescue.permitRequired = false
-                    rescue.permitName = nil
-                }
-                command.message.reply(key: "board.syschange", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.client!,
-                    "systemInfo": rescue.systemInfoDescription
-                ])
-                rescue.systemManuallyCorrected = true
-                rescue.syncUpstream()
             }
-        )
+            rescue.system?.manuallyCorrected = true
+            rescue.syncUpstream()
+            command.message.reply(key: "board.syschange", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier,
+                "client": rescue.client!,
+                "systemInfo": rescue.system.description
+            ])
+        })
     }
 
     @BotCommand(

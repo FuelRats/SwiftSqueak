@@ -84,13 +84,13 @@ class MessageScanner: IRCBotModule {
                 ))
             }
 
-            if rescue.permitRequired {
+            if let permit = rescue.system?.permit {
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.permit",
                     locale: "en-GB",
                     interpolations: [
                         "case": caseId,
-                        "permit": rescue.permitName ?? rescue.system ?? "unknown"
+                        "permit": permit.description
                     ])
                 )
             }

@@ -28,11 +28,7 @@ import IRCKit
 import NIO
 
 class SystemsAPI {
-    static func performSearch (
-        forSystem systemName: String,
-        quickSearch: Bool = false,
-        onComplete: @escaping (Result<SearchDocument, Error>) -> Void
-    ) {
+    static func performSearch (forSystem systemName: String, quickSearch: Bool = false) -> EventLoopFuture<SearchDocument> {
         var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
         if quickSearch {
@@ -43,208 +39,64 @@ class SystemsAPI {
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request, deadline: deadline).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-                    do {
-                        let searchResult = try decoder.decode(SearchDocument.self, from: Data(buffer: response.body!))
-                        onComplete(Result.success(searchResult))
-                    } catch {
-                        debug(String(describing: error))
-                        onComplete(Result.failure(error))
-                    }
-                case .failure(let restError):
-                    debug(String(describing: restError))
-                    onComplete(Result.failure(restError))
-            }
-        }
+        return httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
 
-    static func performSearchAndLandmarkCheck (
-        forSystem systemName: String,
-        onComplete: @escaping (
-            SearchDocument.SearchResult?,
-            LandmarkDocument.LandmarkResult?,
-            String?
-        ) -> Void) {
-        self.performSearch(forSystem: systemName, quickSearch: true, onComplete: { request in
-            switch request {
-                case .success(let systemSearch):
-                    guard let result = systemSearch.data?.first(where: {
-                        $0.similarity == 1
-                    }) else {
-                        onComplete(nil, nil, Autocorrect.check(system: systemName))
-                        return
-                    }
-
-                    self.performLandmarkCheck(forSystem: result.name, onComplete: { request in
-                        switch request {
-                            case .success(let landmarkSearch):
-                                guard let landmarkResult = landmarkSearch.landmarks.first else {
-                                    onComplete(result, nil, nil)
-                                    return
-                                }
-
-                                onComplete(result, landmarkResult, Autocorrect.check(system: systemName))
-
-                            case .failure:
-                                onComplete(result, nil, Autocorrect.check(system: systemName))
-                        }
-                    })
-
-                case .failure:
-                    onComplete(nil, nil, Autocorrect.check(system: systemName))
-            }
-        })
-    }
-
-    static func performCaseLookup (forSystem system: String, inRescue rescue: LocalRescue, onComplete: @escaping (
-        SearchDocument.SearchResult?,
-        LandmarkDocument.LandmarkResult?,
-        String?
-    ) -> Void) {
-        SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, correction in
-            onComplete(searchResult, landmarkResult, correction)
-            var system = system
-
-            guard (searchResult == nil || landmarkResult == nil) && configuration.general.drillMode == false else {
-                return
-            }
-
-            guard system.lowercased().hasSuffix("sector") == false && sectors.contains(where: { $0.name == system.uppercased() }) == false else {
-                mecha.reportingChannel?.send(key: "board.signal.unhelpfulsysmeme", map: [
-                    "system": system
-                ])
-                return
-            }
-            if let correction = correction {
-                system = correction
-            }
-
-            SystemsAPI.performSearch(forSystem: system, onComplete: { result in
-                guard
-                    rescue.systemManuallyCorrected == false,
-                    Autocorrect.proceduralSystemExpression.matches(system) == false
-                else {
-                    return
-                }
-                
-                switch result {
-                    case .success(let data):
-                        guard var results = data.data else {
-                            mecha.reportingChannel?.send(key: "sysc.noresults", map: [
-                                "caseId": rescue.commandIdentifier,
-                                "client": rescue.clientDescription
-                            ])
-                            return
-                        }
-                        guard results.count > 0 else {
-                            mecha.reportingChannel?.send(key: "sysc.noresults", map: [
-                                "caseId": rescue.commandIdentifier
-                            ])
-                            return
-                        }
-
-                        let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system)) })
-                        var approvedCorrections = ratedCorrections.filter({ $1 != nil })
-                        approvedCorrections.sort(by: { $0.1! < $1.1! })
-
-                        if let autoCorrectableResult = approvedCorrections.first?.0 {
-                            SystemsAPI.performLandmarkCheck(forSystem: autoCorrectableResult.name, onComplete: { result in
-                                switch result {
-                                    case .success(let landmarkResult):
-                                        guard landmarkResult.landmarks.count > 0 else {
-                                            return
-                                        }
-
-
-                                        rescue.setSystemData(searchResult: autoCorrectableResult, landmark: landmarkResult.landmarks[0])
-                                        rescue.syncUpstream()
-
-                                        mecha.reportingChannel?.client.sendMessage(
-                                            toChannelName: rescue.channelName,
-                                            withKey: "sysc.autocorrect",
-                                            mapping: [
-                                                "caseId": rescue.commandIdentifier,
-                                                "client": rescue.client ?? "",
-                                                "system": autoCorrectableResult.name.uppercased(),
-                                                "landmark": landmarkResult.landmarks[0].name,
-                                                "distance": NumberFormatter.englishFormatter().string(from: landmarkResult.landmarks[0].distance) ?? landmarkResult.landmarks[0].distance
-                                            ]
-                                        )
-                                        break
-
-                                    default:
-                                        break
-                                }
-                            })
-                            return
-                        }
-
-                        if results.count > 9 {
-                            results.removeSubrange(9...)
-                        }
-
-                        rescue.systemCorrections = results
-
-                        let resultString = results.enumerated().map({
-                            $0.element.correctionRepresentation(index: $0.offset + 1)
-                        }).joined(separator: ", ")
-
-                        rescue.channel?.send(key: "sysc.nearestmatches", map: [
-                            "caseId": rescue.commandIdentifier,
-                            "client": rescue.clientDescription,
-                            "systems": resultString
-                        ])
-
-                    case .failure:
-                        mecha.reportingChannel?.send(key: "sysc.noresults", map: [
-                            "caseId": rescue.commandIdentifier,
-                            "client": rescue.clientDescription
-                        ])
-                }
-            })
-        })
-    }
-
-    static func performLandmarkCheck (
-        forSystem systemName: String,
-        onComplete: @escaping (Result<LandmarkDocument, Error>) -> Void) {
+    static func performLandmarkCheck (forSystem systemName: String) -> EventLoopFuture<LandmarkDocument> {
         var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
         url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
 
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-                    do {
-                        let searchResult = try decoder.decode(
-                            LandmarkDocument.self,
-                            from: Data(buffer: response.body!)
-                        )
-                        onComplete(Result.success(searchResult))
-                    } catch let error {
-                        debug(String(describing: error))
-                        onComplete(Result.failure(error))
-                    }
-                case .failure(let restError):
-                    debug(String(describing: restError))
-                    onComplete(Result.failure(restError))
-            }
-        }
+        return httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
     }
+
+    static func performProceduralCheck (forSystem systemName: String) -> EventLoopFuture<ProceduralCheckDocument> {
+        var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!
+        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        return httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
+    }
+
+    static func performSystemCheck (forSystem systemName: String) -> EventLoopFuture<StarSystem> {
+        let promise = loop.next().makePromise(of: StarSystem.self)
+
+        performSearch(forSystem: systemName, quickSearch: true)
+            .and(performLandmarkCheck(forSystem: systemName), performProceduralCheck(forSystem: systemName))
+            .whenComplete({ result in
+                switch result {
+                    case .success(let (searchResults, landmarkResults, proceduralResult)):
+                        let searchResult = searchResults.data?.first(where: {
+                            $0.similarity == 1
+                        })
+
+                        let permit = StarSystem.Permit(fromSearchResult: searchResult)
+
+                        let starSystem = StarSystem(
+                            name: searchResult?.name ?? systemName,
+                            permit: permit,
+                            availableCorrections: searchResults.data,
+                            landmark: landmarkResults.landmarks.first,
+                            proceduralCheck: proceduralResult
+                        )
+                        promise.succeed(starSystem)
+
+                    case .failure(let error):
+                        promise.fail(error)
+                }
+
+            })
+
+        return promise.futureResult
+    }
+
 
     static func performStatisticsQuery (
         onComplete: @escaping (StatisticsDocument) -> Void,
@@ -286,9 +138,14 @@ class SystemsAPI {
             let error: String?
         }
 
-        struct LandmarkResult: Codable {
+        struct LandmarkResult: Codable, CustomStringConvertible {
             let name: String
             let distance: Double
+
+            var description: String {
+                let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: self.distance))!
+                return " (\(distance) LY from \(self.name))"
+            }
         }
     }
 
@@ -310,6 +167,7 @@ class SystemsAPI {
 
     struct ProceduralCheckDocument: Codable {
         let isPgSystem: Bool
+        let isPgSector: Bool
     }
 
     struct SearchDocument: Codable {

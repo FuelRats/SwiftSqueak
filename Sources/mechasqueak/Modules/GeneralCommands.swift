@@ -100,7 +100,7 @@ class GeneralCommands: IRCBotModule {
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.client ?? "?",
                 "platform": rescue.platform.ircRepresentable,
-                "systemInfo": rescue.systemInfoDescription
+                "systemInfo": rescue.system.description
             ])
         })
 

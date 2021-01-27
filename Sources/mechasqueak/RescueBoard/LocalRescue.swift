@@ -35,13 +35,7 @@ class LocalRescue: Codable {
     var isClosing = false
     var clientHost: String?
     var channelName: String
-    var systemCorrections: [SystemsAPI.SearchDocument.SearchResult]?
-    var systemManuallyCorrected = false
-    var permitRequired = false
-    var permitName: String? = nil
-    var landmark: SystemsAPI.LandmarkDocument.LandmarkResult?
     var jumpCalls = 0
-    var systemBody: String? = nil
 
     let id: UUID
 
@@ -52,13 +46,9 @@ class LocalRescue: Codable {
     var codeRed: Bool
     var notes: String
     var platform: GamePlatform?
-    var system: String? {
-        didSet {
-            system = system?.prefix(64).uppercased()
-        }
-    }
     var quotes: [RescueQuote]
     var status: RescueStatus
+    var system: StarSystem?
     var title: String?
     var outcome: RescueOutcome?
     var unidentifiedRats: [String]
@@ -94,7 +84,6 @@ class LocalRescue: Codable {
         if system.hasSuffix(" SYSTEM") {
             system.removeLast(7)
         }
-        self.system = system
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
@@ -141,11 +130,11 @@ class LocalRescue: Codable {
         self.clientHost = message.user.hostmask
         self.channelName = message.destination.name
 
-        var system = signal.system?.uppercased()
-        if system != nil && system!.hasSuffix(" SYSTEM") {
-            system?.removeLast(7)
+        if let systemName = signal.system {
+            self.system = StarSystem(name: systemName)
+        } else {
+            self.system = nil
         }
-        self.system = system
 
         if let platformString = signal.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
@@ -182,11 +171,12 @@ class LocalRescue: Codable {
         self.client = clientName
         self.clientNick = clientName
 
-        var system = input.system?.uppercased()
-        if system != nil && system!.hasSuffix(" SYSTEM") {
-            system?.removeLast(7)
+        if let systemName = input.system {
+            self.system = StarSystem(name: systemName)
+        } else {
+            self.system = nil
         }
-        self.system = system
+
         self.channelName = command.message.destination.name
 
         if let ircUser = command.message.destination.member(named: clientName) {
@@ -225,7 +215,11 @@ class LocalRescue: Codable {
         self.codeRed = attr.codeRed.value
         self.notes = attr.notes.value
         self.platform = attr.platform.value
-        self.system = attr.system.value
+        if let systemName = attr.system.value {
+            self.system = StarSystem(name: systemName)
+        } else {
+            self.system = nil
+        }
         self.quotes = attr.quotes.value
         self.status = attr.status.value
         self.title = attr.title.value
@@ -258,7 +252,7 @@ class LocalRescue: Codable {
                 codeRed: .init(value: localRescue.codeRed),
                 notes: .init(value: localRescue.notes),
                 platform: .init(value: localRescue.platform),
-                system: .init(value: localRescue.system),
+                system: .init(value: localRescue.system?.name),
                 quotes: .init(value: localRescue.quotes),
                 status: .init(value: localRescue.status),
                 title: .init(value: localRescue.title),
@@ -480,59 +474,89 @@ class LocalRescue: Codable {
         return mecha.rescueBoard.prepTimers[self.id] == nil
     }
 
-    var systemIsIncomplete: Bool {
-        if self.systemManuallyCorrected || self.landmark != nil {
-            return false
-        }
-
-        if self.system?.hasSuffix("SECTOR") == true {
-            return true
-        }
-
-        if self.system?.components(separatedBy: " ").count ?? 0 < 3 {
-            return true
-        }
-
-        return true
-    }
-
     var clientDescription: String {
         return self.client ?? "u\u{200B}nknown client"
-    }
-
-    var systemDescription: String {
-        return self.system ?? "u\u{200B}nknown system"
-    }
-
-    var systemInfoDescription: String {
-        var systemInfo = "\"\(self.systemDescription)\""
-        if let landmark = self.landmark {
-            let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!
-            systemInfo += " (\(distance) LY from \(landmark.name))"
-        } else if let systemName = self.system, Autocorrect.proceduralSystemExpression.matches(systemName) {
-            systemInfo += " (Valid system name)"
-        } else {
-            systemInfo += " (Not found in galaxy database)"
-        }
-        if self.permitRequired {
-            if let permitName = self.permitName {
-                systemInfo += " " + IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
-            } else {
-                systemInfo += " " + IRCFormat.color(.Orange, "(Permit Required)")
-            }
-        }
-        return systemInfo
     }
 
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }
 
-    func setSystemData (searchResult: SystemsAPI.SearchDocument.SearchResult, landmark: SystemsAPI.LandmarkDocument.LandmarkResult) {
-        self.system = searchResult.name.uppercased()
-        self.permitRequired = searchResult.permitRequired
-        self.permitName = searchResult.permitName
-        self.landmark = landmark
+    func validateSystem () -> EventLoopFuture<()>? {
+        let promise = loop.next().makePromise(of: Void.self)
+
+        guard let system = self.system else {
+            return nil
+        }
+
+        SystemsAPI.performSystemCheck(forSystem: system.name).whenComplete({ result in
+            switch result {
+                case .failure(let error):
+                    promise.fail(error)
+
+                case .success(let starSystem):
+                    self.system = starSystem
+                    promise.succeed(())
+                    guard starSystem.isConfirmed == false else {
+                        return
+                    }
+
+                    SystemsAPI.performSearch(forSystem: system.name).whenSuccess({ result in
+                        guard var results = result.data, results.count > 0 else {
+                            return
+                        }
+
+                        let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
+                        var approvedCorrections = ratedCorrections.filter({ $1 != nil })
+                        approvedCorrections.sort(by: { $0.1! < $1.1! })
+
+                        if let autoCorrectableResult = approvedCorrections.first?.0 {
+                            SystemsAPI.performLandmarkCheck(forSystem: autoCorrectableResult.name).whenSuccess({ landmark in
+                                guard landmark.landmarks.count > 0 else {
+                                    return
+                                }
+
+                                let newSystem = StarSystem(
+                                    name: autoCorrectableResult.name,
+                                    permit: StarSystem.Permit(fromSearchResult: autoCorrectableResult),
+                                    availableCorrections: results,
+                                    landmark: landmark.landmarks[0]
+                                )
+                                self.system?.merge(newSystem)
+                                self.syncUpstream()
+                                mecha.reportingChannel?.client.sendMessage(
+                                    toChannelName: self.channelName,
+                                    withKey: "sysc.autocorrect",
+                                    mapping: [
+                                        "caseId": self.commandIdentifier,
+                                        "client": self.clientDescription,
+                                        "system": self.system.description
+                                    ]
+                                )
+
+                            })
+                            return
+                        }
+                        if results.count > 9 {
+                            results.removeSubrange(9...)
+                        }
+
+                        self.system?.availableCorrections = results
+
+                        let resultString = results.enumerated().map({
+                            $0.element.correctionRepresentation(index: $0.offset + 1)
+                        }).joined(separator: ", ")
+
+                        self.channel?.send(key: "sysc.nearestmatches", map: [
+                            "caseId": self.commandIdentifier,
+                            "client": self.clientDescription,
+                            "systems": resultString
+                        ])
+                    })
+
+            }
+        })
+        return promise.futureResult
     }
 }
 
@@ -545,3 +569,4 @@ struct RescueAssignments {
     var notFound = OrderedSet<String>()
     var invalid = OrderedSet<String>()
 }
+

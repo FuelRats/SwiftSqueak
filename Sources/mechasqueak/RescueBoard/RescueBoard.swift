@@ -149,7 +149,7 @@ class RescueBoard {
             } else if initiated == .insertion {
                 message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
                     "client": existingRescue.clientDescription,
-                    "system": existingRescue.systemDescription,
+                    "system": existingRescue.system.description,
                     "caseId": existingRescue.commandIdentifier,
                     "platform": existingRescue.platform.ircRepresentable,
                     "cr": crStatus
@@ -160,22 +160,23 @@ class RescueBoard {
             if rescue.platform != existingRescue.platform && rescue.platform != nil {
                 changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
             }
-            if rescue.system != existingRescue.system && rescue.system != nil {
-                changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "u\u{200B}nknown") -> \(rescue.system ?? "u\u{200B}nknown")")
+            if rescue.system != nil && rescue.system?.name != existingRescue.system?.name {
+                changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)")
                 if let system = rescue.system {
-                    SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
-                        guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
+                    SystemsAPI.performSystemCheck(forSystem: system.name).whenSuccess({ result in
+                        guard result.isConfirmed else {
                             return
                         }
 
-                        existingRescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
+                        existingRescue.system = system
                         existingRescue.syncUpstream()
 
                         message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
                             "caseId": existingRescue.commandIdentifier,
                             "client": rescue.client!,
-                            "systemInfo": rescue.systemInfoDescription
+                            "systemInfo": existingRescue.system.description
                         ]))
+
                     })
                 }
             }
@@ -259,17 +260,17 @@ class RescueBoard {
                 "cr": crStatus,
                 "language": language,
                 "langCode": languageCode,
-                "systemInfo": rescue.systemInfoDescription
+                "systemInfo": rescue.system.description
             ]))
             rescue.createUpstream()
             return
         }
 
-        if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system) {
-            system.removeLast(systemBodiesMatches.matched.count)
-            rescue.system = system
+        if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system.name) {
+            system.name.removeLast(systemBodiesMatches.matched.count)
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
-            rescue.systemBody = body
+            system.clientProvidedBody = body
+            rescue.system = system
             rescue.quotes.append(RescueQuote(
                 author: message.client.currentNick,
                 message: "Client indicated location in system near body \"\(body)\"",
@@ -279,52 +280,26 @@ class RescueBoard {
             )
         }
 
-        SystemsAPI.performCaseLookup(
-            forSystem: system,
-            inRescue: rescue,
-            onComplete: { searchResult, landmarkResult, correction in
-                if let searchResult = searchResult, let landmarkResult = landmarkResult {
-                    rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
+        rescue.validateSystem()?.whenComplete({ _ in
+            message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
+                "signal": configuration.general.signal.uppercased(),
+                "client": rescue.client ?? "u\u{200B}nknown",
+                "platform": rescue.platform.ircRepresentable,
+                "oxygen": rescue.ircOxygenStatus,
+                "caseId": caseId,
+                "systemInfo": rescue.system.description,
+                "platformSignal": rescue.platform?.signal ?? "",
+                "cr": crStatus,
+                "language": language,
+                "langCode": languageCode
+            ]))
 
-                    message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
-                        "signal": configuration.general.signal.uppercased(),
-                        "client": rescue.client ?? "u\u{200B}nknown",
-                        "platform": rescue.platform.ircRepresentable,
-                        "oxygen": rescue.ircOxygenStatus,
-                        "caseId": caseId,
-                        "systemInfo": rescue.systemInfoDescription,
-                        "platformSignal": rescue.platform?.signal ?? "",
-                        "cr": crStatus,
-                        "language": language,
-                        "langCode": languageCode
-                    ]))
-                } else {
-                    message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
-                        "signal": configuration.general.signal.uppercased(),
-                        "client": rescue.client ?? "u\u{200B}nknown",
-                        "platform": rescue.platform.ircRepresentable,
-                        "oxygen": rescue.ircOxygenStatus,
-                        "caseId": caseId,
-                        "systemInfo": rescue.systemInfoDescription,
-                        "platformSignal": rescue.platform?.signal ?? "",
-                        "cr": crStatus,
-                        "language": language,
-                        "langCode": languageCode
-                    ]))
-
-//                    if let correction = correction {
-//                        message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
-//                            "system": system,
-//                            "correction": correction
-//                        ]))
-//                    }
-                }
-                if let systemBody = rescue.systemBody {
-                    message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
-                        "body": systemBody
-                    ]))
-                }
-                self.prepClient(rescue: rescue, message: message, initiated: initiated)
+            if let systemBody = rescue.system?.clientProvidedBody {
+                message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
+                    "body": systemBody
+                ]))
+            }
+            self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
 
         rescue.createUpstream()
