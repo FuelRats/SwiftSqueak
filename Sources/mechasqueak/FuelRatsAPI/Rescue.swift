@@ -35,6 +35,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var clientLanguage: Attribute<String?>
         public var commandIdentifier: Attribute<Int>
         public var codeRed: Attribute<Bool>
+        public var data: Attribute<RescueData>
         public var notes: Attribute<String>
         public var platform: Attribute<GamePlatform?>
         public var system: Attribute<String?>
@@ -55,10 +56,17 @@ enum RescueDescription: ResourceObjectDescription {
 }
 typealias Rescue = JSONEntity<RescueDescription>
 
-struct RescueDataObject: Codable {
+struct RescueData: Codable, Equatable {
+    static func == (lhs: RescueData, rhs: RescueData) -> Bool {
+        return lhs.boardIndex == rhs.boardIndex
+    }
+
     struct RescueDataStatus: Codable {
 
     }
+
+    var permit: StarSystem.Permit?
+    var landmark: SystemsAPI.LandmarkDocument.LandmarkResult?
 
     struct MarkForDeletionEntry: Codable {
         var marked: Bool

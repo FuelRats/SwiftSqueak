@@ -220,6 +220,8 @@ class LocalRescue: Codable {
         } else {
             self.system = nil
         }
+        self.system?.permit = attr.data.value.permit
+        self.system?.landmark = attr.data.value.landmark
         self.quotes = attr.quotes.value
         self.status = attr.status.value
         self.title = attr.title.value
@@ -250,6 +252,7 @@ class LocalRescue: Codable {
                 clientLanguage: .init(value: localRescue.clientLanguage?.identifier),
                 commandIdentifier: .init(value: localRescue.commandIdentifier),
                 codeRed: .init(value: localRescue.codeRed),
+                data: .init(value: RescueData()),
                 notes: .init(value: localRescue.notes),
                 platform: .init(value: localRescue.platform),
                 system: .init(value: localRescue.system?.name),
