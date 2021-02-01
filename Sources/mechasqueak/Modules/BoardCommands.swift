@@ -209,6 +209,16 @@ class BoardCommands: IRCBotModule {
                         ]
                     )
                     return
+                } else {
+                    message.client.sendMessage(
+                        toChannelName: command.message.user.nickname,
+                        withKey: "board.close.firstLimpetPaperwork",
+                        mapping: [
+                            "caseId": rescue.commandIdentifier,
+                            "client": rescue.clientDescription,
+                            "link": shortUrl
+                        ]
+                    )
                 }
                 message.client.sendMessage(
                     toChannelName: configuration.general.reportingChannel,
