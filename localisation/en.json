@@ -117,6 +117,7 @@
   "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
   "board.assign.banned": "%{rats} cannot be assigned to cases right now, contact the ops team for more information.",
   "board.assign.none": "Found nobody to assign to case #%{caseId}",
+  "board.assign.norat": "The following rats could not be assigned as they do not have a valid CMDR for this case: %{rats}. To override use: %{retry}",
   "board.assign.go": {
       "one": "%{client}: Please add the following rat to your friends list: %{rats}",
       "other": "%{client}: Please add the following %{count} rats to your friends list: %{rats}"
@@ -330,7 +331,9 @@
   "help.command.list.@": "Display case UUIDs",
   "help.command.sctime.g": "Calculate going from one gravitational body to another, rather than towards deep space",
   "help.command.go.a": "Include already assigned rats in the message telling clients who to add",
+  "help.command.go.f": "Force mecha to assign someone even if it can't find a valid rat for them",
   "help.command.gofr.a": "Include already assigned rats in the message telling clients who to add",
+  "help.command.gofr.f": "Force mecha to assign someone even if it can't find a valid rat for them",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
   "help.command.clear": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be closed and when they should be deleted.",
   "help.command.facts": "Append - followed by the language code after the command to view all the facts for a specific localisation. 'list' lists all facts for a language, 'add'/'set' creates or modifies a fact, 'del'/'delete' deletes a fact, 'info' shows information about a fact, 'locales' lists all locales that have facts.",

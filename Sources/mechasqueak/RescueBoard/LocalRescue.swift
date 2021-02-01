@@ -351,7 +351,7 @@ class LocalRescue: Codable {
         }
     }
 
-    func assign (_ assignParams: [String], fromChannel channel: IRCChannel) -> RescueAssignments {
+    func assign (_ assignParams: [String], fromChannel channel: IRCChannel, force: Bool = false) -> RescueAssignments {
         let assigns: (RescueAssignments) = assignParams.reduce(RescueAssignments(), { assigns, param in
             var assigns = assigns
             guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param.lowercased() }) == false else {
@@ -402,7 +402,9 @@ class LocalRescue: Codable {
                 self.status = .Open
             }
             self.rats.append(contentsOf: assigns.rats)
-            self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
+            if force || configuration.general.drillMode {
+                self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
+            }
             self.syncUpstream()
         }
         return assigns

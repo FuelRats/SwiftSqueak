@@ -35,7 +35,7 @@ class BoardAssignCommands: IRCBotModule {
     @BotCommand(
         ["go", "assign", "add"],
         parameters: 2...,
-        options: ["a"],
+        options: ["a", "f"],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
         paramText: "<case id/client> ...rats",
@@ -45,6 +45,8 @@ class BoardAssignCommands: IRCBotModule {
     )
     var didReceiveAssignCommand = { command in
         let message = command.message
+        
+        let force = command.options.contains("f")
 
         // Find case by rescue ID or client name
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
@@ -61,18 +63,19 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
 
-        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
+        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
 
         sendAssignMessages(
             assigns: assigns,
             forRescue: rescue,
             fromCommand: command,
-            includeExistingAssigns: command.options.contains("a")
+            includeExistingAssigns: command.options.contains("a"),
+            force: force
         )
     }
 
     @BotCommand(
-        ["gofr", "assignfr", "frgo"],
+        ["gofr", "assignfr", "frgo", "f"],
         parameters: 2...,
         options: ["a"],
         category: .board,
@@ -84,6 +87,8 @@ class BoardAssignCommands: IRCBotModule {
     )
     var didReceiveAssignWithInstructionsCommand = { command in
         let message = command.message
+        
+        let force = command.options.contains("f")
 
         // Find case by rescue ID or client name
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
@@ -101,13 +106,14 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
 
-        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination)
+        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
 
         sendAssignMessages(
             assigns: assigns,
             forRescue: rescue,
             fromCommand: command,
-            includeExistingAssigns: command.options.contains("a")
+            includeExistingAssigns: command.options.contains("a"),
+            force: force
         )
 
         guard assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 else {
@@ -136,7 +142,8 @@ class BoardAssignCommands: IRCBotModule {
         assigns: RescueAssignments,
         forRescue rescue: LocalRescue,
         fromCommand command: IRCBotCommand,
-        includeExistingAssigns: Bool = false
+        includeExistingAssigns: Bool = false,
+        force: Bool = false
     ) {
         if assigns.blacklisted.count > 0 {
             command.message.error(key: "board.assign.banned", fromCommand: command, map: [
@@ -155,34 +162,47 @@ class BoardAssignCommands: IRCBotModule {
                 "rats": assigns.notFound.joined(separator: ", ")
             ])
         }
+        
+        if assigns.unidentifiedRats.count > 0 {
+        }
 
         var allRats = assigns.rats.union(assigns.duplicates).map({ $0.attributes.name.value })
-            + assigns.unidentifiedRats.union(assigns.unidentifiedDuplicates)
+            + assigns.unidentifiedDuplicates
 
         if includeExistingAssigns {
-            allRats = rescue.rats.map({ $0.attributes.name.value }) + rescue.unidentifiedRats
+            allRats = rescue.rats.map({ $0.attributes.name.value })
         }
-        guard allRats.count > 0 else {
-            return
+        
+        if force || configuration.general.drillMode {
+            allRats.append(contentsOf: rescue.unidentifiedRats)
         }
 
         let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
+        if allRats.count > 0 {
+            command.message.reply(key: format, fromCommand: command, map: [
+                "client": rescue.clientNick!,
+                "rats": allRats.map({
+                    "\"\($0)\""
+                }).joined(separator: ", "),
+                "count": allRats.count
+            ])
+        }
 
-        command.message.reply(key: format, fromCommand: command, map: [
-            "client": rescue.clientNick!,
-            "rats": allRats.map({
-                "\"\($0)\""
-            }).joined(separator: ", "),
-            "count": allRats.count
-        ])
 
         if assigns.unidentifiedRats.count > 0 && configuration.general.drillMode == false {
-            command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
-                "platform": rescue.platform!.ircRepresentable,
-                "rats": assigns.unidentifiedRats.map({
-                    "\"\($0)\""
-                }).joined(separator: ", ")
-            ])
+            if force {
+                command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
+                    "platform": rescue.platform!.ircRepresentable,
+                    "rats": assigns.unidentifiedRats.map({
+                        "\"\($0)\""
+                    }).joined(separator: ", ")
+                ])
+            } else {
+                command.message.error(key: "board.assign.norat", fromCommand: command, map: [
+                    "rats": assigns.unidentifiedRats.joined(separator: ", "),
+                    "retry": "!\(command.command) -f \(command.parameters[0]) \(assigns.unidentifiedRats.joined(separator: " "))"
+                ])
+            }
         }
     }
 
