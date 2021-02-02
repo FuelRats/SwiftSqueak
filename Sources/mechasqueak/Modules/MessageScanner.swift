@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -84,15 +84,18 @@ class MessageScanner: IRCBotModule {
                 ))
             }
 
-            if let permit = rescue.system?.permit {
-                channelMessage.replyPrivate(message: lingo.localize(
-                    "jumpcall.permit",
-                    locale: "en-GB",
-                    interpolations: [
-                        "case": caseId,
-                        "permit": permit.description
-                    ])
-                )
+            if let system = rescue.system, let permit = rescue.system?.permit {
+                let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
+                if (rat?.hasPermitFor(system: rescue.system!) ?? false) == false {
+                    channelMessage.replyPrivate(message: lingo.localize(
+                        "jumpcall.permit",
+                        locale: "en-GB",
+                        interpolations: [
+                            "case": caseId,
+                            "permit": permit.name ?? system.name
+                        ])
+                    )
+                }
             }
 
 //            if rescue.systemIsIncomplete {
@@ -138,8 +141,14 @@ class MessageScanner: IRCBotModule {
             let isDrilled = channelMessage.user.hasPermission(permission: .DispatchRead)
             if channelMessage.user.account == nil {
                 message += " (Unidentified)"
-            }else if isDrilled == false {
+            } else if isDrilled == false {
                 message += " (Not Drilled)"
+            }
+            
+            if let system = rescue.system, rescue.system?.permit != nil {
+                if channelMessage.user.currentRat?.hasPermitFor(system: system) == true {
+                    message += " (Permit Confirmed)"
+                }
             }
 
             rescue.jumpCalls += 1

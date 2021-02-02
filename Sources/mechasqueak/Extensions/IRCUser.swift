@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -40,6 +40,56 @@ extension IRCUser {
             }) ||
             $0.unidentifiedRats.contains(self.nickname)
         })
+    }
+    
+    var platform: GamePlatform? {
+        let nickname = self.nickname.lowercased()
+        
+        if nickname.hasSuffix("[pc]") {
+            return .PC
+        }
+        
+        if nickname.hasSuffix("[xb]") || nickname.hasSuffix("[xb1]") {
+            return .Xbox
+        }
+        
+        if nickname.contains("[ps]") || nickname.contains("[ps4]]") || nickname.contains("[ps5]") {
+            return .PS
+        }
+        
+        return nil
+    }
+    
+    var currentRat: Rat? {
+        guard let apiData = self.associatedAPIData, let user = apiData.user else {
+            return nil
+        }
+        
+        
+        var rats = apiData.ratsBelongingTo(user: user)
+        if let platform = self.platform {
+            rats = rats.filter({
+                $0.attributes.platform.value == platform
+            })
+        }
+        
+        var nickname = self.nickname.lowercased()
+        nickname = nickname.replacingOccurrences(of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
+
+        rats.sort(by: {
+            nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased())
+        })
+
+        return rats.first
+    }
+    
+    func flush () {
+        if let mapping = MechaSqueak.accounts.mapping.first(where: {
+            $0.key.lowercased() == self.nickname.lowercased()
+        }) {
+            MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
+        }
+        MechaSqueak.accounts.lookupIfNotExists(user: self)
     }
 
     func hasPermission (permission: AccountPermission) -> Bool {

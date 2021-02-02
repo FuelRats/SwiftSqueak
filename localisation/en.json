@@ -308,6 +308,17 @@
   "changemail.notloggedin": "Could not change email as you are not currently logged into an IRC nickname associated with a Fuel Rats Account",
   "changemail.error": "Unable to change email address, please verify that you entered a valid email address",
   "changemail.success": "The email address of your Fuel Rats account has been changed. A verification email has been sent to %{email} with steps to complete the process",
+  
+  "permits.norat": "Unable to list your current permits as I could not determine your current CMDR",
+  "permits.nopermits": "I could not find any permits for your current rat",
+  "permits.list": "Listing all known permits for CMDR %{name}:",
+  "addpermit.norat": "Unable to add a permit as I could not determine your current CMDR",
+  "addpermit.searcherror": "Unable to add a permit as an error occured searching for the permit",
+  "addpermit.nosystem": "Unable to add a permit as I could not find any permit belonging to this system",
+  "addpermit.added": "Successfully added %{permit} permit to CMDR %{name}",
+  "delpermit.norat": "Unable to remove permit as I could not determine your current CMDR",
+  "delpermit.nopermit": "No permit by that name is currently added to your CMDR",
+  "delpermit.removed": "Removed %{permit} Permit from CMDR %{name}",
 
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",

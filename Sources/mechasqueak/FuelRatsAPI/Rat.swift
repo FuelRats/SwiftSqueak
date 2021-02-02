@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -25,13 +25,15 @@
 import Foundation
 import JSONAPI
 import IRCKit
+import NIO
+import AsyncHTTPClient
 
 enum RatDescription: ResourceObjectDescription {
     public static var jsonType: String { return "rats" }
 
     public struct Attributes: JSONAPI.Attributes {
         public let name: Attribute<String>
-        public let data: Attribute<RatDataObject>
+        public var data: Attribute<RatDataObject>
         public let platform: Attribute<GamePlatform>
         public let frontierId: Attribute<String>?
         public let createdAt: Attribute<Date>
@@ -68,10 +70,51 @@ extension Rat {
 
         return users[0].nickname
     }
+    
+    func hasPermitFor(system: StarSystem) -> Bool {
+        guard let permit = system.permit else {
+            return true
+        }
+        let permitName = (permit.name ?? system.name).lowercased()
+        
+        guard let permits = self.attributes.data.value.permits else {
+            return false
+        }
+        return permits.contains(where: { $0.lowercased() == permitName })
+    }
+    
+    func update () -> EventLoopFuture<Void> {
+        let promise = loop.next().makePromise(of: Void.self)
+        let patchDocument = SingleDocument(
+            apiDescription: .none,
+            body: .init(resourceObject: self),
+            includes: .none,
+            meta: .none,
+            links: .none
+        )
+
+        let url = URLComponents(string: "\(configuration.api.url)/rats/\(self.id.rawValue.uuidString)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        
+        request.body = try? .encodable(patchDocument)
+
+        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
+            switch result {
+                case .success:
+                    promise.succeed(())
+                case .failure(let error):
+                    promise.fail(error)
+            }
+        }
+        return promise.futureResult
+    }
 }
 
 struct RatDataObject: Codable, Equatable {
-
+    var permits: [String]?
 }
 
 enum GamePlatform: String, Codable, CaseIterable {

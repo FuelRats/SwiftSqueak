@@ -162,8 +162,7 @@ class AccountCommands: IRCBotModule {
         [.param("platform", "PC")],
         category: .account,
         description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
-        permission: .RatReadOwn,
-        allowedDestinations: .PrivateMessage
+        permission: .RatReadOwn
     )
     var didReceiveAssignCheckCommand = { command in
         let message = command.message
@@ -215,4 +214,120 @@ class AccountCommands: IRCBotModule {
             }
         })
     }
+    
+    @BotCommand(
+        ["permits"],
+        category: .account,
+        description: "Add the permit belonging to this system to your account",
+        permission: .UserWriteOwn
+    )
+    var didReceiveListPermitCommand = { command in
+        guard let currentRat = command.message.user.currentRat else {
+            command.message.reply(key: "permits.norat", fromCommand: command)
+            return
+        }
+        
+        let permits = currentRat.attributes.data.value.permits ?? []
+        
+        guard permits.count > 0 else {
+            command.message.reply(key: "permits.nopermits", fromCommand: command)
+            return
+        }
+        
+        let heading = lingo.localize("permits.list", locale: "en-GB", interpolations: [
+            "name": currentRat.attributes.name.value
+        ])
+        
+        command.message.reply(list: permits, separator: ", ", heading: "\(heading) ")
+    }
+    
+    @BotCommand(
+        ["addpermit", "permitadd"],
+        [.param("system name", "NLTT 48288", .continious)],
+        category: .account,
+        description: "Add the permit belonging to this system to your current CMDR",
+        permission: .UserWriteOwn
+    )
+    var didReceiveAddPermitCommand = { command in
+        let systemName = command.parameters[0]
+        guard var currentRat = command.message.user.currentRat else {
+            command.message.reply(key: "addpermit.norat", fromCommand: command)
+            return
+        }
+        
+        SystemsAPI.performSearch(forSystem: systemName).whenComplete({ result in
+            switch result {
+                case .failure(_):
+                    command.message.error(key: "addpermit.searcherror", fromCommand: command)
+                    
+                case .success(let searchResult):
+                    guard
+                        searchResult.data?.count ?? 0 > 0,
+                        let system = searchResult.data?[0],
+                        system.similarity == 1,
+                        system.permitRequired
+                    else {
+                        command.message.error(key: "addpermit.nosystem", fromCommand: command)
+                        return
+                    }
+                    
+                    var ratData = currentRat.attributes.data.value
+                    var permits = ratData.permits ?? []
+                    let permitName = system.permitName ?? system.name
+                    if permits.contains(permitName) == false {
+                        permits.append(permitName)
+                    }
+                    ratData.permits = permits
+                    currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
+                    
+                    currentRat.update().whenSuccess({
+                        command.message.user.flush()
+                        command.message.reply(key: "addpermit.added", fromCommand: command, map: [
+                            "name": currentRat.attributes.name.value,
+                            "permit": permitName
+                        ])
+                    })
+            }
+            
+        })
+        
+
+    }
+    
+    @BotCommand(
+        ["delpermit", "permitdel"],
+        [.param("permit name", "Pilot's Federation District", .continious)],
+        category: .account,
+        description: "Delete this permit from your current CMDR",
+        permission: .UserWriteOwn
+    )
+    var didReceiveRemovePermitCommand = { command in
+        let permitName = command.parameters[0]
+        guard var currentRat = command.message.user.currentRat else {
+            command.message.reply(key: "delpermit.norat", fromCommand: command)
+            return
+        }
+        
+        var ratData = currentRat.attributes.data.value
+        var permits = ratData.permits ?? []
+        
+        guard let permitIndex = permits.firstIndex(where: { $0.lowercased() == permitName.lowercased() }) else {
+            command.message.error(key: "delpermit.nopermit", fromCommand: command)
+            return
+        }
+        permits.remove(at: permitIndex)
+        
+        ratData.permits = permits
+        currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
+        
+        currentRat.update().whenSuccess({
+            command.message.user.flush()
+            command.message.reply(key: "delpermit.removed", fromCommand: command, map: [
+                "name": currentRat.attributes.name.value,
+                "permit": permitName
+            ])
+        })
+    }
+    
+
 }
