@@ -84,6 +84,7 @@ class LocalRescue: Codable {
         if system.hasSuffix(" SYSTEM") {
             system.removeLast(7)
         }
+        self.system = StarSystem(name: system)
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
