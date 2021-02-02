@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -35,11 +35,9 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["quote"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Show all information about a specific case",
-        paramText: "<case id/client name>",
-        example: "4",
         permission: .DispatchRead
     )
     var didReceiveQuoteCommand = { command in
@@ -84,11 +82,9 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["grab"],
-        parameters: 1...1,
+        [.param("case id/client/assigned rat", "SpaceDawg")],
         category: .board,
-        description: "Grab the last message by the client and add it an existing rescue",
-        paramText: "<client>",
-        example: "SpaceDawg",
+        description: "Grab the last message by the client or assigned rat and add it to an existing rescue",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -143,13 +139,9 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["inject"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
-        options: ["f"],
+        [.options(["f"]), .param("case id/client", "4"), .param("text", "client is in the EZ", .continious)],
         category: .board,
         description: "Add some new information to the case, if one does not exist, create one with this information",
-        paramText: "<case id/client> <text>",
-        example: "4 client is 1.1 million ls from main star, rats on the way",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -222,12 +214,9 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["sub"],
-        parameters: 2...3,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continious)],
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
-        paramText: "<case id/client> <line number> [new text]",
-        example: "4 1 Client is PC, not Xbox",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

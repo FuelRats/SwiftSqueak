@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -44,12 +44,9 @@ class FactCommands: IRCBotModule {
 
     @BotCommand(
         ["facts", "fact"],
-        parameters: 0...3,
-        lastParameterIsContinous: true,
+        [.param("set/info/locales/del", "set"), .param("fact", "pcwing-es"), .param("contents", "bla bla bla", .continious, .optional)],
         category: .facts,
-        description: "View the list of facts, modify, or delete them.",
-        paramText: "set/info/locales/del [fact][-locale] [fact message]",
-        example: "set pcwing-es bla bla bla, !facts info pcwing-es, !facts locales, !facts del pcwing-es"
+        description: "View the list of facts, modify, or delete them."
     )
     var didReceiveFactCommand = { command in
         if command.parameters.count == 0 {

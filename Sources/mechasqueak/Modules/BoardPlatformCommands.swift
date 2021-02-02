@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -47,11 +47,9 @@ class BoardPlatformCommands: IRCBotModule {
 
     @BotCommand(
         ["xb"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to Xbox.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -61,11 +59,9 @@ class BoardPlatformCommands: IRCBotModule {
 
     @BotCommand(
         ["pc"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PC.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -75,11 +71,9 @@ class BoardPlatformCommands: IRCBotModule {
 
     @BotCommand(
         ["ps", "ps4", "ps5"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PS4.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2022 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -34,12 +34,9 @@ class TweetCommands: IRCBotModule {
 
     @BotCommand(
         ["tweet"],
-        parameters: 1...1,
-        lastParameterIsContinous: true,
+        [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continious)],
         category: .utility,
         description: "Send a tweet from @FuelRatAlerts",
-        paramText: "<tweet>",
-        example: "Need rats urgently for two PS4 cases in the bubble.",
         permission: .TwitterWrite,
         allowedDestinations: .Channel
     )
@@ -75,11 +72,9 @@ class TweetCommands: IRCBotModule {
 
     @BotCommand(
         ["tweetcase", "tweetc"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .utility,
         description: "Tweet information about a case from @FuelRatAlerts",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .DispatchRead,
         allowedDestinations: .Channel
     )

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -33,12 +33,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
-        parameters: 1...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("message", "client left irc", .continious, .optional)],
         category: .board,
         description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
-        paramText: "<case id/client> [message]",
-        example: "4 client left irc",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -81,11 +78,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["queue"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Add a rescue to the queue list, informing the client.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -116,11 +111,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["dequeue", "unqueue"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Remove a rescue from the queue list, informing the client.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -147,12 +140,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["system", "sys", "loc", "location"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("system name", "NLTT 48288", .continious)],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
-        paramText: "<case id/client> <system name>",
-        example: "4 NLTT 48288",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -184,12 +174,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["cmdr", "client", "commander"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continious)],
         category: .board,
         description: "Change the CMDR name of the client of this rescue.",
-        paramText: "<case id/client> <new name>",
-        example: "4 SpaceDawg",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -224,12 +211,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["nick", "ircnick", "nickname"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("new nick", "SpaceDawg")],
         category: .board,
         description: "Change the IRC nick associated with the client of this rescue.",
-        paramText: "<case id/client> <new nick>",
-        example: "4 SpaceDawg",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -262,12 +246,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["lang", "language"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("language code", "de")],
         category: .board,
         description: "Change the language of the client of this rescue.",
-        paramText: "<case id/client> <language code>",
-        example: "4 de",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -297,11 +278,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["cr", "codered", "casered"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Toggle the case between code red (on emergency oxygen) status or not.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -338,12 +317,9 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["title", "operation"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continious)],
         category: .board,
         description: "Set the operations title of this rescue, used to give a unique name to special rescues",
-        paramText: "<case id/client> <operation title>",
-        example: "4 Beyond the Void",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -34,7 +34,7 @@ class HelpCommands: IRCBotModule {
 
     @BotCommand(
         ["help"],
-        parameters: 0...,
+        [.param("category/command", "!assign", .continious, .optional)],
         category: nil,
         description: "View help for MechaSqueak."
     )

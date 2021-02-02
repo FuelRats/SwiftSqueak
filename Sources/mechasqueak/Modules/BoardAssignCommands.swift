@@ -73,12 +73,9 @@ class BoardAssignCommands: IRCBotModule {
 
     @BotCommand(
         ["gofr", "assignfr", "frgo", "f"],
-        parameters: 2...,
-        options: ["a"],
+        [.options(["a"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
-        paramText: "<case id/client> ...rats",
-        example: "4 SpaceDawg StuffedRat",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )
@@ -205,11 +202,9 @@ class BoardAssignCommands: IRCBotModule {
 
     @BotCommand(
         ["unassign", "deassign", "rm", "remove", "standdown"],
-        parameters: 2...,
+        [.param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Remove rats from the rescue",
-        paramText: "<case id/client> ...rats",
-        example: "4 SpaceDawg StuffedRat",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

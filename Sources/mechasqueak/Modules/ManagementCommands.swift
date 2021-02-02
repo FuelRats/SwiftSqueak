@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -34,7 +34,6 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["flushnames", "clearnames", "flushall", "invalidateall"],
-        parameters: 0...0,
         category: .management,
         description: "Invalidate the bots cache of API user data and fetch it again for all users.",
         permission: .UserWrite
@@ -60,7 +59,7 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["flush", "clearname", "invalidate"],
-        parameters: 1...1,
+        [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Invalidate a single name in the cache and fetch it again.",
         permission: .UserWrite
@@ -88,7 +87,7 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["groups", "permissions"],
-        parameters: 1...1,
+        [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Lists the permissions of a specific person",
         permission: .UserRead
@@ -119,11 +118,9 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["addgroup"],
-        parameters: 2...2,
+        [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Add a permission to a person",
-        paramText: "<nick/user id> <group name>",
-        example: "SpaceDawg dispatch",
         permission: .UserWrite
     )
     var didReceiveAddGroupCommand = { command in
@@ -168,11 +165,9 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["suspend"],
-        parameters: 2...2,
+        [.param("nickname/user id", "SpaceDawg"), .param("timespan", "7d")],
         category: .management,
         description: "Suspend a user account, accepts IRC style timespans (0 for indefinite).",
-        paramText: "<nick/user id> <timespan>",
-        example: "SpaceDawg 7d",
         permission: .UserWrite
     )
     var didReceiveSuspendCommand = { command in
@@ -223,12 +218,9 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["msg", "say"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("destination", "#ratchat"), .param("message", "squeak!", .continious)],
         category: .utility,
         description: "Make the bot send an IRC message somewhere.",
-        paramText: "<destination> <message>",
-        example: "#ratchat Squeak!",
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
@@ -241,12 +233,9 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["me", "action", "emote"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("destination", "#ratchat"), .param("message", "takes all the snickers", .continious)],
         category: .utility,
         description: "Make the bot send an IRC action (/me) somewhere.",
-        paramText: "<destination> <action message>",
-        example: "#ratchat noms popcorn.",
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in

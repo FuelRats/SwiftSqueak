@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -43,7 +43,6 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["sync", "fbr", "refreshboard", "reindex", "resetboard", "forcerestartboard",
                    "forcerefreshboard", "frb", "boardrefresh"],
-        parameters: 0...0,
         category: .rescues,
         description: "Force MechaSqueak to perform a synchronization of data between itself and the rescue server.",
         permission: .RescueWrite,
@@ -55,12 +54,9 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["list"],
-        parameters: 0...0,
-        options: ["i", "a", "q", "r", "u", "@"],
+        [.options(["i", "a", "q", "r", "u", "@"])],
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
-        paramText: "",
-        example: "-i",
         permission: .DispatchRead
     )
     var didReceiveListCommand = { command in
@@ -136,9 +132,9 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["clear", "close"],
-        parameters: 1...2,
+        [.param("case id/client", "4"), .param("first limpet rat", "SpaceDawg", .standard, .optional)],
         category: .board,
-        description: "Closes a case and posts the paperwork link.",
+        description: "Closes a case and posts the paperwork link. Optional parameter takes the nick of the person that got first limpet (fuel+).",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -240,12 +236,9 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["trash", "md", "purge", "mdadd"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("message", "client left before rats were assigned", .continious)],
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
-        paramText: "<case id/client> <message>",
-        example: "4 client left before rats were assigned ",
         permission: .DispatchWrite
     )
     var didReceiveTrashCommand = { command in
@@ -285,11 +278,9 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["paperwork", "pwl"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Retrieves the paperwork link for a case on the board.",
-        paramText: "<case id/client>",
-        example: "4",
         permission: .DispatchRead
     )
     var didReceivePaperworkLinkCommand = { command in
@@ -309,7 +300,6 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["quiet", "last"],
-        parameters: 0...0,
         category: .other,
         description: "Displays the amount of time since the last rescue",
         permission: .DispatchRead
@@ -360,11 +350,9 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["sysc"],
-        parameters: 2...2,
+        [.param("case id/client", "4"), .param("number", "1")],
         category: .board,
         description: "Correct the system of a case to one of the options provided by the system correction search.",
-        paramText: "<case id/client> <number>",
-        example: "2 1",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

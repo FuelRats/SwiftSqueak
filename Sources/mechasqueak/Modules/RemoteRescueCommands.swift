@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -35,11 +35,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["closed", "recent"],
-        parameters: 0...1,
+        [.param("number of cases", "10", .standard, .optional)],
         category: .rescues,
         description: "Shows recently closed cases.",
-        paramText: "[number of cases]",
-        example: "10",
         permission: .DispatchRead
     )
     var didReceiveRecentlyClosedCommand = { command in
@@ -84,11 +82,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["delete"],
-        parameters: 1...1,
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Delete a rescue by UUID, cannot be used on a rescue that is currently on the board.",
-        paramText: "<rescue uuid>",
-        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueWrite
     )
     var didReceiveDeleteCommand = { command in
@@ -120,7 +116,6 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["deleteall", "cleartrash"],
-        parameters: 0...0,
         category: .rescues,
         description: "Delete all rescues currently in the trashlist",
         permission: .RescueWrite
@@ -151,7 +146,6 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["trashlist", "mdlist", "purgelist", "listtrash"],
-        parameters: 0...0,
         category: .rescues,
         description: "Shows all the rescues that have been added to the trash list but not yet deleted",
         permission: .DispatchRead
@@ -185,11 +179,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["restore", "mdremove", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
-        parameters: 1...1,
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Restore a case from the trash list.",
-        paramText: "<rescue uuid>",
-        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueWrite
     )
     var didReceiveRestoreTrashCommand = { command in
@@ -231,7 +223,6 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["unfiled", "pwn", "paperworkneeded", "needspaperwork", "npw"],
-        parameters: 0...0,
         category: .rescues,
         description: "Get a list of rescues that have not had their paperwork completed.",
         permission: .DispatchRead,
@@ -269,11 +260,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["quoteid"],
-        parameters: 1...1,
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Show all information about a case by UUID",
-        paramText: "<rescue uuid>",
-        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .DispatchRead
     )
     var didReceiveQuoteRemoteCommand = { command in
@@ -313,11 +302,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["reopen"],
-        parameters: 1...1,
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Add a previously closed case back onto the board.",
-        paramText: "<rescue uuid>",
-        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
@@ -370,11 +357,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["unclose"],
-        parameters: 1...1,
+        [.param("recently closed case number", "5")],
         category: .rescues,
         description: "Add a previously closed case back onto the board by its previous case number.",
-        paramText: "<closed case number>",
-        example: "5",
         permission: .RescueWriteOwn
     )
     var didReceiveUncloseCommand = { command in
@@ -422,13 +407,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["clientpw", "pwclient"],
-        parameters: 1...1,
-        lastParameterIsContinous: true,
-        namedOptions: ["all"],
+        [.argument("all"), .param("client name", "SpaceDawg")],
         category: .rescues,
         description: "Get paperwork link for a previous client by name.",
-        paramText: "<client name>",
-        example: "3811e593-160b-45af-bf5e-ab8b5f26b718",
         permission: .DispatchRead
     )
     var didReceiveClientPaperworkCommand = { command in

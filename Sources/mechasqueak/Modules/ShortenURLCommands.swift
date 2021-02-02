@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -30,11 +30,9 @@ class ShortenURLCommands: IRCBotModule {
 
     @BotCommand(
         ["shorten", "short", "shortener"],
-        parameters: 1...2,
+        [.param("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"), .param("custom link", "importantinfo", .standard, .optional)],
         category: .utility,
         description: "Create a t.fuelr.at short url to another url, optionally set a custom url rather than a random.",
-        paramText: "<url> [custom link]",
-        example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ importantinfo",
         permission: .RescueWriteOwn,
         allowedDestinations: .PrivateMessage
     )

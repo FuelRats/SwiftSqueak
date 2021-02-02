@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -67,7 +67,6 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["needsrats", "needrats", "nr"],
-        parameters: 0...0,
         category: .utility,
         description: "Get a list of cases that currently require rats to call jumps",
         permission: .DispatchRead,
@@ -111,7 +110,6 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["sysstats", "syscount", "systems"],
-        parameters: 0...0,
         category: .utility,
         description: "See statistics about the systems API.",
         permission: nil
@@ -138,12 +136,9 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["sctime", "sccalc", "traveltime"],
-        parameters: 1...,
-        options: ["g"],
+        [.options(["g"]), .param("distance", "2500ls", .continious)],
         category: .utility,
         description: "Calculate supercruise travel time.",
-        paramText: "<distance>",
-        example: "2500ls",
         permission: nil
     )
     var didReceiveTravelTimeCommand = { command in
@@ -267,7 +262,6 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["version", "uptime"],
-        parameters: 0...0,
         category: .utility,
         description: "See version information about the bot.",
         permission: nil

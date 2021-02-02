@@ -34,7 +34,6 @@ class AccountCommands: IRCBotModule {
 
     @BotCommand(
         ["whoami"],
-        parameters: 0...0,
         category: .account,
         description: "Check the Fuel Rats account information the bot is currently associating with your nick",
         allowedDestinations: .PrivateMessage
@@ -89,11 +88,9 @@ class AccountCommands: IRCBotModule {
 
     @BotCommand(
         ["whois", "ratid", "who", "id"],
-        parameters: 1...1,
+        [.param("nickname", "SpaceDawg")],
         category: .account,
         description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
-        paramText: "<nickname>",
-        example: "SpaceDawg",
         permission: .RatReadOwn,
         allowedDestinations: .PrivateMessage
     )
@@ -162,11 +159,9 @@ class AccountCommands: IRCBotModule {
 
     @BotCommand(
         ["activerat", "assigncheck", "assigntest"],
-        parameters: 1...1,
+        [.param("platform", "PC")],
         category: .account,
         description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
-        paramText: "<platform>",
-        example: "PC",
         permission: .RatReadOwn,
         allowedDestinations: .PrivateMessage
     )
@@ -195,11 +190,9 @@ class AccountCommands: IRCBotModule {
 
     @BotCommand(
         ["changeemail", "changemail"],
-        parameters: 1...1,
+        [.param("email", "spacedawg@fuelrats.com")],
         category: .account,
         description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
-        paramText: "<email address>",
-        example: "spacedawg@fuelrats.com",
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage
     )

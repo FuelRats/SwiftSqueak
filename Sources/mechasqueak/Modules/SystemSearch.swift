@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -35,12 +35,9 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["search"],
-        parameters: 1...1,
-        lastParameterIsContinous: true,
+        [.param("system name", "NLTT 48288", .continious)],
         category: .utility,
-        description: "Search for a system in the galaxy database.",
-        paramText: "<system name>",
-        example: "NLTT 48288"
+        description: "Search for a system in the galaxy database."
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
@@ -74,12 +71,9 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["landmark"],
-        parameters: 1...1,
-        lastParameterIsContinous: true,
+        [.param("system name", "NLTT 48288", .continious)],
         category: .utility,
-        description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
-        paramText: "<system name>",
-        example: "NLTT 48288"
+        description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia."
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
