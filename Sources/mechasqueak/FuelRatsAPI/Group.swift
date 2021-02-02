@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -139,6 +139,37 @@ extension Group {
         )])
 
         var request = try! HTTPClient.Request(url: url, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = try! .encodable(relationship)
+
+        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
+            switch result {
+                case .success(_):
+                    promise.succeed(())
+
+                case .failure(let error):
+                    promise.fail(error)
+            }
+        })
+        return promise.futureResult
+    }
+    
+    func delUser (id: UUID) -> EventLoopFuture<Void> {
+        let promise = loop.next().makePromise(of: Void.self)
+
+        var url = configuration.api.url
+        url.appendPathComponent("/users")
+        url.appendPathComponent(id.uuidString)
+        url.appendPathComponent("/relationships/groups")
+
+        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
+            type: "groups",
+            id: self.id.rawValue
+        )])
+
+        var request = try! HTTPClient.Request(url: url, method: .DELETE)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/json")

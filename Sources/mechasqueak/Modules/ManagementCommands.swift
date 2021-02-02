@@ -162,6 +162,53 @@ class ManagementCommands: IRCBotModule {
             })
         })
     }
+    
+    @BotCommand(
+        ["delgroup"],
+        [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
+        category: .management,
+        description: "Remove a permission from a person",
+        permission: .UserWrite
+    )
+    var didReceiveDelGroupCommand = { command in
+        var getUserId = UUID(uuidString: command.parameters[0])
+        if getUserId == nil {
+            getUserId = command.message.client.user(withName: command.parameters[0])?.associatedAPIData?.user?.id.rawValue
+        }
+
+        guard let userId = getUserId else {
+            command.message.reply(key: "delgroup.noid", fromCommand: command, map: [
+                "param": command.parameters[0]
+            ])
+            return
+        }
+
+        Group.list().whenSuccess({ groupSearch in
+            guard let group = groupSearch.body.data?.primary.values.first(where: {
+                $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
+            }) else {
+                command.message.reply(key: "delgroup.nogroup", fromCommand: command, map: [
+                    "param": command.parameters[1]
+                ])
+                return
+            }
+
+            group.delUser(id: userId).whenComplete({ result in
+                switch result {
+                    case .success(_):
+                        command.message.reply(key: "delgroup.success", fromCommand: command, map: [
+                            "group": group.attributes.name.value,
+                            "groupId": group.id.rawValue.ircRepresentation,
+                            "userId": userId.ircRepresentation
+                        ])
+
+                    case .failure(let error):
+                        debug(String(describing: error))
+                        command.message.error(key: "delgroup.error", fromCommand: command)
+                }
+            })
+        })
+    }
 
     @BotCommand(
         ["suspend"],

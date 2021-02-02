@@ -278,6 +278,10 @@
   "addgroup.nogroup": "Could not add group as %{param} is not a valid group name",
   "addgroup.success": "Successfully added group %{group} (%{groupId}) for user ID %{userId}",
   "addgroup.error": "Unable to add group to user due to an unknown error",
+  "delgroup.noid": "Could not remove group as %{param} is not a logged in nick or a user id",
+  "delgroup.nogroup": "Could not remove group as %{param} is not a valid group name",
+  "delgroup.error": "Unable to remove group from user due to an unknown error",
+  "delgroup.success": "Successfully removed group %{group} (%{groupId}) from user ID %{userId}",
 
   "suspend.noid": "Unable to suspend user as %{param} is not a logged in nick or user id",
   "suspend.invalidspan": "Unable to suspend user as %{param} is not a valid timespan",
