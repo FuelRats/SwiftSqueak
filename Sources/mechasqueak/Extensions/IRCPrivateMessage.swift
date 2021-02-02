@@ -39,7 +39,7 @@ extension IRCPrivateMessage {
             self.reply(message: message)
             return
         }
-        self.client.sendNotice(toTarget: self.user.nickname, contents: message)
+        self.client.sendMessage(toTarget: self.user.nickname, contents: message)
     }
 
     func replyPrivate (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
