@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -36,6 +36,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
 
+    @available(*, deprecated, renamed: "init(wrappedValue:_:_:category:description:permission:allowedDestinations:)", message: "Replaced with CommandBody based initialiser")
     init <T: AnyRange> (
         wrappedValue value: @escaping BotCommandFunction,
         _ commands: [String],
@@ -64,6 +65,47 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
             description: description,
             paramText: paramText,
             example: example,
+            permission: permission,
+            allowedDestinations: allowedDestinations
+        )
+
+        MechaSqueak.commands.append(declaration)
+    }
+    
+    init (
+        wrappedValue value: @escaping BotCommandFunction,
+        _ commands: [String],
+        _ body: [CommandBody] = [],
+        category: HelpCategory?,
+        description: String,
+        permission: AccountPermission? = nil,
+        allowedDestinations: AllowedCommandDestination = .All
+    ) {
+        self.wrappedValue = value
+        
+        var maxParameters: Int? = body.parameters.count
+        var lastIsContinious = false
+        if case .param(_, _, let type, _) = body.last {
+            if type == .continious {
+                lastIsContinious = true
+            } else if type == .multiple {
+                maxParameters = nil
+            }
+        }
+        
+
+        let declaration = IRCBotCommandDeclaration(
+            commands: commands,
+            minParameters: body.requiredParameters.count,
+            onCommand: self.wrappedValue,
+            maxParameters: maxParameters,
+            lastParameterIsContinous: lastIsContinious,
+            options: body.options,
+            namedOptions: body.namedOptions,
+            category: category,
+            description: description,
+            paramText: body.paramText,
+            example: body.example,
             permission: permission,
             allowedDestinations: allowedDestinations
         )
@@ -101,8 +143,8 @@ struct IRCBotCommandDeclaration {
         paramText: String? = nil,
         example: String? = nil,
         permission: AccountPermission? = nil,
-        allowedDestinations: AllowedCommandDestination = .All) {
-
+        allowedDestinations: AllowedCommandDestination = .All
+    ) {
         self.commands = commands
         self.minimumParameters = minParameters
         self.maximumParameters = maxParameters

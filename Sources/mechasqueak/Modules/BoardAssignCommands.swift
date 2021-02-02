@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -34,12 +34,9 @@ class BoardAssignCommands: IRCBotModule {
 
     @BotCommand(
         ["go", "assign", "add"],
-        parameters: 2...,
-        options: ["a", "f"],
+        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
-        paramText: "<case id/client> ...rats",
-        example: "4 SpaceDawg StuffedRat",
         permission: .RescueWriteOwn,
         allowedDestinations: .Channel
     )

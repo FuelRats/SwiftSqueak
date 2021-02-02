@@ -310,8 +310,8 @@
   "help.nofacts": "Information commands such as !prep and !pcwing are not listed here, to see a list of those, use !facts.",
   "help.categoryerror": "%{category} is not in the categories list. To list all categories, do !help. To see help for a specific command, add a ! before the command.",
   "help.categorylist": "Showing commands in the %{category} category. To see see more information about the command, do !help !command (e.g !help !assign).",
-  "help.commandlist": "\u0002!%{command}\u0002 %{params} - %{description}",
-  "help.commandtitle": "\u0002!%{command}\u0002 %{example}",
+  "help.commandlist": "\u0002%{command}\u0002 %{params} - %{description}",
+  "help.commandtitle": "\u0002%{command}\u0002 %{example}",
   "help.commandaliases": "Aliases: %{aliases}",
   "help.commanderror": "!%{command} is not a known command, it may be a fact (simple commands that tell you a piece of information) to see a list of those, use !facts.",
 
