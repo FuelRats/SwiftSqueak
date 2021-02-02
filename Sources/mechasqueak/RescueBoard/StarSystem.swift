@@ -57,6 +57,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
 
     mutating func merge (_ starSystem: StarSystem) {
+        self.name = starSystem.name
         self.permit = starSystem.permit
         self.availableCorrections = starSystem.availableCorrections
         self.landmark = starSystem.landmark
