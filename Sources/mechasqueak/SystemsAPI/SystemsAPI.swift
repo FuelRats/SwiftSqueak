@@ -69,24 +69,25 @@ class SystemsAPI {
         let promise = loop.next().makePromise(of: StarSystem.self)
 
         performSearch(forSystem: systemName, quickSearch: true)
-            .and(performLandmarkCheck(forSystem: systemName), performProceduralCheck(forSystem: systemName))
+            .and(performProceduralCheck(forSystem: systemName))
             .whenComplete({ result in
                 switch result {
-                    case .success(let (searchResults, landmarkResults, proceduralResult)):
+                    case .success(let (searchResults, proceduralResult)):
                         let searchResult = searchResults.data?.first(where: {
                             $0.similarity == 1
                         })
+                        performLandmarkCheck(forSystem: searchResult?.name ?? systemName).whenSuccess({ landmarkResults in
+                            let permit = StarSystem.Permit(fromSearchResult: searchResult)
 
-                        let permit = StarSystem.Permit(fromSearchResult: searchResult)
-
-                        let starSystem = StarSystem(
-                            name: searchResult?.name ?? systemName,
-                            permit: permit,
-                            availableCorrections: searchResults.data,
-                            landmark: landmarkResults.landmarks?.first,
-                            proceduralCheck: proceduralResult
-                        )
-                        promise.succeed(starSystem)
+                            let starSystem = StarSystem(
+                                name: searchResult?.name ?? systemName,
+                                permit: permit,
+                                availableCorrections: searchResults.data,
+                                landmark: landmarkResults.landmarks?.first,
+                                proceduralCheck: proceduralResult
+                            )
+                            promise.succeed(starSystem)
+                        })
 
                     case .failure(let error):
                         debug(String(describing: error))
