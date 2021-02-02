@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 202§ The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -83,12 +83,13 @@ class SystemsAPI {
                             name: searchResult?.name ?? systemName,
                             permit: permit,
                             availableCorrections: searchResults.data,
-                            landmark: landmarkResults.landmarks.first,
+                            landmark: landmarkResults.landmarks?.first,
                             proceduralCheck: proceduralResult
                         )
                         promise.succeed(starSystem)
 
                     case .failure(let error):
+                        debug(String(describing: error))
                         promise.fail(error)
                 }
 
@@ -131,10 +132,10 @@ class SystemsAPI {
 
     struct LandmarkDocument: Codable {
         let meta: Meta
-        let landmarks: [LandmarkResult]
+        let landmarks: [LandmarkResult]?
 
         struct Meta: Codable {
-            let name: String
+            let name: String?
             let error: String?
         }
 

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -518,7 +518,7 @@ class LocalRescue: Codable {
 
                         if let autoCorrectableResult = approvedCorrections.first?.0 {
                             SystemsAPI.performLandmarkCheck(forSystem: autoCorrectableResult.name).whenSuccess({ landmark in
-                                guard landmark.landmarks.count > 0 else {
+                                guard landmark.landmarks?.count ?? 0 > 0 else {
                                     return
                                 }
 
@@ -526,7 +526,7 @@ class LocalRescue: Codable {
                                     name: autoCorrectableResult.name,
                                     permit: StarSystem.Permit(fromSearchResult: autoCorrectableResult),
                                     availableCorrections: results,
-                                    landmark: landmark.landmarks[0]
+                                    landmark: landmark.landmarks?[0]
                                 )
                                 self.system?.merge(newSystem)
                                 self.syncUpstream()

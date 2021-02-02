@@ -387,7 +387,7 @@ class BoardCommands: IRCBotModule {
                     ])
 
                 case .success(let landmarkResults):
-                    guard landmarkResults.landmarks.count > 0 else {
+                    guard landmarkResults.landmarks?.count ?? 0 > 0, let landmark = landmarkResults.landmarks?[0] else {
                         return
                     }
 
@@ -395,7 +395,7 @@ class BoardCommands: IRCBotModule {
                         name: selectedCorrection.name,
                         manuallyCorrected: true,
                         permit: StarSystem.Permit(fromSearchResult: selectedCorrection),
-                        landmark: landmarkResults.landmarks[0]
+                        landmark: landmark
                     )
                     rescue.system?.merge(newSystem)
                     rescue.syncUpstream()
