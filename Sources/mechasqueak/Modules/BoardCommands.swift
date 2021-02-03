@@ -236,7 +236,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["trash", "md", "purge", "mdadd"],
-        [.param("case id/client", "4"), .param("message", "client left before rats were assigned", .continious)],
+        [.param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
         permission: .DispatchWrite

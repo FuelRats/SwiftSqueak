@@ -34,7 +34,7 @@ class TweetCommands: IRCBotModule {
 
     @BotCommand(
         ["tweet"],
-        [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continious)],
+        [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
         description: "Send a tweet from @FuelRatAlerts",
         permission: .TwitterWrite,

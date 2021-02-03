@@ -139,7 +139,7 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["inject"],
-        [.options(["f"]), .param("case id/client", "4"), .param("text", "client is in the EZ", .continious)],
+        [.options(["f"]), .param("case id/client", "4"), .param("text", "client is in the EZ", .continuous)],
         category: .board,
         description: "Add some new information to the case, if one does not exist, create one with this information",
         permission: .RescueWriteOwn,
@@ -214,7 +214,7 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["sub"],
-        [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continious)],
+        [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continuous)],
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
         permission: .RescueWriteOwn,

@@ -33,7 +33,7 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
-        [.param("case id/client", "4"), .param("message", "client left irc", .continious, .optional)],
+        [.param("case id/client", "4"), .param("message", "client left irc", .continuous, .optional)],
         category: .board,
         description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
         permission: .RescueWriteOwn,
@@ -140,7 +140,7 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["system", "sys", "loc", "location"],
-        [.param("case id/client", "4"), .param("system name", "NLTT 48288", .continious)],
+        [.param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
         permission: .RescueWriteOwn,
@@ -174,7 +174,7 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["cmdr", "client", "commander"],
-        [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continious)],
+        [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continuous)],
         category: .board,
         description: "Change the CMDR name of the client of this rescue.",
         permission: .RescueWriteOwn,
@@ -317,7 +317,7 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["title", "operation"],
-        [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continious)],
+        [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continuous)],
         category: .board,
         description: "Set the operations title of this rescue, used to give a unique name to special rescues",
         permission: .RescueWriteOwn,

@@ -136,7 +136,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["sctime", "sccalc", "traveltime"],
-        [.options(["g"]), .param("distance", "2500ls", .continious)],
+        [.options(["g"]), .param("distance", "2500ls", .continuous)],
         category: .utility,
         description: "Calculate supercruise travel time.",
         permission: nil

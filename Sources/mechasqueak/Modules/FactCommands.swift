@@ -44,7 +44,7 @@ class FactCommands: IRCBotModule {
 
     @BotCommand(
         ["facts", "fact"],
-        [.param("set/info/locales/del", "set"), .param("fact", "pcwing-es"), .param("contents", "bla bla bla", .continious, .optional)],
+        [.param("set/info/locales/del", "set"), .param("fact", "pcwing-es"), .param("contents", "bla bla bla", .continuous, .optional)],
         category: .facts,
         description: "View the list of facts, modify, or delete them."
     )

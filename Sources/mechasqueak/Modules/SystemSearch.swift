@@ -35,7 +35,7 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["search"],
-        [.param("system name", "NLTT 48288", .continious)],
+        [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a system in the galaxy database."
     )
@@ -71,7 +71,7 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["landmark"],
-        [.param("system name", "NLTT 48288", .continious)],
+        [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia."
     )

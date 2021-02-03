@@ -86,7 +86,7 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         var maxParameters: Int? = body.parameters.count
         var lastIsContinious = false
         if case .param(_, _, let type, _) = body.last {
-            if type == .continious {
+            if type == .continuous {
                 lastIsContinious = true
             } else if type == .multiple {
                 maxParameters = nil

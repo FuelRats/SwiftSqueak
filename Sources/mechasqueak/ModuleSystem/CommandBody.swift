@@ -31,7 +31,7 @@ enum CommandBody {
     
     enum ParameterType {
         case standard
-        case continious
+        case continuous
         case multiple
     }
     
@@ -92,7 +92,7 @@ extension Array where Element == CommandBody {
                 }
                 return "[\(description)]"
                 
-            case .continious:
+            case .continuous:
                 if nullability == .required {
                     return "<\(description)>..."
                 }

@@ -34,7 +34,7 @@ class HelpCommands: IRCBotModule {
 
     @BotCommand(
         ["help"],
-        [.param("category/command", "!assign", .continious, .optional)],
+        [.param("category/command", "!assign", .continuous, .optional)],
         category: nil,
         description: "View help for MechaSqueak."
     )

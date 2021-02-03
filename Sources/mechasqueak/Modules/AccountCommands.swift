@@ -243,7 +243,7 @@ class AccountCommands: IRCBotModule {
     
     @BotCommand(
         ["addpermit", "permitadd"],
-        [.param("system name", "NLTT 48288", .continious)],
+        [.param("system name", "NLTT 48288", .continuous)],
         category: .account,
         description: "Add the permit belonging to this system to your current CMDR",
         permission: .UserWriteOwn
@@ -296,7 +296,7 @@ class AccountCommands: IRCBotModule {
     
     @BotCommand(
         ["delpermit", "permitdel"],
-        [.param("permit name", "Pilot's Federation District", .continious)],
+        [.param("permit name", "Pilot's Federation District", .continuous)],
         category: .account,
         description: "Delete this permit from your current CMDR",
         permission: .UserWriteOwn

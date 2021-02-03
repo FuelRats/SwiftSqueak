@@ -265,7 +265,7 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["msg", "say"],
-        [.param("destination", "#ratchat"), .param("message", "squeak!", .continious)],
+        [.param("destination", "#ratchat"), .param("message", "squeak!", .continuous)],
         category: .utility,
         description: "Make the bot send an IRC message somewhere.",
         permission: .UserWrite
@@ -280,7 +280,7 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["me", "action", "emote"],
-        [.param("destination", "#ratchat"), .param("message", "takes all the snickers", .continious)],
+        [.param("destination", "#ratchat"), .param("message", "takes all the snickers", .continuous)],
         category: .utility,
         description: "Make the bot send an IRC action (/me) somewhere.",
         permission: .UserWrite
