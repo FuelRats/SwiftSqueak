@@ -161,7 +161,8 @@ class EDSM {
                 return "\(self.spectralClass!) class Star"
             }
             let subType = self.subType
-            if let start = subType.firstIndex(of: "("), let end = subType.firstIndex(of: ")") {
+            if let firstIndex = subType.firstIndex(of: "("), let end = subType.firstIndex(of: ")") {
+                let start = subType.index(after: firstIndex)
                 return "\(self.spectralClass!) \(subType[start..<end])"
             }
             return "\(self.spectralClass!) \(subType)"
