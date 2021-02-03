@@ -305,12 +305,14 @@ class RescueBoard {
             if rescue.codeRed == false, let stations = rescue.system?.refuelingStations, stations.count > 0 {
                 let station = stations[0]
                 let distance = station.distanceToArrival.eliteDistance
-                message.reply(message: lingo.localize("board.stationfound", locale: "en", interpolations: [
+                mecha.reportingChannel?.send(key: "board.stationfound", map: [
+                    "caseId": rescue.commandIdentifier,
+                    "client": rescue.clientDescription,
                     "name": station.name,
                     "distance": distance,
                     "type": station.type,
                     "services": station.services.joined(separator: ", ")
-                ]))
+                ])
             }
             self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
