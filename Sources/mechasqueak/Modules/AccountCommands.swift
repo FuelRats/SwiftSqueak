@@ -223,14 +223,14 @@ class AccountCommands: IRCBotModule {
     )
     var didReceiveListPermitCommand = { command in
         guard let currentRat = command.message.user.currentRat else {
-            command.message.reply(key: "permits.norat", fromCommand: command)
+            command.message.replyPrivate(key: "permits.norat", fromCommand: command)
             return
         }
         
         let permits = currentRat.attributes.data.value.permits ?? []
         
         guard permits.count > 0 else {
-            command.message.reply(key: "permits.nopermits", fromCommand: command)
+            command.message.replyPrivate(key: "permits.nopermits", fromCommand: command)
             return
         }
         
@@ -238,7 +238,7 @@ class AccountCommands: IRCBotModule {
             "name": currentRat.attributes.name.value
         ])
         
-        command.message.reply(list: permits, separator: ", ", heading: "\(heading) ")
+        command.message.replyPrivate(list: permits, separator: ", ", heading: "\(heading) ")
     }
     
     @BotCommand(
@@ -246,7 +246,8 @@ class AccountCommands: IRCBotModule {
         [.param("system name", "NLTT 48288", .continuous)],
         category: .account,
         description: "Add the permit belonging to this system to your current CMDR",
-        permission: .UserWriteOwn
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveAddPermitCommand = { command in
         let systemName = command.parameters[0]
@@ -299,7 +300,8 @@ class AccountCommands: IRCBotModule {
         [.param("permit name", "Pilot's Federation District", .continuous)],
         category: .account,
         description: "Delete this permit from your current CMDR",
-        permission: .UserWriteOwn
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveRemovePermitCommand = { command in
         let permitName = command.parameters[0]
