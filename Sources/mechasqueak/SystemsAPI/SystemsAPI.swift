@@ -76,17 +76,33 @@ class SystemsAPI {
                         let searchResult = searchResults.data?.first(where: {
                             $0.similarity == 1
                         })
-                        performLandmarkCheck(forSystem: searchResult?.name ?? systemName).whenSuccess({ landmarkResults in
+                        let properName = searchResult?.name ?? systemName
+                        performLandmarkCheck(forSystem: properName).whenSuccess({ landmarkResults in
                             let permit = StarSystem.Permit(fromSearchResult: searchResult)
 
-                            let starSystem = StarSystem(
+                            var starSystem = StarSystem(
                                 name: searchResult?.name ?? systemName,
                                 permit: permit,
                                 availableCorrections: searchResults.data,
                                 landmark: landmarkResults.landmarks?.first,
                                 proceduralCheck: proceduralResult
                             )
-                            promise.succeed(starSystem)
+                            
+                            if starSystem.landmark != nil {
+                                EDSM.getBodies(forSystem: properName).and(EDSM.getStations(forSystem: properName)).whenComplete({ result in
+                                    switch result {
+                                    case .failure(let error):
+                                        debug(String(describing: error))
+                                        promise.succeed(starSystem)
+                                    case .success((let bodies, let stations)):
+                                        starSystem.bodies = bodies.bodies
+                                        starSystem.stations = stations.stations
+                                        promise.succeed(starSystem)
+                                    }
+                                })
+                            } else {
+                                promise.succeed(starSystem)
+                            }
                         })
 
                     case .failure(let error):
@@ -146,7 +162,7 @@ class SystemsAPI {
 
             var description: String {
                 let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: self.distance))!
-                return " (\(distance) LY from \(self.name))"
+                return "\(distance) LY from \(self.name)"
             }
         }
     }

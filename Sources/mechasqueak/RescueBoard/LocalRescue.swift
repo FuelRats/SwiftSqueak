@@ -501,7 +501,7 @@ class LocalRescue: Codable {
                     promise.fail(error)
 
                 case .success(let starSystem):
-                    self.system = starSystem
+                    self.system?.merge(starSystem)
                     promise.succeed(())
                     guard starSystem.isConfirmed == false else {
                         return

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -295,8 +295,21 @@ class RescueBoard {
             ]))
 
             if let systemBody = rescue.system?.clientProvidedBody {
+                let bodyDescription = rescue.system?.body(byName: systemBody)?.bodyDescription
                 message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
-                    "body": systemBody
+                    "body": systemBody,
+                    "bodyDescription": bodyDescription != nil ? "(\(bodyDescription!))" : ""
+                ]))
+            }
+            
+            if rescue.codeRed == false, let stations = rescue.system?.refuelingStations, stations.count > 0 {
+                let station = stations[0]
+                let distance = station.distanceToArrival.eliteDistance
+                message.reply(message: lingo.localize("board.stationfound", locale: "en", interpolations: [
+                    "name": station.name,
+                    "distance": distance,
+                    "type": station.type,
+                    "services": station.services.joined(separator: ", ")
                 ]))
             }
             self.prepClient(rescue: rescue, message: message, initiated: initiated)

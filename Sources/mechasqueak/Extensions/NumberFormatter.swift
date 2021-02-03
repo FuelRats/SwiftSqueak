@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -28,6 +28,8 @@ extension NumberFormatter {
     static func englishFormatter () -> NumberFormatter {
         let numberFormatter = NumberFormatter()
         numberFormatter.numberStyle = .decimal
+        numberFormatter.thousandSeparator = ","
+        numberFormatter.decimalSeparator = "."
         numberFormatter.groupingSize = 3
         numberFormatter.maximumFractionDigits = 1
         numberFormatter.roundingMode = .halfUp
@@ -56,5 +58,26 @@ extension Int {
 extension Double {
     var clean: String {
        return String(format: "%.0f", floor(self))
+    }
+    
+    var eliteDistance: String {
+        let formatter = NumberFormatter.englishFormatter()
+        formatter.maximumFractionDigits = 2
+        
+        let lightYears = self / 60/60/24/365
+        var formattedDistance = (formatter.string(from: self) ?? "\(self)") + "ls"
+        let scientificFormatter = NumberFormatter()
+        scientificFormatter.numberStyle = .scientific
+        scientificFormatter.positiveFormat = "0.###E+0"
+        scientificFormatter.exponentSymbol = "E"
+
+        if self > 3.1*pow(10, 13) {
+            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
+        } else if self > 3.6*pow(10, 6) {
+            formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
+        } else if self < 1 {
+            formattedDistance = "\(scientificFormatter.string(from: self) ?? "\(self)")ls"
+        }
+        return formattedDistance
     }
 }

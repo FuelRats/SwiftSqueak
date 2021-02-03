@@ -214,8 +214,6 @@ class GeneralCommands: IRCBotModule {
             seconds = seconds * 2
         }
 
-        let formatter = NumberFormatter.englishFormatter()
-        formatter.maximumFractionDigits = 2
         let yearFormatter = NumberFormatter.englishFormatter()
         yearFormatter.maximumFractionDigits = 0
         if seconds > 31536000 {
@@ -238,24 +236,9 @@ class GeneralCommands: IRCBotModule {
             time = "\(seconds.clean) seconds"
         }
 
-        let lightYears = displayDistance / 60/60/24/365
-        var formattedDistance = (formatter.string(from: displayDistance) ?? "\(displayDistance)") + "ls"
-        let scientificFormatter = NumberFormatter()
-        scientificFormatter.numberStyle = .scientific
-        scientificFormatter.positiveFormat = "0.###E+0"
-        scientificFormatter.exponentSymbol = "E"
-
-        if displayDistance > 3.1*pow(10, 13) {
-            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
-        } else if displayDistance > 3.6*pow(10, 6) {
-            formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
-        } else if displayDistance < 1 {
-            formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(displayDistance)")ls"
-        }
-
         let responseKey = destinationGravity ? "sctime.response.g" : "sctime.response"
         command.message.reply(key: responseKey, fromCommand: command, map: [
-            "distance": formattedDistance,
+            "distance": displayDistance.eliteDistance,
             "time": time
         ])
     }

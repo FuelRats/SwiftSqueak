@@ -37,6 +37,8 @@ struct StarSystem: CustomStringConvertible, Codable {
     var landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil
     var clientProvidedBody: String?
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
+    var bodies: [EDSM.Body]? = nil
+    var stations: [EDSM.Station]? = nil
 
     init (
         name: String,
@@ -62,6 +64,8 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.availableCorrections = starSystem.availableCorrections
         self.landmark = starSystem.landmark
         self.proceduralCheck = starSystem.proceduralCheck
+        self.bodies = starSystem.bodies
+        self.stations = starSystem.stations
     }
 
     struct Permit: CustomStringConvertible, Codable {
@@ -81,18 +85,46 @@ struct StarSystem: CustomStringConvertible, Codable {
             self.name = result.permitName
         }
     }
+    
+    func body (byName name: String) -> EDSM.Body? {
+        guard let bodies = self.bodies, bodies.count > 0 else {
+            return nil
+        }
+        
+        let composedName = "\(self.name.uppercased()) \(name.uppercased())"
+        return bodies.first(where: { $0.name.uppercased() == composedName })
+    }
 
     var description: String {
         var systemInfo = "\"\(self.name)\""
         if let landmark = self.landmark {
-            systemInfo += landmark.description
-        } else if Autocorrect.proceduralSystemExpression.matches(name) {
-            systemInfo += " (Valid system name)"
+            systemInfo += " ("
+            if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
+                systemInfo += description + " "
+            }
+            systemInfo += "\(landmark.description))"
+        } else if self.proceduralCheck?.isPgSystem == true && self.proceduralCheck?.isPgSector == true {
+            systemInfo += " (Valid procedural)"
         } else {
             systemInfo += " (Not found in galaxy database)"
         }
         if let permit = self.permit {
             systemInfo += " " + IRCFormat.color(.Orange, permit.description)
+        }
+        return systemInfo
+    }
+    
+    var shortDescription: String {
+        var systemInfo = "\"\(self.name)\""
+        if let landmark = self.landmark {
+            systemInfo += landmark.description
+        } else if self.proceduralCheck?.isPgSystem == true && self.proceduralCheck?.isPgSector == true {
+            systemInfo += " (Valid procedural)"
+        } else {
+            systemInfo += " (Not found)"
+        }
+        if self.permit != nil {
+            systemInfo += IRCFormat.bold(IRCFormat.color(.Orange, "*"))
         }
         return systemInfo
     }
@@ -135,7 +167,13 @@ struct StarSystem: CustomStringConvertible, Codable {
 
         return "~\(ceil(landmark.distance / 1000))kLY from \(landmark.name)"
     }
-}
+    
+    var refuelingStations: [EDSM.Station] {
+        return self.stations?.filter({
+            $0.otherServices.contains("Refuel")
+        }) ?? []
+    }
+ }
 
 extension Optional where Wrapped == StarSystem {
     var description: String {

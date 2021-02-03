@@ -85,7 +85,8 @@
   "board.signal.oxygen": "%{client} Are you on emergency oxygen? (\"oxygen depleted in xx.xx\" timer counting down in the top right of your cockpit)",
   "board.signal.changes": "\u000304CAUTION:\u0003 The new signal for case #%{caseId} has changes: %{changes}",
   "board.signal.unhelpfulsysmeme": "\"%{system}\" https://i.kym-cdn.com/entries/icons/facebook/000/032/874/cover4.jpg ಠ_ಠ",
-  "board.systembody": "NOTE: Client indicated their location near system body \"%{body}\"",
+  "board.systembody": "NOTE: Client indicated their location near system body \"%{body}\" %{bodyDescription}",
+  "board.stationfound": "\u0002STATION FOUND:\u0002 %{name} (%{type}) %{distance} from main star (%{services})",
   
   "board.casenotfound": "Could not find a case ID or client name matching \"%{caseIdentifier}\".",
   "board.platformset": "Platform for case #%{caseId} (%{client}) set to: %{platform}.",
