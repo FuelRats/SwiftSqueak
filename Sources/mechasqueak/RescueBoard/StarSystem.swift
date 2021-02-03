@@ -49,7 +49,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         clientProvidedBody: String? = nil,
         proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
     ) {
-        self.name = name
+        self.name = name.prefix(64).uppercased()
         self.manuallyCorrected = manuallyCorrected
         self.permit = permit
         self.availableCorrections = availableCorrections
