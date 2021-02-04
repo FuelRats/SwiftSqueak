@@ -517,18 +517,8 @@ class LocalRescue: Codable {
                         approvedCorrections.sort(by: { $0.1! < $1.1! })
 
                         if let autoCorrectableResult = approvedCorrections.first?.0 {
-                            SystemsAPI.performLandmarkCheck(forSystem: autoCorrectableResult.name).whenSuccess({ landmark in
-                                guard landmark.landmarks?.count ?? 0 > 0 else {
-                                    return
-                                }
-
-                                let newSystem = StarSystem(
-                                    name: autoCorrectableResult.name,
-                                    permit: StarSystem.Permit(fromSearchResult: autoCorrectableResult),
-                                    availableCorrections: results,
-                                    landmark: landmark.landmarks?[0]
-                                )
-                                self.system?.merge(newSystem)
+                            SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult).whenSuccess({ starSystem in
+                                self.system?.merge(starSystem)
                                 self.syncUpstream()
                                 mecha.reportingChannel?.client.sendMessage(
                                     toChannelName: self.channelName,
@@ -539,7 +529,6 @@ class LocalRescue: Codable {
                                         "system": self.system.description
                                     ]
                                 )
-
                             })
                             return
                         }

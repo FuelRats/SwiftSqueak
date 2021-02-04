@@ -53,6 +53,38 @@ class SystemsAPI {
 
         return httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
     }
+    
+    static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) -> EventLoopFuture<StarSystem> {
+        let promise = loop.next().makePromise(of: StarSystem.self)
+        self.performLandmarkCheck(forSystem: system.name).whenComplete({ result in
+            switch result {
+            case .failure(let error):
+                promise.fail(error)
+                
+            case .success(let landmarkDocument):
+                let permit = StarSystem.Permit(fromSearchResult: system)
+
+                var starSystem = StarSystem(
+                    name: system.name,
+                    permit: permit,
+                    availableCorrections: nil,
+                    landmark: landmarkDocument.landmarks?.first,
+                    proceduralCheck: nil
+                )
+                EDSM.getBodies(forSystem: system.name).and(EDSM.getStations(forSystem: system.name)).whenComplete({ result in
+                    switch result {
+                    case .failure(_):
+                        promise.succeed(starSystem)
+                    case .success((let bodies, let stations)):
+                        starSystem.bodies = bodies.bodies
+                        starSystem.stations = stations.stations
+                        promise.succeed(starSystem)
+                    }
+                })
+            }
+        })
+        return promise.futureResult
+    }
 
     static func performProceduralCheck (forSystem systemName: String) -> EventLoopFuture<ProceduralCheckDocument> {
         var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!

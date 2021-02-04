@@ -377,35 +377,15 @@ class BoardCommands: IRCBotModule {
         }
         let selectedCorrection = corrections[index - 1]
 
-        SystemsAPI.performLandmarkCheck(forSystem: selectedCorrection.name).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    command.message.error(key: "sysc.seterror", fromCommand: command, map: [
-                        "system": selectedCorrection,
-                        "caseId": rescue.commandIdentifier,
-                        "client": rescue.clientDescription
-                    ])
+        SystemsAPI.getSystemInfo(forSystem: selectedCorrection).whenSuccess({ starSystem in
+            rescue.system?.merge(starSystem)
+            rescue.syncUpstream()
 
-                case .success(let landmarkResults):
-                    guard landmarkResults.landmarks?.count ?? 0 > 0, let landmark = landmarkResults.landmarks?[0] else {
-                        return
-                    }
-
-                    let newSystem = StarSystem(
-                        name: selectedCorrection.name,
-                        manuallyCorrected: true,
-                        permit: StarSystem.Permit(fromSearchResult: selectedCorrection),
-                        landmark: landmark
-                    )
-                    rescue.system?.merge(newSystem)
-                    rescue.syncUpstream()
-
-                    command.message.reply(key: "board.syschange", fromCommand: command, map: [
-                        "caseId": rescue.commandIdentifier,
-                        "client": rescue.clientDescription,
-                        "systemInfo": rescue.system.description
-                    ])
-            }
+            command.message.reply(key: "board.syschange", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier,
+                "client": rescue.clientDescription,
+                "systemInfo": rescue.system.description
+            ])
         })
     }
 
