@@ -135,7 +135,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     
     var info: String {
         var description = self.description + "."
-        if let bodies = self.bodies, bodies.count > 0 {
+        if let bodies = self.bodies, bodies.count > 1 {
             description += " \(bodies.count) stellar bodies"
         }
         let allStations = self.refuelingStations
@@ -143,10 +143,10 @@ struct StarSystem: CustomStringConvertible, Codable {
             let stations = allStations.filter({ $0.type != .FleetCarrier })
             let carriers = allStations.filter({ $0.type == .FleetCarrier })
             if stations.count > 0 {
-                description += ", \(stations.count) stations"
+                description += ", \(stations.count) \(stations.count > 1 ? "stations" : "station")"
             }
             if carriers.count > 0 {
-                description += ", \(carriers.count) fleet carriers"
+                description += ", \(carriers.count) fleet \(carriers.count > 1 ? "carriers" : "carrier")"
             }
             
             let station = allStations.first!
