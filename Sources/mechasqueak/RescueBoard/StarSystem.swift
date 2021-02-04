@@ -142,6 +142,9 @@ struct StarSystem: CustomStringConvertible, Codable {
             description += ", \(stations.count) stations. "
             
             let station = stations.first!
+            if station.type == .FleetCarrier {
+                return description
+            }
             if let economy = station.economy {
                 description += "Economy: \(economy). "
             }
