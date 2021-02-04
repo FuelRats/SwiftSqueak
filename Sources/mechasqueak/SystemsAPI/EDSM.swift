@@ -28,6 +28,8 @@ import AsyncHTTPClient
 import IRCKit
 
 class EDSM {
+    static let mainSequence: [Character] = ["O", "B", "A", "F", "G", "K", "M"]
+    
     static func getBodies (forSystem systemName: String) -> EventLoopFuture<BodiesResult> {
         var url = URLComponents(string: "https://www.edsm.net/api-system-v1/bodies")!
         url.queryItems = [URLQueryItem(name: "systemName", value: systemName)]
@@ -156,8 +158,12 @@ class EDSM {
             guard self.type == .Star, let spectralClass = self.spectralClass else {
                 return subType
             }
+            let subType = self.subType
             if let firstIndex = subType.firstIndex(of: "("), let end = subType.firstIndex(of: ")") {
                 let start = subType.index(after: firstIndex)
+                if self.isMainSequence {
+                    return "\(spectralClass) \(subType[start..<end]) star"
+                }
                 return "\(spectralClass) \(subType[start..<end])"
             }
             return "\(spectralClass) \(subType)"
