@@ -193,6 +193,9 @@ class SystemsAPI {
             let distance: Double
 
             var description: String {
+                guard distance > 0 else {
+                    return ""
+                }
                 let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: self.distance))!
                 return "\(distance) LY from \(self.name)"
             }

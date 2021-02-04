@@ -173,7 +173,7 @@ class EDSM {
     struct Station: Codable {
         let id: Int
         let marketId: Int
-        let type: String
+        let type: StationType
         let name: String
         let distanceToArrival: Double
         let allegience: String?
@@ -185,6 +185,35 @@ class EDSM {
         let haveOutfitting: Bool
         let otherServices: [String]
         let updateTime: StationUpdateTimes
+        
+        enum StationType: String, Codable {
+            case CoriolisStarport = "Coriolis Starport"
+            case OcellusStarport = "Ocellus Starport"
+            case OrbisStarport = "Orbis Starport"
+            case Outpost
+            case PlanetaryOutpost = "Planetary Outpost"
+            case PlanetaryPort = "Planetary Port"
+            case AsteroidBase = "Asteroid base"
+            case MegaShip = "Mega ship"
+            case FleetCarrier = "Fleet Carrier"
+            
+            
+            static let ratings: [StationType: UInt] = [
+                .CoriolisStarport: 0,
+                .OcellusStarport: 0,
+                .OrbisStarport: 0,
+                .PlanetaryPort: 1,
+                .PlanetaryOutpost: 1,
+                .AsteroidBase: 2,
+                .MegaShip: 2,
+                .Outpost: 3,
+                .FleetCarrier: 4
+            ]
+            
+            var rating: UInt {
+                return StationType.ratings[self]!
+            }
+        }
         
         struct StationUpdateTimes: Codable {
             let information: Date?

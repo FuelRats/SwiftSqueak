@@ -100,9 +100,13 @@ struct StarSystem: CustomStringConvertible, Codable {
         if let landmark = self.landmark {
             systemInfo += " ("
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
-                systemInfo += description + " "
+                systemInfo += description
             }
-            systemInfo += "\(landmark.description))"
+            if landmark.description.count > 0 {
+                systemInfo += " \(landmark.description))"
+            } else {
+                systemInfo += ")"
+            }
         } else if self.proceduralCheck?.isPgSystem == true && self.proceduralCheck?.isPgSector == true {
             systemInfo += " (Valid procedural)"
         } else {
@@ -127,6 +131,26 @@ struct StarSystem: CustomStringConvertible, Codable {
             systemInfo += IRCFormat.bold(IRCFormat.color(.Orange, "*"))
         }
         return systemInfo
+    }
+    
+    var info: String {
+        var description = self.description + "."
+        if let bodies = self.bodies, bodies.count > 0 {
+            description += " \(bodies.count) stellar bodies"
+        }
+        if let stations = self.stations, stations.count > 0 {
+            description += ", \(stations.count) stations. "
+            
+            let station = stations.first!
+            if let economy = station.economy {
+                description += "Economy: \(economy). "
+            }
+            
+            if let government = station.government {
+                description += "Government: \(government). "
+            }
+        }
+        return description
     }
 
     var systemIsIncomplete: Bool {
@@ -169,9 +193,13 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
     
     var refuelingStations: [EDSM.Station] {
-        return self.stations?.filter({
+        var stations = self.stations?.filter({
             $0.otherServices.contains("Refuel")
         }) ?? []
+        stations.sort(by: {
+            $0.type.rating < $1.type.rating
+        })
+        return stations
     }
  }
 

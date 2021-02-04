@@ -88,11 +88,7 @@ class SystemSearch: IRCBotModule {
                 ])
                 return
             }
-            command.message.reply(key: "landmark.response", fromCommand: command, map: [
-                "system": result.name,
-                "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
-                "landmark": landmark.name
-            ])
+            command.message.reply(message: result.info)
 
         })
     }

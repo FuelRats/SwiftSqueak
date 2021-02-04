@@ -310,7 +310,7 @@ class RescueBoard {
                     "client": rescue.clientDescription,
                     "name": station.name,
                     "distance": distance,
-                    "type": station.type,
+                    "type": station.type.rawValue,
                     "services": station.services.joined(separator: ", ")
                 ])
             }
