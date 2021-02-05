@@ -184,9 +184,6 @@ class GeneralCommands: IRCBotModule {
 
         distance = distance * factor
         let displayDistance = distance
-        if destinationGravity {
-            distance = distance / 2
-        }
 
         var seconds = distance.distanceToSeconds(destinationGravity: destinationGravity)
 
