@@ -333,6 +333,9 @@ class FactCommands: IRCBotModule {
 
                     var smartCommand = command
                     smartCommand.command = "\(platform.factPrefix)\(command.command)"
+                    if command.command == "pcfr" && targets.contains(where: { $1?.codeRed ?? false == true }) {
+                        smartCommand.command += "cr"
+                    }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
