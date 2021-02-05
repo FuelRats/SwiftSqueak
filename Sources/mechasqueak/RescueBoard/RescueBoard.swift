@@ -275,13 +275,6 @@ class RescueBoard {
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
             system.clientProvidedBody = body
             rescue.system = system
-            rescue.quotes.append(RescueQuote(
-                author: message.client.currentNick,
-                message: "Client indicated location in system near body \"\(body)\"",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: message.client.currentNick)
-            )
         }
 
         rescue.validateSystem()?.whenComplete({ _ in
@@ -304,6 +297,14 @@ class RescueBoard {
                     "body": systemBody,
                     "bodyDescription": bodyDescription != nil ? "(\(bodyDescription!))" : ""
                 ]))
+                rescue.quotes.append(RescueQuote(
+                    author: message.client.currentNick,
+                    message: "Client indicated location in system near body \"\(systemBody)\" \(bodyDescription ?? "")}",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: message.client.currentNick)
+                )
+                rescue.syncUpstream()
             }
             
             if rescue.codeRed == false, let stations = rescue.system?.refuelingStations, stations.count > 0 {
