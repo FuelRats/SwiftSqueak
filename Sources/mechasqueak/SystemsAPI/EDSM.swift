@@ -147,9 +147,10 @@ class EDSM {
                 return bodyType
             }
             let distance = Double(self.distanceToArrival).eliteDistance
-            var description = "\(bodyType) ~\(distance) from main star"
+            let travelTime = Double(self.distanceToArrival).distanceToSeconds(destinationGravity: true)
+            var description = "\(bodyType) ~\(distance) from main star (estimated \(travelTime.timeSpan))"
             if self.orbitalEccentricity ?? 1 < 0.6 || self.orbitalEccentricity ?? 1 > 1.5 {
-                description += " (Eccentric orbit)"
+                description += " CAUTION: Eccentric orbit"
             }
             return description
         }

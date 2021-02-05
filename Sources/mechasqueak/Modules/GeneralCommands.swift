@@ -188,58 +188,12 @@ class GeneralCommands: IRCBotModule {
             distance = distance / 2
         }
 
-        var seconds = 0.0
-        if distance < 308639 {
-            seconds = 4.4708*pow(distance, 0.3899)
-        } else if distance > 579427 {
-            seconds = (distance - 5100000.0) / 2001 + 3420
-        }
-        else {
-            /*
-                Thank you to RadLock for creating the original equation.
-             */
-           let part1 = 33.7+1.87*pow(10 as Double, -3)*Double(distance)
-           let part2 = -8.86*pow(10 as Double, -10) * pow(Double(distance), 2)
-           let part3 = 2.37*pow(10 as Double, -16) * pow(Double(distance), 3)
-           let part4 = -2.21*pow(10 as Double, -23) * pow(Double(distance), 4)
-           seconds = part1 + part2 + part3 + part4
-        }
-
-        var time = ""
-        if seconds < 0 {
-            return
-        }
-
-        if destinationGravity {
-            seconds = seconds * 2
-        }
-
-        let yearFormatter = NumberFormatter.englishFormatter()
-        yearFormatter.maximumFractionDigits = 0
-        if seconds > 31536000 {
-            let years = seconds / 31536000
-            let days = seconds.truncatingRemainder(dividingBy: 31536000) / 86400
-            time = "\(yearFormatter.string(from: years) ?? "\(years)") years, and \(days.clean) days"
-        } else if seconds > 86400 {
-            let days = seconds / 86400
-            let hours = seconds.truncatingRemainder(dividingBy: 86400) / 3600
-            time = "\(days.clean) days, and \(hours.clean) hours"
-        } else if seconds > 3600 {
-            let hours = seconds / 3600
-            let minutes = seconds.truncatingRemainder(dividingBy: 3600) / 60
-            time = "\(hours.clean) hours, and \(minutes.clean) minutes"
-        } else if seconds > 60 {
-            let minutes = seconds / 60
-            let seconds = (seconds.truncatingRemainder(dividingBy: 60))
-            time = "\(minutes.clean) minutes, and \(seconds.clean) seconds"
-        } else {
-            time = "\(seconds.clean) seconds"
-        }
+        var seconds = distance.distanceToSeconds(destinationGravity: destinationGravity)
 
         let responseKey = destinationGravity ? "sctime.response.g" : "sctime.response"
         command.message.reply(key: responseKey, fromCommand: command, map: [
             "distance": displayDistance.eliteDistance,
-            "time": time
+            "time": seconds.timeSpan
         ])
     }
 

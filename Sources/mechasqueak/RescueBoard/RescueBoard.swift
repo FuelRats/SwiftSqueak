@@ -50,7 +50,7 @@ class RescueBoard {
         self.distanceFormatter.maximumFractionDigits = 1
         self.distanceFormatter.roundingMode = .halfUp
         
-        loop.next().scheduleRepeatedTask(initialDelay: .seconds(1), delay: .hours(1), self.checkElapsedPaperwork)
+        loop.next().scheduleRepeatedTask(initialDelay: .minutes(1), delay: .hours(1), self.checkElapsedPaperwork)
 
         FuelRatsAPI.getLastRescue(complete: { result in
             guard let rescues = result.body.primaryResource, rescues.values.count > 0 else {
