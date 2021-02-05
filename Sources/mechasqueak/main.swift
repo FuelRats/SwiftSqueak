@@ -315,7 +315,7 @@ class MechaSqueak {
     }
 }
 
-let mecha = MechaSqueak()
 let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+let mecha = MechaSqueak()
 
 RunLoop.main.run()

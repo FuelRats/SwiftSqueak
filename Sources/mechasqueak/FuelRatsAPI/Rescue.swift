@@ -156,6 +156,14 @@ extension RescueSearchDocument {
 }
 
 extension Rescue {
+    var viewLink: URL {
+        return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())")!
+    }
+    
+    var editLink: URL {
+        return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
+    }
+    
     func update (complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
         let patchDocument = SingleDocument(
             apiDescription: .none,

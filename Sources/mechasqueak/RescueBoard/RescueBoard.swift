@@ -39,6 +39,8 @@ class RescueBoard {
     var recentIdentifiers: [Int] = []
     private let systemBodiesPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
     var recentlyClosed = [Int: UUID]()
+    
+    var lastPaperworkReminder: [UUID: Date] = [:]
 
     init () {
         self.queue.maxConcurrentOperationCount = 1
@@ -47,6 +49,8 @@ class RescueBoard {
         self.distanceFormatter.groupingSize = 3
         self.distanceFormatter.maximumFractionDigits = 1
         self.distanceFormatter.roundingMode = .halfUp
+        
+        loop.next().scheduleRepeatedTask(initialDelay: .seconds(1), delay: .hours(1), self.checkElapsedPaperwork)
 
         FuelRatsAPI.getLastRescue(complete: { result in
             guard let rescues = result.body.primaryResource, rescues.values.count > 0 else {
@@ -549,6 +553,44 @@ class RescueBoard {
                 rescueChannel.send(message: syncMessage)
             }
         }
+    }
+    
+    func checkElapsedPaperwork (task: RepeatedTask) {
+        FuelRatsAPI.getUnfiledRescues(complete: { results in
+            let cases = results.body.data?.primary.values.filter({
+                $0.attributes.status.value == .Closed && Date().timeIntervalSince($0.attributes.updatedAt.value) > 1800.0
+            }) ?? []
+            
+            for rescue in cases {
+                
+                var firstLimpet = results.body.includes![Rat.self].first(where: { $0.id.rawValue == rescue.relationships.firstLimpet?.id.rawValue })
+                if firstLimpet == nil {
+                    firstLimpet = results.assignedRatsFor(rescue: rescue).first
+                }
+                guard let caseRat = firstLimpet else {
+                    continue
+                }
+                
+                let presentNicks = caseRat.presence(inIRCChannel: mecha.reportingChannel!).filter({
+                    $0.isAway == false
+                })
+                if let lastReminder = self.lastPaperworkReminder[rescue.id.rawValue], Date().timeIntervalSince(lastReminder) < 43200 {
+                    continue
+                }
+                if presentNicks.count > 0 {
+                    self.lastPaperworkReminder[rescue.id.rawValue] = Date()
+                    
+                    for presentNick in presentNicks {
+                        mecha.reportingChannel?.client.sendMessage(toTarget: presentNick.nickname, contents: lingo.localize("rescue.pwreminder", locale: "en-GB", interpolations: [
+                            "client": rescue.attributes.client.value ?? "unknown client",
+                            "system": rescue.attributes.system.value ?? "unknown system",
+                            "timeAgo": rescue.attributes.updatedAt.value.timeAgo,
+                            "link": rescue.editLink.absoluteString
+                        ]))
+                    }
+                }
+            }
+        }, error: { _ in })
     }
 
     @EventListener<RatSocketRescueCreatedNotification>
