@@ -188,7 +188,7 @@
   "sysstats.message": "The systems database as of %{date} ago contains %{systems} star systems, with %{stars} stars and %{bodies} stellar bodies.",
   "sysstats.error": "I was unable to request statistics information from the Systems API due to an error.",
   
-  "rescue.pwreminder": "Hi! You seem to have unfiled paperwork, rescue of %{client} in %{system} was closed %{timeAgo} ago and is still not done: %{link}",
+  "rescue.pwreminder": "Hi %{nick}! You seem to have unfiled paperwork, rescue of %{client} in %{system} was closed %{timeAgo} ago and is still not done: %{link}",
   
   "rescue.closed.invalid": "Could not list recently closed cases, !closed takes an optional number between 1 and 10.",
   "rescue.closed.error": "Failed to look up recently closed cases due to an error in the rescue server.",

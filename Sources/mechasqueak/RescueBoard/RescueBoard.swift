@@ -585,6 +585,7 @@ class RescueBoard {
                     
                     for presentNick in presentNicks {
                         mecha.reportingChannel?.client.sendMessage(toTarget: presentNick.nickname, contents: lingo.localize("rescue.pwreminder", locale: "en-GB", interpolations: [
+                            "nick": presentNick.nickname,
                             "client": rescue.attributes.client.value ?? "unknown client",
                             "system": rescue.attributes.system.value ?? "unknown system",
                             "timeAgo": rescue.attributes.updatedAt.value.timeAgo,
