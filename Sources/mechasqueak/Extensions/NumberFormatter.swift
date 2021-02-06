@@ -64,7 +64,7 @@ extension Double {
         let formatter = NumberFormatter.englishFormatter()
         formatter.maximumFractionDigits = 2
         
-        let lightYears = self / 60/60/24/365
+        let lightYears = self / 60/60/24/365.25
         var formattedDistance = (formatter.string(from: self) ?? "\(self)") + "ls"
         let scientificFormatter = NumberFormatter()
         scientificFormatter.numberStyle = .scientific

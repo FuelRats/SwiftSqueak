@@ -28,7 +28,7 @@ import IRCKit
 class GeneralCommands: IRCBotModule {
     static let factors: [String: Double] = [
         "ls": 1,
-        "ly": 365 * 24 * 60 * 60,
+        "ly": 365.25 * 24 * 60 * 60,
         "pc": 3.262 * 365 * 24 * 60 * 60,
         "parsec": 3.262 * 365 * 24 * 60 * 60,
         "parsecs": 3.262 * 365 * 24 * 60 * 60,
