@@ -561,7 +561,7 @@ class RescueBoard {
     func checkElapsedPaperwork (task: RepeatedTask) {
         FuelRatsAPI.getUnfiledRescues(complete: { results in
             let cases = results.body.data?.primary.values.filter({
-                $0.attributes.status.value == .Closed && Date().timeIntervalSince($0.attributes.updatedAt.value) > 1800.0
+                $0.attributes.status.value == .Closed && Date().timeIntervalSince($0.attributes.updatedAt.value) > 7200.0
             }) ?? []
             
             for rescue in cases {
