@@ -54,17 +54,28 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["list"],
-        [.options(["i", "a", "q", "r", "u", "@"])],
+        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps")],
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
         permission: .DispatchRead
     )
     var didReceiveListCommand = { command in
         var arguments: [ListCommandArgument] = command.options.compactMap({
+            return ListCommandArgument(rawValue: String($0))
+        })
+        
+        arguments.append(contentsOf: command.namedOptions.compactMap({
             return ListCommandArgument(rawValue: $0)
+        }))
+        
+        let filteredPlatforms = command.namedOptions.compactMap({
+            GamePlatform(rawValue: $0)
         })
 
         let rescues = mecha.rescueBoard.rescues.filter({
+            if filteredPlatforms.count > 0 && ($0.platform == nil || filteredPlatforms.contains($0.platform!)) == false {
+                return false
+            }
             if arguments.contains(.showOnlyAssigned) && $0.rats.count == 0 && $0.unidentifiedRats.count == 0 {
                 return false
             }
@@ -401,13 +412,16 @@ class BoardCommands: IRCBotModule {
     }
 }
 
-enum ListCommandArgument: Character {
+enum ListCommandArgument: String {
     case showOnlyInactive = "i"
     case showOnlyActive = "a"
     case showOnlyQueued = "q"
     case showOnlyAssigned = "r"
     case showOnlyUnassigned = "u"
     case includeCaseIds = "@"
+    case showOnlyPC = "pc"
+    case showOnlyXbox = "xb"
+    case showOnlyPS = "ps"
 
     var description: String {
         let maps: [ListCommandArgument: String] = [
@@ -416,7 +430,10 @@ enum ListCommandArgument: Character {
             .showOnlyQueued: "Show only Queued",
             .showOnlyAssigned: "Show only Assigned",
             .showOnlyUnassigned: "Show only Unassigned",
-            .includeCaseIds: "Include UUIDs"
+            .includeCaseIds: "Include UUIDs",
+            .showOnlyPC: "Show only PC cases",
+            .showOnlyXbox: "Show only Xbox cases",
+            .showOnlyPS: "Show only Playstation cases"
         ]
         return maps[self]!
     }
