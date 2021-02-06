@@ -138,7 +138,6 @@ class SystemsAPI {
                         })
 
                     case .failure(let error):
-                        debug(String(describing: error))
                         promise.fail(error)
                 }
 

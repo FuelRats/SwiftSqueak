@@ -156,13 +156,22 @@ class BoardAttributeCommands: IRCBotModule {
             system.removeLast(7)
         }
 
-        SystemsAPI.performSystemCheck(forSystem: system).whenSuccess({ system in
-            if rescue.system != nil {
-                rescue.system?.merge(system)
-            } else {
-                rescue.system = system
+        SystemsAPI.performSystemCheck(forSystem: system).whenComplete({ result in
+            switch result {
+                case .failure(_):
+                    rescue.system = StarSystem(
+                        name: system,
+                        manuallyCorrected: true
+                    )
+                case .success(let system):
+                    if rescue.system != nil {
+                        rescue.system?.merge(system)
+                    } else {
+                        rescue.system = system
+                    }
+                    rescue.system?.manuallyCorrected = true
             }
-            rescue.system?.manuallyCorrected = true
+            
             rescue.syncUpstream()
             command.message.reply(key: "board.syschange", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
