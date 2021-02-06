@@ -214,7 +214,7 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["sub"],
-        [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continuous)],
+        [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continuous, .optional)],
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
         permission: .RescueWriteOwn,
