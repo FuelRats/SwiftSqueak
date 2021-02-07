@@ -28,7 +28,7 @@ import Regex
 import IRCKit
 import NIO
 
-class LocalRescue: Codable {
+class LocalRescue {
 
     private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
@@ -36,6 +36,7 @@ class LocalRescue: Codable {
     var clientHost: String?
     var channelName: String
     var jumpCalls = 0
+    var dispatchers: [IRCUser] = []
 
     let id: UUID
 
@@ -287,6 +288,11 @@ class LocalRescue: Codable {
 
         mecha.rescueBoard.queue.addOperation(operation)
         return promise.futureResult
+    }
+    
+    @discardableResult
+    func syncUpstream (fromCommand command: IRCBotCommand) -> EventLoopFuture<LocalRescue> {
+        return self.syncUpstream(representing: command.message.user)
     }
 
     @discardableResult

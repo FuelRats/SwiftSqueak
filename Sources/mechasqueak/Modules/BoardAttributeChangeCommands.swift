@@ -73,7 +73,7 @@ class BoardAttributeCommands: IRCBotModule {
             "message": message
         ])
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -106,7 +106,7 @@ class BoardAttributeCommands: IRCBotModule {
             command.message.reply(message: "\(target): \(fact.message)")
         }
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -135,7 +135,7 @@ class BoardAttributeCommands: IRCBotModule {
             "client": rescue.client!
         ])
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -172,7 +172,7 @@ class BoardAttributeCommands: IRCBotModule {
                     rescue.system?.manuallyCorrected = true
             }
             
-            rescue.syncUpstream()
+            rescue.syncUpstream(fromCommand: command)
             command.message.reply(key: "board.syschange", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.client!,
@@ -215,7 +215,7 @@ class BoardAttributeCommands: IRCBotModule {
             ])
         }
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -250,7 +250,7 @@ class BoardAttributeCommands: IRCBotModule {
             ])
         }
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -282,7 +282,7 @@ class BoardAttributeCommands: IRCBotModule {
             "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
         ])
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -321,7 +321,7 @@ class BoardAttributeCommands: IRCBotModule {
                 ])
             }
         }
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -345,6 +345,6 @@ class BoardAttributeCommands: IRCBotModule {
             "title": title
         ])
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 }

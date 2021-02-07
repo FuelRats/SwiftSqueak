@@ -270,6 +270,6 @@ class BoardAssignCommands: IRCBotModule {
             "caseId": rescue.commandIdentifier,
             "rats": unassignedRats
         ])
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 }

@@ -134,7 +134,7 @@ class BoardQuoteCommands: IRCBotModule {
             "text": lastMessage
         ])
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     @BotCommand(
@@ -263,7 +263,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
 
-        rescue.syncUpstream()
+        rescue.syncUpstream(fromCommand: command)
     }
 
     static func isLikelyAccidentalInject (clientParam: String) -> Bool {

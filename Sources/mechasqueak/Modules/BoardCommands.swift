@@ -390,7 +390,7 @@ class BoardCommands: IRCBotModule {
 
         SystemsAPI.getSystemInfo(forSystem: selectedCorrection).whenSuccess({ starSystem in
             rescue.system?.merge(starSystem)
-            rescue.syncUpstream()
+            rescue.syncUpstream(fromCommand: command)
 
             command.message.reply(key: "board.syschange", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
