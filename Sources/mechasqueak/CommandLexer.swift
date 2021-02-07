@@ -203,9 +203,9 @@ struct Lexer {
     }
 
     private mutating func lexArgument () throws -> Token {
-        if peek() == "\"" {
+        if peek() == "`" {
             pop()
-            let arg = readWhile({ $0 != "\"" })
+            let arg = readWhile({ $0 != "`" })
             guard arg.count > 0 else {
                 throw LexerError.invalidArgument
             }
