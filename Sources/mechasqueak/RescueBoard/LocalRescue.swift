@@ -36,7 +36,7 @@ class LocalRescue {
     var clientHost: String?
     var channelName: String
     var jumpCalls = 0
-    var dispatchers: [IRCUser] = []
+    var dispatchers: [UUID] = []
 
     let id: UUID
 
@@ -229,6 +229,8 @@ class LocalRescue {
         self.title = attr.title.value
         self.outcome = attr.outcome.value
         self.unidentifiedRats = attr.unidentifiedRats.value
+        
+        self.dispatchers = attr.data.value.dispatchers ?? []
 
         self.createdAt = attr.createdAt.value
         self.updatedAt = attr.updatedAt.value
@@ -254,7 +256,11 @@ class LocalRescue {
                 clientLanguage: .init(value: localRescue.clientLanguage?.identifier),
                 commandIdentifier: .init(value: localRescue.commandIdentifier),
                 codeRed: .init(value: localRescue.codeRed),
-                data: .init(value: RescueData()),
+                data: .init(value: RescueData(
+                    permit: localRescue.system?.permit,
+                    landmark: localRescue.system?.landmark,
+                    dispatchers: localRescue.dispatchers
+                )),
                 notes: .init(value: localRescue.notes),
                 platform: .init(value: localRescue.platform),
                 system: .init(value: localRescue.system?.name),
@@ -297,6 +303,12 @@ class LocalRescue {
 
     @discardableResult
     func syncUpstream (representing: IRCUser? = nil) -> EventLoopFuture<LocalRescue> {
+        if let representing = representing, let user = representing.associatedAPIData?.user {
+            if self.dispatchers.contains(user.id.rawValue) == false {
+                self.dispatchers.append(user.id.rawValue)
+            }
+        }
+        
         let promise = loop.next().makePromise(of: LocalRescue.self)
 
         let operation = RescueUpdateOperation(rescue: self)
