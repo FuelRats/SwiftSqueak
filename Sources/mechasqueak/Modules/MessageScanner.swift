@@ -87,14 +87,26 @@ class MessageScanner: IRCBotModule {
             if let system = rescue.system, let permit = rescue.system?.permit {
                 let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
                 if (rat?.hasPermitFor(system: rescue.system!) ?? false) == false {
-                    channelMessage.replyPrivate(message: lingo.localize(
-                        "jumpcall.permit",
-                        locale: "en-GB",
-                        interpolations: [
-                            "case": caseId,
-                            "permit": permit.name ?? system.name
-                        ])
-                    )
+                    if rat?.attributes.data.value.permits?.count ?? 0 > 0 {
+                        channelMessage.reply(message: lingo.localize(
+                            "jumpcall.publicpermit",
+                            locale: "en-GB",
+                            interpolations: [
+                                "nick": channelMessage.user.nickname,
+                                "case": caseId,
+                                "permit": permit.name ?? system.name
+                            ])
+                        )
+                    } else {
+                        channelMessage.replyPrivate(message: lingo.localize(
+                            "jumpcall.permit",
+                            locale: "en-GB",
+                            interpolations: [
+                                "case": caseId,
+                                "permit": permit.name ?? system.name
+                            ])
+                        )
+                    }
                 }
             }
 
