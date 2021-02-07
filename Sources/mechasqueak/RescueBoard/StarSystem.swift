@@ -100,10 +100,10 @@ struct StarSystem: CustomStringConvertible, Codable {
         if let landmark = self.landmark {
             systemInfo += " ("
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
-                systemInfo += description
+                systemInfo += description + " "
             }
             if landmark.description.count > 0 {
-                systemInfo += " \(landmark.description))"
+                systemInfo += "\(landmark.description))"
             } else {
                 systemInfo += ")"
             }
