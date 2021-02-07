@@ -158,8 +158,8 @@ class MessageScanner: IRCBotModule {
             }
             
             if let system = rescue.system, rescue.system?.permit != nil {
-                if channelMessage.user.currentRat?.hasPermitFor(system: system) == true {
-                    message += " (Permit Confirmed)"
+                if channelMessage.user.getRatRepresenting(platform: rescue.platform!)?.hasPermitFor(system: system) == false {
+                    message += " (MISSING PERMIT)"
                 }
             }
 
