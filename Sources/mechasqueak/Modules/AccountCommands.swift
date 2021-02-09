@@ -259,7 +259,9 @@ class AccountCommands: IRCBotModule {
         SystemsAPI.performSearch(forSystem: systemName).whenComplete({ result in
             switch result {
                 case .failure(_):
-                    command.message.error(key: "addpermit.searcherror", fromCommand: command)
+                    command.message.error(key: "addpermit.searcherror", fromCommand: command, map: [
+                        "system": systemName
+                    ])
                     
                 case .success(let searchResult):
                     guard
@@ -268,7 +270,9 @@ class AccountCommands: IRCBotModule {
                         system.similarity == 1,
                         system.permitRequired
                     else {
-                        command.message.error(key: "addpermit.nosystem", fromCommand: command)
+                        command.message.error(key: "addpermit.nosystem", fromCommand: command, map: [
+                            "system": systemName
+                        ])
                         return
                     }
                     
