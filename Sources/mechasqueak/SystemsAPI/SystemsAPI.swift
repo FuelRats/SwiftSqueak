@@ -220,6 +220,15 @@ class SystemsAPI {
     struct ProceduralCheckDocument: Codable {
         let isPgSystem: Bool
         let isPgSector: Bool
+        let sectordata: SectorData
+        
+        struct SectorData: Codable {
+            let handauthored: Bool
+            let uncertainty: Double
+            let x: Double
+            let y: Double
+            let z: Double
+        }
     }
 
     struct SearchDocument: Codable {
