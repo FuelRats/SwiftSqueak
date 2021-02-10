@@ -68,7 +68,7 @@ class SystemsAPI {
                     name: system.name,
                     permit: permit,
                     availableCorrections: nil,
-                    landmark: landmarkDocument.landmarks?.first,
+                    landmark: landmarkDocument.first,
                     proceduralCheck: nil
                 )
                 EDSM.getBodies(forSystem: system.name).and(EDSM.getStations(forSystem: system.name)).whenComplete({ result in
@@ -126,7 +126,7 @@ class SystemsAPI {
                                 name: searchResult?.name ?? systemName,
                                 permit: permit,
                                 availableCorrections: searchResults.data,
-                                landmark: landmarkResults.landmarks?.first,
+                                landmark: landmarkResults.first,
                                 proceduralCheck: proceduralResult
                             )
                             
@@ -229,6 +229,13 @@ class SystemsAPI {
                 return "\(distance) LY from \(self.name)"
             }
         }
+        
+        var first: LandmarkDocument.LandmarkResult? {
+            if self.landmarks?.count ?? 0 < 2 {
+                return self.landmarks?.first
+            }
+            return self.landmarks?.filter({ $0.name != "Sagittarius A*" || $0.distance < 8000 }).first
+        }
     }
     
     struct LandmarkListDocument: Decodable {
@@ -259,7 +266,11 @@ class SystemsAPI {
                 let z = try values.decode(Double.self, forKey: .z)
                 self.coordinates = Vector3(x, y, z)
                 
-                self.soi = try? values.decode(Double.self, forKey: .soi)
+                var soi = try? values.decode(Double.self, forKey: .soi)
+                if name == "Sagittarius A*" {
+                    soi = 8000
+                }
+                self.soi = soi
             }
         }
         
