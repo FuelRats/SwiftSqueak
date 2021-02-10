@@ -110,7 +110,7 @@ class BoardAssignCommands: IRCBotModule {
             force: force
         )
 
-        guard assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 else {
+        guard assigns.rats.count > 0 || (assigns.unidentifiedRats.count > 0 && force) else {
             return
         }
 
