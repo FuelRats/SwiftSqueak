@@ -37,6 +37,7 @@
   "sysc.seterror": "Unable to set system for case #%{caseId} (%{client}) to \"%{system}\" due to an error with the systems API.",
   "sysc.autocorrect": "\u0002ATTENTION:\u0002 System for case #%{caseId} (%{client}) has been automatically corrected to %{system}.",
   "landmark.noresults": "%{system} was not found in the galaxy database.",
+  "landmark.procedural": "%{system} was not found in the galaxy database but is a valid procedural system name estimated to be about %{distance} LY from %{landmark}",
 
   "sctime.error": "Unable to understand the distance given in this command.",
   "sctime.unknownunit": "Unable to understand the distance because I have no idea what a \"%{unit}\" is.",

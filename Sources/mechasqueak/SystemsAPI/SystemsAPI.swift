@@ -186,6 +186,26 @@ class SystemsAPI {
             }
         }
     }
+    
+    static func fetchLandmarkList () -> EventLoopFuture<[LandmarkListDocument.LandmarkListEntry]> {
+        let promise = loop.next().makePromise(of: [LandmarkListDocument.LandmarkListEntry].self)
+        
+        let url = URLComponents(string: "https://systems.api.fuelrats.com/landmark?list")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).whenComplete({ result in
+            switch result {
+                case .failure(_):
+                    let fallbackLandmark = LandmarkListDocument.LandmarkListEntry(name: "Sol", coordinates: Vector3(0, 0, 0))
+                    promise.succeed([fallbackLandmark])
+                    
+                case .success(let document):
+                    promise.succeed(document.landmarks)
+            }
+        })
+        return promise.futureResult
+    }
 
 
     struct LandmarkDocument: Codable {
@@ -210,6 +230,39 @@ class SystemsAPI {
             }
         }
     }
+    
+    struct LandmarkListDocument: Decodable {
+        let meta: LandmarkListMeta
+        let landmarks: [LandmarkListEntry]
+        
+        struct LandmarkListEntry: Decodable {
+            let name: String
+            let coordinates: Vector3
+            
+            enum CodingKeys: String, CodingKey {
+                case name, x, y, z
+            }
+            
+            init (name: String, coordinates: Vector3) {
+                self.name = name
+                self.coordinates = coordinates
+            }
+            
+            init (from decoder: Decoder) throws {
+                let values = try decoder.container(keyedBy: CodingKeys.self)
+                name = try values.decode(String.self, forKey: .name)
+                
+                let x = try values.decode(Double.self, forKey: .x)
+                let y = try values.decode(Double.self, forKey: .y)
+                let z = try values.decode(Double.self, forKey: .z)
+                self.coordinates = Vector3(x, y, z)
+            }
+        }
+        
+        struct LandmarkListMeta: Decodable {
+            let count: Int
+        }
+    }
 
     struct StatisticsDocument: Codable {
         struct SystemsAPIStatistic: Codable {
@@ -231,6 +284,17 @@ class SystemsAPI {
         let isPgSystem: Bool
         let isPgSector: Bool
         let sectordata: SectorData
+        
+        var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String) {
+            var landmarkDistances = mecha.landmarks.map({ ($0, self.sectordata.coords.distance(from: $0.coordinates)) })
+            landmarkDistances.sort(by: { $0.1 < $1.1 })
+            
+            let formatter = NumberFormatter.englishFormatter()
+            formatter.usesSignificantDigits = true
+            formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
+            
+            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!)
+        }
         
         struct SectorData: Codable {
             let handauthored: Bool

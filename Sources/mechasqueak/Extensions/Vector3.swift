@@ -55,6 +55,10 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable, Exp
         self.z = z
     }
     
+    func distance (from vector: Vector3) -> Double {
+        return (pow(vector.x - self.x, 2) + pow(vector.y - self.y, 2) + pow(vector.z - self.z, 2)).squareRoot()
+    }
+    
     static func < (lhs: Vector3, rhs: Vector3) -> Bool {
         return lhs.x < rhs.x && lhs.y < rhs.y && lhs.z < lhs.z
     }

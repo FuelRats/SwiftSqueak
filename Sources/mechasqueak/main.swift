@@ -70,6 +70,7 @@ class MechaSqueak {
     let helpModule: HelpCommands
     let startupTime: Date
     let version = "3.0.0"
+    var landmarks: [SystemsAPI.LandmarkListDocument.LandmarkListEntry] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
     //let ratSocket: RatSocket?
@@ -120,6 +121,10 @@ class MechaSqueak {
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager)
         ]
+        
+        SystemsAPI.fetchLandmarkList().whenSuccess({ landmarks in
+            self.landmarks = landmarks
+        })
     }
 
 
@@ -245,12 +250,13 @@ class MechaSqueak {
             )
             rescue.syncUpstream()
 
-            userQuit.client.sendMessage(
-                toChannelName: rescue.channelName,
-                withKey: "board.clientquit", mapping: [
+            let quitChannels = userQuit.client.channels.filter({ $0.member(fromSender: userQuit.sender!) != nil })
+            for channel in quitChannels {
+                channel.send(key: "board.clientquit", map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.clientDescription
-            ])
+                ])
+            }
         }
     }
 
