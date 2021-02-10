@@ -238,14 +238,16 @@ class SystemsAPI {
         struct LandmarkListEntry: Decodable {
             let name: String
             let coordinates: Vector3
+            let soi: Double?
             
             enum CodingKeys: String, CodingKey {
-                case name, x, y, z
+                case name, x, y, z, soi
             }
             
-            init (name: String, coordinates: Vector3) {
+            init (name: String, coordinates: Vector3, soi: Double? = nil) {
                 self.name = name
                 self.coordinates = coordinates
+                self.soi = soi
             }
             
             init (from decoder: Decoder) throws {
@@ -256,6 +258,8 @@ class SystemsAPI {
                 let y = try values.decode(Double.self, forKey: .y)
                 let z = try values.decode(Double.self, forKey: .z)
                 self.coordinates = Vector3(x, y, z)
+                
+                self.soi = try? values.decode(Double.self, forKey: .soi)
             }
         }
         
@@ -287,6 +291,7 @@ class SystemsAPI {
         
         var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String) {
             var landmarkDistances = mecha.landmarks.map({ ($0, self.sectordata.coords.distance(from: $0.coordinates)) })
+            landmarkDistances = landmarkDistances.filter({ $0.0.soi == nil || $0.1 < $0.0.soi! })
             landmarkDistances.sort(by: { $0.1 < $1.1 })
             
             let formatter = NumberFormatter.englishFormatter()
