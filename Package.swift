@@ -19,7 +19,7 @@ let package = Package(
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(4, 0, 0)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 1)),
         //.package(path: "../IRCKit"),
-        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 12))
+        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 14))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
