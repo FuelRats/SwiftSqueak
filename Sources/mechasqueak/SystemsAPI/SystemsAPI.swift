@@ -86,7 +86,8 @@ class SystemsAPI {
         return promise.futureResult
     }
 
-    static func performProceduralCheck (forSystem systemName: String) -> EventLoopFuture<ProceduralCheckDocument> {
+    static func performProceduralCheck (forSystem systemName: String) -> EventLoopFuture<ProceduralCheckDocument?> {
+        let promise = loop.next().makePromise(of: ProceduralCheckDocument?.self)
         var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
         url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
@@ -94,7 +95,16 @@ class SystemsAPI {
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
-        return httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
+        httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self).whenComplete({ result in
+            switch result {
+            case .failure(_):
+                promise.succeed(nil)
+                
+            case .success(let document):
+                promise.succeed(document)
+            }
+        })
+        return promise.futureResult
     }
 
     static func performSystemCheck (forSystem systemName: String) -> EventLoopFuture<StarSystem> {
