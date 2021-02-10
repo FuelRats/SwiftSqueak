@@ -235,9 +235,7 @@ class SystemsAPI {
         struct SectorData: Codable {
             let handauthored: Bool
             let uncertainty: Double
-            let x: Double
-            let y: Double
-            let z: Double
+            let coords: Vector3
         }
     }
 
