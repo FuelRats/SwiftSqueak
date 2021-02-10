@@ -228,10 +228,10 @@ class MechaSqueak {
 
     @EventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
-        accounts.mapping.removeValue(forKey: userQuit.sender!.nickname)
+        accounts.mapping.removeValue(forKey: userQuit.raw.sender!.nickname)
 
         if
-            let sender = userQuit.sender,
+            let sender = userQuit.raw.sender,
             let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
         {
             if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
@@ -242,15 +242,15 @@ class MechaSqueak {
                 $0.message == "Client left the rescue channel"
             })
             rescue.quotes.append(RescueQuote(
-                author: userQuit.client.currentNick,
+                author: userQuit.raw.client.currentNick,
                 message: "Client left the rescue channel",
                 createdAt: Date(),
                 updatedAt: Date(),
-                lastAuthor: userQuit.client.currentNick)
+                lastAuthor: userQuit.raw.client.currentNick)
             )
             rescue.syncUpstream()
 
-            let quitChannels = userQuit.client.channels.filter({ $0.member(fromSender: userQuit.sender!) != nil })
+            let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
                 channel.send(key: "board.clientquit", map: [
                     "caseId": rescue.commandIdentifier,

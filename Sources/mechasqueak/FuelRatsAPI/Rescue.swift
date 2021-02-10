@@ -73,7 +73,6 @@ struct RescueData: Codable, Equatable {
         var marked: Bool
         var reason: String
         var reporter: String
-
     }
     var langID: String?
     var status: RescueDataStatus?
@@ -103,6 +102,22 @@ enum RescueOutcome: String, Codable {
     case Invalid = "invalid"
     case Other = "other"
     case Purge = "purge"
+}
+
+struct JumpCall: Codable {
+    let name: String
+    let jumps: UInt
+    let remark: String?
+    
+    let isDrilled: Bool
+    let hasPermit: Bool?
+}
+
+struct AssignMeta: Codable {
+    let receivedFriendRequest: Bool
+    let receivedWingRequest: Bool
+    let confirmedBeacon: Bool
+    let beaconDistance: UInt?
 }
 
 typealias RescueSearchDocument = Document<ManyResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
