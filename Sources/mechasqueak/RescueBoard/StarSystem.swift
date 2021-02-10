@@ -184,7 +184,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
 
     var isConfirmed: Bool {
-        return self.landmark != nil
+        return self.landmark != nil || (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata.handauthored == true))
     }
 
     var twitterDescription: String? {
