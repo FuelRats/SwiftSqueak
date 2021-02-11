@@ -71,6 +71,9 @@ struct ProceduralSystem: CustomStringConvertible {
         var hasSectorSuffix = false
         
         let components = systemName.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        guard components.count > 2 && components[0].contains("-") == false else {
+            return nil
+        }
         if let sectorComponent = components.first(where: { $0.lowercased().levenshtein("sector") <= 3 }) {
             hasSectorSuffix = true
             systemName.removeSubrange(systemName.range(of: sectorComponent)!)
