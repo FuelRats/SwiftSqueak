@@ -83,7 +83,9 @@ struct ProceduralSystem: CustomStringConvertible {
         guard let hyphenIndex = systemName.firstIndex(of: "-") else {
             return nil
         }
-        let proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<hyphenIndex)!
+        guard let proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<hyphenIndex) else {
+            return nil
+        }
         self.sectorName = String(systemName[systemName.startIndex..<proceduralStart.lowerBound]).trimmingCharacters(in: .whitespaces)
         let procedural = String(systemName[proceduralStart.upperBound..<systemName.endIndex])
         var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted)
