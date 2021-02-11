@@ -95,8 +95,8 @@
   "board.toggleactivemsg": "Status of case #%{caseId} (%{client}) set to: %{status} with message \"%{message}\"",
   "board.nopermission": "You do not have permission to perform this command.",
   
-  "board.syschange": "System for case #%{caseId} (%{client}) has been changed to \"%{systemInfo}\"",
-  "board.syschange.autocorrect": "System for case #%{caseId} (%{client}) has been changed to \"%{systemInfo}\" \u000304(Automatically corrected)\u0003",
+  "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}",
+  "board.syschange.autocorrect": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo} \u000304(Automatically corrected)\u0003",
 
   "board.languagechange": "Language for case #%{caseId} (%{client}) has now been changed to %{language}",
   "board.languagechange.error": "Case language could not be changed as %{language} is not a valid language",
