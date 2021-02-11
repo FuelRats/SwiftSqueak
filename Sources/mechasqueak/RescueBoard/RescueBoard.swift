@@ -311,7 +311,10 @@ class RescueBoard {
             
             if rescue.codeRed == false, let stations = rescue.system?.refuelingStations, stations.count > 0 {
                 let station = stations[0]
-                let distance = station.distanceToArrival.eliteDistance
+                var distance = "\(station.distanceToArrival.eliteDistance) from main star"
+                if station.distanceToArrival == 0 {
+                    distance = "orbiting main star"
+                }
                 mecha.reportingChannel?.send(key: "board.stationfound", map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.clientDescription,
