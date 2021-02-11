@@ -25,9 +25,10 @@
 import Foundation
 import Regex
 
-class Autocorrect {
+struct ProceduralSystem: CustomStringConvertible {
     static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
+    static let validMassCategories = "ABCDEFGH"
     private static let numberSubstitutions: [Character: Character] = [
         "1": "I",
         "4": "A",
@@ -44,83 +45,101 @@ class Autocorrect {
         "O": "0",
         "A": "4"
     ]
-
-    static func check (system: String) -> String? {
-        let system = system.uppercased()
-
-        guard system.contains(" SECTOR ") else {
-            // Not a special system, and not a sector system, nothing we can do with this input
+    
+    var sectorName: String
+    var hasSectorSuffix: Bool
+    
+    var cubeId: CubeID
+    
+    var massCategory: Character
+    var cubePosition: String
+    var systemId: String?
+    
+    struct CubeID: CustomStringConvertible {
+        var part1: Character
+        var part2: Character
+        var suffix: Character
+        
+        var description: String {
+            return "\(part1)\(part2)-\(suffix)"
+        }
+    }
+    
+    init? (string systemName: String) {
+        var systemName = systemName.uppercased()
+        
+        var hasSectorSuffix = false
+        
+        let components = systemName.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        if let sectorComponent = components.first(where: { $0.lowercased().levenshtein("sector") <= 3 }) {
+            hasSectorSuffix = true
+            systemName.removeSubrange(systemName.range(of: sectorComponent)!)
+        }
+        self.hasSectorSuffix = hasSectorSuffix
+        
+        guard let hyphenIndex = systemName.firstIndex(of: "-") else {
             return nil
         }
-
-        let components = system.components(separatedBy: " SECTOR ")
-        guard components.count == 2 else {
-            // Only the sector itself was entered nothing after it, there is nothing we can do here, exit
+        let proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<hyphenIndex)!
+        self.sectorName = String(systemName[systemName.startIndex..<proceduralStart.lowerBound]).trimmingCharacters(in: .whitespaces)
+        let procedural = String(systemName[proceduralStart.upperBound..<systemName.endIndex])
+        var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        
+        guard proceduralComponents.count > 2 && proceduralComponents.first!.count > 1 else {
             return nil
         }
- 
-        var sector = components[0]
-        var fragments = components[1].components(separatedBy: " ")
-        if sectors.contains(where: { $0.name == sector }) == false {
-            var lastDistance = sector.levenshtein(sectors[0].name)
-            var lastCorrection = sectors[0]
-
-            for entry in sectors {
-                let distance = sector.levenshtein(entry.name)
-                if distance < lastDistance || (distance == lastDistance && entry.count > lastCorrection.count) {
-                    lastDistance = distance
-                    lastCorrection = entry
+        let part1: Character = proceduralComponents[0].removeFirst()
+        let part2: Character = proceduralComponents[0].removeFirst()
+        var suffix: Character? = proceduralComponents[0].count > 0 ? proceduralComponents[0].removeFirst() : nil
+        proceduralComponents.removeFirst()
+        
+        if suffix == nil {
+            suffix = proceduralComponents[0].removeFirst()
+            proceduralComponents.removeFirst()
+        }
+        self.cubeId = CubeID(part1: part1, part2: part2, suffix: suffix!)
+        
+        guard proceduralComponents.count > 1 else {
+            return nil
+        }
+        
+        self.massCategory = proceduralComponents[0].removeFirst()
+        var cubePosition: String = proceduralComponents[0]
+        proceduralComponents.removeFirst()
+        if cubePosition.count == 0 {
+            cubePosition.append(proceduralComponents[0])
+        }
+        self.cubePosition = cubePosition
+        
+        if proceduralComponents.count > 0 {
+            self.systemId = proceduralComponents[0]
+        }
+    }
+    
+    var description: String {
+        var system = sectorName
+        if hasSectorSuffix {
+            system += " SECTOR"
+        }
+        system += " \(cubeId) \(massCategory)\(cubePosition)"
+        if let systemId = systemId {
+            system += "-\(systemId)"
+        }
+        return system
+    }
+    
+    static func correct (system: String) -> String? {
+        if let procedural = ProceduralSystem(string: system), let correction = procedural.corrected {
+            if correction.description != system {
+                let correctionName = correction.description
+                if correctionName != system {
+                    return correctionName
                 }
             }
-
-            sector = lastCorrection.name
         }
-
-        let sectorCorrectedSystem = "\(sector) SECTOR \(fragments.joined(separator: " "))"
-        if proceduralSystemExpression.findFirst(in: system) != nil && system != sectorCorrectedSystem {
-            // If the last part of the system name looks correct, return it with corrected sector name
-            return sectorCorrectedSystem
-        }
-
-        /* This section of procedural system names do never contain digits, if there are one, replace them with letters
-         that are commonly mistaken for these numbers. */
-        if fragments[0].rangeOfCharacter(from: .decimalDigits) != nil {
-            fragments[0] = Autocorrect.performNumberSubstitution(value: fragments[0])
-        }
-        var secondFragment = fragments.count > 1 ? fragments[1] : ""
-        if secondFragment.first != nil && secondFragment.first!.isNumber {
-            /*  The first character of the second fragment of a procedural system name is always a letter.
-             If it is a number in the input, replace it with letters that are commonly mistaken for numbers.  */
-            secondFragment = secondFragment.replacingCharacters(
-                in: ...secondFragment.startIndex,
-                with: Autocorrect.performNumberSubstitution(value: String(secondFragment.first!))
-            )
-            /* The last part of the second fragment of a procedural system is always a number. */
-        }
-
-        if secondFragment.last != nil && secondFragment.last!.isLetter {
-            let lastIndex = secondFragment.index(before: secondFragment.endIndex)
-            secondFragment = secondFragment.replacingCharacters(
-                in: lastIndex...lastIndex,
-                with: Autocorrect.performLetterSubstitution(value: String(secondFragment.last!))
-            )
-        }
-
-        if secondFragment.count > 0 {
-            fragments[1] = secondFragment
-        }
-
-        let correctedSystem = "\(sector) SECTOR \(fragments.joined(separator: " "))"
-
-        // Check that our corrected name now passes the check for valid procedural system
-        if proceduralSystemExpression.findFirst(in: correctedSystem) != nil && system != correctedSystem {
-            return correctedSystem
-        }
-
-        // We were not able to correct this
         return nil
     }
-
+    
     static func performNumberSubstitution (value: String) -> String {
         return String(value.map({ (char: Character) -> Character in
             if let substitution = numberSubstitutions[char] {
@@ -137,6 +156,75 @@ class Autocorrect {
             }
             return char
         }))
+    }
+    
+    var isValid: Bool {
+        if self.hasSectorSuffix && sectors.contains(where: { $0.name == self.sectorName }) == false {
+            return false
+        }
+        
+        if self.cubeId.part1.isLetter == false || self.cubeId.part2.isLetter == false || self.cubeId.suffix.isLetter == false {
+            return false
+        }
+        
+        if ProceduralSystem.validMassCategories.contains(self.massCategory) == false {
+            return false
+        }
+        
+        if self.cubePosition.rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) != nil {
+            return false
+        }
+        if let systemId = self.systemId, systemId.rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) != nil {
+            return false
+        }
+        return true
+    }
+    
+    // TRIANGULI SECTOR AB-N A7-0
+    var corrected: ProceduralSystem? {
+        var system = self
+        if sectors.contains(where: { $0.name == self.sectorName }) {
+            system.hasSectorSuffix = true
+        } else if system.hasSectorSuffix {
+            var lastDistance = self.sectorName.levenshtein(sectors[0].name)
+            var lastCorrection = sectors[0]
+
+            for entry in sectors {
+                let distance = system.sectorName.levenshtein(entry.name)
+                if distance < lastDistance || (distance == lastDistance && entry.count > lastCorrection.count) {
+                    lastDistance = distance
+                    lastCorrection = entry
+                }
+            }
+
+            system.sectorName = lastCorrection.name
+        }
+        
+        if system.cubeId.part1.isLetter == false {
+            system.cubeId.part1 = ProceduralSystem.performNumberSubstitution(value: String(system.cubeId.part1)).first!
+        }
+        if system.cubeId.part2.isLetter == false {
+            system.cubeId.part2 = ProceduralSystem.performNumberSubstitution(value: String(system.cubeId.part2)).first!
+        }
+        if system.cubeId.suffix.isLetter == false {
+            system.cubeId.suffix = ProceduralSystem.performNumberSubstitution(value: String(system.cubeId.suffix)).first!
+        }
+        
+        if system.massCategory.isLetter == false {
+            system.massCategory = ProceduralSystem.performNumberSubstitution(value: String(system.massCategory)).first!
+        }
+        
+        if system.cubePosition.rangeOfCharacter(from: .letters) != nil {
+            system.cubePosition = ProceduralSystem.performLetterSubstitution(value: system.cubePosition)
+        }
+        if let systemId = system.systemId, systemId.rangeOfCharacter(from: .letters) != nil {
+            system.systemId = ProceduralSystem.performLetterSubstitution(value: systemId)
+        }
+        
+        if system.isValid == false {
+            return nil
+        }
+        return system
     }
 }
 

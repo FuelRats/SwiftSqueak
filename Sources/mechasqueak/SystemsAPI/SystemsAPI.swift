@@ -390,14 +390,10 @@ class SystemsAPI {
 
 
                 let isWithinReasonableEditDistance = (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
-                let originalIsProceduralSystem = Autocorrect.proceduralSystemExpression.matches(system)
+                let originalIsProceduralSystem = ProceduralSystem.proceduralSystemExpression.matches(system)
 
                 if correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric {
                     return 0
-                }
-
-                if correctionName == Autocorrect.check(system: system)?.lowercased() {
-                    return 1
                 }
 
                 if correctionName == system.dropLast(1) && system.last!.isLetter {

@@ -278,6 +278,10 @@ class RescueBoard {
             system.clientProvidedBody = body
             rescue.system = system
         }
+        
+        if let systemName = rescue.system?.name, let correction = ProceduralSystem.correct(system: systemName) {
+            rescue.system?.name = correction
+        }
 
         rescue.validateSystem()?.whenComplete({ _ in
             message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [

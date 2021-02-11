@@ -110,8 +110,8 @@ struct StarSystem: CustomStringConvertible, Codable {
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
             let (landmark, distance) = procedural.estimatedLandmarkDistance
             systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
-        } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && procedural.isPgSector == false {
-            systemInfo += "(Invalid system name)"
+        } else if isInvalid {
+            systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
         } else {
             systemInfo += " (Not found in galaxy database)"
         }
@@ -181,6 +181,13 @@ struct StarSystem: CustomStringConvertible, Codable {
         }
 
         return true
+    }
+    
+    var isInvalid: Bool {
+        if let procedural = ProceduralSystem(string: self.name) {
+            return (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata.handauthored == true)) || !procedural.isValid
+        }
+        return false
     }
 
     var isConfirmed: Bool {

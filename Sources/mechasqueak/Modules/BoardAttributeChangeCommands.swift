@@ -140,7 +140,7 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["system", "sys", "loc", "location"],
-        [.param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
+        [.options(["f"]), .param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
         permission: .RescueWriteOwn,
@@ -154,6 +154,12 @@ class BoardAttributeCommands: IRCBotModule {
         var system = command.parameters[1].uppercased()
         if system.hasSuffix(" SYSTEM") {
             system.removeLast(7)
+        }
+        
+        var key = "board.syschange"
+        if let correction = ProceduralSystem.correct(system: system), command.options.contains("f") == false {
+            key += ".autocorrect"
+            system = correction
         }
 
         SystemsAPI.performSystemCheck(forSystem: system).whenComplete({ result in
@@ -173,7 +179,7 @@ class BoardAttributeCommands: IRCBotModule {
             }
             
             rescue.syncUpstream(fromCommand: command)
-            command.message.reply(key: "board.syschange", fromCommand: command, map: [
+            command.message.reply(key: key, fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,
                 "client": rescue.client!,
                 "systemInfo": rescue.system.description

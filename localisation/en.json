@@ -95,7 +95,8 @@
   "board.toggleactivemsg": "Status of case #%{caseId} (%{client}) set to: %{status} with message \"%{message}\"",
   "board.nopermission": "You do not have permission to perform this command.",
   
-  "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}.",
+  "board.syschange": "System for case #%{caseId} (%{client}) has been changed to \"%{systemInfo}\"",
+  "board.syschange.autocorrect": "System for case #%{caseId} (%{client}) has been changed to \"%{systemInfo}\" \u000304(Automatically corrected)\u0003",
 
   "board.languagechange": "Language for case #%{caseId} (%{client}) has now been changed to %{language}",
   "board.languagechange.error": "Case language could not be changed as %{language} is not a valid language",
@@ -363,6 +364,7 @@
   "help.command.announce.cr": "Announces the rescue as a code red",
   "help.command.clientpw.all": "Lists ALL previous cases for this client",
   "help.command.inject.f": "Forces a new case to be created from this inject bypassing all restrictions",
+  "help.command.system.f": "Prevents Mecha from automatically correcting the system name",
 
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
   "announce.invalidchannel": "Invalid channel given to announce command",
