@@ -97,12 +97,6 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveFlushCommand = { command in
-        if let mapping = MechaSqueak.accounts.mapping.first(where: {
-            $0.key.lowercased() == command.parameters[0].lowercased()
-        }) {
-            MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
-        }
-
         guard let user = command.message.client.channels.first(where: {
             $0.member(named: command.parameters[0]) != nil
         })?.member(named: command.parameters[0]) else {
@@ -110,6 +104,10 @@ class ManagementCommands: IRCBotModule {
                 "name": command.parameters[0]
             ])
             return
+        }
+        
+        if let account = user.account {
+            MechaSqueak.accounts.mapping.removeValue(forKey: account)
         }
         MechaSqueak.accounts.lookupIfNotExists(user: user)
         command.message.replyPrivate(key: "flush.response", fromCommand: command, map: [
@@ -125,18 +123,19 @@ class ManagementCommands: IRCBotModule {
         permission: .UserRead
     )
     var didReceivePermissionsCommand = { command in
-        guard let mapping = MechaSqueak.accounts.mapping.first(where: {
-            $0.key.lowercased() == command.parameters[0].lowercased()
-        }) else {
+        guard let user = command.message.client.channels.first(where: {
+            $0.member(named: command.parameters[0]) != nil
+        })?.member(named: command.parameters[0]) else {
             command.message.replyPrivate(key: "groups.nouser", fromCommand: command, map: [
                 "nick": command.parameters[0]
             ])
             return
         }
 
-        let groupIds = mapping.value.user?.relationships.groups?.ids ?? []
+        
+        let groupIds = user.associatedAPIData?.user?.relationships.groups?.ids ?? []
 
-        let groups = mapping.value.body.includes![Group.self].filter({
+        let groups = user.associatedAPIData?.body.includes![Group.self].filter({
             groupIds.contains($0.id)
         }).map({
             $0.attributes.name.value
@@ -144,7 +143,7 @@ class ManagementCommands: IRCBotModule {
 
         command.message.reply(key: "groups.response", fromCommand: command, map: [
             "nick": command.parameters[0],
-            "groups": groups.joined(separator: ", ")
+            "groups": groups?.joined(separator: ", ") ?? ""
         ])
     }
 

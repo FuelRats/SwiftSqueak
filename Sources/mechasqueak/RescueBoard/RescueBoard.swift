@@ -282,7 +282,7 @@ class RescueBoard {
         if let systemName = rescue.system?.name, let correction = ProceduralSystem.correct(system: systemName) {
             rescue.system?.name = correction
         }
-
+        
         rescue.validateSystem()?.whenComplete({ _ in
             message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
@@ -305,7 +305,7 @@ class RescueBoard {
                 ]))
                 rescue.quotes.append(RescueQuote(
                     author: message.client.currentNick,
-                    message: "Client indicated location in system near body \"\(systemBody)\" \(bodyDescription ?? "")}",
+                    message: "Client indicated location in system near body \"\(systemBody)\" (\(bodyDescription ?? ""))",
                     createdAt: Date(),
                     updatedAt: Date(),
                     lastAuthor: message.client.currentNick)

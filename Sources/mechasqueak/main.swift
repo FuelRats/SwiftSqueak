@@ -132,12 +132,14 @@ class MechaSqueak {
     var onAccountChange = { accountChange in
         let user = accountChange.user
 
-        guard user.account != nil else {
-            accounts.mapping[user.nickname] = nil
+        guard let account = user.account else {
+            if let oldValue = accountChange.oldValue {
+                accounts.mapping[oldValue] = nil
+            }
             return
         }
 
-        if accountChange.oldValue != user.account || accounts.mapping[user.nickname] == nil {
+        if accountChange.oldValue != account || accounts.mapping[account] == nil {
             accounts.lookupIfNotExists(user: user)
         }
     }
@@ -301,11 +303,6 @@ class MechaSqueak {
                     "client": rescue.clientDescription,
                     "newNick": nickChange.newNick
             ])
-        }
-
-        if let apiNickname = accounts.mapping[sender.nickname] {
-            accounts.mapping.removeValue(forKey: sender.nickname)
-            accounts.mapping[nickChange.newNick] = apiNickname
         }
     }
 

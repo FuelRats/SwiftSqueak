@@ -27,7 +27,10 @@ import IRCKit
 
 extension IRCUser {
     var associatedAPIData: NicknameSearchDocument? {
-        return MechaSqueak.accounts.mapping[self.nickname]
+        guard let account = self.account else {
+            return nil
+        }
+        return MechaSqueak.accounts.mapping[account]
     }
 
     var assignedRescue: LocalRescue? {
@@ -85,7 +88,7 @@ extension IRCUser {
     
     func flush () {
         if let mapping = MechaSqueak.accounts.mapping.first(where: {
-            $0.key.lowercased() == self.nickname.lowercased()
+            $0.key == self.account
         }) {
             MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
         }

@@ -44,8 +44,8 @@ class NicknameLookupManager {
         let operation = NicknameLookupOperation(user: user)
 
         operation.onCompletion = { apiNick in
-            if let result = apiNick {
-                self.mapping[user.nickname] = result
+            if let result = apiNick, let account = user.account {
+                self.mapping[account] = result
                 completed?(result)
             }
         }
@@ -62,7 +62,7 @@ class NicknameLookupManager {
     }
 
     func lookupIfNotExists (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
-        guard self.mapping[user.nickname] == nil else {
+        guard let account = user.account, self.mapping[account] == nil else {
             return
         }
 
