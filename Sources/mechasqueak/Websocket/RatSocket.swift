@@ -25,6 +25,7 @@
 import Foundation
 import NIOHTTP1
 import IRCKit
+import WebSocketKit
 
 enum RatSocketEventType: String {
     case connection
@@ -34,19 +35,27 @@ enum RatSocketEventType: String {
     case channelMessage = "mechasqueak.channelmessage"
 }
 
-/*
-class RatSocket: WebSocketDelegate {
+class RatSocket {
     var connectedAndAuthenticated = false
-    let socket: WebSocket
+    var socket: WebSocket?
 
     init () {
-        let request = URLRequest(
-            url: URL(string: "\(configuration.api.url)?bearer=\(configuration.api.token)")!,
-            timeoutInterval: 5
-        )
-        self.socket = WebSocket(request: request, protocols: ["FR-JSONAPI-WS"])
-        socket.delegate = self
-        socket.connect()
+        self.connect()
+    }
+    
+    func connect () {
+        WebSocket.connect(to: URL(string: "\(configuration.api.url)?bearer=\(configuration.api.token)")!, headers: HTTPHeaders([("Sec-Websocket-Protocol", "FR-JSONAPI-WS")]), on: loop) { ws in
+            self.socket = ws
+            ws.onText(self.websocketDidReceiveMessage)
+        }.whenComplete({ result in
+            switch result {
+            case .failure(let error):
+                self.websocketDidDisconnect(error: error)
+            
+            case .success(_):
+                self.websocketDidConnect()
+            }
+        })
     }
 
     func broadcast<Payload: Encodable> (event: RatSocketEventType, payload: Payload) {
@@ -65,20 +74,21 @@ class RatSocket: WebSocketDelegate {
             return
         }
 
-        socket.write(string: requestJson)
+        socket?.send(requestJson)
     }
 
-    func websocketDidConnect (socket: WebSocketClient) {
+    func websocketDidConnect () {
         debug("Connected to Websocket connection")
     }
 
-    func websocketDidDisconnect (socket: WebSocketClient, error: Error?) {
+    func websocketDidDisconnect (error: Error?) {
+        self.socket = nil
         debug("Disconnected from Websocket connection")
         connectedAndAuthenticated = false
-        self.socket.connect()
+        self.connect()
     }
 
-    func websocketDidReceiveMessage (socket: WebSocketClient, text: String) {
+    func websocketDidReceiveMessage (socket: WebSocket, text: String) {
         guard let data = text.data(using: .utf8), let initialField = RatSocket.getInitialField(from: data) else {
             return
         }
@@ -104,9 +114,6 @@ class RatSocket: WebSocketDelegate {
         }
     }
 
-    func websocketDidReceiveData (socket: WebSocketClient, data: Data) {
-    }
-
     @discardableResult
     static func getEventAndPost<Notification: NotificationDescriptor, Event: Decodable>
     (notification: Notification.Type, from data: Data) -> RatSocketEvent<Event>?
@@ -127,7 +134,6 @@ class RatSocket: WebSocketDelegate {
         return genericResponse.originField
     }
 }
-*/
 
 struct BroadcastQuery: Encodable {
     let event: String

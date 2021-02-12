@@ -29,15 +29,6 @@
         }
       },
       {
-        "package": "IRCKit",
-        "repositoryURL": "https://github.com/FuelRats/IRCKit.git",
-        "state": {
-          "branch": null,
-          "revision": "17efdfaef1f0b55ca1381214852838074decc816",
-          "version": "0.0.12"
-        }
-      },
-      {
         "package": "JSONAPI",
         "repositoryURL": "https://github.com/mattpolzin/JSONAPI.git",
         "state": {
@@ -170,6 +161,15 @@
           "branch": null,
           "revision": "a5978582981f7151594bdaf5fe0d3cd9b1d2d0c0",
           "version": "1.3.4"
+        }
+      },
+      {
+        "package": "websocket-kit",
+        "repositoryURL": "https://github.com/vapor/websocket-kit",
+        "state": {
+          "branch": null,
+          "revision": "2b06a70dfcfa76a2e5079f60e3ae911511f09db0",
+          "version": "2.1.2"
         }
       }
     ]

@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "mechasqueak",
+    platforms: [
+        .macOS(.v10_15)
+    ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
@@ -18,8 +21,9 @@ let package = Package(
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(4, 0, 0)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 1)),
-        //.package(path: "../IRCKit"),
-        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 14))
+        .package(url: "https://github.com/vapor/websocket-kit", from: Version(2, 1, 2)),
+        .package(path: "../IRCKit")
+        //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 14))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -37,7 +41,8 @@ let package = Package(
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
                 .product(name: "Regex", package: "Regex"),
                 .product(name: "JSONAPI", package: "JSONAPI"),
-                .product(name: "IRCKit", package: "IRCKit")
+                .product(name: "IRCKit", package: "IRCKit"),
+                .product(name: "WebSocketKit", package: "websocket-kit")
             ]
         ),
         .testTarget(
