@@ -189,9 +189,7 @@ struct ProceduralSystem: CustomStringConvertible {
     // TRIANGULI SECTOR AB-N A7-0
     var corrected: ProceduralSystem? {
         var system = self
-        if sectors.contains(where: { $0.name == self.sectorName }) {
-            system.hasSectorSuffix = true
-        } else if system.hasSectorSuffix {
+        if system.hasSectorSuffix {
             var lastDistance = self.sectorName.levenshtein(sectors[0].name)
             var lastCorrection = sectors[0]
 
