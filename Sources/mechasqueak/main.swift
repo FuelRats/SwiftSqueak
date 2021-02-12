@@ -149,6 +149,9 @@ class MechaSqueak {
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
             mecha.rescueBoard.syncBoard()
+            if CommandLine.arguments.count > 2 {
+                mecha.reportingChannel?.send(message: "Update complete. Changes available here: \(CommandLine.arguments[2])")
+            }
         } else {
 
             accounts.lookupIfNotExists(user: userJoin.user)

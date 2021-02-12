@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import NIO
 
 class ManagementCommands: IRCBotModule {
     var name: String = "ManagementCommands"
@@ -55,6 +56,37 @@ class ManagementCommands: IRCBotModule {
         }
 
         command.message.replyPrivate(key: "flushall.response", fromCommand: command)
+    }
+    
+    @BotCommand(
+        ["relaunch"],
+        [.param("update link", "https://fuelrats.com/", .standard, .optional)],
+        category: .management,
+        description: "Invalidate the bots cache of API user data and fetch it again for all users.",
+        permission: .UserWrite
+    )
+    var didReceiveRebootCommand = { command in
+        let executablePath = FileManager.default.currentDirectoryPath
+        
+        var restartMessage = ":Restarting.."
+        var arguments = Array(CommandLine.arguments.dropFirst())
+        if command.parameters.count > 0 {
+            restartMessage = ":Restarting for an update.."
+            arguments.append(command.parameters[0])
+        }
+        
+        
+        let task = Process()
+        task.launchPath = "\(executablePath)/mechasqueak"
+        task.arguments = arguments
+        task.launch()
+        
+        for client in mecha.connections {
+            client.sendQuit(message: restartMessage)
+        }
+        loop.next().scheduleTask(in: .seconds(1)) {
+            exit(0)
+        }
     }
 
     @BotCommand(
