@@ -294,6 +294,14 @@ class FactCommands: IRCBotModule {
 
         if command.parameters.count > 0 {
             let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
+                var target = target
+                if command.message.destination.member(named: target) == nil {
+                    if let fuzzyTarget = command.message.destination.members.first(where: {
+                        $0.nickname.levenshtein(target) < 3
+                    }) {
+                        target = fuzzyTarget.nickname
+                    }
+                }
                 var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
                 if rescue == nil, let member = message.destination.member(named: target) {
                     if let correctedRescue = mecha.rescueBoard.fuzzyFindRescue(forChannelMember: member) {
