@@ -110,16 +110,16 @@ class MessageScanner: IRCBotModule {
                 }
             }
 
-//            if rescue.systemIsIncomplete {
-//                channelMessage.client.sendMessage(
-//                    toChannelName: channelMessage.destination.name,
-//                    withKey: "jumpcall.incompletesys",
-//                    mapping: [
-//                        "case": caseId,
-//                        "nick": channelMessage.user.nickname
-//                    ]
-//                )
-//            }
+            if rescue.system?.isIncomplete == true {
+                channelMessage.client.sendMessage(
+                    toChannelName: channelMessage.destination.name,
+                    withKey: "jumpcall.incompletesys",
+                    mapping: [
+                        "case": caseId,
+                        "nick": channelMessage.user.nickname
+                    ]
+                )
+            }
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)

@@ -110,7 +110,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
             let (landmark, distance) = procedural.estimatedLandmarkDistance
             systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
-        } else if isInvalid {
+        } else if isInvalid || isIncomplete {
             systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
         } else {
             systemInfo += " (Not found in galaxy database)"
@@ -167,20 +167,16 @@ struct StarSystem: CustomStringConvertible, Codable {
         return description
     }
 
-    var systemIsIncomplete: Bool {
-        if self.manuallyCorrected || self.landmark != nil {
+    var isIncomplete: Bool {
+        if self.landmark != nil || self.isInvalid == false {
             return false
         }
 
-        if self.name.hasSuffix("SECTOR") {
+        if self.name.hasSuffix("SECTOR") && self.name.components(separatedBy: " ").count < 4 {
             return true
         }
 
-        if self.name.components(separatedBy: " ").count < 3 {
-            return true
-        }
-
-        return true
+        return sectors.contains(where: { $0.name == self.name })
     }
     
     var isInvalid: Bool {

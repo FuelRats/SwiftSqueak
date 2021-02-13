@@ -521,7 +521,7 @@ class LocalRescue {
                 case .success(let starSystem):
                     self.system?.merge(starSystem)
                     promise.succeed(())
-                    guard starSystem.isConfirmed == false else {
+                    guard starSystem.isConfirmed == false || starSystem.isIncomplete == false else {
                         return
                     }
 
