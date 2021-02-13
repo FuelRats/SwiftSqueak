@@ -36,7 +36,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("message", "client left irc", .continuous, .optional)],
         category: .board,
         description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveToggleCaseActiveCommand = { command in
@@ -81,7 +81,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Add a rescue to the queue list, informing the client.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveQueueCommand = { command in
@@ -114,7 +114,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Remove a rescue from the queue list, informing the client.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveDequeueCommand = { command in
@@ -143,7 +143,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.options(["f"]), .param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveSystemChangeCommand = { command in
@@ -192,7 +192,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continuous)],
         category: .board,
         description: "Change the CMDR name of the client of this rescue.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveClientChangeCommand = { command in
@@ -229,7 +229,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("new nick", "SpaceDawg")],
         category: .board,
         description: "Change the IRC nick associated with the client of this rescue.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveClientNickChangeCommand = { command in
@@ -264,7 +264,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("language code", "de")],
         category: .board,
         description: "Change the language of the client of this rescue.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveLanguageChangeCommand = { command in
@@ -296,7 +296,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Toggle the case between code red (on emergency oxygen) status or not.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveCodeRedToggleCommand = { command in
@@ -335,7 +335,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continuous)],
         category: .board,
         description: "Set the operations title of this rescue, used to give a unique name to special rescues",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveSetTitleCommand = { command in

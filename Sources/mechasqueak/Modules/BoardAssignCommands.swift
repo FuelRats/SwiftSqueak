@@ -37,7 +37,7 @@ class BoardAssignCommands: IRCBotModule {
         [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveAssignCommand = { command in
@@ -76,7 +76,7 @@ class BoardAssignCommands: IRCBotModule {
         [.options(["a"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveAssignWithInstructionsCommand = { command in

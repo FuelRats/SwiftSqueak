@@ -50,7 +50,7 @@ class BoardPlatformCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to Xbox.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveXboxPlatformCommand = { command in
@@ -62,7 +62,7 @@ class BoardPlatformCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PC.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceivePCPlatformCommand = { command in
@@ -74,7 +74,7 @@ class BoardPlatformCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PS4.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceivePS4PlatformCommand = { command in
