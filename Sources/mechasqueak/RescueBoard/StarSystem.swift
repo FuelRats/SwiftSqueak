@@ -168,7 +168,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
 
     var isIncomplete: Bool {
-        if self.landmark != nil || self.isInvalid == false {
+        if self.landmark != nil || (self.proceduralCheck != nil && self.isInvalid == false) {
             return false
         }
 
