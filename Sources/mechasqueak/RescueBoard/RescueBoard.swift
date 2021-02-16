@@ -284,6 +284,10 @@ class RescueBoard {
         }
         
         rescue.validateSystem()?.whenComplete({ _ in
+            var key = "board.\(announceType)"
+            if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
+                key += ".nick"
+            }
             message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "u\u{200B}nknown",
@@ -294,7 +298,8 @@ class RescueBoard {
                 "platformSignal": rescue.platform?.signal ?? "",
                 "cr": crStatus,
                 "language": language,
-                "langCode": languageCode
+                "langCode": languageCode,
+                "nick": rescue.clientNick ?? rescue.clientDescription
             ]))
 
             if let systemBody = rescue.system?.clientProvidedBody {
