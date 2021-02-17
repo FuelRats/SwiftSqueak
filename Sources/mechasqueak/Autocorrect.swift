@@ -108,6 +108,9 @@ struct ProceduralSystem: CustomStringConvertible {
             return nil
         }
         
+        if proceduralComponents[0].count == 0 {
+            proceduralComponents.removeFirst()
+        }
         self.massCategory = proceduralComponents[0].removeFirst()
         var cubePosition: String = proceduralComponents[0]
         proceduralComponents.removeFirst()
