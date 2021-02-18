@@ -74,20 +74,26 @@ struct ProceduralSystem: CustomStringConvertible {
         guard components.count > 2 && components[0].contains("-") == false else {
             return nil
         }
+        var proceduralStart: String.Index? = nil
         if let sectorComponent = components.first(where: { $0.lowercased().levenshtein("sector") <= 3 }) {
             hasSectorSuffix = true
-            systemName.removeSubrange(systemName.range(of: sectorComponent)!)
+            let sectorRange = systemName.range(of: sectorComponent)!
+            proceduralStart = systemName.index(before: sectorRange.lowerBound)
+            systemName.removeSubrange(sectorRange)
         }
         self.hasSectorSuffix = hasSectorSuffix
         
-        guard let hyphenIndex = systemName.firstIndex(of: "-") else {
+        let hyphenIndex = systemName.firstIndex(of: "-")
+        if hyphenIndex != nil && proceduralStart == nil {
+            proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<hyphenIndex!)?.lowerBound
+        }
+        guard proceduralStart != nil else {
             return nil
         }
-        guard let proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<hyphenIndex) else {
-            return nil
-        }
-        self.sectorName = String(systemName[systemName.startIndex..<proceduralStart.lowerBound]).trimmingCharacters(in: .whitespaces)
-        let procedural = String(systemName[proceduralStart.upperBound..<systemName.endIndex])
+        
+        self.sectorName = String(systemName[systemName.startIndex..<proceduralStart!]).trimmingCharacters(in: .whitespaces)
+        let proceduralStartIndex = systemName.index(after: proceduralStart!)
+        let procedural = String(systemName[proceduralStartIndex..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
         var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted)
         
         guard proceduralComponents.count > 2 && proceduralComponents.first!.count > 1 else {
@@ -116,7 +122,11 @@ struct ProceduralSystem: CustomStringConvertible {
         proceduralComponents.removeFirst()
         if cubePosition.count == 0 {
             cubePosition.append(proceduralComponents[0])
-            proceduralComponents[0].removeFirst()
+            if proceduralComponents[0].count > 0 {
+                proceduralComponents[0].removeFirst()
+            } else {
+                proceduralComponents.removeFirst()
+            }
         }
         self.cubePosition = cubePosition
         
