@@ -80,6 +80,9 @@ class SystemSearch: IRCBotModule {
         if system.lowercased().starts(with: "near ") {
             system.removeFirst(5)
         }
+        if let autocorrect = ProceduralSystem.correct(system: system) {
+            system = autocorrect
+        }
 
         SystemsAPI.performSystemCheck(forSystem: system).whenComplete { apiResult in
             switch apiResult {
