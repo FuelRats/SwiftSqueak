@@ -81,24 +81,30 @@ class SystemSearch: IRCBotModule {
             system.removeFirst(5)
         }
 
-        SystemsAPI.performSystemCheck(forSystem: system).whenSuccess({ result in
-            guard let landmark = result.landmark else {
-                if let procedural = result.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                    let (landmark, distance) = procedural.estimatedLandmarkDistance
-                    command.message.reply(key: "landmark.procedural", fromCommand: command, map: [
-                        "system": system,
-                        "distance": distance,
-                        "landmark": landmark.name
+        SystemsAPI.performSystemCheck(forSystem: system).whenComplete { apiResult in
+            switch apiResult {
+                case .failure(_):
+                    command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                        "system": system
                     ])
-                    return
-                }
-                command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                    "system": system
-                ])
-                return
+                case .success(let result):
+                    guard let landmark = result.landmark else {
+                        if let procedural = result.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
+                            let (landmark, distance) = procedural.estimatedLandmarkDistance
+                            command.message.reply(key: "landmark.procedural", fromCommand: command, map: [
+                                "system": system,
+                                "distance": distance,
+                                "landmark": landmark.name
+                            ])
+                            return
+                        }
+                        command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                            "system": system
+                        ])
+                        return
+                    }
+                    command.message.reply(message: result.info)
             }
-            command.message.reply(message: result.info)
-
-        })
+        }
     }
 }
