@@ -234,7 +234,7 @@ class SystemsAPI {
             if self.landmarks?.count ?? 0 < 2 {
                 return self.landmarks?.first
             }
-            return self.landmarks?.filter({ $0.name != "Sagittarius A*" || $0.distance < 8000 }).first
+            return self.landmarks?.first
         }
     }
     
@@ -266,11 +266,7 @@ class SystemsAPI {
                 let z = try values.decode(Double.self, forKey: .z)
                 self.coordinates = Vector3(x, y, z)
                 
-                var soi = try? values.decode(Double.self, forKey: .soi)
-                if name == "Sagittarius A*" {
-                    soi = 8000
-                }
-                self.soi = soi
+                self.soi = try? values.decode(Double.self, forKey: .soi)
             }
         }
         
@@ -376,12 +372,12 @@ class SystemsAPI {
                 if self.permitRequired {
                     if let permitName = self.permitName {
                         let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
-                        return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
+                        return "(\(IRCFormat.bold(index.description))) \"\(self.name)\" \(permitReq)"
                     }
                     let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
-                    return "(\(IRCFormat.bold(index.value))) \"\(self.name)\" \(permitReq)"
+                    return "(\(IRCFormat.bold(index.description))) \"\(self.name)\" \(permitReq)"
                 }
-                return "(\(IRCFormat.bold(index.value))) \"\(self.name)\""
+                return "(\(IRCFormat.bold(index.description))) \"\(self.name)\""
             }
 
             func rateCorrectionFor (system: String) -> Int? {
