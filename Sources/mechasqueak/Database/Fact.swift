@@ -24,74 +24,52 @@
 
 import Foundation
 import SwiftKuery
+import SwiftKueryORM
+import SwiftKueryPostgreSQL
 import NIO
-import SQLKit
-import PostgresKit
-import IRCKit
 
-let sqlConfiguration = PostgresConfiguration(
-    hostname: configuration.database.host,
-    username: configuration.database.username,
-    password: configuration.database.password,
-    database: configuration.database.database
-)
+struct Fact: Codable {
+    static var dateEncodingFormat: DateEncodingFormat = .timestamp
+    var id: Int?
 
-let pools = EventLoopGroupConnectionPool(
-    source: PostgresConnectionSource(configuration: sqlConfiguration),
-    on: loop
-)
-let sql = pools.database(logger: Logger(label: "SQL")).sql()
-
-
-struct Fact: Codable, Hashable {
-    static let platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog"]
-    private static var cache = [String: Fact]()
-    
-    var id: String
-    var fact: String
-    var createdAt: Date
-    var updatedAt: Date
+    var name: String
     var language: String
     var message: String
     var author: String
-    
-    var cacheIdentifier: String {
-        return "\(self.fact.lowercased())-\(self.language)"
-    }
-    
+    var createdAt: Date
+    var updatedAt: Date
+
+    static var idKeypath: IDKeyPath = \Fact.id
+}
+
+struct FactQuery: QueryParams {
+    let name: String
+    let language: String
+}
+
+struct FactListQuery: QueryParams {
+    let language: String
+}
+
+extension Fact: Model {
     public static func get (name: String, forLocale locale: Locale) -> EventLoopFuture<Fact?> {
-        let factName = name.lowercased()
-        let localeString = locale.identifier.prefix(2)
-        
-        let future = loop.next().makePromise(of: Fact?.self)
-        if let cachedFact = cache["\(factName)-\(localeString)"] {
-            future.succeed(cachedFact)
-        } else {
-            sql.select().column("*")
-                .from("facts")
-                .join("factmessages", method: .inner, on: "facts.id=factmessages.fact and factmessages.language='\(localeString)'")
-                .where("alias", .equal, factName)
-                .first().whenComplete({ result in
-                    switch result {
-                        case .failure(let error):
-                            future.fail(error)
-                            
-                        case .success(let row):
-                            guard let row = row else {
-                                future.succeed(nil)
-                                return
-                            }
-                            
-                            let fact = try? row.decode(model: Fact.self)
-                            if let cacheFact = fact {
-                                cache["\(factName)-\(localeString)"] = cacheFact
-                            }
-                            future.succeed(fact)
-                    }
-                })
-        }
-        
-        return future.futureResult
+        let promise = loop.next().makePromise(of: Fact?.self)
+
+        let query = FactQuery(name: name.lowercased(), language: String(locale.identifier.prefix(2)))
+        Fact.findAll(using: Database.default, matching: query, { (facts, error) in
+            if let error = error {
+                promise.fail(error)
+                return
+            }
+
+            guard let facts = facts, facts.count > 0 else {
+                promise.succeed(nil)
+                return
+            }
+
+            promise.succeed(facts[0])
+        })
+        return promise.futureResult
     }
 
     public static func getWithFallback (name: String, forLcoale locale: Locale) -> EventLoopFuture<Fact?> {
@@ -103,135 +81,26 @@ struct Fact: Codable, Hashable {
             return loop.next().makeSucceededFuture(fact)
         })
     }
-    
-    public static var all: EventLoopFuture<[Fact]> {
-        let future = loop.next().makePromise(of: [Fact].self)
-        sql.select().column("*")
-            .from("facts")
-            .join("factmessages", method: .inner, on: "facts.id=factmessages.fact")
-            .all().whenComplete({ result in
-                switch result {
-                case .failure(let error):
-                    future.fail(error)
-                
-                case .success(let rows):
-                    let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
-                    for fact in facts {
-                        cache[fact.cacheIdentifier] = fact
-                    }
-                    future.succeed(facts)
-                }
-            })
-        return future.futureResult
-    }
-    
-//    public static func create (name: String, message: String, forLocale: Locale = Locale(identifier: "en")) -> EventLoopFuture<Fact> {
-//        sql.insertif
-//    }
-}
 
-struct GroupedFact: Codable {
-    let cannonicalName: String
-    var messages: [String: Fact]
-    var aliases: [String]
-    
-    var isPlatformFact: Bool {
-        return Fact.platformFacts.contains(where: { cannonicalName.hasSuffix($0) })
-    }
-    
-    var platform: GamePlatform? {
-        guard self.isPlatformFact else {
-            return nil
-        }
-        
-        switch self.cannonicalName {
-            case let str where str.starts(with: "pc"):
-                return .PC
-                
-            case let str where str.starts(with: "x"):
-                return .Xbox
-                
-            case let str where str.starts(with: "ps"):
-                return .PS
-                
-            default:
-                return nil
-        }
-    }
-    
-    var platformLessIdentifier: String? {
-        guard let platform = self.platform else {
-            return nil
-        }
-        
-        switch platform {
-            case .PC, .PS:
-                return String(self.cannonicalName.dropFirst(2))
-                
-            case .Xbox:
-                return String(self.cannonicalName.dropFirst(1))
-        }
-    }
-    
-    static func get (name: String) -> EventLoopFuture<GroupedFact?> {
-        let future = loop.next().makePromise(of: GroupedFact?.self)
-        sql.select().column("*")
-            .from("facts")
-            .join("factmessages", method: .inner, on: "facts.id=factmessages.fact")
-            .where("alias", .equal, SQLBind(name))
-            .all(decoding: Fact.self)
-            .whenComplete({ result in
-                switch result {
-                    case .failure(let error):
-                        future.fail(error)
-                        
-                    case .success(let facts):
-                        future.succeed(facts.grouped.values.first)
-                }
-            })
-        return future.futureResult
-    }
-}
+    public static func get (
+        name: String,
+        forLocale locale: Locale,
+        onComplete: @escaping (Fact?) -> Void,
+        onError: ((Error) -> Void)? = nil
+    ) {
+        let query = FactQuery(name: name.lowercased(), language: String(locale.identifier.prefix(2)))
+        Fact.findAll(using: Database.default, matching: query, { (facts, error) in
+            if let error = error {
+                onError?(error)
+                return
+            }
 
-extension Array where Element == GroupedFact {
-    var platformGrouped: [String: [GroupedFact]] {
-        return self.reduce([String: [GroupedFact]](), { groups, group in
-            var groups = groups
-            guard let platformLessIdentifier = group.platformLessIdentifier else {
-                return groups
+            guard let facts = facts, facts.count > 0 else {
+                onComplete(nil)
+                return
             }
-            if groups[platformLessIdentifier] == nil {
-                groups[platformLessIdentifier] = []
-            }
-            groups[platformLessIdentifier]?.append(group)
-            return groups
-        })
-    }
-    
-    var platformFactDescription: String {
-        let platforms = self.compactMap({ $0.platform?.factPrefix })
-        let platformPrefix = IRCFormat.color(.Grey, "(\(platforms.joined(separator: "|")))")
-        return "\(platformPrefix)\(self.first?.platformLessIdentifier ?? "")"
-    }
-}
 
-extension Array where Element == Fact {
-    var grouped: [String: GroupedFact] {
-        self.reduce([String: GroupedFact](), { facts, fact in
-            var facts = facts
-            if var entry = facts[fact.id] {
-                if entry.aliases.contains(fact.fact) == false {
-                    entry.aliases.append(fact.fact)
-                }
-                entry.messages[fact.language] = fact
-            } else {
-                facts[fact.id] = GroupedFact(
-                    cannonicalName: fact.id,
-                    messages: [fact.language: fact],
-                    aliases: [fact.fact]
-                )
-            }
-            return facts
+            onComplete(facts[0])
         })
     }
 }
