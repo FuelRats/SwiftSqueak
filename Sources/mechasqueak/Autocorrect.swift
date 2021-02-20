@@ -130,8 +130,17 @@ struct ProceduralSystem: CustomStringConvertible {
         }
         self.cubePosition = cubePosition
         
-        if proceduralComponents.count > 0 {
-            self.systemId = proceduralComponents[0]
+        var systemId = ""
+        while proceduralComponents.count > 0 {
+            let comp = proceduralComponents[0]
+            if comp.allSatisfy({ $0.isNumber }) == false {
+                break
+            }
+            systemId += comp
+            proceduralComponents.removeFirst()
+        }
+        if systemId.count > 0 {
+            self.systemId = systemId
         }
     }
     
