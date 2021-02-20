@@ -122,11 +122,7 @@ struct ProceduralSystem: CustomStringConvertible {
         proceduralComponents.removeFirst()
         if cubePosition.count == 0 {
             cubePosition.append(proceduralComponents[0])
-            if proceduralComponents[0].count > 0 {
-                proceduralComponents[0].removeFirst()
-            } else {
-                proceduralComponents.removeFirst()
-            }
+            proceduralComponents.removeFirst()
         }
         self.cubePosition = cubePosition
         
