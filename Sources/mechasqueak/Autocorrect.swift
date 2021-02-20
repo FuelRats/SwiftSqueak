@@ -129,7 +129,7 @@ struct ProceduralSystem: CustomStringConvertible {
         var systemId = ""
         while proceduralComponents.count > 0 {
             let comp = proceduralComponents[0]
-            if comp.allSatisfy({ $0.isNumber }) == false {
+            if comp.allSatisfy({ $0.isNumber || ProceduralSystem.letterSubstitutions.keys.contains($0) }) == false {
                 break
             }
             systemId += comp
@@ -137,6 +137,9 @@ struct ProceduralSystem: CustomStringConvertible {
         }
         if systemId.count > 0 {
             self.systemId = systemId
+        }
+        if ProceduralSystem.proceduralSystemExpression.matches(self.description) == false {
+            return nil
         }
     }
     
