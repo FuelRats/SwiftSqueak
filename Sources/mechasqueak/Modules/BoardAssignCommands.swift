@@ -73,7 +73,7 @@ class BoardAssignCommands: IRCBotModule {
 
     @BotCommand(
         ["gofr", "assignfr", "frgo", "f"],
-        [.options(["a"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
+        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
         permission: .DispatchWrite,
@@ -102,7 +102,7 @@ class BoardAssignCommands: IRCBotModule {
 
         let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
 
-        sendAssignMessages(
+        let didSend = sendAssignMessages(
             assigns: assigns,
             forRescue: rescue,
             fromCommand: command,
@@ -110,7 +110,7 @@ class BoardAssignCommands: IRCBotModule {
             force: force
         )
 
-        guard assigns.rats.count > 0 || (assigns.unidentifiedRats.count > 0 && force) else {
+        guard didSend else {
             return
         }
 
@@ -132,13 +132,15 @@ class BoardAssignCommands: IRCBotModule {
         }
     }
 
+    @discardableResult
     static func sendAssignMessages (
         assigns: RescueAssignments,
         forRescue rescue: LocalRescue,
         fromCommand command: IRCBotCommand,
         includeExistingAssigns: Bool = false,
         force: Bool = false
-    ) {
+    ) -> Bool {
+        var sent = false
         if assigns.blacklisted.count > 0 {
             command.message.error(key: "board.assign.banned", fromCommand: command, map: [
                 "rats": assigns.blacklisted.joined(separator: ", ")
@@ -180,6 +182,7 @@ class BoardAssignCommands: IRCBotModule {
                 }).joined(separator: ", "),
                 "count": allRats.count
             ])
+            sent = true
         }
 
 
@@ -198,6 +201,7 @@ class BoardAssignCommands: IRCBotModule {
                 ])
             }
         }
+        return sent
     }
 
     @BotCommand(
