@@ -94,7 +94,7 @@ struct ProceduralSystem: CustomStringConvertible {
         self.sectorName = String(systemName[systemName.startIndex..<proceduralStart!]).trimmingCharacters(in: .whitespaces)
         let proceduralStartIndex = systemName.index(after: proceduralStart!)
         let procedural = String(systemName[proceduralStartIndex..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
-        var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted).filter({ $0.count > 0 })
         
         guard proceduralComponents.count > 2 && proceduralComponents.first!.count > 1 else {
             return nil
@@ -103,6 +103,9 @@ struct ProceduralSystem: CustomStringConvertible {
         let part2: Character = proceduralComponents[0].removeFirst()
         var suffix: Character? = proceduralComponents[0].count > 0 ? proceduralComponents[0].removeFirst() : nil
         proceduralComponents.removeFirst()
+        if proceduralComponents[0].count == 0 {
+            proceduralComponents.removeFirst()
+        }
         
         if suffix == nil {
             suffix = proceduralComponents[0].removeFirst()
