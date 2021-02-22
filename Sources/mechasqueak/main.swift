@@ -139,9 +139,7 @@ class MechaSqueak {
             return
         }
 
-        if accountChange.oldValue != account || accounts.mapping[account] == nil {
-            accounts.lookupIfNotExists(user: user)
-        }
+        accounts.lookupIfNotExists(user: user)
     }
 
     @EventListener<IRCUserJoinedChannelNotification>
@@ -156,7 +154,7 @@ class MechaSqueak {
             }
         } else {
 
-            accounts.lookupIfNotExists(user: userJoin.user)
+            accounts.lookup(user: userJoin.user)
             if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userJoin.user.nickname) {
                     rescue.quotes.removeAll(where: {
                         $0.message.starts(with: "Client rejoined the rescue channel")
@@ -322,6 +320,10 @@ class MechaSqueak {
 }
 
 let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+
+func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
+    return loop.next().makePromise(of: type)
+}
 let mecha = MechaSqueak()
 
 RunLoop.main.run()

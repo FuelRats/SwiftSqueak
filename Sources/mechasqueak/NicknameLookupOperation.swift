@@ -76,7 +76,7 @@ class NicknameLookupManager {
 
     func hasExistingFetchOperation (user: IRCUser) -> Bool {
         return self.queue.operations.contains(where: {
-            $0.name == user.nickname
+            $0.name == user.account
         })
     }
 }
@@ -117,7 +117,7 @@ class NicknameLookupOperation: Operation {
     init (user: IRCUser) {
         self.user = user
         super.init()
-        self.name = user.nickname
+        self.name = user.account
     }
 
     override func start () {
