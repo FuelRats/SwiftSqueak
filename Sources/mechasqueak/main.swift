@@ -231,8 +231,6 @@ class MechaSqueak {
 
     @EventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
-        accounts.mapping.removeValue(forKey: userQuit.raw.sender!.nickname)
-
         if
             let sender = userQuit.raw.sender,
             let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
@@ -308,8 +306,7 @@ class MechaSqueak {
     @EventListener<IRCUserHostChangeNotification>
     var onUserHostChange = { hostChange in
         let sender = hostChange.sender!
-        accounts.mapping.removeValue(forKey: sender.nickname)
-
+        
         guard let user = hostChange.client.channels.first(where: {
             $0.member(named: sender.nickname) != nil
         })?.member(named: sender.nickname) else {
