@@ -36,13 +36,13 @@ struct IRCBotCommand {
     var locale: Locale
     let message: IRCPrivateMessage
     private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
-
-    init? (from channelMessage: IRCPrivateMessage) {
-        var message = channelMessage.message
+    
+    init? (from text: String, inMessage privateMessage: IRCPrivateMessage) {
+        var message = text
         message = IRCBotCommand.ircFormattingExpression.replaceAll(in: message, with: "")
-        message = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        message = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        var lexer = Lexer(body: message)
+        var lexer = Lexer(body: text)
         do {
             let tokens = try lexer.lex()
 
@@ -50,7 +50,7 @@ struct IRCBotCommand {
                 return nil
             }
 
-            self.message = channelMessage
+            self.message = privateMessage
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
 
@@ -84,6 +84,11 @@ struct IRCBotCommand {
         }
     }
 
+    init? (from channelMessage: IRCPrivateMessage) {
+        let message = channelMessage.message
+        self.init(from: message, inMessage: channelMessage)
+    }
+
     init? (
         from channelMessage: IRCPrivateMessage,
         withIdentifier identifier: String,
@@ -106,6 +111,26 @@ struct IRCBotCommand {
             channelMessage.reply(message: "Command was given too few parameters, usage: \(usageMessage)")
             return nil
         }
+    }
+    
+    var param1: String? {
+        self.parameters[safe: 0]
+    }
+    
+    var param2: (String?, String?) {
+        return (self.parameters[safe: 0], self.parameters[safe: 1])
+    }
+    
+    var param3: (String?, String?, String?) {
+        return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2])
+    }
+    
+    var param4: (String?, String?, String?, String?) {
+        return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2], self.parameters[safe: 3])
+    }
+    
+    var param5: (String?, String?, String?, String?, String?) {
+        return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2], self.parameters[safe: 3], self.parameters[safe: 4])
     }
 }
 

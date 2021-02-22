@@ -41,6 +41,9 @@ class NicknameLookupManager {
     }
 
     func lookup (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
+        guard user.account != nil else {
+            return
+        }
         let operation = NicknameLookupOperation(user: user)
 
         operation.onCompletion = { apiNick in
