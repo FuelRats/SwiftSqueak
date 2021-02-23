@@ -54,7 +54,7 @@ class NicknameLookupManager {
         }
 
         operation.onError = { error in
-            self.lookupServiceAvailable = false
+            mecha.rescueBoard.synced = false
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .seconds(1), execute: {
                 self.lookupIfNotExists(user: user)
             })
