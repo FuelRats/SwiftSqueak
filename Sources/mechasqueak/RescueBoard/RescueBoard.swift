@@ -37,7 +37,6 @@ class RescueBoard {
     var lastSignalReceived: Date?
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
-    private let systemBodiesPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
     var recentlyClosed = [Int: UUID]()
     
     var lastPaperworkReminder: [UUID: Date] = [:]
@@ -272,15 +271,18 @@ class RescueBoard {
             return
         }
 
-        if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system.name) {
+        
+        
+        if let systemName = rescue.system?.name, let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
+            rescue.system?.name = correction
+            if let body = procedural.systemBody {
+                rescue.system?.clientProvidedBody = body
+            }
+        } else if let systemBodiesMatches = ProceduralSystem.systemBodyPattern.findFirst(in: system.name) {
             system.name.removeLast(systemBodiesMatches.matched.count)
             let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
             system.clientProvidedBody = body
             rescue.system = system
-        }
-        
-        if let systemName = rescue.system?.name, let correction = ProceduralSystem.correct(system: systemName) {
-            rescue.system?.name = correction
         }
         
         rescue.validateSystem()?.whenComplete({ _ in
@@ -288,7 +290,7 @@ class RescueBoard {
             if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
                 key += ".nick"
             }
-            message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
+            message.reply(message: lingo.localize(key, locale: "en", interpolations: [
                 "signal": configuration.general.signal.uppercased(),
                 "client": rescue.client ?? "u\u{200B}nknown",
                 "platform": rescue.platform.ircRepresentable,
@@ -299,7 +301,7 @@ class RescueBoard {
                 "cr": crStatus,
                 "language": language,
                 "langCode": languageCode,
-                "nick": rescue.clientNick ?? rescue.clientDescription
+                "nickname": rescue.clientNick ?? rescue.clientDescription
             ]))
 
             if let systemBody = rescue.system?.clientProvidedBody {

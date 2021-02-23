@@ -69,6 +69,7 @@ class SystemsAPI {
                     permit: permit,
                     availableCorrections: nil,
                     landmark: landmarkDocument.first,
+                    landmarks: landmarkDocument.landmarks ?? [],
                     proceduralCheck: nil
                 )
                 EDSM.getBodies(forSystem: system.name).and(EDSM.getStations(forSystem: system.name)).whenComplete({ result in
@@ -127,6 +128,7 @@ class SystemsAPI {
                                 permit: permit,
                                 availableCorrections: searchResults.data,
                                 landmark: landmarkResults.first,
+                                landmarks: landmarkResults.landmarks ?? [],
                                 proceduralCheck: proceduralResult
                             )
                             
@@ -306,6 +308,16 @@ class SystemsAPI {
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
             
             return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!)
+        }
+        
+        var estimatedSolDistance: String {
+            let distance = self.sectordata.coords.distance(from: Vector3(0, 0, 0))
+            
+            let formatter = NumberFormatter.englishFormatter()
+            formatter.usesSignificantDigits = true
+            formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
+            
+            return formatter.string(from: distance)!
         }
         
         struct SectorData: Codable {

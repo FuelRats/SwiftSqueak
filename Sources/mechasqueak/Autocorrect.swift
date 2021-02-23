@@ -28,6 +28,7 @@ import Regex
 struct ProceduralSystem: CustomStringConvertible {
     static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
+    static let systemBodyPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
     static let validMassCategories = "ABCDEFGH"
     private static let numberSubstitutions: [Character: Character] = [
         "1": "I",
@@ -54,6 +55,7 @@ struct ProceduralSystem: CustomStringConvertible {
     var massCategory: Character
     var cubePosition: String
     var systemId: String?
+    var systemBody: String? = nil
     
     struct CubeID: CustomStringConvertible {
         var part1: Character
@@ -132,7 +134,7 @@ struct ProceduralSystem: CustomStringConvertible {
         var systemId = ""
         while proceduralComponents.count > 0 {
             let comp = proceduralComponents[0]
-            if comp.allSatisfy({ $0.isNumber || ProceduralSystem.letterSubstitutions.keys.contains($0) }) == false {
+            if comp.allSatisfy({ $0.isNumber }) == false {
                 break
             }
             systemId += comp
@@ -140,6 +142,12 @@ struct ProceduralSystem: CustomStringConvertible {
         }
         if systemId.count > 0 {
             self.systemId = systemId
+        }
+        if proceduralComponents.count > 0 {
+            let remaining = " " + proceduralComponents.joined(separator: " ")
+            if let systemBody = ProceduralSystem.systemBodyPattern.findFirst(in: remaining) {
+                self.systemBody = systemBody.matched.trimmingCharacters(in: .whitespaces)
+            }
         }
         if ProceduralSystem.proceduralSystemExpression.matches(self.description) == false {
             return nil
@@ -245,9 +253,9 @@ struct ProceduralSystem: CustomStringConvertible {
         if system.cubePosition.rangeOfCharacter(from: .letters) != nil {
             system.cubePosition = ProceduralSystem.performLetterSubstitution(value: system.cubePosition)
         }
-        if let systemId = system.systemId, systemId.rangeOfCharacter(from: .letters) != nil {
-            system.systemId = ProceduralSystem.performLetterSubstitution(value: systemId)
-        }
+//        if let systemId = system.systemId, systemId.rangeOfCharacter(from: .letters) != nil {
+//            system.systemId = ProceduralSystem.performLetterSubstitution(value: systemId)
+//        }
         
         if system.isValid == false {
             return nil
