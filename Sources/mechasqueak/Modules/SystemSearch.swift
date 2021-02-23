@@ -71,7 +71,7 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["landmark"],
-        [.param("system name", "NLTT 48288", .continuous)],
+        [.argument("sol"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia."
     )
@@ -80,6 +80,8 @@ class SystemSearch: IRCBotModule {
         if system.lowercased().starts(with: "near ") {
             system.removeFirst(5)
         }
+        
+        let landmarkPreference = command.namedOptions.contains("sol") ? "Sol" : nil
         if let autocorrect = ProceduralSystem.correct(system: system) {
             system = autocorrect
         }
@@ -93,11 +95,17 @@ class SystemSearch: IRCBotModule {
                 case .success(let result):
                     guard let landmark = result.landmark else {
                         if let procedural = result.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                            let (landmark, distance) = procedural.estimatedLandmarkDistance
+                            var (landmark, distance) = procedural.estimatedLandmarkDistance
+                            var landmarkName = landmark.name
+                            
+                            if landmarkPreference != nil {
+                                landmarkName = "Sol"
+                                distance = procedural.estimatedSolDistance
+                            }
                             command.message.reply(key: "landmark.procedural", fromCommand: command, map: [
                                 "system": system,
                                 "distance": distance,
-                                "landmark": landmark.name
+                                "landmark": landmarkName
                             ])
                             return
                         }
@@ -106,7 +114,7 @@ class SystemSearch: IRCBotModule {
                         ])
                         return
                     }
-                    command.message.reply(message: result.info)
+                    command.message.reply(message: result.getInfo(preferredLandmarkName: landmarkPreference))
             }
         }
     }

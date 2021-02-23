@@ -35,6 +35,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     var permit: Permit? = nil
     var availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil
     var landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil
+    var landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = []
     var clientProvidedBody: String?
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
     var bodies: [EDSM.Body]? = nil
@@ -46,6 +47,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         permit: Permit? = nil,
         availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil,
         landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil,
+        landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = [],
         clientProvidedBody: String? = nil,
         proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
     ) {
@@ -54,6 +56,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.permit = permit
         self.availableCorrections = availableCorrections
         self.landmark = landmark
+        self.landmarks = landmarks
         self.clientProvidedBody = clientProvidedBody
         self.proceduralCheck = proceduralCheck
     }
@@ -94,10 +97,10 @@ struct StarSystem: CustomStringConvertible, Codable {
         let composedName = "\(self.name.uppercased()) \(name.uppercased())"
         return bodies.first(where: { $0.name.uppercased() == composedName })
     }
-
-    var description: String {
+    
+    func getDescription (preferredLandmarkName: String? = nil) -> String {
         var systemInfo = "\"\(self.name)\""
-        if let landmark = self.landmark {
+        if let landmark = self.landmarks.first(where: { $0.name == preferredLandmarkName }) ?? self.landmark {
             systemInfo += " ("
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
                 systemInfo += description
@@ -123,6 +126,10 @@ struct StarSystem: CustomStringConvertible, Codable {
         }
         return systemInfo
     }
+
+    var description: String {
+        return getDescription()
+    }
     
     var shortDescription: String {
         var systemInfo = "\"\(self.name)\""
@@ -139,8 +146,8 @@ struct StarSystem: CustomStringConvertible, Codable {
         return systemInfo
     }
     
-    var info: String {
-        var description = self.description + "."
+    func getInfo (preferredLandmarkName: String? = nil) -> String {
+        var description = self.getDescription(preferredLandmarkName: preferredLandmarkName) + "."
         if let bodies = self.bodies, bodies.count > 1 {
             description += " \(bodies.count) stellar bodies"
         }
@@ -168,6 +175,10 @@ struct StarSystem: CustomStringConvertible, Codable {
             }
         }
         return description
+    }
+    
+    var info: String {
+        return getInfo()
     }
 
     var isIncomplete: Bool {
