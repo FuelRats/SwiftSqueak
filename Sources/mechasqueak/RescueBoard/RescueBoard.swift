@@ -268,6 +268,7 @@ class RescueBoard {
                 "systemInfo": rescue.system.description
             ]))
             rescue.createUpstream()
+            self.prepClient(rescue: rescue, message: message, initiated: initiated)
             return
         }
 
