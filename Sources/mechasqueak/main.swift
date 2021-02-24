@@ -316,7 +316,7 @@ class MechaSqueak {
     }
 }
 
-let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount * 2)
 
 func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
     return loop.next().makePromise(of: type)
