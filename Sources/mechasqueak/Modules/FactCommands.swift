@@ -330,9 +330,9 @@ class FactCommands: IRCBotModule {
         guard var command = IRCBotCommand(from: message) else {
             return
         }
-
+        
         let isPrepFact = prepFacts.contains(where: { $0 == command.command })
-
+        
         if command.parameters.count > 0 {
             let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
                 var target = target
@@ -353,18 +353,18 @@ class FactCommands: IRCBotModule {
                 }
                 return (target, nil)
             })
-
+            
             if command.locale.identifier == "auto", targets.count > 0, let firstRescue = targets[0].1 {
                 command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en-GB")
             }
-
+            
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
                 for platform in GamePlatform.allCases {
                     let platformTargets = targets.filter({ $0.1?.platform == platform })
                     if platformTargets.count == 0 {
                         continue
                     }
-
+                    
                     var smartCommand = command
                     smartCommand.command = "\(platform.factPrefix)\(command.command)"
                     if command.command == "fr" && targets.contains(where: { $1?.codeRed ?? false == true }) {
@@ -376,6 +376,9 @@ class FactCommands: IRCBotModule {
                 if command.command == "quit" {
                     command.command = "prepcr"
                 }
+                command.parameters = targets.map({ $0.0 })
+                sendFact(command: command, message: message)
+            } else {
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }
