@@ -376,8 +376,16 @@ class FactCommands: IRCBotModule {
                 if command.command == "quit" {
                     command.command = "prepcr"
                 }
-                command.parameters = targets.map({ $0.0 })
-                sendFact(command: command, message: message)
+                let unknownTargets = targets.compactMap({ target -> String? in
+                    if target.1 != nil && target.1?.platform != nil {
+                        return nil
+                    }
+                    return target.0
+                })
+                if unknownTargets.count > 0 {
+                    command.parameters = unknownTargets
+                    sendFact(command: command, message: message)
+                }
             } else {
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
