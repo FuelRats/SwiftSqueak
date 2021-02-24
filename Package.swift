@@ -13,8 +13,6 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/xlexi/Lingo.git", from: Version(3, 0, 6)),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 2, 1)),
-        .package(name: "SwiftKueryORM", url: "https://github.com/IBM-Swift/Swift-Kuery-ORM.git", from: "0.6.1"),
-        .package(name: "SwiftKueryPostgreSQL", url: "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git", from: "2.1.1"),
         .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 22, 0)),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 9, 1)),
         .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 7, 0)),
@@ -22,6 +20,8 @@ let package = Package(
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(4, 0, 0)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 3, 1)),
         .package(url: "https://github.com/vapor/websocket-kit", from: Version(2, 1, 2)),
+        .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 7, 2)),
+        .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 0)),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 14))
     ],
@@ -32,8 +32,6 @@ let package = Package(
             name: "mechasqueak",
             dependencies: [
                 .product(name: "Lingo", package: "Lingo"),
-                "SwiftKueryORM",
-                "SwiftKueryPostgreSQL",
                 "CryptoSwift",
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "NIO", package: "swift-nio"),
@@ -42,7 +40,9 @@ let package = Package(
                 .product(name: "Regex", package: "Regex"),
                 .product(name: "JSONAPI", package: "JSONAPI"),
                 .product(name: "IRCKit", package: "IRCKit"),
-                .product(name: "WebSocketKit", package: "websocket-kit")
+                .product(name: "WebSocketKit", package: "websocket-kit"),
+                .product(name: "SQLKit", package: "sql-kit"),
+                .product(name: "PostgresKit", package: "postgres-kit")
             ]
         ),
         .testTarget(

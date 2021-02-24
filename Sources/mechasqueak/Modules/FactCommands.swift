@@ -23,8 +23,6 @@
  */
 
 import Foundation
-import SwiftKueryORM
-import SwiftKueryPostgreSQL
 import IRCKit
 
 class FactCommands: IRCBotModule {
@@ -32,8 +30,7 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
-    private var platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules"]
-    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr"]
+    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue"]
 
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
@@ -41,244 +38,288 @@ class FactCommands: IRCBotModule {
         let locale = Locale(identifier: factComponents.count > 1 ? factComponents[1] : "en")
         return (name, locale)
     }
-
+    
     @BotCommand(
-        ["facts", "fact"],
-        [.param("set/info/locales/del", "set", .standard, .optional), .param("fact", "pcwing-es", .standard, .optional), .param("contents", "bla bla bla", .continuous, .optional)],
+        ["facts", "listfacts", "factlist", "fact"],
+        [.argument("locales")],
         category: .facts,
-        description: "View the list of facts, modify, or delete them."
+        description: "View the list of facts"
     )
-    var didReceiveFactCommand = { command in
-        if command.parameters.count == 0 {
-            didReceiveFactListCommand(command: command)
-            return
-        }
-
-        let modifier = command.parameters[0].lowercased()
-
-        switch modifier {
-            case "add", "set":
-                didReceiveFactSetCommand(command: command)
-
-            case "info":
-                didReceiveFactInfoCommand(command: command)
-
-            case "locales":
-                didReceiveFactLocalesCommand(command: command)
-
-            case "del", "delete":
-                didReceiveFactDeleteCommand(command: command)
-
-            default:
-                command.message.error(key: "facts.invalidargument", fromCommand: command, map: [
-                    "argument": modifier
-                ])
-        }
-    }
-
-    static func didReceiveFactListCommand (command: IRCBotCommand) {
-        let query = FactListQuery(language: command.locale.identifier)
-        Fact.findAll(using: Database.default, matching: query, { facts, _ in
-
-            guard let facts = facts else {
-                command.message.error(key: "facts.list.error", fromCommand: command)
-                return
-            }
-
-            guard facts.count > 0 else {
-                command.message.reply(key: "facts.list.none", fromCommand: command, map: [
-                    "locale": command.locale.englishDescription
-                ])
-                return
-            }
-
-            let factStrings = facts.map({
-                $0.name
-            })
-
-            let heading = lingo.localize("facts.list.heading", locale: "en-GB", interpolations: [
-                "count": facts.count,
-                "locale": command.locale.englishDescription
-            ])
-
-            command.message.replyPrivate(list: factStrings, separator: ", ", heading: heading)
-        })
-    }
-
-    static func didReceiveFactInfoCommand (command: IRCBotCommand) {
-        guard command.parameters.count == 2 else {
-            command.message.error(key: "facts.info.syntax", fromCommand: command)
-            return
-        }
-
-        let (name, locale) = FactCommands.parseFromParameter(param: command.parameters[1])
-
-        Fact.get(name: name, forLocale: locale, onComplete: { fact in
-            guard let fact = fact else {
-                command.message.reply(key: "facts.info.notfound", fromCommand: command, map: [
-                    "fact": name,
-                    "locale": command.locale.englishDescription
-                ])
-                return
-            }
-
-            let excerpt = fact.message.excerpt(maxLength: 100)
-
-            command.message.reply(key: "facts.info.message", fromCommand: command, map: [
-                "fact": name,
-                "locale": locale.englishDescription,
-                "created": fact.createdAt,
-                "updated": fact.updatedAt,
-                "author": fact.author,
-                "excerpt": excerpt
-            ])
-        }, onError: { _ in
-            command.message.reply(key: "facts.info.error", fromCommand: command, map: [
-                "fact": command.parameters[1].lowercased()
-            ])
-        })
-    }
-
-    static func didReceiveFactLocalesCommand (command: IRCBotCommand) {
-        Fact.findAll({ facts, _ in
-            guard let facts = facts else {
-                command.message.error(key: "facts.list.error", fromCommand: command)
-                return
-            }
-
-            let locales = Set(facts.compactMap({
-                $0.language
-            })).map({ (localeIdentifier) -> String in
-                let locale = Locale(identifier: localeIdentifier)
-                return "\(locale.identifier) (\(locale.englishDescription))"
-            }).joined(separator: ", ")
-
-            command.message.reply(key: "facts.locales", fromCommand: command, map: [
-                "locales": locales
-            ])
-        })
-    }
-
-    static func didReceiveFactSetCommand (command: IRCBotCommand) {
-        let message = command.message
-
-        guard command.parameters.count == 3 else {
-            command.message.error(key: "facts.set.syntax", fromCommand: command)
-            return
-        }
-
-        guard message.user.hasPermission(permission: .UserWrite) else {
-            command.message.error(key: "facts.set.nopermission", fromCommand: command)
-            return
-        }
-
-        let (name, locale) = FactCommands.parseFromParameter(param: command.parameters[1])
-
-        Fact.get(name: name, forLocale: locale, onComplete: { fact in
-            let contents = command.parameters[2]
-
-            // Shorten facts above 100 characters in reply message
-            var excerpt = contents
-            if excerpt.count > 100 {
-                excerpt = "\(excerpt.prefix(98)).."
-            }
-
-            if var fact = fact {
-                // Fact already exists, update it with new contents and author
-                fact.message = contents
-                fact.author = message.user.nickname
-                fact.updatedAt = Date()
-
-                fact.update(id: fact.id!, { (_, error) in
-                    guard error == nil else {
-                        command.message.error(key: "facts.set.error", fromCommand: command, map: [
-                            "fact": command.parameters[1].lowercased()
-                        ])
-                        return
-                    }
-
-                    command.message.reply(key: "facts.set.updated", fromCommand: command, map: [
-                        "fact": command.parameters[1].lowercased(),
-                        "locale": locale.englishDescription,
-                        "message": excerpt
-                    ])
+    var didReceiveFactListCommand = { command in
+        Fact.all.whenSuccess({ facts in
+            if command.namedOptions.contains("locales") {
+                let languages = facts.reduce(Set<String>(), { languages, fact in
+                    var languages = languages
+                    languages.insert(fact.language)
+                    return languages
                 })
-                return
-            }
-
-            let fact = Fact(
-                name: name,
-                language: locale.identifier,
-                message: contents,
-                author: message.user.nickname,
-                createdAt: Date(),
-                updatedAt: Date()
-            )
-
-            fact.save({ (_, error) in
-                guard error == nil else {
-                    command.message.error(key: "facts.set.error", fromCommand: command, map: [
-                        "fact": command.parameters[1].lowercased()
-                    ])
-                    return
-                }
-
-                command.message.error(key: "facts.set.created", fromCommand: command, map: [
-                    "fact": command.parameters[1].lowercased(),
-                    "locale": locale.englishDescription,
-                    "message": excerpt
-                ])
-            })
-        }, onError: { _ in
-            command.message.error(key: "facts.set.error", fromCommand: command, map: [
-                "fact": command.parameters[1].lowercased()
-            ])
-        })
-    }
-
-    static func didReceiveFactDeleteCommand (command: IRCBotCommand) {
-        let message = command.message
-
-        guard command.parameters.count == 2 else {
-            command.message.error(key: "facts.del.syntax", fromCommand: command)
-            return
-        }
-
-        guard message.user.hasPermission(permission: .UserWrite) else {
-            command.message.error(key: "facts.del.nopermission", fromCommand: command)
-            return
-        }
-
-        let (name, locale) = FactCommands.parseFromParameter(param: command.parameters[1])
-
-        Fact.get(name: name, forLocale: locale, onComplete: { fact in
-            guard fact != nil else {
-                command.message.reply(key: "facts.del.notfound", fromCommand: command, map: [
-                    "fact": command.parameters[1].lowercased()
+                
+                let translations = languages.map({ "\($0) (\(Locale(identifier: $0).englishDescription)" }).joined(separator: ", ")
+                command.message.replyPrivate(key: "facts.locales", fromCommand: command, map: [
+                    "translations": translations
                 ])
                 return
             }
-
-            let query = FactQuery(name: name, language: locale.identifier)
-
-            Fact.deleteAll(using: Database.default, matching: query, { error in
-                guard error == nil else {
-                    command.message.error(key: "facts.del.error", fromCommand: command, map: [
-                        "fact": command.parameters[1].lowercased()
-                    ])
-                    return
-                }
-
-                command.message.reply(key: "facts.del.success", fromCommand: command, map: [
-                    "fact": command.parameters[1].lowercased()
-                ])
-            })
-        }, onError: { _ in
-            command.message.error(key: "facts.del.error", fromCommand: command, map: [
-                "fact": command.parameters[1].lowercased()
+            var facts = Array(facts.grouped.values).sorted(by: { $0.cannonicalName < $1.cannonicalName })
+            let filterLanguage = String(command.locale.identifier.prefix(2))
+            if filterLanguage != "en" {
+                facts = facts.filter({ $0.messages[filterLanguage] != nil })
+            }
+            
+            var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
+            facts = facts.filter({ $0.isPlatformFact == false })
+            
+            command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+                "language": command.locale.englishDescription,
+                "count": facts.count,
+                "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
             ])
+            
+            if platformFacts.count > 0 {
+                command.message.replyPrivate(key: "facts.list.platform", fromCommand: command, map: [
+                    "count": platformFacts.count,
+                    "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(separator: ", ")
+                ])
+            }
         })
     }
+    
+    @BotCommand(
+        ["addfact"],
+        [.param("fact-language", "pcquit-en"), .param("fact message", "Get out it's gonna blow!", .continuous)],
+        category: .facts,
+        description: "Add a new fact or a new language onto an existing fact",
+        permission: .UserWrite
+    )
+    var didReceiveFactAddCommand = { command in
+        guard let (commandParam, message) = command.param2 as? (String, String) else {
+            return
+        }
+        guard let factCommand = IRCBotCommand(from: "!\(commandParam)", inMessage: command.message) else {
+            command.message.error(key: "addfact.syntax", fromCommand: command, map: [
+                "param": command.param1!
+            ])
+            return
+        }
+        let author = command.message.user.nickname
+        
+        GroupedFact.get(name: factCommand.command).whenSuccess({ fact in
+            if fact == nil {
+                Fact.create(name: factCommand.command, author: author, message: message, forLocale: factCommand.locale).whenComplete({ result in
+                    switch result {
+                    case .failure(_):
+                        command.message.error(key: "addfact.error", fromCommand: command)
+                        
+                    case .success(let fact):
+                        command.message.reply(key: "addfact.new", fromCommand: command, map: [
+                            "fact": factCommand.command,
+                            "language": factCommand.locale.englishDescription,
+                            "locale": factCommand.locale.short,
+                            "message": message.excerpt(maxLength: 350)
+                        ])
+                    }
+                })
+            } else if let fact = fact, fact.messages[factCommand.locale.short] == nil {
+                Fact.create(message: message, forName: factCommand.command, inLocale: factCommand.locale, withAuthor: author).whenComplete({ result in
+                    switch result {
+                    case .failure(_):
+                        command.message.error(key: "addfact.error", fromCommand: command)
+                        
+                    case .success:
+                        command.message.reply(key: "addfact.added", fromCommand: command, map: [
+                            "fact": factCommand.command,
+                            "language": factCommand.locale.englishDescription,
+                            "locale": factCommand.locale.short,
+                            "message": message.excerpt(maxLength: 350)
+                        ])
+                    }
+                })
+            } else {
+                command.message.error(key: "addfact.exists", fromCommand: command)
+            }
+        })
+    }
+    
+    @BotCommand(
+        ["setfact"],
+        [.param("fact-language", "pcquit-en"), .param("fact message", "Get out it's gonna blow!", .continuous)],
+        category: .facts,
+        description: "Update an existing fact",
+        permission: .UserWrite
+    )
+    var didReceiveFactSetCommand = { command in
+        let (commandName, message) = command.param2 as! (String, String)
+        guard let factCommand = IRCBotCommand(from: "!\(commandName)", inMessage: command.message) else {
+            command.message.error(key: "addfact.syntax", fromCommand: command, map: [
+                "param": command.param1!
+            ])
+            return
+        }
+        
+        GroupedFact.get(name: factCommand.command).whenSuccess({ fact in
+            guard let fact = fact, fact.messages[factCommand.locale.short] != nil else {
+                command.message.error(key: "setfact.notfound", fromCommand: command)
+                return
+            }
+            
+            Fact.update(locale: factCommand.locale, forFact: factCommand.command, withMessage: message, fromAuthor: command.message.user.nickname).whenComplete({ result in
+                switch result {
+                case .failure(_):
+                    command.message.error(key: "addfact.error", fromCommand: command)
+                    
+                case .success:
+                    command.message.reply(key: "setfact.set", fromCommand: command, map: [
+                        "fact": factCommand.command,
+                        "language": factCommand.locale.englishDescription,
+                        "locale": factCommand.locale.short,
+                        "message": message.excerpt(maxLength: 350)
+                    ])
+                }
+            })
+        })
+    }
+    
+    @BotCommand(
+        ["delfact"],
+        [.param("fact-language", "pcquit-en")],
+        category: .facts,
+        description: "Delete a fact or an alias",
+        permission: .UserWrite
+    )
+    var didReceiveFactDelCommand = { command in
+        guard let factCommand = IRCBotCommand(from: "!\(command.parameters[0])", inMessage: command.message) else {
+            command.message.error(key: "addfact.syntax", fromCommand: command, map: [
+                "param": command.param1!
+            ])
+            return
+        }
+        
+        GroupedFact.get(name: factCommand.command).whenSuccess({ fact in
+            guard let fact = fact, let factMessage = fact.messages[factCommand.locale.short] else {
+                command.message.error(key: "setfact.notfound", fromCommand: command)
+                return
+            }
+            
+            if fact.messages.count == 1 {
+                Fact.drop(name: fact.cannonicalName).whenComplete({ result in
+                    switch result {
+                    case .failure(_):
+                        command.message.error(key: "addfact.error", fromCommand: command)
+                        
+                    case .success:
+                        command.message.reply(key: "delfact.dropped", fromCommand: command, map: [
+                            "fact": fact.cannonicalName
+                        ])
+                    }
+                })
+            } else {
+                Fact.delete(locale: factCommand.locale, forFact: factCommand.command).whenComplete({ result in
+                    switch result {
+                    case .failure(_):
+                        command.message.error(key: "addfact.error", fromCommand: command)
+                        
+                    case .success:
+                        command.message.reply(key: "delfact.deleted", fromCommand: command, map: [
+                            "locale": factCommand.locale.short,
+                            "language": factCommand.locale.englishDescription,
+                            "fact": fact.cannonicalName
+                        ])
+                    }
+                })
+            }
+        })
+    }
+    
+    @BotCommand(
+        ["alias", "aliasfact"],
+        [.param("fact", "ircguide"), .param("alias", "ircguides")],
+        category: .facts,
+        description: "Create an alias of an existing fact",
+        permission: .UserWrite
+    )
+    var didReceiveFactAliasCommand = { command in
+        var (cannonicalFact, alias) = command.param2 as! (String, String)
+        alias = alias.lowercased()
+        GroupedFact.get(name: cannonicalFact).and(GroupedFact.get(name: alias)).whenSuccess({ fact, existingAlias in
+            guard let fact = fact else {
+                command.message.error(key: "aliasfact.notexist", fromCommand: command, map: [
+                    "fact": cannonicalFact
+                ])
+                return
+            }
+            
+            guard existingAlias == nil && MechaSqueak.commands.contains(where: { $0.commands.contains(alias) }) == false else {
+                command.message.error(key: "aliasfact.inuse", fromCommand: command, map: [
+                    "alias": alias
+                ])
+                return
+            }
+            
+            Fact.create(alias: alias, forName: fact.cannonicalName).whenComplete({ result in
+                switch result {
+                case .failure(_):
+                    command.message.error(key: "addfact.error", fromCommand: command)
+                    
+                case .success:
+                    command.message.reply(key: "aliasfact.added", fromCommand: command, map: [
+                        "alias": alias,
+                        "fact": fact.cannonicalName
+                    ])
+                }
+            })
+        })
+    }
+    
+    @BotCommand(
+        ["delalias"],
+        [.param("alias", "ircguides")],
+        category: .facts,
+        description: "Delete an existing alias",
+        permission: .UserWrite
+    )
+    var didReceiveDeleteAliasCommand = { command in
+        let alias = command.parameters[0].lowercased()
+        GroupedFact.get(name: alias).whenSuccess({ fact in
+            guard let fact = fact else {
+                command.message.error(key: "delalias.notfound", fromCommand: command, map: [
+                    "fact": alias
+                ])
+                return
+            }
+            
+            guard alias != fact.cannonicalName else {
+                command.message.error(key: "delalias.protected", fromCommand: command, map: [
+                    "alias": alias
+                ])
+                return
+            }
+            
+            Fact.delete(alias: alias).whenComplete({ result in
+                switch result {
+                case .failure(_):
+                    command.message.error(key: "addfact.error", fromCommand: command)
+                case .success:
+                    command.message.reply(key: "delalias.deleted", fromCommand: command, map: [
+                        "alias": alias,
+                        "fact": fact.cannonicalName
+                    ])
+                }
+                
+            })
+        })
+    }
+    
+    @BotCommand(
+        ["anyfact"],
+        [.argument("info"), .argument("locales"), .param("targets", "SpaceDawg", .multiple, .optional)],
+        category: .facts,
+        description: "Use a fact in the channel",
+        permission: .UserWrite
+    )
+    var dummyFactHelpEntry = { command in
+        
+    }
+
 
     func onMessage (_ message: IRCPrivateMessage) {
         guard message.raw.messageTags["batch"] == nil else {
@@ -302,9 +343,8 @@ class FactCommands: IRCBotModule {
                         target = fuzzyTarget.nickname
                     }
                 }
-                var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
-
-                if let rescue = rescue {
+                
+                if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target) {
                     if isPrepFact, let timer = mecha.rescueBoard.prepTimers[rescue.id] {
                         timer?.cancel()
                         mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
@@ -318,8 +358,7 @@ class FactCommands: IRCBotModule {
                 command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en-GB")
             }
 
-
-            if platformFacts.contains(where: { $0 == command.command }) {
+            if Fact.platformFacts.contains(where: { $0 == command.command }) {
                 for platform in GamePlatform.allCases {
                     let platformTargets = targets.filter({ $0.1?.platform == platform })
                     if platformTargets.count == 0 {
@@ -334,15 +373,60 @@ class FactCommands: IRCBotModule {
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
-            } else {
+                if command.command == "quit" {
+                    command.command = "prepcr"
+                }
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }
-        } else if platformFacts.contains(where: { $0 == command.command }) {
+        } else if command.namedOptions.contains("locales") {
+            factLocales(command: command)
+        } else if command.namedOptions.contains("info") {
+            factInfo(command: command)
+        } else if command.command == "quit" {
+            command.command = "prepcr"
+            sendFact(command: command, message: message)
+        } else if Fact.platformFacts.contains(where: { $0 == command.command }) {
             command.message.error(key: "facts.noclienterror", fromCommand: command)
         } else {
             sendFact(command: command, message: message)
         }
+    }
+    
+    func factLocales (command: IRCBotCommand) {
+        GroupedFact.get(name: command.command).whenSuccess({ fact in
+            guard let fact = fact else {
+                command.message.error(key: "anyfact.notafact", fromCommand: command, map: [
+                    "command": command.command
+                ])
+                return
+            }
+            
+            let locales = fact.messages.keys.map({ "\($0) (\(Locale(identifier: $0).englishDescription))" }).joined(separator: ", ")
+            command.message.replyPrivate(key: "anyfact.locales", fromCommand: command, map: [
+                "fact": fact.cannonicalName,
+                "locales": locales
+            ])
+        })
+    }
+    
+    func factInfo (command: IRCBotCommand) {
+        Fact.get(name: command.command, forLocale: command.locale).whenSuccess({ fact in
+            guard let fact = fact else {
+                command.message.error(key: "anyfact.notafact", fromCommand: command, map: [
+                    "command": "\(command.command)-\(command.locale.short)"
+                ])
+                return
+            }
+            
+            command.message.replyPrivate(key: "anyfact.info", fromCommand: command, map: [
+                "fact": fact.id,
+                "language": Locale(identifier: fact.language).englishDescription,
+                "created": fact.createdAt.eliteFormattedString,
+                "updated": fact.updatedAt.eliteFormattedString,
+                "author": fact.author
+            ])
+        })
     }
 
     func sendFact (command: IRCBotCommand, message: IRCPrivateMessage) {
@@ -359,9 +443,9 @@ class FactCommands: IRCBotModule {
             })
         }
 
-        Fact.get(name: command.command, forLocale: command.locale, onComplete: { fact in
+        Fact.get(name: command.command, forLocale: command.locale).whenSuccess({ fact in
             guard let fact = fact else {
-                Fact.get(name: command.command, forLocale: Locale(identifier: "en"), onComplete: { fallbackFact in
+                Fact.get(name: command.command, forLocale: Locale(identifier: "en")).whenSuccess({ fallbackFact in
                     guard let fallbackFact = fallbackFact else {
                         return
                     }
@@ -378,6 +462,7 @@ class FactCommands: IRCBotModule {
 
             self.messageFact(command: command, fact: fact)
         })
+            
     }
 
     func messageFact (command: IRCBotCommand, fact: Fact) {
@@ -415,21 +500,5 @@ class FactCommands: IRCBotModule {
             descriptor: IRCPrivateMessageNotification(),
             using: onMessage(_:)
         )
-
-        let pool = PostgreSQLConnection.createPool(
-            host: configuration.database.host,
-            port: configuration.database.port,
-            options: [
-                .databaseName(configuration.database.database),
-                .userName(configuration.database.username)
-            ],
-            poolOptions: ConnectionPoolOptions(initialCapacity: 10, maxCapacity: 50)
-        )
-        Database.default = Database(pool)
-        do {
-            try Fact.createTableSync()
-        } catch let error {
-            debug(String(describing: error))
-        }
     }
 }

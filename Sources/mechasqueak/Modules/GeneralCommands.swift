@@ -117,7 +117,7 @@ class GeneralCommands: IRCBotModule {
     var didReceiveSystemStatisticsCommand = { command in
         SystemsAPI.performStatisticsQuery(onComplete: { results in
             let result = results.data[0]
-            guard let date = try? Double(value: result.id) else {
+            guard let date = Double(result.id) else {
                 return
             }
 

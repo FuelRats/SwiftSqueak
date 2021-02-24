@@ -34,4 +34,8 @@ extension Locale {
         let englishLocale = Locale(identifier: "en-GB")
         return englishLocale.localizedString(forIdentifier: self.identifier) != nil
     }
+    
+    var short: String {
+        return String(self.identifier.prefix(2))
+    }
 }
