@@ -83,6 +83,16 @@ extension Rat {
         return permits.contains(where: { $0.lowercased() == permitName })
     }
     
+    var currentRescues: [LocalRescue] {
+        guard let userId = self.relationships.user?.id?.rawValue else {
+            return []
+        }
+        
+        return mecha.rescueBoard.rescues.filter({ rescue in
+            rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
+        })
+    }
+    
     func update () -> EventLoopFuture<Void> {
         let promise = loop.next().makePromise(of: Void.self)
         let patchDocument = SingleDocument(

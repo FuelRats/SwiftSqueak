@@ -143,7 +143,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["clear", "close"],
-        [.param("case id/client", "4"), .param("first limpet rat", "SpaceDawg", .standard, .optional)],
+        [.options(["f"]), .param("case id/client", "4"), .param("first limpet rat", "SpaceDawg", .standard, .optional)],
         category: .board,
         description: "Closes a case and posts the paperwork link. Optional parameter takes the nick of the person that got first limpet (fuel+).",
         permission: .DispatchWrite,
@@ -151,6 +151,7 @@ class BoardCommands: IRCBotModule {
     )
     var didReceiveCloseCommand = { command in
         let message = command.message
+        let override = command.options.contains("f")
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
@@ -160,7 +161,7 @@ class BoardCommands: IRCBotModule {
             guard
                 let rat = message.destination.member(named: command.parameters[1])?.getRatRepresenting(platform: rescue.platform)
             else {
-                command.message.reply(key: "board.close.notfound", fromCommand: command, map: [
+                command.message.error(key: "board.close.notfound", fromCommand: command, map: [
                     "caseId": rescue.commandIdentifier,
                     "firstLimpet": command.parameters[1]
                 ])
@@ -168,7 +169,17 @@ class BoardCommands: IRCBotModule {
             }
 
             firstLimpet = rat
-        }
+            let currentRescues = rat.currentRescues
+            if currentRescues.contains(where: { $0.id == rescue.id }) == false, let conflictCase = currentRescues.first, override == false {
+                command.message.error(key: "board.close.conflict", fromCommand: command, map: [
+                    "rat": command.parameters[1],
+                    "closeCaseId": rescue.commandIdentifier,
+                    "conflictId": conflictCase.commandIdentifier,
+                    "override": "!\(command.command) -f \(command.parameters.joined(separator: " "))"
+                ])
+                return
+            }
+         }
 
         rescue.close(fromBoard: mecha.rescueBoard, firstLimpet: firstLimpet, onComplete: {
             mecha.rescueBoard.rescues.removeAll(where: {
