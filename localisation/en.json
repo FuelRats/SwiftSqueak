@@ -113,7 +113,7 @@
   "board.titleset": "Title for case #%{clientId} (%{client}) has been set to \"Operation %{title}\".",
   "board.caseopened": "Case #%{caseId} opened for %{client} with \"%{message}\".",
 
-  "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. To override send the same command again within the next 60 seconds.",
+  "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. To override send the same command again within the next 30 seconds.",
   "board.grab.noclient": "Could not find the client or rat for case %{caseId} in the channel.",
   "board.grab.nomessage": "Could not find any messages by %{client} in the channel.",
   "board.grab.notcreated": "Could not find an existing case for %{client} and could not create one from the contents of this message.",
@@ -122,7 +122,7 @@
   "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
   "board.assign.banned": "%{rats} cannot be assigned to cases right now, contact the ops team for more information.",
   "board.assign.none": "Found nobody to assign to case #%{caseId}",
-  "board.assign.norat": "The following rats could not be assigned as they do not have a valid CMDR for this case: %{rats}. To override use: %{retry}",
+  "board.assign.norat": "The following rats could not be assigned as they do not have a valid CMDR for this case: %{rats}. To override send the same command again within the next 30 seconds.",
   "board.assign.go": {
       "one": "%{client}: Please add the following rat to your friends list: %{rats}",
       "other": "%{client}: Please add the following %{count} rats to your friends list: %{rats}"
@@ -160,7 +160,7 @@
   "board.quote.assigned": "Assigned rats: %{rats}",
   
   "board.close.notfound": "Unable to close case #%{caseId} to \"%{firstLimpet}\", no rat was found.",
-  "board.close.conflict": "You attempted to close case #%{closeCaseId} to %{rat} but they belong to case #%{conflictId}. If this is not an error, you can override with: %{override}",
+  "board.close.conflict": "You attempted to close case #%{closeCaseId} to %{rat} but they belong to case #%{conflictId}. If this is not an error, send the same command again within the next 30 seconds.",
   "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
   "board.close.firstLimpetPaperwork": "Here is your paperwork for case #%{caseId} (%{client}): %{link}",
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",

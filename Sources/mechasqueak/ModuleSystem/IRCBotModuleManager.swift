@@ -33,6 +33,7 @@ protocol IRCBotModule {
 
 class IRCBotModuleManager {
     private var registeredModules: [IRCBotModule] = []
+    public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 25)
     static var blacklist = configuration.general.dispatchBlacklist
 
     func register (module: IRCBotModule) {
@@ -163,7 +164,8 @@ class IRCBotModuleManager {
             ])
             return
         }
-
+        
+        commandHistory.push(value: ircBotCommand)
         if let permission = command.permission {
             guard message.user.hasPermission(permission: permission) else {
                 message.reply(key: "board.nopermission", fromCommand: ircBotCommand, map: [

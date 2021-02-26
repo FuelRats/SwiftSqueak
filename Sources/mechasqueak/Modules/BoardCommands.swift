@@ -151,7 +151,7 @@ class BoardCommands: IRCBotModule {
     )
     var didReceiveCloseCommand = { command in
         let message = command.message
-        let override = command.options.contains("f")
+        let override = command.forceOverride
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
@@ -174,8 +174,7 @@ class BoardCommands: IRCBotModule {
                 command.message.error(key: "board.close.conflict", fromCommand: command, map: [
                     "rat": command.parameters[1],
                     "closeCaseId": rescue.commandIdentifier,
-                    "conflictId": conflictCase.commandIdentifier,
-                    "override": "!\(command.command) -f \(command.parameters.joined(separator: " "))"
+                    "conflictId": conflictCase.commandIdentifier
                 ])
                 return
             }

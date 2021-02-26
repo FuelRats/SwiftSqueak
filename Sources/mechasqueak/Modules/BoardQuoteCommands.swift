@@ -27,7 +27,6 @@ import IRCKit
 
 class BoardQuoteCommands: IRCBotModule {
     static let disallowedInjectNames = ["ratsignal", "drillsignal", "client", "<client>"]
-    static var injectRepeatCache = Set<String>()
     var name: String = "Case Quote Commands"
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -146,7 +145,7 @@ class BoardQuoteCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveInjectCommand = { command in
-        var forceInject = command.options.contains("f")
+        var forceInject = command.forceOverride
         let message = command.message
         let clientParam = command.parameters[0]
 
@@ -166,14 +165,8 @@ class BoardQuoteCommands: IRCBotModule {
         if rescue == nil {
             guard
                 isLikelyAccidentalInject(clientParam: clientParam) == false ||
-                injectRepeatCache.contains(clientParam.lowercased()) ||
                 forceInject
             else {
-                injectRepeatCache.insert(clientParam.lowercased())
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(60), execute: {
-                    injectRepeatCache.remove(clientParam.lowercased())
-                })
-
                 message.error(key: "board.inject.ignored", fromCommand: command)
                 return
             }

@@ -43,7 +43,7 @@ class BoardAssignCommands: IRCBotModule {
     var didReceiveAssignCommand = { command in
         let message = command.message
         
-        let force = command.options.contains("f")
+        let force = command.forceOverride
 
         // Find case by rescue ID or client name
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
@@ -82,7 +82,7 @@ class BoardAssignCommands: IRCBotModule {
     var didReceiveAssignWithInstructionsCommand = { command in
         let message = command.message
         
-        let force = command.options.contains("f")
+        let force = command.forceOverride
 
         // Find case by rescue ID or client name
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
@@ -196,8 +196,7 @@ class BoardAssignCommands: IRCBotModule {
                 ])
             } else {
                 command.message.error(key: "board.assign.norat", fromCommand: command, map: [
-                    "rats": assigns.unidentifiedRats.joined(separator: ", "),
-                    "retry": "!\(command.command) -f \(command.parameters[0]) \(assigns.unidentifiedRats.joined(separator: " "))"
+                    "rats": assigns.unidentifiedRats.joined(separator: ", ")
                 ])
             }
         }

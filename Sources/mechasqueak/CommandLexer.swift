@@ -29,6 +29,7 @@ import IRCKit
 
 
 struct IRCBotCommand {
+    var id: UUID
     var command: String
     var parameters: [String]
     var options: OrderedSet<Character>
@@ -38,6 +39,7 @@ struct IRCBotCommand {
     private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
     
     init? (from text: String, inMessage privateMessage: IRCPrivateMessage) {
+        self.id = UUID()
         var message = text
         message = IRCBotCommand.ircFormattingExpression.replaceAll(in: message, with: "")
         message = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -111,6 +113,17 @@ struct IRCBotCommand {
             channelMessage.reply(message: "Command was given too few parameters, usage: \(usageMessage)")
             return nil
         }
+    }
+    
+    var isRepeatInvocation: Bool {
+        let previousIncoation = IRCBotModuleManager.commandHistory.elements.reversed().first(where: {
+            $0.id != self.id && $0.command == self.command && $0.parameters == self.parameters && $0.message.user.nickname == self.message.user.nickname
+        })
+        return previousIncoation != nil && Date().timeIntervalSince(previousIncoation!.message.raw.time) < 30
+    }
+    
+    var forceOverride: Bool {
+        return self.options.contains("f") || self.namedOptions.contains("force") || self.isRepeatInvocation
     }
     
     var param1: String? {

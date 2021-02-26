@@ -157,7 +157,7 @@ class BoardAttributeCommands: IRCBotModule {
         }
         
         var key = "board.syschange"
-        if let correction = ProceduralSystem.correct(system: system), command.options.contains("f") == false {
+        if let correction = ProceduralSystem.correct(system: system), command.forceOverride == false {
             key += ".autocorrect"
             system = correction
         }
