@@ -245,15 +245,23 @@ class MechaSqueak {
             rescue.quotes.removeAll(where: {
                 $0.message == "Client left the rescue channel"
             })
+            
+            var clientWasBanned = false
+            if let quitMessage = userQuit.raw.parameters.first {
+                clientWasBanned = quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ")
+            }
+            
+            var quoteMessage = clientWasBanned ? "CLIENT BANNED" : "Client left the rescue channel"
             rescue.quotes.append(RescueQuote(
                 author: userQuit.raw.client.currentNick,
-                message: "Client left the rescue channel",
+                message: quoteMessage,
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: userQuit.raw.client.currentNick)
             )
             rescue.syncUpstream()
 
+            var key = clientWasBanned ? "board.clientban" : "board.clientquit"
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
                 channel.send(key: "board.clientquit", map: [
