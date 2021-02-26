@@ -250,7 +250,8 @@ class RemoteRescueCommands: IRCBotModule {
                     "system": rescue.system ?? "u\u{200B}nknown system",
                     "platform": rescue.platform.ircRepresentable,
                     "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
-                    "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
+                    "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit",
+                    "timeAgo": rescue.attributes.updatedAt.value.timeAgo
                 ])
             }
         }, error: { _ in
