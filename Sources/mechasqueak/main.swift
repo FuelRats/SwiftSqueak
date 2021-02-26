@@ -168,10 +168,13 @@ class MechaSqueak {
                     )
                     rescue.syncUpstream()
 
+                var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
                 rescue.clientHost = userJoin.user.hostmask
-                userJoin.channel.send(key: "board.clientjoin", map: [
+                userJoin.channel.send(key: key, map: [
                     "caseId": rescue.commandIdentifier,
-                    "client": rescue.clientDescription
+                    "client": rescue.clientDescription,
+                    "platform": rescue.platform.ircRepresentable,
+                    "system": rescue.system.description
                 ])
             } else if let rescue = mecha.rescueBoard.rescues.first(where: {
                 $0.clientHost == userJoin.user.hostmask

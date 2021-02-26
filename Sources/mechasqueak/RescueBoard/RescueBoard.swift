@@ -564,7 +564,6 @@ class RescueBoard {
             }) ?? []
             
             for rescue in cases {
-                
                 var firstLimpet = results.body.includes![Rat.self].first(where: { $0.id.rawValue == rescue.relationships.firstLimpet?.id.rawValue })
                 if firstLimpet == nil {
                     firstLimpet = results.assignedRatsFor(rescue: rescue).first

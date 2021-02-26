@@ -166,7 +166,7 @@ class IRCBotModuleManager {
 
         if let permission = command.permission {
             guard message.user.hasPermission(permission: permission) else {
-                message.error(key: "board.nopermission", fromCommand: ircBotCommand, map: [
+                message.reply(key: "board.nopermission", fromCommand: ircBotCommand, map: [
                     "nick": message.user.nickname
                 ])
                 return
