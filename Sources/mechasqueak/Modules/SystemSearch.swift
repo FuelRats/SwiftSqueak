@@ -118,4 +118,35 @@ class SystemSearch: IRCBotModule {
             }
         }
     }
+    
+    @BotCommand(
+        ["distance", "distanceto"],
+        [.param("departure system", "NLTT 48288"), .param("arrival system", "Sagittarius A*")],
+        category: .utility,
+        description: "Calculate the distance between two star systems"
+    )
+    var didReceiveDistanceCommand = { command in
+        let (depSystem, arrSystem) = command.param2 as! (String, String)
+        SystemsAPI.performSystemCheck(forSystem: depSystem, includeEdsm: false)
+            .and(SystemsAPI.performSystemCheck(forSystem: arrSystem, includeEdsm: false)).whenComplete({ result in
+                switch result {
+                    case .failure(_):
+                        command.message.error(key: "distance.error", fromCommand: command)
+                    
+                    case .success((let departure, let arrival)):
+                        guard let depCoords = departure.coordinates, let arrCoords = arrival.coordinates else {
+                            command.message.error(key: "distance.notfound", fromCommand: command)
+                            return
+                        }
+                        
+                        let distance = arrCoords.distance(from: depCoords)
+                        let formatter = NumberFormatter.englishFormatter()
+                        command.message.reply(key: "distance.result", fromCommand: command, map: [
+                            "departure": departure.name,
+                            "arrival": arrival.name,
+                            "distance": formatter.string(from: distance)!
+                        ])
+                }
+            })
+    }
 }

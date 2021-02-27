@@ -247,6 +247,7 @@ struct Lexer {
             guard arg.count > 0 else {
                 throw LexerError.invalidArgument
             }
+            pop()
 
             return Token.Parameter(arg)
         }

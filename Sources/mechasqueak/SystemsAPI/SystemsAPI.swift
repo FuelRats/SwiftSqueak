@@ -106,7 +106,7 @@ class SystemsAPI {
         return promise.futureResult
     }
 
-    static func performSystemCheck (forSystem systemName: String) -> EventLoopFuture<StarSystem> {
+    static func performSystemCheck (forSystem systemName: String, includeEdsm: Bool = true) -> EventLoopFuture<StarSystem> {
         let promise = loop.next().makePromise(of: StarSystem.self)
 
         performSearch(forSystem: systemName, quickSearch: true)
@@ -128,7 +128,7 @@ class SystemsAPI {
                                 proceduralCheck: proceduralResult
                             )
                             
-                            if starSystem.landmark != nil {
+                            if starSystem.landmark != nil && includeEdsm {
                                 EDSM.getBodies(forSystem: properName).and(EDSM.getStations(forSystem: properName)).whenComplete({ result in
                                     switch result {
                                     case .failure(let error):
