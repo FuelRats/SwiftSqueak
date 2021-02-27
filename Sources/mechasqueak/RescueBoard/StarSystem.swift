@@ -32,6 +32,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         }
     }
     var manuallyCorrected: Bool = false
+    var searchResult: SystemsAPI.SearchDocument.SearchResult? = nil
     var permit: Permit? = nil
     var availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil
     var landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil
@@ -40,11 +41,12 @@ struct StarSystem: CustomStringConvertible, Codable {
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
     var bodies: [EDSM.Body]? = nil
     var stations: [EDSM.Station]? = nil
+    var position: Vector3?
 
     init (
         name: String,
         manuallyCorrected: Bool = false,
-        permit: Permit? = nil,
+        searchResult: SystemsAPI.SearchDocument.SearchResult? = nil,
         availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil,
         landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil,
         landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = [],
@@ -53,7 +55,10 @@ struct StarSystem: CustomStringConvertible, Codable {
     ) {
         self.name = name.prefix(64).uppercased()
         self.manuallyCorrected = manuallyCorrected
-        self.permit = permit
+        self.searchResult = searchResult
+        if let searchResult = searchResult {
+            self.permit = StarSystem.Permit(fromSearchResult: searchResult)
+        }
         self.availableCorrections = availableCorrections
         self.landmark = landmark
         self.landmarks = landmarks
@@ -63,6 +68,7 @@ struct StarSystem: CustomStringConvertible, Codable {
 
     mutating func merge (_ starSystem: StarSystem) {
         self.name = starSystem.name
+        self.searchResult = starSystem.searchResult
         self.permit = starSystem.permit
         self.availableCorrections = starSystem.availableCorrections
         self.landmark = starSystem.landmark
@@ -105,6 +111,12 @@ struct StarSystem: CustomStringConvertible, Codable {
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
                 systemInfo += description
             }
+            if landmark.distance > 8000, let galacticRegion = self.galacticRegion {
+                if systemInfo.hasSuffix("(") == false {
+                    systemInfo += " "
+                }
+                systemInfo += "in \(galacticRegion.name)"
+            }
             if landmark.description.count > 0 {
                 if systemInfo.hasSuffix("(") == false {
                     systemInfo += " "
@@ -113,9 +125,14 @@ struct StarSystem: CustomStringConvertible, Codable {
             } else {
                 systemInfo += ")"
             }
+            
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-            let (landmark, distance) = procedural.estimatedLandmarkDistance
-            systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
+            let (landmark, distanceString, estimatedDistance) = procedural.estimatedLandmarkDistance
+            if estimatedDistance > 8000, let galacticRegion = self.galacticRegion {
+                systemInfo += " (in \(galacticRegion.name) Estimated ~\(distanceString) LY from \(landmark.name))"
+            } else {
+                systemInfo += " (Estimated ~\(distanceString) LY from \(landmark.name))"
+            }
         } else if isInvalid || isIncomplete {
             systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
         } else {
@@ -136,7 +153,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         if let landmark = self.landmark {
             systemInfo += " (\(landmark.description))"
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-            let (landmark, distance) = procedural.estimatedLandmarkDistance
+            let (landmark, distance, _) = procedural.estimatedLandmarkDistance
             systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
         } else if isInvalid || isIncomplete {
             systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
@@ -208,26 +225,28 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
 
     var twitterDescription: String? {
+        var description = ""
+        if let galacticRegion = self.galacticRegion {
+            description = "In \(galacticRegion.name) "
+        }
         guard let landmark = self.landmark else {
             if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                let (landmark, distance) = procedural.estimatedLandmarkDistance
-                return "~\(distance) LY from \(landmark.name)"
+                let (landmark, distance, _) = procedural.estimatedLandmarkDistance
+                description += "~\(distance) LY from \(landmark.name)"
+                return description
             }
             return nil
         }
         if landmark.distance < 50 {
-            return "near \(landmark.name)"
+            description += "near \(landmark.name)"
+        } else if landmark.distance < 500 {
+            description += "~\(ceil(landmark.distance / 10) * 10)LY from \(landmark.name)"
+        } else if landmark.distance < 2000 {
+            description += "~\(ceil(landmark.distance / 100) * 100)LY from \(landmark.name)"
+        } else {
+            description += "~\(ceil(landmark.distance / 1000))kLY from \(landmark.name)"
         }
-
-        if landmark.distance < 500 {
-            return "~\(ceil(landmark.distance / 10) * 10)LY from \(landmark.name)"
-        }
-
-        if landmark.distance < 2000 {
-            return "~\(ceil(landmark.distance / 100) * 100)LY from \(landmark.name)"
-        }
-
-        return "~\(ceil(landmark.distance / 1000))kLY from \(landmark.name)"
+        return description
     }
     
     var refuelingStations: [EDSM.Station] {
@@ -238,6 +257,20 @@ struct StarSystem: CustomStringConvertible, Codable {
             $0.type.rating < $1.type.rating
         })
         return stations
+    }
+    
+    var coordinates: Vector3? {
+        return self.searchResult?.coords ?? self.proceduralCheck?.sectordata.coords
+    }
+    
+    var galacticRegion: GalacticRegion? {
+        guard let coordinates = self.coordinates else {
+            return nil
+        }
+        let point = CGPoint(x: coordinates.x, y: coordinates.z)
+        return regions.first(where: {
+            $0.coordinates.contains(point)
+        })
     }
  }
 
@@ -261,5 +294,48 @@ extension Optional where Wrapped == StarSystem {
             return system.name
         }
         return "u\u{200B}nknown system"
+    }
+}
+
+func loadRegions () -> [GalacticRegion] {
+    let regionPath = URL(
+        fileURLWithPath: FileManager.default.currentDirectoryPath
+    ).appendingPathComponent("regions.json")
+
+    guard let regionData = try? Data(contentsOf: regionPath) else {
+        fatalError("Could not locate region file in \(regionPath.absoluteString)")
+    }
+
+    let regionDecoder = JSONDecoder()
+    return try! regionDecoder.decode([GalacticRegion].self, from: regionData)
+}
+
+let regions = loadRegions()
+
+struct GalacticRegion: Decodable {
+    let id: Int
+    let name: String
+    let coordinates: CGPath
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, coordinates
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(Int.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        let coords = try container.decode([[Double]].self, forKey: .coordinates).map({ Vector3($0[0], $0[1], $0[2]) })
+        self.coordinates = coords.cgPath
+    }
+}
+
+extension Array where Element == Vector3 {
+    var cgPath: CGPath {
+        let points = self.map({ CGPoint(x: $0.x, y: $0.z) })
+        let path = CGMutablePath()
+        path.addLines(between: points)
+        path.closeSubpath()
+        return path
     }
 }

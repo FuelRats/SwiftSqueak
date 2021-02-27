@@ -95,7 +95,7 @@ class SystemSearch: IRCBotModule {
                 case .success(let result):
                     guard let landmark = result.landmark else {
                         if let procedural = result.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                            var (landmark, distance) = procedural.estimatedLandmarkDistance
+                            var (landmark, distance, _) = procedural.estimatedLandmarkDistance
                             var landmarkName = landmark.name
                             
                             if landmarkPreference != nil {

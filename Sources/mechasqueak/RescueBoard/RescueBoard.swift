@@ -49,7 +49,7 @@ class RescueBoard {
         self.distanceFormatter.maximumFractionDigits = 1
         self.distanceFormatter.roundingMode = .halfUp
         
-        if configuration.general.drillMode == false {
+        if configuration.general.drillMode == false && configuration.api.url.absoluteString.contains("dev.api") == false {
             loop.next().scheduleRepeatedTask(initialDelay: .minutes(1), delay: .hours(1), self.checkElapsedPaperwork)
         }
 

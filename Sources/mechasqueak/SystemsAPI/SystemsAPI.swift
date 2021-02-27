@@ -62,11 +62,9 @@ class SystemsAPI {
                 promise.fail(error)
                 
             case .success(let landmarkDocument):
-                let permit = StarSystem.Permit(fromSearchResult: system)
-
                 var starSystem = StarSystem(
                     name: system.name,
-                    permit: permit,
+                    searchResult: system,
                     availableCorrections: nil,
                     landmark: landmarkDocument.first,
                     landmarks: landmarkDocument.landmarks ?? [],
@@ -121,11 +119,9 @@ class SystemsAPI {
                         })
                         let properName = searchResult?.name ?? systemName
                         performLandmarkCheck(forSystem: properName).whenSuccess({ landmarkResults in
-                            let permit = StarSystem.Permit(fromSearchResult: searchResult)
-
                             var starSystem = StarSystem(
                                 name: searchResult?.name ?? systemName,
-                                permit: permit,
+                                searchResult: searchResult,
                                 availableCorrections: searchResults.data,
                                 landmark: landmarkResults.first,
                                 landmarks: landmarkResults.landmarks ?? [],
@@ -298,7 +294,7 @@ class SystemsAPI {
         let isPgSector: Bool
         let sectordata: SectorData
         
-        var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String) {
+        var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
             var landmarkDistances = mecha.landmarks.map({ ($0, self.sectordata.coords.distance(from: $0.coordinates)) })
             landmarkDistances = landmarkDistances.filter({ $0.0.soi == nil || $0.1 < $0.0.soi! })
             landmarkDistances.sort(by: { $0.1 < $1.1 })
@@ -307,7 +303,7 @@ class SystemsAPI {
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
             
-            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!)
+            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, landmarkDistances[0].1)
         }
         
         var estimatedSolDistance: String {
@@ -340,6 +336,7 @@ class SystemsAPI {
         struct SearchResult: Codable {
             let name: String
             let id64: Int64
+            let coords: Vector3
 
             let similarity: Double?
             let distance: Int?
