@@ -45,9 +45,9 @@
   "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (Assuming constant travel away from any gravity well).",
   "sctime.response.g": "The estimated super cruise travel time for %{distance} is %{time} (Assuming travel from one gravity well to another).",
 
-  "board.clientjoin": "Client of case #%{caseId} (%{client}) has rejoined!",
-  "board.clientjoin.needsrats": "Client \"%{client}\" of %{platform} case #%{caseId} in %{system} has rejoined!",
-  "board.clientjoinhost": "Caution: Client of case #%{caseId} (%{client}) has rejoined with a different name! (%{nick})",
+  "board.clientjoin": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) has rejoined!",
+  "board.clientjoin.needsrats": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) in %{system} has rejoined!",
+  "board.clientjoinhost": "Caution: Case #%{caseId} client (%{client}) has rejoined with a different name! (%{nick})",
   "board.clientquit": "Caution: Client of case #%{caseId} (%{client}) has left!",
   "board.clientban": "NOTICE: Client of case #%{caseId} (%{client}) has been banned by the moderator team. Please close the rescue and file it as invalid.",
   "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",

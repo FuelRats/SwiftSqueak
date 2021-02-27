@@ -134,14 +134,17 @@ struct StarSystem: CustomStringConvertible, Codable {
     var shortDescription: String {
         var systemInfo = "\"\(self.name)\""
         if let landmark = self.landmark {
-            systemInfo += landmark.description
-        } else if self.proceduralCheck?.isPgSystem == true && self.proceduralCheck?.isPgSector == true {
-            systemInfo += " (Valid procedural)"
+            systemInfo += " (\(landmark.description))"
+        } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
+            let (landmark, distance) = procedural.estimatedLandmarkDistance
+            systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
+        } else if isInvalid || isIncomplete {
+            systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
         } else {
-            systemInfo += " (Not found)"
+            systemInfo += " (Not found in galaxy database)"
         }
-        if self.permit != nil {
-            systemInfo += IRCFormat.bold(IRCFormat.color(.Orange, "*"))
+        if let permit = self.permit {
+            systemInfo += " " + IRCFormat.color(.Orange, permit.description)
         }
         return systemInfo
     }
@@ -242,6 +245,13 @@ extension Optional where Wrapped == StarSystem {
     var description: String {
         if let system = self {
             return system.description
+        }
+        return "u\u{200B}nknown system"
+    }
+    
+    var shortDescription: String {
+        if let system = self {
+            return system.shortDescription
         }
         return "u\u{200B}nknown system"
     }
