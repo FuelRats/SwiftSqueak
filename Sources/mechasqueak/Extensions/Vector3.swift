@@ -122,3 +122,22 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable, Exp
         lhs.z *= rhs.z
     }
 }
+
+extension CGPoint {
+    func intersects (polygon: [CGPoint]) -> Bool {
+        guard polygon.count > 0 else { return false }
+        var i = 0, j = polygon.count - 1, c = false, vi: CGPoint, vj: CGPoint
+        while true {
+            guard i < polygon.count else { break }
+            vi = polygon[i]
+            vj = polygon[j]
+            if (vi.y > y) != (vj.y > y) &&
+                x < (vj.x - vi.x) * (y - vi.y) / (vj.y - vi.y) + vi.x {
+                c = !c
+            }
+            j = i
+            i += 1
+        }
+        return c
+    }
+}

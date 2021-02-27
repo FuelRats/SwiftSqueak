@@ -269,7 +269,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         }
         let point = CGPoint(x: coordinates.x, y: coordinates.z)
         return regions.first(where: {
-            $0.coordinates.contains(point)
+            point.intersects(polygon: $0.coordinates)
         })
     }
  }
@@ -315,7 +315,7 @@ let regions = loadRegions()
 struct GalacticRegion: Decodable {
     let id: Int
     let name: String
-    let coordinates: CGPath
+    let coordinates: [CGPoint]
     
     enum CodingKeys: String, CodingKey {
         case id, name, coordinates
@@ -325,17 +325,6 @@ struct GalacticRegion: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(Int.self, forKey: .id)
         self.name = try container.decode(String.self, forKey: .name)
-        let coords = try container.decode([[Double]].self, forKey: .coordinates).map({ Vector3($0[0], $0[1], $0[2]) })
-        self.coordinates = coords.cgPath
-    }
-}
-
-extension Array where Element == Vector3 {
-    var cgPath: CGPath {
-        let points = self.map({ CGPoint(x: $0.x, y: $0.z) })
-        let path = CGMutablePath()
-        path.addLines(between: points)
-        path.closeSubpath()
-        return path
+        self.coordinates = try container.decode([[Double]].self, forKey: .coordinates).map({ CGPoint(x: $0[0], y: $0[2]) })
     }
 }
