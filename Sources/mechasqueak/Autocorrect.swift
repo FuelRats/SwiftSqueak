@@ -77,7 +77,7 @@ struct ProceduralSystem: CustomStringConvertible {
             return nil
         }
         var proceduralStart: String.Index? = nil
-        if let sectorComponent = components.first(where: { $0.lowercased().levenshtein("sector") <= 3 }) {
+        if let sectorComponent = components.first(where: { $0.count > 3 && $0.lowercased().levenshtein("sector") <= 2 }) {
             hasSectorSuffix = true
             let sectorRange = systemName.range(of: sectorComponent)!
             proceduralStart = systemName.index(before: sectorRange.lowerBound)
