@@ -321,6 +321,14 @@ class SystemsAPI {
             let uncertainty: Double
             let coords: Vector3
         }
+        
+        var galacticRegion: GalacticRegion? {
+            let coordinates = self.sectordata.coords
+            let point = CGPoint(x: coordinates.x, y: coordinates.z)
+            return regions.first(where: {
+                point.intersects(polygon: $0.coordinates)
+            })
+        }
     }
 
     struct SearchDocument: Codable {

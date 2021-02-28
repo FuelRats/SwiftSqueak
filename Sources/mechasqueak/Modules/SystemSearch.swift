@@ -102,10 +102,12 @@ class SystemSearch: IRCBotModule {
                                 landmarkName = "Sol"
                                 distance = procedural.estimatedSolDistance
                             }
+                            let region = procedural.galacticRegion
                             command.message.reply(key: "landmark.procedural", fromCommand: command, map: [
                                 "system": system,
                                 "distance": distance,
-                                "landmark": landmarkName
+                                "landmark": landmarkName,
+                                "region": region?.name ?? ""
                             ])
                             return
                         }

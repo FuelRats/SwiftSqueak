@@ -37,7 +37,7 @@
   "sysc.seterror": "Unable to set system for case #%{caseId} (%{client}) to \"%{system}\" due to an error with the systems API.",
   "sysc.autocorrect": "\u0002ATTENTION:\u0002 System for case #%{caseId} (%{client}) has been automatically corrected to %{system}.",
   "landmark.noresults": "%{system} was not found in the galaxy database.",
-  "landmark.procedural": "%{system} was not found in the galaxy database but is a valid procedural system name estimated to be about %{distance} LY from %{landmark}",
+  "landmark.procedural": "%{system} was not found in the galaxy database but is a valid procedural system in %{region} estimated to be about %{distance} LY from %{landmark}",
   "distance.error": "Unable to calculate distance as an error occured when retrieving system information",
   "distance.notfound": "Unable to calculate distance as one of the systems could not be found",
   "distance.result": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY",
