@@ -162,12 +162,12 @@ class RescueBoard {
             }
 
             var changes: [String] = []
-            if rescue.platform != existingRescue.platform && rescue.platform != nil {
+            if rescue.platform != existingRescue.platform && rescue.platform != nil, rescue.platform != .PC {
                 changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
             }
             if rescue.system != nil && rescue.system?.name != existingRescue.system?.name {
                 changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)")
-                if let system = rescue.system {
+                if let system = rescue.system, rescue.system?.isConfirmed == false {
                     SystemsAPI.performSystemCheck(forSystem: system.name).whenSuccess({ result in
                         guard result.isConfirmed else {
                             return
