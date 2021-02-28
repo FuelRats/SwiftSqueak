@@ -218,9 +218,9 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveGameTimeCommand = { command in
         let timeFormatter = DateFormatter()
-        timeFormatter.timeStyle = .medium
-        timeFormatter.dateStyle = .none
+        timeFormatter.dateFormat = "HH:mm"
         timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        
         let time = timeFormatter.string(from: Date())
         let date = Date().eliteFormattedString
 

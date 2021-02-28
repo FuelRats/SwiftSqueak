@@ -111,7 +111,7 @@ struct StarSystem: CustomStringConvertible, Codable {
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
                 systemInfo += description
             }
-            if landmark.distance > 8000, let galacticRegion = self.galacticRegion {
+            if landmark.distance > 6000, let galacticRegion = self.galacticRegion {
                 if systemInfo.hasSuffix("(") == false {
                     systemInfo += " "
                 }
@@ -128,7 +128,7 @@ struct StarSystem: CustomStringConvertible, Codable {
             
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
             let (landmark, distanceString, estimatedDistance) = procedural.estimatedLandmarkDistance
-            if estimatedDistance > 8000, let galacticRegion = self.galacticRegion {
+            if estimatedDistance > 6000, let galacticRegion = self.galacticRegion {
                 systemInfo += " (in \(galacticRegion.name) Estimated ~\(distanceString) LY from \(landmark.name))"
             } else {
                 systemInfo += " (Estimated ~\(distanceString) LY from \(landmark.name))"
