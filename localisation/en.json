@@ -41,6 +41,7 @@
   "distance.error": "Unable to calculate distance as an error occured when retrieving system information",
   "distance.notfound": "Unable to calculate distance as one of the systems could not be found",
   "distance.result": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY",
+  "gametime": "The current in-game time is %{time} on %{date} ",
 
   "sctime.error": "Unable to understand the distance given in this command.",
   "sctime.unknownunit": "Unable to understand the distance because I have no idea what a \"%{unit}\" is.",

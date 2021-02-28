@@ -209,6 +209,26 @@ class GeneralCommands: IRCBotModule {
             "startup": mecha.startupTime.description
         ])
     }
+    
+    @BotCommand(
+        ["gametime", "utc"],
+        category: .utility,
+        description: "See the current time in game time / UTC",
+        permission: nil
+    )
+    var didReceiveGameTimeCommand = { command in
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .medium
+        timeFormatter.dateStyle = .none
+        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        let time = timeFormatter.string(from: Date())
+        let date = Date().eliteFormattedString
+
+        command.message.reply(key: "gametime", fromCommand: command, map: [
+            "date": date,
+            "time": time
+        ])
+    }
 
 //    @BotCommand(
 //        ["announce"],
