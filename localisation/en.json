@@ -53,7 +53,7 @@
   "board.clientjoin.needsrats": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) in %{system} has rejoined!",
   "board.clientjoinhost": "Caution: Case #%{caseId} client (%{client}) has rejoined with a different name! (%{nick})",
   "board.clientquit": "Caution: Client of case #%{caseId} (%{client}) has left!",
-  "board.clientban": "NOTICE: Client of case #%{caseId} (%{client}) has been banned by the moderator team. Please close the rescue and file it as invalid.",
+  "board.clientban": "\u0002Client of case #%{caseId} (%{client}) has been banned by the moderator team. Please close the rescue and file it as invalid\u0002",
   "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",
   "board.nickcorrected": "Caution: Nickname of case #%{caseId} (%{client}) has been automatically corrected to %{newNick}",
   "board.synced": "Successfully synced board with %{api}. %{updates}",
@@ -173,9 +173,10 @@
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
   
-  "board.trash.success": "Successfully added case #%{caseId} (%{client}) to the trash.",
-  "board.trash.error": "Failed to add case #%{caseId} to the trash due to an error in the rescue server.",
-  "board.trash.assigned": "Refusing to add case #%{caseId} to the trash as there are rats assigned to the case, did you mean to !close?",
+  "board.trash.success": "Successfully added case #%{caseId} (%{client}) to the deletion list.",
+  "board.trash.error": "Failed to add case #%{caseId} to the deletion list due to an error in the rescue server.",
+  "board.trash.assigned": "Refusing to add case #%{caseId} to the deletion list as there are rats assigned to the case, did you mean to !close?",
+  "board.trash.banned": "Refusing to add case #%{caseId} to the deletion list as the client was banned by the moderator team, this case should be closed and filed as invalid",
   
   "board.title.set": "Title for case #%{caseId} set to \"%{title}\".",
   

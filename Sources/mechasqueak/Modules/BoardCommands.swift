@@ -263,7 +263,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["trash", "md", "purge", "mdadd"],
-        [.param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
+        [.options(["f"]), .param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
         permission: .DispatchWrite
@@ -272,8 +272,16 @@ class BoardCommands: IRCBotModule {
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
+        let forced = command.forceOverride
+        
+        guard rescue.banned == false else {
+            command.message.reply(key: "board.trash.banned", fromCommand: command, map: [
+                "caseId": rescue.commandIdentifier
+            ])
+            return
+        }
 
-        guard rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 else {
+        guard (rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0) || forced else {
             command.message.reply(key: "board.trash.assigned", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier
             ])

@@ -259,6 +259,10 @@ class MechaSqueak {
                 updatedAt: Date(),
                 lastAuthor: userQuit.raw.client.currentNick)
             )
+            if clientWasBanned {
+                rescue.status = .Inactive
+                rescue.banned = true
+            }
             rescue.syncUpstream()
 
             var key = clientWasBanned ? "board.clientban" : "board.clientquit"

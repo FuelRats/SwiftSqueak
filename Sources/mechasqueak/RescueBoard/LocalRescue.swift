@@ -43,6 +43,7 @@ class LocalRescue {
     var clientNick: String?
     var clientLanguage: Locale?
     var commandIdentifier: Int
+    var banned: Bool = false
     var codeRed: Bool
     var notes: String
     var platform: GamePlatform?
