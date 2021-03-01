@@ -29,13 +29,12 @@ import IRCKit
 import NIO
 
 class LocalRescue {
-
     private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
     var clientHost: String?
     var channelName: String
-    var jumpCalls = 0
+    var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
 
     let id: UUID
@@ -118,6 +117,7 @@ class LocalRescue {
         self.updatedAt = Date()
 
         self.rats = []
+        self.jumpCalls = []
     }
 
     init? (fromRatsignal message: IRCPrivateMessage) {
@@ -157,6 +157,7 @@ class LocalRescue {
 
         self.unidentifiedRats = []
         self.rats = []
+        self.jumpCalls = []
 
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -197,6 +198,7 @@ class LocalRescue {
         self.status = .Open
         self.unidentifiedRats = []
         self.rats = []
+        self.jumpCalls = []
 
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -237,6 +239,7 @@ class LocalRescue {
 
         self.rats = rats
         self.firstLimpet = firstLimpet
+        self.jumpCalls = []
     }
 
     var toApiRescue: Rescue {
@@ -398,6 +401,11 @@ class LocalRescue {
                 }
 
                 assigns.unidentifiedRats.insert(param)
+                return assigns
+            }
+            
+            if rat.currentJumpCalls.first(where: { $0.id == self.id }) == nil && rat.currentJumpCalls.first(where: { $0.id != self.id }) != nil && force == false {
+                assigns.jumpConflicts.append(param)
                 return assigns
             }
 
@@ -581,5 +589,6 @@ struct RescueAssignments {
     var blacklisted = OrderedSet<String>()
     var notFound = OrderedSet<String>()
     var invalid = OrderedSet<String>()
+    var jumpConflicts = OrderedSet<String>()
 }
 

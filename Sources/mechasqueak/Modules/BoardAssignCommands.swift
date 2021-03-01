@@ -146,6 +146,13 @@ class BoardAssignCommands: IRCBotModule {
                 "rats": assigns.blacklisted.joined(separator: ", ")
             ])
         }
+        
+        if assigns.jumpConflicts.count > 0 {
+            command.message.error(key: "board.assign.jumpconflict", fromCommand: command, map: [
+                
+                "rats": assigns.jumpConflicts.joined(separator: ", ")
+            ])
+        }
 
         if assigns.notFound.count > 0 {
             command.message.error(key: "board.assign.notexist", fromCommand: command, map: [

@@ -93,6 +93,16 @@ extension Rat {
         })
     }
     
+    var currentJumpCalls: [LocalRescue] {
+        guard let userId = self.relationships.user?.id?.rawValue else {
+            return []
+        }
+        
+        return mecha.rescueBoard.rescues.filter({ rescue in
+            rescue.jumpCalls.contains(where: { $0.0.relationships.user?.id?.rawValue == userId })
+        })
+    }
+    
     func update () -> EventLoopFuture<Void> {
         let promise = loop.next().makePromise(of: Void.self)
         let patchDocument = SingleDocument(

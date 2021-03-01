@@ -128,6 +128,7 @@
   "board.assign.banned": "%{rats} cannot be assigned to cases right now, contact the ops team for more information.",
   "board.assign.none": "Found nobody to assign to case #%{caseId}",
   "board.assign.norat": "The following rats could not be assigned as they do not have a valid CMDR for this case: %{rats}. To override send the same command again within the next 30 seconds.",
+  "board.assign.jumpconflict": "Refused to assign the following rats as they called jumps for a different case but not this one. To override send the same command again within the next 30 seconds.",
   "board.assign.go": {
       "one": "%{client} Please add the following rat to your friends list: %{rats}",
       "other": "%{client} Please add the following %{count} rats to your friends list: %{rats}"

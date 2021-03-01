@@ -56,6 +56,7 @@ class MessageScanner: IRCBotModule {
         if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
             let caseId = jumpCallMatch.group(named: "case")!
+            let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
 
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
                 if configuration.general.drillMode == false {
@@ -70,11 +71,6 @@ class MessageScanner: IRCBotModule {
                 return
             }
 
-
-            guard channelMessage.destination == rescue.channel else {
-                return
-            }
-
             if rescue.isPrepped == false && configuration.general.drillMode == false && rescue.codeRed == false {
                 // User called jumps for a case where the client has not been prepped, yell at them.
                 channelMessage.replyPrivate(message: lingo.localize(
@@ -83,9 +79,10 @@ class MessageScanner: IRCBotModule {
                     interpolations: [:]
                 ))
             }
-
+            
+            let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
             if let system = rescue.system, let permit = rescue.system?.permit {
-                let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
+                
                 if (rat?.hasPermitFor(system: rescue.system!) ?? false) == false {
                     if rat?.attributes.data.value.permits?.count ?? 0 > 0 {
                         channelMessage.reply(message: lingo.localize(
@@ -158,12 +155,14 @@ class MessageScanner: IRCBotModule {
             }
             
             if let system = rescue.system, rescue.system?.permit != nil {
-                if channelMessage.user.getRatRepresenting(platform: rescue.platform!)?.hasPermitFor(system: system) == false {
+                if rat?.hasPermitFor(system: system) == false {
                     message += " (MISSING PERMIT)"
                 }
             }
 
-            rescue.jumpCalls += 1
+            if let jumpRat = rat ?? channelMessage.user.currentRat {
+                rescue.jumpCalls.append((jumpRat, jumps))
+            }
             rescue.quotes.append(RescueQuote(
                 author: channelMessage.client.currentNick,
                 message: message,
