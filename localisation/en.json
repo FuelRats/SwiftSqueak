@@ -384,6 +384,7 @@
   "help.command.inject.f": "Forces a new case to be created from this inject bypassing all restrictions",
   "help.command.system.f": "Prevents Mecha from automatically correcting the system name",
   "help.command.clear.f": "Force Mecha to close a case without validating the first limpet",
+  "help.command.clear.p": "Sends the paperwork to a rat without actually making them the first limpet of the rescue",
   "help.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
