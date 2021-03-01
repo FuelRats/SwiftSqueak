@@ -264,7 +264,7 @@ class MechaSqueak {
             var key = clientWasBanned ? "board.clientban" : "board.clientquit"
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
-                channel.send(key: "board.clientquit", map: [
+                channel.send(key: key, map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.clientDescription
                 ])
