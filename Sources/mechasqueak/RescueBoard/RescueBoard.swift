@@ -416,7 +416,12 @@ class RescueBoard {
         let oddCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == true }).count
         var expectedEvenness = even
         if expectedEvenness == nil {
-            expectedEvenness = (evenCases + (evenCRCases * 3)) <= oddCases + (oddCRCases * 3)
+            let evenWeight = (evenCases + (evenCRCases * 3))
+            let oddWeight = oddCases + (oddCRCases * 3)
+            if evenWeight == oddWeight {
+                expectedEvenness = Bool.random()
+            }
+            expectedEvenness = evenWeight < oddWeight
         }
 
         // Return the best scoring identifier that is the opposite evenness of the last case identifier
