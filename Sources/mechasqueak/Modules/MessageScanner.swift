@@ -99,7 +99,7 @@ class MessageScanner: IRCBotModule {
                             "jumpcall.permit",
                             locale: "en-GB",
                             interpolations: [
-                                "case": caseId,
+                                "caseId": caseId,
                                 "permit": permit.name ?? system.name
                             ])
                         )
