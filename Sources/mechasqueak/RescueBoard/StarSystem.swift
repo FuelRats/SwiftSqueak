@@ -209,6 +209,10 @@ struct StarSystem: CustomStringConvertible, Codable {
         if self.name.hasSuffix("SECTOR") && self.name.components(separatedBy: " ").count < 4 {
             return true
         }
+        
+        if ProceduralSystem.proceduralEndPattern.matches(self.name.components(separatedBy: CharacterSet.alphanumerics.inverted).joined()) {
+            return true
+        }
 
         return sectors.contains(where: { $0.name == self.name })
     }
