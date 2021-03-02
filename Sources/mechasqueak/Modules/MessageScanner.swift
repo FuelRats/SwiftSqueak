@@ -172,7 +172,6 @@ class MessageScanner: IRCBotModule {
             ))
 
             rescue.syncUpstream()
-            return
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
@@ -194,17 +193,19 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if
-            let rescue = caseMentionedInMessage(message: channelMessage),
-            (channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel)
-        {
+        let mentionedRescues = mentionedCasesInMessage(message: channelMessage)
+        for rescue in mentionedRescues {
+            guard channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel else {
+                continue
+            }
+            
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
-                return
+                continue
             }
             guard MessageScanner.caseRelevantPhrases.first(where: {
                 channelMessage.message.lowercased().contains($0)
             }) != nil else {
-                return
+                continue
             }
 
             rescue.quotes.append(RescueQuote(
@@ -219,22 +220,12 @@ class MessageScanner: IRCBotModule {
         }
     }
 
-    static func caseMentionedInMessage (message: IRCPrivateMessage) -> LocalRescue? {
-        if let caseMentionMatch = MessageScanner.caseMentionExpression.findFirst(in: message.message) {
-            let caseId = caseMentionMatch.group(at: 1)!
-            guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
+    static func mentionedCasesInMessage (message: IRCPrivateMessage) -> [LocalRescue] {
+        MessageScanner.caseMentionExpression.findAll(in: message.message).compactMap({
+            guard let caseId = $0.group(at: 1) else {
                 return nil
             }
-
-            return rescue
-        }
-        return nil
-
-//        return mecha.rescueBoard.rescues.first(where: { rescue in
-//            guard let clientNick = rescue.clientNick else {
-//                return false
-//            }
-//            return message.message.lowercased().contains(clientNick.lowercased())
-//        })
+            return mecha.rescueBoard.findRescue(withCaseIdentifier: caseId)
+        })
     }
 }
