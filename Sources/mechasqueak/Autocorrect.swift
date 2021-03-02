@@ -28,7 +28,7 @@ import Regex
 struct ProceduralSystem: CustomStringConvertible {
     static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
-    static let proceduralEndPattern = "[a-zA-Z]{2,4}[0-9]{1,5}".r!
+    static let proceduralEndPattern = "^[a-zA-Z]{2,4}[0-9]{1,5}$".r!
     static let systemBodyPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
     static let validMassCategories = "ABCDEFGH"
     private static let numberSubstitutions: [Character: Character] = [
