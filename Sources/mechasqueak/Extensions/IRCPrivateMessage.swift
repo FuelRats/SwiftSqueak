@@ -39,6 +39,9 @@ extension IRCPrivateMessage {
             self.reply(message: message)
             return
         }
+        if self.user.settings?.preferredPrivateMethod == .Notice {
+            self.client.sendNotice(toTarget: self.user.nickname, contents: message)
+        }
         self.client.sendMessage(toTarget: self.user.nickname, contents: message)
     }
 

@@ -32,6 +32,10 @@ extension IRCUser {
         }
         return MechaSqueak.accounts.mapping[account]
     }
+    
+    var settings: UserDataObject? {
+        return self.associatedAPIData?.user?.attributes.data.value
+    }
 
     var assignedRescue: LocalRescue? {
         guard let userId = self.associatedAPIData?.user?.id.rawValue else {

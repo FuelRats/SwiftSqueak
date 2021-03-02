@@ -129,5 +129,10 @@ enum UserStatus: String, Codable {
 }
 
 struct UserDataObject: Codable, Equatable {
+    var preferredPrivateMethod: MessagingMethod? = .Privmsg
+}
 
+enum MessagingMethod: String, Codable {
+    case Privmsg
+    case Notice
 }
