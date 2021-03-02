@@ -89,6 +89,7 @@
 
   "board.signal": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in %{systemInfo} %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
   "board.signal.exists": "CMDR %{client} belongs to existing %{platform} %{cr} \u0002case #%{caseId}\u0002 in %{system}.",
+  "board.signal.recentlyclosed": "Ignoring signal from recently closed client %{client} of case #%{caseId}",
   "board.signal.helpyou": "%{client} You already sent a Signal! Please stand by, someone will help you soon!",
   "board.signal.oxygen": "%{client} Are you on emergency oxygen? (\"oxygen depleted in xx.xx\" timer counting down in the top right of your cockpit)",
   "board.signal.changes": "\u000304CAUTION:\u0003 The new signal for case #%{caseId} has changes: %{changes}",

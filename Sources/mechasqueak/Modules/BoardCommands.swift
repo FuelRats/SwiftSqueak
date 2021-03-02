@@ -191,7 +191,7 @@ class BoardCommands: IRCBotModule {
                 $0.id == rescue.id
             })
 
-            mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue.id
+            mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue
 
             if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
                 timer?.cancel()
@@ -294,7 +294,7 @@ class BoardCommands: IRCBotModule {
             mecha.rescueBoard.rescues.removeAll(where: {
                 $0.id == rescue.id
             })
-            mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue.id
+            mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue
 
             command.message.reply(key: "board.trash.success", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier,

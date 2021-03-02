@@ -364,21 +364,21 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .RescueWriteOwn
     )
     var didReceiveUncloseCommand = { command in
-        guard let caseNumber = Int(command.parameters[0]), let id = mecha.rescueBoard.recentlyClosed[caseNumber] else {
+        guard let caseNumber = Int(command.parameters[0]), let closedRescue = mecha.rescueBoard.recentlyClosed[caseNumber] else {
             return
         }
 
         if let existingRescue = mecha.rescueBoard.rescues.first(where: {
-            $0.id == id
+            $0.id == closedRescue.id
         }) {
             command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
-                "id": id,
+                "id": closedRescue.id,
                 "caseId": existingRescue.commandIdentifier
             ])
             return
         }
 
-        FuelRatsAPI.getRescue(id: id, complete: { result in
+        FuelRatsAPI.getRescue(id: closedRescue.id, complete: { result in
             let apiRescue = result.body.data!.primary.value
             let rats = result.assignedRats()
             let firstLimpet = result.firstLimpet()
@@ -398,7 +398,7 @@ class RemoteRescueCommands: IRCBotModule {
             mecha.rescueBoard.rescues.append(rescue)
             rescue.syncUpstream(fromCommand: command)
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
-                "id": id.ircRepresentation,
+                "id": closedRescue.id.ircRepresentation,
                 "caseId": rescue.commandIdentifier
             ])
         }, error: { _ in

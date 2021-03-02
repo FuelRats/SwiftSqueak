@@ -37,7 +37,7 @@ class RescueBoard {
     var lastSignalReceived: Date?
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
-    var recentlyClosed = [Int: UUID]()
+    var recentlyClosed = [Int: LocalRescue]()
     
     var lastPaperworkReminder: [UUID: Date] = [:]
 
@@ -195,6 +195,14 @@ class RescueBoard {
                 ]))
             }
 
+            return
+        }
+        
+        if let recentRescue = recentlyClosed.first(where: { $0.value.client == rescue.client }), configuration.general.drillMode == false, initiated != .insertion {
+            message.reply(message: lingo.localize("board.signal.recentlyclosed", locale: "en-GB", interpolations: [
+                "caseId": recentRescue.key,
+                "client": recentRescue.value.clientDescription
+            ]))
             return
         }
 
