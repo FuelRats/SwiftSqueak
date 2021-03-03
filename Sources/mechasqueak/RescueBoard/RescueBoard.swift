@@ -198,7 +198,9 @@ class RescueBoard {
             return
         }
         
-        if let recentRescue = recentlyClosed.first(where: { $0.value.client == rescue.client }), configuration.general.drillMode == false, initiated != .insertion {
+        if let recentRescue = recentlyClosed.first(where: {
+            $0.value.client == rescue.client && Date().timeIntervalSince($0.value.updatedAt) < 900
+        }), configuration.general.drillMode == false, initiated != .insertion {
             message.reply(message: lingo.localize("board.signal.recentlyclosed", locale: "en-GB", interpolations: [
                 "caseId": recentRescue.key,
                 "client": recentRescue.value.clientDescription
