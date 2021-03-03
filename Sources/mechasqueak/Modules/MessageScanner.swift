@@ -57,9 +57,6 @@ class MessageScanner: IRCBotModule {
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
             let caseId = jumpCallMatch.group(named: "case")!
             let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
-
-            let 🚒 = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId)!
-            
             
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
                 if configuration.general.drillMode == false {
