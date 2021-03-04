@@ -234,7 +234,9 @@ struct ProceduralSystem: CustomStringConvertible {
                 }
             }
 
-            system.sectorName = lastCorrection.name
+            if lastDistance < 4 {
+                system.sectorName = lastCorrection.name
+            }
         }
         
         if system.cubeId.part1.isLetter == false {
