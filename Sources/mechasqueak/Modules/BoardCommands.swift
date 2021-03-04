@@ -171,6 +171,8 @@ class BoardCommands: IRCBotModule {
                 return
             }
             
+            firstLimpet = rat
+            
             let currentRescues = rat.currentRescues
             if currentRescues.contains(where: { $0.id == rescue.id }) == false, let conflictCase = currentRescues.first, override == false {
                 command.message.error(key: "board.close.conflict", fromCommand: command, map: [
