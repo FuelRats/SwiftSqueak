@@ -27,11 +27,11 @@ import IRCKit
 
 extension IRCPrivateMessage {
     func reply (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        self.reply(message: lingo.localize(key, locale: command.locale.identifier, interpolations: map))
+        self.reply(message: lingo.localize(key, locale: command.locale.short, interpolations: map))
     }
 
     func error (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        self.reply(message: "\(command.message.user.nickname): \(lingo.localize(key, locale: command.locale.identifier, interpolations: map))")
+        self.reply(message: "\(command.message.user.nickname): \(lingo.localize(key, locale: command.locale.short, interpolations: map))")
     }
 
     func replyPrivate (message: String) {
@@ -46,7 +46,7 @@ extension IRCPrivateMessage {
     }
 
     func replyPrivate (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        let message = lingo.localize(key, locale: command.locale.identifier, interpolations: map)
+        let message = lingo.localize(key, locale: command.locale.short, interpolations: map)
         self.replyPrivate(message: message)
     }
 

@@ -61,7 +61,7 @@ class RemoteRescueCommands: IRCBotModule {
 
         FuelRatsAPI.getRecentlyClosedRescues(count: closeCount, complete: { results in
             let rescueList = results.body.data!.primary.values.enumerated().map({ (index, rescue) in
-                return lingo.localize("rescue.closed.entry", locale: command.locale.identifier, interpolations: [
+                return lingo.localize("rescue.closed.entry", locale: command.locale.short, interpolations: [
                     "index": index,
                     "client": rescue.client ?? "u\u{200B}nknown client",
                     "platform": rescue.platform.ircRepresentable,

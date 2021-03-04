@@ -355,7 +355,7 @@ class FactCommands: IRCBotModule {
             })
             
             if command.locale.identifier == "auto", targets.count > 0, let firstRescue = targets[0].1 {
-                command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en-GB")
+                command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en")
             }
             
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
