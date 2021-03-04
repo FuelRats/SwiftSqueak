@@ -170,10 +170,6 @@ class BoardCommands: IRCBotModule {
                 ])
                 return
             }
-
-            if noFirstLimpet == false {
-                firstLimpet = rat
-            }
             
             let currentRescues = rat.currentRescues
             if currentRescues.contains(where: { $0.id == rescue.id }) == false, let conflictCase = currentRescues.first, override == false {
@@ -186,7 +182,8 @@ class BoardCommands: IRCBotModule {
             }
          }
 
-        rescue.close(fromBoard: mecha.rescueBoard, firstLimpet: firstLimpet, onComplete: {
+        var closeFl = noFirstLimpet ? nil : firstLimpet
+        rescue.close(fromBoard: mecha.rescueBoard, firstLimpet: closeFl, onComplete: {
             mecha.rescueBoard.rescues.removeAll(where: {
                 $0.id == rescue.id
             })
