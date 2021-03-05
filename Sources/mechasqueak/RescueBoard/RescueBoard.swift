@@ -201,10 +201,32 @@ class RescueBoard {
         if let recentRescue = recentlyClosed.first(where: {
             $0.value.client == rescue.client && Date().timeIntervalSince($0.value.updatedAt) < 900
         }), configuration.general.drillMode == false, initiated != .insertion {
-            message.reply(message: lingo.localize("board.signal.recentlyclosed", locale: "en-GB", interpolations: [
-                "caseId": recentRescue.key,
-                "client": recentRescue.value.clientDescription
-            ]))
+            FuelRatsAPI.getRescue(id: recentRescue.value.id, complete: { result in
+                let apiRescue = result.body.data!.primary.value
+                let rats = result.assignedRats()
+                let firstLimpet = result.firstLimpet()
+
+                let rescue = LocalRescue(
+                    fromAPIRescue: apiRescue,
+                    withRats: rats,
+                    firstLimpet: firstLimpet,
+                    onBoard: mecha.rescueBoard
+                )
+                if rescue.hasConflictingId(inBoard: mecha.rescueBoard) {
+                    rescue.commandIdentifier = mecha.rescueBoard.getNewIdentifier()
+                }
+                rescue.outcome = nil
+                rescue.status = .Open
+
+                mecha.rescueBoard.rescues.append(rescue)
+                rescue.syncUpstream()
+                message.reply(message: lingo.localize("rescue.reopen.opened", locale: "en-GB", interpolations: [
+                    "id": recentRescue.value.id.ircRepresentation,
+                    "caseId": rescue.commandIdentifier
+                ]))
+            }, error: { _ in
+            })
+            
             return
         }
 
