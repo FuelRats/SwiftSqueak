@@ -358,6 +358,10 @@ class FactCommands: IRCBotModule {
                 command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en")
             }
             
+            if command.command == "prep" &&  targets.contains(where: { $0.1?.codeRed == true }) {
+                command.command = "quit"
+            }
+            
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
                 for platform in GamePlatform.allCases {
                     let platformTargets = targets.filter({ $0.1?.platform == platform })
