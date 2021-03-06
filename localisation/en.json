@@ -118,6 +118,8 @@
   "board.codered.no": "Case #%{caseId} (%{client}) is no longer CR.",
   "board.titleset": "Title for case #%{clientId} (%{client}) has been set to \"Operation %{title}\".",
   "board.caseopened": "Case #%{caseId} opened for %{client} with \"%{message}\".",
+  
+  "board.sprep": "Silenced prep warning for case #%{caseId}",
 
   "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. To override send the same command again within the next 30 seconds.",
   "board.grab.noclient": "Could not find the client or rat for case %{caseId} in the channel.",

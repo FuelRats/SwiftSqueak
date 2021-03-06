@@ -433,6 +433,28 @@ class BoardCommands: IRCBotModule {
 
         return rescue
     }
+    
+    @BotCommand(
+        ["sprep"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Silences the prep warning on a case",
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSilencePrepCommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
+            timer?.cancel()
+            mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+        }
+        command.message.reply(key: "board.sprep", fromCommand: command, map: [
+            "caseId": rescue.id
+        ])
+    }
 }
 
 enum ListCommandArgument: String {
