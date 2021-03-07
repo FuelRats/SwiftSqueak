@@ -452,7 +452,7 @@ class BoardCommands: IRCBotModule {
             mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
         }
         command.message.reply(key: "board.sprep", fromCommand: command, map: [
-            "caseId": rescue.id
+            "caseId": rescue.commandIdentifier
         ])
     }
 }

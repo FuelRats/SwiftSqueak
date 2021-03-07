@@ -23,7 +23,7 @@
   "jumpcall.wrongplatform": "CAUTION: %{nick} called jumps for case #%{case} which is on %{platform} but they do not have a registered rat for this platform.",
   "jumpcall.incompletesys": "CAUTION: %{nick} called jumps for case #%{case} which has an incomplete system name!",
   "jumpcall.notprepped": "CAUTION: You have called jumps for a case where the client has not been !prep'd or told to logout. The first rat to respond to a case should always take care of this beforehand.",
-  "jumpcall.permit": "CAUTION: You have called jumps for case #%{case} which requires %{permit} permit, make sure you have access to this system.",
+  "jumpcall.permit": "CAUTION: You have called jumps for case #%{caseId} which requires %{permit} permit, make sure you have access to this system.",
   "jumpcall.publicpermit": "CAUTION: %{nick} does not have the %{permit} permit required by case #%{caseId}.",
   
   "systemsearch.noresults": "No results were found for this system.",
