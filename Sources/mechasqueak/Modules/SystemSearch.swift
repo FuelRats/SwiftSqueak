@@ -93,24 +93,7 @@ class SystemSearch: IRCBotModule {
                         "system": system
                     ])
                 case .success(let result):
-                    guard let landmark = result.landmark else {
-                        if let procedural = result.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                            var (landmark, distance, _) = procedural.estimatedLandmarkDistance
-                            var landmarkName = landmark.name
-                            
-                            if landmarkPreference != nil {
-                                landmarkName = "Sol"
-                                distance = procedural.estimatedSolDistance
-                            }
-                            let region = procedural.galacticRegion
-                            command.message.reply(key: "landmark.procedural", fromCommand: command, map: [
-                                "system": system,
-                                "distance": distance,
-                                "landmark": landmarkName,
-                                "region": region?.name ?? ""
-                            ])
-                            return
-                        }
+                    guard let landmarkDescription = result.landmarkDescription else {
                         command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
                             "system": system
                         ])

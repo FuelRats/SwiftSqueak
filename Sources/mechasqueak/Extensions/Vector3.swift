@@ -91,7 +91,6 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable, Exp
         return Vector3(abs(x), abs(y), abs(z))
     }
     
-    
     static func + (lhs: Vector3, rhs: Vector3) -> Vector3 {
         return Vector3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z)
     }
@@ -121,7 +120,56 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable, Exp
         lhs.y *= rhs.y
         lhs.z *= rhs.z
     }
+    
+    
+    func bearing (from vector: Vector3) -> Double {
+        let originX = self.x - vector.x
+        let originZ = self.z - vector.z
+        let radians = atan2(originX, originZ)
+        
+        var degrees = radians * 180 / Double.pi
+        while degrees < 0 {
+            degrees += 360
+        }
+        return degrees
+    }
 }
+
+
+enum CardinalDirection: String {
+    case North
+    case NorthEast = "North-east"
+    case East
+    case SouthEast = "South-east"
+    case South
+    case SouthWest = "South-west"
+    case West
+    case NorthWest = "North-west"
+    
+    init (bearing: Double) {
+        switch bearing {
+            case _ where bearing >= 337.5 && bearing <= 22.7:
+                self = .North
+            case 22.7...67.7:
+                self = .NorthEast
+            case 67.7...112.7:
+                self = .East
+            case 112.7...157.3:
+                self = .SouthEast
+            case 157.3...202.7:
+                self = .South
+            case 202.7...247.7:
+                self = .SouthWest
+            case 247.7...292.7:
+                self = .West
+            case 292.7...337.5:
+                self = .NorthWest
+            default:
+                self = .North
+        }
+    }
+}
+
 
 extension CGPoint {
     func intersects (polygon: [CGPoint]) -> Bool {

@@ -215,17 +215,9 @@ class SystemsAPI {
             let error: String?
         }
 
-        struct LandmarkResult: Codable, CustomStringConvertible {
+        struct LandmarkResult: Codable {
             let name: String
             let distance: Double
-
-            var description: String {
-                guard distance > 0 else {
-                    return ""
-                }
-                let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: self.distance))!
-                return "\(distance) LY from \(self.name)"
-            }
         }
         
         var first: LandmarkDocument.LandmarkResult? {

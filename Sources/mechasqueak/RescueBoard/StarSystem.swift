@@ -104,35 +104,40 @@ struct StarSystem: CustomStringConvertible, Codable {
         return bodies.first(where: { $0.name.uppercased() == composedName })
     }
     
+    func description (forLandmark landmark: SystemsAPI.LandmarkDocument.LandmarkResult?) -> String? {
+        guard let landmark = landmark, landmark.distance > 0 else {
+            if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
+                let (landmark, distanceString, _) = procedural.estimatedLandmarkDistance
+                let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
+                return "Estimated ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
+            }
+            return nil
+        }
+        let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!
+        
+        if landmark.distance > 1000, let searchResult = searchResult, let landmarkResult = mecha.landmarks.first(where: { $0.name == landmark.name }) {
+            let cardinal = CardinalDirection(bearing: searchResult.coords.bearing(from: landmarkResult.coordinates))
+            return "\(distance) LY \"\(cardinal.rawValue)\" of \(self.name)"
+        }
+        return "\(distance) LY from \(self.name)"
+    }
+    
+    var landmarkDescription: String? {
+        return self.description(forLandmark: landmark)
+    }
+    
     func getDescription (preferredLandmarkName: String? = nil) -> String {
         var systemInfo = "\"\(self.name)\""
-        if let landmark = self.landmarks.first(where: { $0.name == preferredLandmarkName }) ?? self.landmark {
+        if let landmarkDescription = self.description(forLandmark: landmark) {
             systemInfo += " ("
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
                 systemInfo += description
             }
-            if landmark.distance > 6000, let galacticRegion = self.galacticRegion {
-                if systemInfo.hasSuffix("(") == false {
-                    systemInfo += " "
-                }
-                systemInfo += "in \(galacticRegion.name)"
-            }
-            if landmark.description.count > 0 {
-                if systemInfo.hasSuffix("(") == false {
-                    systemInfo += " "
-                }
-                systemInfo += "\(landmark.description))"
-            } else {
-                systemInfo += ")"
-            }
             
-        } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-            let (landmark, distanceString, estimatedDistance) = procedural.estimatedLandmarkDistance
-            if estimatedDistance > 6000, let galacticRegion = self.galacticRegion {
-                systemInfo += " (in \(galacticRegion.name) Estimated ~\(distanceString) LY from \(landmark.name))"
-            } else {
-                systemInfo += " (Estimated ~\(distanceString) LY from \(landmark.name))"
+            if systemInfo.hasSuffix("(") == false {
+                systemInfo += " "
             }
+            systemInfo += "\(landmarkDescription))"
         } else if isInvalid || isIncomplete {
             systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
         } else {
@@ -150,8 +155,8 @@ struct StarSystem: CustomStringConvertible, Codable {
     
     var shortDescription: String {
         var systemInfo = "\"\(self.name)\""
-        if let landmark = self.landmark {
-            systemInfo += " (\(landmark.description))"
+        if let landmarkDescription = landmarkDescription {
+            systemInfo += " (\(landmarkDescription))"
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
             let (landmark, distance, _) = procedural.estimatedLandmarkDistance
             systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
