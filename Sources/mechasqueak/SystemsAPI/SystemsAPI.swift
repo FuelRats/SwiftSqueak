@@ -298,14 +298,15 @@ class SystemsAPI {
             return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, landmarkDistances[0].1)
         }
         
-        var estimatedSolDistance: String {
+        var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
             let distance = self.sectordata.coords.distance(from: Vector3(0, 0, 0))
             
             let formatter = NumberFormatter.englishFormatter()
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
             
-            return formatter.string(from: distance)!
+            let landmark = LandmarkListDocument.LandmarkListEntry(name: "Sol", coordinates: Vector3(0, 0, 0))
+            return (landmark, formatter.string(from: distance)!, distance)
         }
         
         struct SectorData: Codable {

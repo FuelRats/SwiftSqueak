@@ -104,10 +104,10 @@ struct StarSystem: CustomStringConvertible, Codable {
         return bodies.first(where: { $0.name.uppercased() == composedName })
     }
     
-    func description (forLandmark landmark: SystemsAPI.LandmarkDocument.LandmarkResult?) -> String? {
-        guard let landmark = landmark, landmark.distance > 0 else {
+    func description (forLandmarkName landmarkName: String?) -> String? {
+        guard let landmark = landmarks.first(where: { $0.name == landmarkName }) ?? landmarks.first, landmark.distance > 0 else {
             if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                let (landmark, distanceString, _) = procedural.estimatedLandmarkDistance
+                let (landmark, distanceString, _) = landmarkName != nil ? procedural.estimatedSolDistance : procedural.estimatedLandmarkDistance
                 let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
                 return "Estimated ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
             }
@@ -123,12 +123,12 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
     
     var landmarkDescription: String? {
-        return self.description(forLandmark: landmark)
+        return self.description(forLandmarkName: nil)
     }
     
     func getDescription (preferredLandmarkName: String? = nil) -> String {
         var systemInfo = "\"\(self.name)\""
-        if let landmarkDescription = self.description(forLandmark: landmark) {
+        if let landmarkDescription = self.description(forLandmarkName: preferredLandmarkName) {
             systemInfo += " ("
             if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
                 systemInfo += description
