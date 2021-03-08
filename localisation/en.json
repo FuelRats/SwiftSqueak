@@ -296,6 +296,7 @@
   },
   "fact.fallback": "!%{fact} is not available in %{language} (%{identifier}), falling back to English",
   "facts.noclienterror": "Facts that automatically detect platform does not work without a client as target as there is no way to determine the platform",
+  "facts.quitprepcorrection": "WARNING: You just attempted to !prep a code-red case, I have automatically corrected it for you but you should pay attention in the future.",
   
   "say.sending": "Sending message \"%{contents}\" to %{target}",
   "me.sending": "Emoting \"%{contents}\" to %{target}",

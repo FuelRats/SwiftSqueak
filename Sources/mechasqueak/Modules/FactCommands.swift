@@ -379,6 +379,7 @@ class FactCommands: IRCBotModule {
                 }
                 if command.command == "quit" {
                     command.command = "prepcr"
+                    command.message.replyPrivate(key: "facts.prepquitcorrection", fromCommand: command)
                 }
                 let unknownTargets = targets.compactMap({ target -> String? in
                     if target.1 != nil && target.1?.platform != nil {
