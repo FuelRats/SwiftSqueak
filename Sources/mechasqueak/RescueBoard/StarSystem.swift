@@ -117,7 +117,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         
         if landmark.distance > 1000, let searchResult = searchResult, let landmarkResult = mecha.landmarks.first(where: { $0.name == landmark.name }) {
             let cardinal = CardinalDirection(bearing: searchResult.coords.bearing(from: landmarkResult.coordinates))
-            return "\(distance) LY \"\(cardinal.rawValue)\" of \(self.name)"
+            return "\(distance) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
         }
         return "\(distance) LY from \(self.name)"
     }
