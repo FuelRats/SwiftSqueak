@@ -72,6 +72,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.permit = starSystem.permit
         self.availableCorrections = starSystem.availableCorrections
         self.landmark = starSystem.landmark
+        self.landmarks = starSystem.landmarks
         self.proceduralCheck = starSystem.proceduralCheck
         self.bodies = starSystem.bodies
         self.stations = starSystem.stations
