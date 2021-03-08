@@ -119,7 +119,7 @@ struct StarSystem: CustomStringConvertible, Codable {
             let cardinal = CardinalDirection(bearing: searchResult.coords.bearing(from: landmarkResult.coordinates))
             return "\(distance) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
         }
-        return "\(distance) LY from \(self.name)"
+        return "\(distance) LY from \(landmark.name)"
     }
     
     var landmarkDescription: String? {
