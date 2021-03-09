@@ -358,8 +358,12 @@ class FactCommands: IRCBotModule {
                 command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en")
             }
             
-            if command.command == "prep" &&  targets.contains(where: { $0.1?.codeRed == true }) {
+            if command.command == "prep" && targets.contains(where: { $0.1?.codeRed == true }) && configuration.general.drillMode == false {
                 command.command = "quit"
+                
+                mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
+                    "nick": command.message.user.nickname
+                ])
             }
             
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
@@ -377,11 +381,8 @@ class FactCommands: IRCBotModule {
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
-                if command.command == "quit" && configuration.general.drillMode == false {
+                if command.command == "quit" {
                     command.command = "prepcr"
-                    mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
-                        "nick": command.message.user.nickname
-                    ])
                 }
                 let unknownTargets = targets.compactMap({ target -> String? in
                     if target.1 != nil && target.1?.platform != nil {
