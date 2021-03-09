@@ -377,9 +377,12 @@ class FactCommands: IRCBotModule {
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
-                if command.command == "quit" {
+                if command.command == "quit" && configuration.general.drillMode == false {
                     command.command = "prepcr"
                     command.message.replyPrivate(key: "facts.prepquitcorrection", fromCommand: command)
+                    mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
+                        "nick": command.message.user.nickname
+                    ])
                 }
                 let unknownTargets = targets.compactMap({ target -> String? in
                     if target.1 != nil && target.1?.platform != nil {
