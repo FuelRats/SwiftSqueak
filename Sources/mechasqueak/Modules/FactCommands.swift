@@ -379,7 +379,6 @@ class FactCommands: IRCBotModule {
                 }
                 if command.command == "quit" && configuration.general.drillMode == false {
                     command.command = "prepcr"
-                    command.message.replyPrivate(key: "facts.prepquitcorrection", fromCommand: command)
                     mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
                         "nick": command.message.user.nickname
                     ])
