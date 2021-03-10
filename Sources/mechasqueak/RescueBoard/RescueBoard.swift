@@ -609,10 +609,8 @@ class RescueBoard {
                     continue
                 }
                 
-                let presentNicks = caseRat.presence(inIRCChannel: mecha.reportingChannel!).filter({
-                    $0.isAway == false
-                })
-                if let lastReminder = self.lastPaperworkReminder[rescue.id.rawValue], Date().timeIntervalSince(lastReminder) < 43200 {
+                let presentNicks = caseRat.presence(inIRCChannel: mecha.reportingChannel!)
+                if let lastReminder = self.lastPaperworkReminder[rescue.id.rawValue], Date().timeIntervalSince(lastReminder) < 21600 {
                     continue
                 }
                 if presentNicks.count > 0 {
