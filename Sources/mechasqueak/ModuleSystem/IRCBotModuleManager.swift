@@ -144,7 +144,13 @@ class IRCBotModuleManager {
 
             while paramIndex < maxParameters && paramIndex < ircBotCommand.parameters.count {
                 if paramIndex == maxParameters - 1 {
-                    let remainderComponents = ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex]
+                    var remainderComponents = Array(ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex])
+                    remainderComponents = remainderComponents.map({
+                        if $0.contains(" ") {
+                            return "\"\($0)\""
+                        }
+                        return $0
+                    })
                     let remainder = remainderComponents.joined(separator: " ")
                     parameters.append(remainder)
                     break

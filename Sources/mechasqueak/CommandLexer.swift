@@ -251,6 +251,16 @@ struct Lexer {
 
             return Token.Parameter(arg)
         }
+        if peek() == "\"" {
+            pop()
+            let arg = readWhile({ $0 != "\"" })
+            guard arg.count > 0 else {
+                throw LexerError.invalidArgument
+            }
+            pop()
+
+            return Token.Parameter(arg)
+        }
         return Token.Parameter(readWhile({ $0.isWhitespace == false }))
     }
 

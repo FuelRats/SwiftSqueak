@@ -117,7 +117,7 @@ extension Array where Element == CommandBody {
             switch type {
             case .standard:
                 if example.components(separatedBy: " ").count > 1 {
-                    return "`\(example)`"
+                    return "\"\(example)\""
                 }
                 return example
                 
