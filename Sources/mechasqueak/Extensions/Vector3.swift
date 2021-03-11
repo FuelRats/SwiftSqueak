@@ -121,7 +121,6 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable, Exp
         lhs.z *= rhs.z
     }
     
-    
     func bearing (from vector: Vector3) -> Double {
         let originX = self.x - vector.x
         let originZ = self.z - vector.z

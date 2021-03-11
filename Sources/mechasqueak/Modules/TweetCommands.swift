@@ -118,6 +118,14 @@ class TweetCommands: IRCBotModule {
             command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier
             ])
+            rescue.quotes.append(RescueQuote(
+                author: command.message.user.nickname,
+                message: "Tweet to @FuelRatAlerts has been posted",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: command.message.user.nickname
+            ))
+            rescue.syncUpstream(representing: command.message.user)
         }, error: { _ in
             command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier
