@@ -126,7 +126,11 @@ class SystemSearch: IRCBotModule {
                         
                         let distance = arrCoords.distance(from: depCoords)
                         let formatter = NumberFormatter.englishFormatter()
-                        command.message.reply(key: "distance.result", fromCommand: command, map: [
+                        
+                        let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
+                        
+                        var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
+                        command.message.reply(key: key, fromCommand: command, map: [
                             "departure": departure.name,
                             "arrival": arrival.name,
                             "distance": formatter.string(from: distance)!
