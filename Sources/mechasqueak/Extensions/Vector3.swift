@@ -130,7 +130,7 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable, Exp
         while degrees < 0 {
             degrees += 360
         }
-        return degrees
+        return degrees 
     }
 }
 

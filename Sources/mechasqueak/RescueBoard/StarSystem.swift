@@ -109,6 +109,10 @@ struct StarSystem: CustomStringConvertible, Codable {
         guard let landmark = landmarks.first(where: { $0.name == landmarkName }) ?? landmarks.first, landmark.distance > 0 else {
             if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
                 let (landmark, distanceString, _) = landmarkName != nil ? procedural.estimatedSolDistance : procedural.estimatedLandmarkDistance
+                
+                guard (1000...80000).contains(procedural.estimatedSolDistance.2) else {
+                    return nil
+                }
                 let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
                 return "Estimated ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
             }
