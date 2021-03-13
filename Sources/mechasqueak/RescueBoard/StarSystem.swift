@@ -220,7 +220,7 @@ struct StarSystem: CustomStringConvertible, Codable {
             return true
         }
 
-        return sectors.contains(where: { $0.name == self.name })
+        return mecha.sectors.contains(where: { $0.name == self.name })
     }
     
     var isInvalid: Bool {

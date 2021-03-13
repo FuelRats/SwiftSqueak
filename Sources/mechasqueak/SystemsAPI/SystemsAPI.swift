@@ -204,6 +204,33 @@ class SystemsAPI {
         })
         return promise.futureResult
     }
+    
+    static func fetchSectorList () -> EventLoopFuture<[StarSector]> {
+        let promise = loop.next().makePromise(of: [StarSector].self)
+        
+        let url = URLComponents(string: "https://systems.api.fuelrats.com/get_ha_regions")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        httpClient.execute(request: request, forDecodable: [String].self).whenComplete({ result in
+            switch result {
+                case .failure(_):
+                    promise.succeed([])
+                    
+                case .success(let sectors):
+                    promise.succeed(sectors.map({ sector -> StarSector in
+                        var name = sector.uppercased()
+                        var hasSector = false
+                        if name.hasSuffix(" SECTOR") {
+                            name.removeLast(7)
+                            hasSector = true
+                        }
+                        return StarSector(name: name, hasSector: hasSector)
+                    }))
+            }
+        })
+        return promise.futureResult
+    }
 
 
     struct LandmarkDocument: Codable {
@@ -417,6 +444,9 @@ class SystemsAPI {
             }
         }
     }
+}
 
-
+struct StarSector {
+    let name: String
+    let hasSector: Bool
 }

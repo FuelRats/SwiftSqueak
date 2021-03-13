@@ -201,7 +201,7 @@ struct ProceduralSystem: CustomStringConvertible {
     }
     
     var isValid: Bool {
-        if self.hasSectorSuffix && sectors.contains(where: { $0.name == self.sectorName }) == false {
+        if self.hasSectorSuffix && mecha.sectors.contains(where: { $0.name == self.sectorName }) == false {
             return false
         }
         
@@ -222,24 +222,22 @@ struct ProceduralSystem: CustomStringConvertible {
         return true
     }
     
-    // TRIANGULI SECTOR AB-N A7-0
     var corrected: ProceduralSystem? {
         var system = self
-        if system.hasSectorSuffix {
-            var lastDistance = self.sectorName.levenshtein(sectors[0].name)
-            var lastCorrection = sectors[0]
+        var lastDistance = self.sectorName.levenshtein(mecha.sectors[0].name)
+        var lastCorrection = mecha.sectors[0]
 
-            for entry in sectors {
-                let distance = system.sectorName.levenshtein(entry.name)
-                if distance < lastDistance || (distance == lastDistance && entry.count > lastCorrection.count) {
-                    lastDistance = distance
-                    lastCorrection = entry
-                }
+        for entry in mecha.sectors {
+            let distance = system.sectorName.levenshtein(entry.name)
+            if distance < lastDistance {
+                lastDistance = distance
+                lastCorrection = entry
             }
+        }
 
-            if lastDistance < 4 {
-                system.sectorName = lastCorrection.name
-            }
+        if lastDistance < 4 {
+            system.sectorName = lastCorrection.name
+            system.hasSectorSuffix = lastCorrection.hasSector
         }
         
         if system.cubeId.part1.isLetter == false {
@@ -268,24 +266,4 @@ struct ProceduralSystem: CustomStringConvertible {
         }
         return system
     }
-}
-
-func loadSectors () -> [StarSector] {
-    let sectorPath = URL(
-        fileURLWithPath: FileManager.default.currentDirectoryPath
-    ).appendingPathComponent("sectors.json")
-
-    guard let sectorData = try? Data(contentsOf: sectorPath) else {
-        fatalError("Could not locate sector file in \(sectorPath.absoluteString)")
-    }
-
-    let sectorDecoder = JSONDecoder()
-    return try! sectorDecoder.decode([StarSector].self, from: sectorData)
-}
-
-let sectors = loadSectors()
-
-struct StarSector: Codable {
-    let name: String
-    let count: Int
 }
