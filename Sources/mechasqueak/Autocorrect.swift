@@ -235,7 +235,7 @@ struct ProceduralSystem: CustomStringConvertible {
             }
         }
 
-        if lastDistance < 4 {
+        if (system.sectorName.count > 7 && lastDistance < 4) || lastDistance < 3 {
             system.sectorName = lastCorrection.name
             system.hasSectorSuffix = lastCorrection.hasSector
         }
