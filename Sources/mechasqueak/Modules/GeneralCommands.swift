@@ -229,16 +229,40 @@ class GeneralCommands: IRCBotModule {
             "time": time
         ])
     }
+    
+    @BotCommand(
+        ["roll"],
+        [.param("dices", "2d8")],
+        category: .utility,
+        description: "Roll a dice",
+        permission: nil,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveDiceRollCommand = { command in
+        guard let diceParam = "(?<num>[0-9]+)?d(?<value>[0-9]+)(\\+(?<add>[0-9]+))?".r!.findFirst(in: command.parameters[0]) else {
+            return
+        }
+        
+        let diceValue = Int(diceParam.group(at: 2) ?? "") ?? 20
+        let diceNum = Int(diceParam.group(at: 1) ?? "1") ?? 1
+        let add = Int(diceParam.group(at: 4) ?? "0") ?? 0
+        
+        var value = add
+        for roll in 1...diceNum {
+            value += Int.random(in: 1...diceValue)
+        }
+        if add > 0 {
+            command.message.reply(message: "\(diceNum)d\(diceValue)+\(add) = \(value)")
+        } else {
+            command.message.reply(message: "\(diceNum)d\(diceValue) = \(value)")
+        }
+    }
 
 //    @BotCommand(
 //        ["announce"],
-//        parameters: 4...4,
-//        lastParameterIsContinous: true,
-//        namedOptions: ["cr"],
+//        [.argument("cr"), .param("channel", "#drillrats"), .param("client name", "Space Dawg"), .param("client nick", "SpaceDawg"), .param("PC/XB/PS", "PC"), .param("system", "NLTT 48288")],
 //        category: .utility,
 //        description: "Create a rescue announcement in a drill channel",
-//        paramText: "<channel> <client name> <PC/XB/PS> <system>",
-//        example: "#drillrats3 SpaceDawg PC NLTT 48288",
 //        permission: .AnnouncementWrite
 //    )
 //    var didReceiveAnnounceCommand = { command in
@@ -277,6 +301,6 @@ class GeneralCommands: IRCBotModule {
 //        ])
 //
 //
-//        command.message.client.sendMessage(toChannelName: "BotServ", contents: "SAY \(channel) \(announcement)")
+//        command.message.client.sendMessage(toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
 //    }
 }

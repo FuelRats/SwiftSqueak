@@ -52,6 +52,10 @@ class MessageScanner: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
+        
+        if channelMessage.destination.name.lowercased().starts(with: "#drill") && channelMessage.message.range(of: "choo.*choo", options: .regularExpression) != nil {
+            channelMessage.reply(message: "🚂🚃🚃🚃🚃🚃")
+        }
 
         if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
