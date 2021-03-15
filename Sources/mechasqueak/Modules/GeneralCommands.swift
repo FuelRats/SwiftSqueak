@@ -239,7 +239,7 @@ class GeneralCommands: IRCBotModule {
         allowedDestinations: .PrivateMessage
     )
     var didReceiveDiceRollCommand = { command in
-        guard let diceParam = "(?<num>[0-9]+)?d(?<value>[0-9]+)(\\+(?<add>[0-9]+))?".r!.findFirst(in: command.parameters[0]) else {
+        guard let diceParam = "(?<num>[0-9]{1})?d(?<value>[0-9]{1,3})(\\+(?<add>[0-9]{1,4}))?".r!.findFirst(in: command.parameters[0]) else {
             return
         }
         
