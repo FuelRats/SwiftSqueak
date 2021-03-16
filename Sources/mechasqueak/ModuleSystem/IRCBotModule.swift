@@ -35,42 +35,6 @@ enum AllowedCommandDestination {
 typealias BotCommandFunction = (IRCBotCommand) -> Void
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
-
-    @available(*, deprecated, renamed: "init(wrappedValue:_:_:category:description:permission:allowedDestinations:)", message: "Replaced with CommandBody based initialiser")
-    init <T: AnyRange> (
-        wrappedValue value: @escaping BotCommandFunction,
-        _ commands: [String],
-        parameters: T,
-        lastParameterIsContinous: Bool = false,
-        options: OrderedSet<Character> = [],
-        namedOptions: OrderedSet<String> = [],
-        category: HelpCategory?,
-        description: String,
-        paramText: String? = nil,
-        example: String? = nil,
-        permission: AccountPermission? = nil,
-        allowedDestinations: AllowedCommandDestination = .All
-    ) {
-        self.wrappedValue = value
-
-        let declaration = IRCBotCommandDeclaration(
-            commands: commands,
-            minParameters: parameters.lower as? Int ?? 0,
-            onCommand: self.wrappedValue,
-            maxParameters: parameters.upper as? Int,
-            lastParameterIsContinous: lastParameterIsContinous,
-            options: options,
-            namedOptions: namedOptions,
-            category: category,
-            description: description,
-            paramText: paramText,
-            example: example,
-            permission: permission,
-            allowedDestinations: allowedDestinations
-        )
-
-        MechaSqueak.commands.append(declaration)
-    }
     
     init (
         wrappedValue value: @escaping BotCommandFunction,
