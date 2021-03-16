@@ -54,7 +54,7 @@ class FactCommands: IRCBotModule {
                     return languages
                 })
                 
-                let translations = languages.map({ "\($0) (\(Locale(identifier: $0).englishDescription)" }).joined(separator: ", ")
+                let translations = languages.map({ "\($0) (\(Locale(identifier: $0).englishDescription))" }).joined(separator: ", ")
                 command.message.replyPrivate(key: "facts.locales", fromCommand: command, map: [
                     "translations": translations
                 ])
@@ -328,6 +328,10 @@ class FactCommands: IRCBotModule {
         }
         
         guard var command = IRCBotCommand(from: message) else {
+            return
+        }
+        
+        if command.command == "fact" || command.command == "facts" {
             return
         }
         
