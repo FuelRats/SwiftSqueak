@@ -33,7 +33,7 @@ protocol IRCBotModule {
 
 class IRCBotModuleManager {
     private var registeredModules: [IRCBotModule] = []
-    public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 25)
+    public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 250)
     static var blacklist = configuration.general.dispatchBlacklist
 
     func register (module: IRCBotModule) {
@@ -169,6 +169,17 @@ class IRCBotModuleManager {
                 "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
             return
+        }
+        
+        if let cooldown = command.cooldown, message.destination.isPrivateMessage == false {
+            if let previousCommand = commandHistory.elements.reversed().first(where: { command.commands.contains($0.command) && $0.message.destination.isPrivateMessage == false }),
+               Date().timeIntervalSince(previousCommand.message.raw.time) < cooldown {
+                message.replyPrivate(key: "command.cooldown", fromCommand: ircBotCommand, map: [
+                    "command": ircBotCommand.command,
+                    "cooldown": (cooldown - Date().timeIntervalSince(previousCommand.message.raw.time)).timeSpan
+                ])
+                return
+            }
         }
         
         commandHistory.push(value: ircBotCommand)

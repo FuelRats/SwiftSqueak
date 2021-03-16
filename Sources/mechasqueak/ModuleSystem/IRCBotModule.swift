@@ -25,7 +25,6 @@
 import Foundation
 import IRCKit
 
-
 enum AllowedCommandDestination {
     case Channel
     case PrivateMessage
@@ -43,7 +42,8 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         category: HelpCategory?,
         description: String,
         permission: AccountPermission? = nil,
-        allowedDestinations: AllowedCommandDestination = .All
+        allowedDestinations: AllowedCommandDestination = .All,
+        cooldown: DispatchTimeInterval? = nil
     ) {
         self.wrappedValue = value
         
@@ -71,7 +71,8 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
             paramText: body.paramText,
             example: body.example,
             permission: permission,
-            allowedDestinations: allowedDestinations
+            allowedDestinations: allowedDestinations,
+            cooldown: TimeInterval(dispatchTimeInterval: cooldown)
         )
 
         MechaSqueak.commands.append(declaration)
@@ -87,6 +88,7 @@ struct IRCBotCommandDeclaration {
     let permission: AccountPermission?
     let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
+    let cooldown: TimeInterval?
     let category: HelpCategory?
     let description: String
     var paramText: String?
@@ -107,7 +109,8 @@ struct IRCBotCommandDeclaration {
         paramText: String? = nil,
         example: String? = nil,
         permission: AccountPermission? = nil,
-        allowedDestinations: AllowedCommandDestination = .All
+        allowedDestinations: AllowedCommandDestination = .All,
+        cooldown: TimeInterval? = nil
     ) {
         self.commands = commands
         self.minimumParameters = minParameters
@@ -122,6 +125,7 @@ struct IRCBotCommandDeclaration {
         self.description = description
         self.paramText = paramText
         self.example = example
+        self.cooldown = cooldown
     }
 
     func usageDescription (command: IRCBotCommand?) -> String {

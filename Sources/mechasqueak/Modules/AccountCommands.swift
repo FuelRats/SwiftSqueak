@@ -36,7 +36,7 @@ class AccountCommands: IRCBotModule {
         ["whoami"],
         category: .account,
         description: "Check the Fuel Rats account information the bot is currently associating with your nick",
-        allowedDestinations: .PrivateMessage
+        cooldown: .seconds(300)
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -92,7 +92,7 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
         permission: .RatReadOwn,
-        allowedDestinations: .PrivateMessage
+        cooldown: .seconds(300)
     )
     var didReceiveWhoIsCommand = { command in
         let message = command.message
@@ -162,7 +162,8 @@ class AccountCommands: IRCBotModule {
         [.param("platform", "PC")],
         category: .account,
         description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
-        permission: .RatReadOwn
+        permission: .RatReadOwn,
+        cooldown: .seconds(300)
     )
     var didReceiveAssignCheckCommand = { command in
         let message = command.message

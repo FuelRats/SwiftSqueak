@@ -70,7 +70,7 @@ class GeneralCommands: IRCBotModule {
         category: .utility,
         description: "Get a list of cases that currently require rats to call jumps",
         permission: .DispatchRead,
-        allowedDestinations: .PrivateMessage
+        cooldown: .seconds(300)
     )
     var needsRatsCommand = { command in
         let needsRats = mecha.rescueBoard.rescues.filter({ rescue in
@@ -112,7 +112,8 @@ class GeneralCommands: IRCBotModule {
         ["sysstats", "syscount", "systems"],
         category: .utility,
         description: "See statistics about the systems API.",
-        permission: nil
+        permission: nil,
+        cooldown: .seconds(300)
     )
     var didReceiveSystemStatisticsCommand = { command in
         SystemsAPI.performStatisticsQuery(onComplete: { results in
@@ -139,7 +140,8 @@ class GeneralCommands: IRCBotModule {
         [.options(["g"]), .param("distance", "2500ls", .continuous)],
         category: .utility,
         description: "Calculate supercruise travel time.",
-        permission: nil
+        permission: nil,
+        cooldown: .seconds(30)
     )
     var didReceiveTravelTimeCommand = { command in
         var params = command.parameters
@@ -198,7 +200,8 @@ class GeneralCommands: IRCBotModule {
         ["version", "uptime"],
         category: .utility,
         description: "See version information about the bot.",
-        permission: nil
+        permission: nil,
+        cooldown: .seconds(120)
     )
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
@@ -214,7 +217,8 @@ class GeneralCommands: IRCBotModule {
         ["gametime", "utc"],
         category: .utility,
         description: "See the current time in game time / UTC",
-        permission: nil
+        permission: nil,
+        cooldown: .seconds(300)
     )
     var didReceiveGameTimeCommand = { command in
         let timeFormatter = DateFormatter()
@@ -236,7 +240,7 @@ class GeneralCommands: IRCBotModule {
         category: .utility,
         description: "Roll a dice",
         permission: nil,
-        allowedDestinations: .PrivateMessage
+        cooldown: .seconds(60)
     )
     var didReceiveDiceRollCommand = { command in
         guard let diceParam = "(?<num>[0-9]{1})?d(?<value>[0-9]{1,3})(\\+(?<add>[0-9]{1,4}))?".r!.findFirst(in: command.parameters[0]) else {

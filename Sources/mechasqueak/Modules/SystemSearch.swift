@@ -37,7 +37,8 @@ class SystemSearch: IRCBotModule {
         ["search"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
-        description: "Search for a system in the galaxy database."
+        description: "Search for a system in the galaxy database.",
+        cooldown: .seconds(30)
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
@@ -73,7 +74,8 @@ class SystemSearch: IRCBotModule {
         ["landmark"],
         [.argument("sol"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
-        description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia."
+        description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
+        cooldown: .seconds(30)
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
@@ -108,7 +110,8 @@ class SystemSearch: IRCBotModule {
         ["distance", "distanceto"],
         [.param("departure system", "NLTT 48288"), .param("arrival system", "Sagittarius A*")],
         category: .utility,
-        description: "Calculate the distance between two star systems"
+        description: "Calculate the distance between two star systems",
+        cooldown: .seconds(30)
     )
     var didReceiveDistanceCommand = { command in
         let (depSystem, arrSystem) = command.param2 as! (String, String)
