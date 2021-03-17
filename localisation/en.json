@@ -362,7 +362,7 @@
   "help.category.rescues": "View, edit and manage rescues that have already been completed.",
   "help.category.facts": "View, edit and manage the list of information commands such as !prep",
   "help.category.utility": "Various commands that provide utility for rats and dispatches, such as tweeting a case or looking up a star system",
-  "help.cateogory.management": "Admin Commands to manage MechaSqueak and the API",
+  "help.category.management": "Admin Commands to manage MechaSqueak and the API",
   "help.category.other": "Commands that don't fit into any category",
   "help.category.account": "Commands to manage your Fuel Rats account",
 
@@ -381,6 +381,7 @@
   "help.command.gofr.a": "Include already assigned rats in the message telling clients who to add",
   "help.command.gofr.f": "Force mecha to assign someone even if it can't find a valid rat for them",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
+  "help.command.trash.f": "Forces a case to be trashed even if it has rats assigned",
   "help.command.clear": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be closed and when they should be deleted.",
   "help.command.facts.locales": "List all the locales currently available",
   "help.command.anyfact.info": "Get information about this fact such as who created it and when",
@@ -392,7 +393,7 @@
   "help.command.system.f": "Prevents Mecha from automatically correcting the system name",
   "help.command.clear.f": "Force Mecha to close a case without validating the first limpet",
   "help.command.clear.p": "Sends the paperwork to a rat without actually making them the first limpet of the rescue",
-  "help.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
+  "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
   "announce.invalidchannel": "Invalid channel given to announce command",
