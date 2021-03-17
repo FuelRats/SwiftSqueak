@@ -42,6 +42,7 @@ class HelpCommands: IRCBotModule {
         let message = command.message
         guard command.parameters.count > 0 else {
             message.replyPrivate(key: "help.howto", fromCommand: command)
+            message.replyPrivate(key: "help.webpage", fromCommand: command)
             message.replyPrivate(key: "help.nofacts", fromCommand: command)
             message.replyPrivate(message: "-")
 
