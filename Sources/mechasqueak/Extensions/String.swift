@@ -133,3 +133,7 @@ extension Array where Element == String {
         return self.dropLast(1).joined(separator: ", ") + " and " + self.last! + "."
     }
 }
+
+extension StringProtocol {
+    var firstCapitalized: String { prefix(1).capitalized + dropFirst() }
+}

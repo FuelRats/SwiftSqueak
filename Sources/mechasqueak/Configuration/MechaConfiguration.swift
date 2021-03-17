@@ -33,6 +33,7 @@ struct MechaConfiguration: Codable {
     let queue: QueueConfiguration
     let database: DatabaseConfiguration
     let shortener: URLShortenerConfiguration
+    let documentationPath: URL?
 }
 
 struct GeneralConfiguration: Codable {

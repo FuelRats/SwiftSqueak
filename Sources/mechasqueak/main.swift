@@ -123,6 +123,10 @@ class MechaSqueak {
             AccountCommands(moduleManager)
         ]
         
+        if let documentationPath = configuration.documentationPath {
+            ReferenceGenerator.generate(inPath: documentationPath)
+        }
+        
         SystemsAPI.fetchLandmarkList().whenSuccess({ landmarks in
             self.landmarks = landmarks
         })
