@@ -81,7 +81,7 @@ class HelpCommands: IRCBotModule {
             for helpCommand in commands {
                 message.replyPrivate(key: "help.commandlist", fromCommand: command, map: [
                     "command": "!" + helpCommand.commands[0],
-                    "params": helpCommand.paramText ?? "",
+                    "params": helpCommand.paramText,
                     "description": helpCommand.description
                 ])
             }
@@ -123,8 +123,8 @@ class HelpCommands: IRCBotModule {
 
         message.replyPrivate(key: "help.commandtitle", fromCommand: command, map: [
             "command": helpCommand.usageDescription(command: nil),
-            "example": helpCommand.example != nil
-                ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example!))"
+            "example": helpCommand.example.count > 0
+                ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
                 : ""
         ])
         if helpCommand.commands.count > 1 {

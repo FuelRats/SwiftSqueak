@@ -46,30 +46,15 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
         cooldown: DispatchTimeInterval? = nil
     ) {
         self.wrappedValue = value
-        
-        var maxParameters: Int? = body.parameters.count
-        var lastIsContinious = false
-        if case .param(_, _, let type, _) = body.last {
-            if type == .continuous {
-                lastIsContinious = true
-            } else if type == .multiple {
-                maxParameters = nil
-            }
-        }
-        
 
         let declaration = IRCBotCommandDeclaration(
             commands: commands,
-            minParameters: body.requiredParameters.count,
             onCommand: self.wrappedValue,
-            maxParameters: maxParameters,
-            lastParameterIsContinous: lastIsContinious,
+            parameters: body.parameters,
             options: body.options,
             namedOptions: body.namedOptions,
             category: category,
             description: description,
-            paramText: body.paramText,
-            example: body.example,
             permission: permission,
             allowedDestinations: allowedDestinations,
             cooldown: TimeInterval(dispatchTimeInterval: cooldown)
@@ -81,50 +66,38 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
 
 struct IRCBotCommandDeclaration {
     let commands: [String]
-    let minimumParameters: Int
-    let maximumParameters: Int?
     let options: OrderedSet<Character>
     let namedOptions: OrderedSet<String>
     let permission: AccountPermission?
-    let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
     let cooldown: TimeInterval?
     let category: HelpCategory?
     let description: String
-    var paramText: String?
-    var example: String?
+    var parameters: [CommandBody]
 
     var onCommand: BotCommandFunction?
 
     init (
         commands: [String],
-        minParameters: Int,
         onCommand: BotCommandFunction?,
-        maxParameters: Int? = nil,
-        lastParameterIsContinous: Bool = false,
+        parameters: [CommandBody],
         options: OrderedSet<Character> = [],
         namedOptions: OrderedSet<String> = [],
         category: HelpCategory?,
         description: String,
-        paramText: String? = nil,
-        example: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: TimeInterval? = nil
     ) {
         self.commands = commands
-        self.minimumParameters = minParameters
-        self.maximumParameters = maxParameters
+        self.parameters = parameters
         self.options = options
         self.namedOptions = namedOptions
-        self.lastParameterIsContinous = lastParameterIsContinous
         self.permission = permission
         self.onCommand = onCommand
         self.allowedDestinations = allowedDestinations
         self.category = category
         self.description = description
-        self.paramText = paramText
-        self.example = example
         self.cooldown = cooldown
     }
 
@@ -139,18 +112,46 @@ struct IRCBotCommandDeclaration {
             usage += " " + Array(self.namedOptions).map({ "[--\($0)]" }).joined(separator: " ")
         }
 
-        if let paramText = self.paramText {
-            usage += " \(paramText)"
-        }
+        usage += " \(paramText)"
         return usage
     }
 
     func exampleDescription (command: IRCBotCommand?) -> String {
-        return "!\(command?.command ?? self.commands[0]) \(self.example ?? "")"
+        return "!\(command?.command ?? self.commands[0]) \(self.example)"
     }
 
     var isDispatchingCommand: Bool {
         return self.category == .board && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
+    }
+    
+    var example: String {
+        return self.parameters.example
+    }
+    
+    var paramText: String {
+        return self.parameters.paramText
+    }
+    
+    var minimumParameters: Int {
+        return self.parameters.requiredParameters.count
+    }
+    
+    var maximumParameters: Int? {
+        if case .param(_, _, let type, _) = parameters.last {
+            if type == .multiple {
+                return nil
+            }
+        }
+        return self.parameters.count
+    }
+    
+    var lastParameterIsContinous: Bool {
+        if case .param(_, _, let type, _) = parameters.last {
+            if type == .continuous {
+                return true
+            }
+        }
+        return false
     }
 }
 
