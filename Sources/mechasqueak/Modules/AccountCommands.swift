@@ -192,7 +192,7 @@ class AccountCommands: IRCBotModule {
         ["changeemail", "changemail"],
         [.param("email", "spacedawg@fuelrats.com")],
         category: .account,
-        description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
+        description: "Change your Fuel Rats account email address",
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage
     )
