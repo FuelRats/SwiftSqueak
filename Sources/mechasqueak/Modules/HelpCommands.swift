@@ -49,7 +49,7 @@ class HelpCommands: IRCBotModule {
             for category in HelpCategory.allCases {
                 let categoryDescription = lingo.localize("help.category.\(category)", locale: "en-GB")
                 message.replyPrivate(
-                    message: "\(IRCFormat.bold(category.rawValue)) - \(categoryDescription)"
+                    message: "\(IRCFormat.bold(category.rawValue.firstCapitalized)) - \(categoryDescription)"
                 )
                 let commands = MechaSqueak.commands.filter({
                     $0.category == category
