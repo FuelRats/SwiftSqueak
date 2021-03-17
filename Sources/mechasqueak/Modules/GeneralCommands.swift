@@ -262,49 +262,50 @@ class GeneralCommands: IRCBotModule {
         }
     }
 
-//    @BotCommand(
-//        ["announce"],
-//        [.argument("cr"), .param("channel", "#drillrats"), .param("client name", "Space Dawg"), .param("client nick", "SpaceDawg"), .param("PC/XB/PS", "PC"), .param("system", "NLTT 48288")],
-//        category: .utility,
-//        description: "Create a rescue announcement in a drill channel",
-//        permission: .AnnouncementWrite
-//    )
-//    var didReceiveAnnounceCommand = { command in
-//        var channel = command.parameters[0].lowercased()
-//        if channel.starts(with: "#") == false {
-//            channel = "#" + channel
-//        }
-//
-//        guard configuration.general.drillChannels.contains(channel) else {
-//            command.message.error(key: "announce.invalidchannel", fromCommand: command)
-//            return
-//        }
-//
-//        let clientName = command.parameters[1]
-//        var platformString = command.parameters[2]
-//        guard let platform = GamePlatform.parsedFromText(text: platformString) else {
-//            command.message.error(key: "announce.invalidplatform", fromCommand: command)
-//            return
-//        }
-//        let system = command.parameters[3]
-//        let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
-//
-//        command.message.reply(key: "announce.success", fromCommand: command, map: [
-//            "channel": channel,
-//            "client": clientName,
-//            "system": system,
-//            "platform": platform.ircRepresentable,
-//            "crStatus": crStatus
-//        ])
-//
-//        let announcement = lingo.localize("announcement", locale: "en-GB", interpolations: [
-//            "client": clientName,
-//            "system": system,
-//            "platform": platform.rawValue.uppercased(),
-//            "crStatus": crStatus
-//        ])
-//
-//
-//        command.message.client.sendMessage(toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
-//    }
+    @BotCommand(
+        ["announce"],
+        [.argument("cr"), .param("channel", "#drillrats"), .param("client name", "Space Dawg"), .param("client nick", "SpaceDawg"), .param("PC/XB/PS", "PC"), .param("system", "NLTT 48288", .continuous)],
+        category: .utility,
+        description: "Create a rescue announcement in a drill channel",
+        permission: .AnnouncementWrite
+    )
+    var didReceiveAnnounceCommand = { command in
+        var channel = command.parameters[0].lowercased()
+        if channel.starts(with: "#") == false {
+            channel = "#" + channel
+        }
+
+        guard configuration.general.drillChannels.contains(channel) else {
+            command.message.error(key: "announce.invalidchannel", fromCommand: command)
+            return
+        }
+
+        let clientName = command.parameters[1]
+        let clientNick = command.parameters[2]
+        var platformString = command.parameters[3]
+        guard let platform = GamePlatform.parsedFromText(text: platformString) else {
+            command.message.error(key: "announce.invalidplatform", fromCommand: command)
+            return
+        }
+        let system = command.parameters[4]
+        let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
+
+        command.message.reply(key: "announce.success", fromCommand: command, map: [
+            "channel": channel,
+            "client": clientName,
+            "system": system,
+            "platform": platform.ircRepresentable,
+            "crStatus": crStatus
+        ])
+
+        let announcement = lingo.localize("announcement", locale: "en-GB", interpolations: [
+            "client": clientName,
+            "system": system,
+            "platform": platform.rawValue.uppercased(),
+            "crStatus": crStatus
+        ])
+
+
+        command.message.client.sendMessage(toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
+    }
 }
