@@ -251,6 +251,10 @@ class GeneralCommands: IRCBotModule {
         let diceNum = Int(diceParam.group(at: 1) ?? "1") ?? 1
         let add = Int(diceParam.group(at: 4) ?? "0") ?? 0
         
+        guard diceValue > 1 else {
+            return
+        }
+        
         var value = add
         for roll in 1...diceNum {
             value += Int.random(in: 1...diceValue)
