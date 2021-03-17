@@ -264,7 +264,7 @@
   "tweetcase.nosystemcr": "%{platform} rats needed for a CODE RED rescue! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
   "tweetcase.system": "%{platform} rats needed for a rescue %{systemDescription}! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
   "tweetcase.systemcr": "%{platform} rats needed for a CODE RED rescue %{systemDescription}! Call your jumps, rats! Case #%{caseId} (%{id}) %{link}",
-  "tweetcase.success": "Successfully sent tweet for case #%{caseId}.",
+  "tweetcase.success": "Successfully sent tweet \"%{tweet}\"",
   "tweetcase.failure": "Encountered an error in posting a tweet for case #%{caseId}.",
   
   "autocorrect.correction": "\"%{system}\" is probably \"%{correction}\".",
