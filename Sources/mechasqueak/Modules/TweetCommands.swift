@@ -116,7 +116,7 @@ class TweetCommands: IRCBotModule {
 
         Twitter.tweet(message: tweet, complete: {
             command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "tweet": tweet
             ])
             rescue.quotes.append(RescueQuote(
                 author: command.message.user.nickname,
