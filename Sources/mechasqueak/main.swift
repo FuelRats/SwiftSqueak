@@ -262,7 +262,8 @@ class MechaSqueak {
                     rescue.close(fromBoard: mecha.rescueBoard, onComplete: {
                         mecha.reportingChannel?.send(key: "board.bannedclose", map: [
                             "caseId": rescue.commandIdentifier,
-                            "link": url
+                            "link": url,
+                            "client": rescue.clientDescription
                         ])
                     }, onError: { _ in
                         
@@ -270,7 +271,8 @@ class MechaSqueak {
                 } else {
                     rescue.trash(fromBoard: mecha.rescueBoard, reason: "Client was banned", onComplete: {
                         mecha.reportingChannel?.send(key: "board.bannedmd", map: [
-                            "caseId": rescue.commandIdentifier
+                            "caseId": rescue.commandIdentifier,
+                            "client": rescue.clientDescription
                         ])
                     }, onError: { _ in
                         
