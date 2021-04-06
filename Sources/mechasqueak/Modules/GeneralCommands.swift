@@ -251,7 +251,7 @@ class GeneralCommands: IRCBotModule {
         let diceNum = Int(diceParam.group(at: 1) ?? "1") ?? 1
         let add = Int(diceParam.group(at: 4) ?? "0") ?? 0
         
-        guard diceValue > 1 else {
+        guard diceValue > 1 && diceNum > 0 else {
             return
         }
         
