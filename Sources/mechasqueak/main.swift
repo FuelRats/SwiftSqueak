@@ -255,29 +255,42 @@ class MechaSqueak {
                 $0.message == "Client left the rescue channel"
             })
             
-            var clientWasBanned = false
-            if let quitMessage = userQuit.raw.parameters.first {
-                clientWasBanned = quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ")
+            if let quitMessage = userQuit.raw.parameters.first, quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ") {
+                if rescue.rats.count > 0 {
+                    rescue.notes = "Client was banned"
+                    let url = "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit"
+                    rescue.close(fromBoard: mecha.rescueBoard, onComplete: {
+                        mecha.reportingChannel?.send(key: "board.bannedclose", map: [
+                            "caseId": rescue.commandIdentifier,
+                            "link": url
+                        ])
+                    }, onError: { _ in
+                        
+                    })
+                } else {
+                    rescue.trash(fromBoard: mecha.rescueBoard, reason: "Client was banned", onComplete: {
+                        mecha.reportingChannel?.send(key: "board.bannedmd", map: [
+                            "caseId": rescue.commandIdentifier
+                        ])
+                    }, onError: { _ in
+                        
+                    })
+                }
+                return
             }
             
-            var quoteMessage = clientWasBanned ? "CLIENT BANNED" : "Client left the rescue channel"
             rescue.quotes.append(RescueQuote(
                 author: userQuit.raw.client.currentNick,
-                message: quoteMessage,
+                message: "Client left the rescue channel",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: userQuit.raw.client.currentNick)
             )
-            if clientWasBanned {
-                rescue.status = .Inactive
-                rescue.banned = true
-            }
             rescue.syncUpstream()
 
-            var key = clientWasBanned ? "board.clientban" : "board.clientquit"
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
-                channel.send(key: key, map: [
+                channel.send(key: "board.clientquit", map: [
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.clientDescription
                 ])
