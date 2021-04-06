@@ -55,7 +55,7 @@
   "board.clientjoinhost": "Caution: Case #%{caseId} client (%{client}) has rejoined with a different name! (%{nick})",
   "board.clientquit": "Caution: Client of case #%{caseId} (%{client}) has left!",
   "board.bannedclose": "\u0002Client of case #%{caseId} (%{client}) has been banned by the moderator team. Do the paperwork: %{link}\u0002",
-  "board.bannedtrash": "\u0002Client of case #%{caseId} (%{client}) has been banned by the moderator team and the case has been trashed.\u0002",
+  "board.bannedmd": "\u0002Client of case #%{caseId} (%{client}) has been banned by the moderator team and the case has been trashed.\u0002",
   "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",
   "board.nickcorrected": "Caution: Nickname of case #%{caseId} (%{client}) has been automatically corrected to %{newNick}",
   "board.synced": "Successfully synced board with %{api}. %{updates}",
