@@ -198,13 +198,6 @@ class RescueBoard {
             return
         }
         
-        if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
-            guard rescue.channel?.member(named: clientNick) != nil else {
-                message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
-                return
-            }
-        }
-        
         if let recentRescue = recentlyClosed.first(where: {
             $0.value.client == rescue.client && Date().timeIntervalSince($0.value.updatedAt) < 900
         }), configuration.general.drillMode == false, initiated != .insertion {
@@ -326,6 +319,13 @@ class RescueBoard {
         }
         
         rescue.validateSystem()?.whenComplete({ _ in
+            if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
+                guard rescue.channel?.member(named: clientNick) != nil else {
+                    message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
+                    return
+                }
+            }
+            
             var key = "board.\(announceType)"
             if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
                 key += ".nick"
