@@ -265,6 +265,7 @@ class MechaSqueak {
                             "link": url,
                             "client": rescue.clientDescription
                         ])
+                        mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
                     }, onError: { _ in
                         
                     })
@@ -274,6 +275,7 @@ class MechaSqueak {
                             "caseId": rescue.commandIdentifier,
                             "client": rescue.clientDescription
                         ])
+                        mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
                     }, onError: { _ in
                         
                     })
