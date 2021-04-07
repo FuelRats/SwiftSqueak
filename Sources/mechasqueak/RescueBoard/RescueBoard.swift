@@ -256,6 +256,13 @@ class RescueBoard {
                 }
             })
         }
+        
+        if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
+            guard rescue.channel?.member(named: clientNick) != nil else {
+                message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
+                return
+            }
+        }
 
         self.rescues.append(rescue)
 
@@ -319,13 +326,6 @@ class RescueBoard {
         }
         
         rescue.validateSystem()?.whenComplete({ _ in
-            if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
-                guard rescue.channel?.member(named: clientNick) != nil else {
-                    message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
-                    return
-                }
-            }
-            
             var key = "board.\(announceType)"
             if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
                 key += ".nick"
