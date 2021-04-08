@@ -162,7 +162,6 @@ class MechaSqueak {
                 mecha.reportingChannel?.send(message: "Update complete. Changes available here: \(CommandLine.arguments[2])")
             }
         } else {
-
             accounts.lookup(user: userJoin.user)
             if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userJoin.user.nickname) {
                     rescue.quotes.removeAll(where: {
@@ -256,6 +255,11 @@ class MechaSqueak {
             })
             
             if let quitMessage = userQuit.raw.parameters.first, quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ") {
+                if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
+                    timer?.cancel()
+                    mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+                }
+                
                 if rescue.rats.count > 0 {
                     rescue.notes = "Client was banned"
                     let url = "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit"

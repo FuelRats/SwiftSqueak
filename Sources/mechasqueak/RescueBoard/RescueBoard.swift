@@ -246,6 +246,14 @@ class RescueBoard {
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
         self.lastSignalReceived = Date()
+        
+        
+        if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
+            guard rescue.channel?.member(named: clientNick) != nil else {
+                message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
+                return
+            }
+        }
 
         if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
             prepTimers[rescue.id] = group.next().scheduleTask(in: .seconds(180), {
@@ -257,12 +265,6 @@ class RescueBoard {
             })
         }
         
-        if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
-            guard rescue.channel?.member(named: clientNick) != nil else {
-                message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
-                return
-            }
-        }
 
         self.rescues.append(rescue)
 
