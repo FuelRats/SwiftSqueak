@@ -229,7 +229,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     
     var isInvalid: Bool {
         if let procedural = ProceduralSystem(string: self.name) {
-            return (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata.handauthored == true)) || !procedural.isValid
+            return (self.proceduralCheck?.isPgSystem == false || (self.proceduralCheck?.isPgSector == false && self.proceduralCheck?.sectordata.handauthored == false)) || !procedural.isValid
         }
         return false
     }
