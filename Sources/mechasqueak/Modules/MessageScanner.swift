@@ -56,6 +56,8 @@ class MessageScanner: IRCBotModule {
         if channelMessage.destination.name.lowercased().starts(with: "#drill") && channelMessage.message.range(of: "choo.*choo", options: .regularExpression) != nil {
             channelMessage.reply(message: "🚂🚃🚃🚃🚃🚃")
         }
+        
+        var casesUpdatedForMessage: [LocalRescue] = []
 
         if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
@@ -167,15 +169,18 @@ class MessageScanner: IRCBotModule {
             if let jumpRat = rat ?? channelMessage.user.currentRat {
                 rescue.jumpCalls.append((jumpRat, jumps))
             }
-            rescue.quotes.append(RescueQuote(
-                author: channelMessage.client.currentNick,
-                message: message,
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: channelMessage.client.currentNick
-            ))
+            if casesUpdatedForMessage.contains(where: { $0.id == rescue.id }) == false {
+                rescue.quotes.append(RescueQuote(
+                    author: channelMessage.client.currentNick,
+                    message: message,
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: channelMessage.client.currentNick
+                ))
+                casesUpdatedForMessage.append(rescue)
 
-            rescue.syncUpstream()
+                rescue.syncUpstream()
+            }
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
@@ -203,6 +208,10 @@ class MessageScanner: IRCBotModule {
                 continue
             }
             
+            guard casesUpdatedForMessage.contains(where: { $0.id == rescue.id }) == false else {
+                continue
+            }
+            
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
                 continue
             }
@@ -219,6 +228,7 @@ class MessageScanner: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: channelMessage.client.currentNick
             ))
+            casesUpdatedForMessage.append(rescue)
 
             rescue.syncUpstream()
         }
