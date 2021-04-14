@@ -398,7 +398,7 @@
   "help.command.clear.p": "Sends the paperwork to a rat without actually making them the first limpet of the rescue",
   "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
   
-  "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB)",
+  "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announce.invalidchannel": "Invalid channel given to announce command",
   "announce.invalidplatform": "Invalid platform given to announce command",
   "announce.success": "Sending announcement to %{channel} for client %{client}, system \"%{system}\" on %{platform} and O2 status %{crStatus}"

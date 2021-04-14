@@ -306,7 +306,8 @@ class GeneralCommands: IRCBotModule {
             "client": clientName,
             "system": system,
             "platform": platform.rawValue.uppercased(),
-            "crStatus": crStatus
+            "crStatus": crStatus,
+            "nick": clientNick
         ])
 
 
