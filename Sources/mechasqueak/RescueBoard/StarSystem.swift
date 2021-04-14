@@ -106,7 +106,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
     
     func description (forLandmarkName landmarkName: String?) -> String? {
-        guard let landmark = landmarks.first(where: { $0.name == landmarkName }) ?? landmarks.first, landmark.distance > 0 else {
+        guard let landmark = landmarks.first(where: { $0.name == landmarkName }) ?? landmarks.first else {
             if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
                 let (landmark, distanceString, _) = landmarkName != nil ? procedural.estimatedSolDistance : procedural.estimatedLandmarkDistance
                 
