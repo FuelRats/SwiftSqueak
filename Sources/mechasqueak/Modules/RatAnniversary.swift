@@ -49,7 +49,10 @@ class RatAnniversary: IRCBotModule {
                 return
             }
             let joinComponents = Calendar.current.dateComponents([.day, .month, .year], from: joinDate)
-            let todayComponents = Calendar.current.dateComponents([.day, .month, .year], from: Date())
+            let todayComponents = Calendar.current.dateComponents([.day, .month, .year, .hour], from: Date())
+            guard todayComponents.hour! > 6 else {
+                return
+            }
             let years = todayComponents.year! - joinComponents.year!
 
             if joinComponents.day! == todayComponents.day! && joinComponents.month! == todayComponents.month!, years > 0 {
