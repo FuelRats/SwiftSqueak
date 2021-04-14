@@ -171,9 +171,9 @@ class IRCBotModuleManager {
             return
         }
         
-        if configuration.general.drillMode == false && message.user.hasPermission(permission: .RescueWrite) == false {
+        if configuration.general.drillMode == false && message.user.hasPermission(permission: .RescueWrite) == false, configuration.general.cooldownExceptionChannels.contains(message.destination.name.lowercased()) == false {
             if let cooldown = command.cooldown, message.destination.isPrivateMessage == false {
-                if let previousCommand = commandHistory.elements.reversed().first(where: { $0.message.destination.isPrivateMessage == false && command.commands.contains($0.command) }),
+                if let previousCommand = commandHistory.elements.reversed().first(where: { $0.message.destination.isPrivateMessage == false && command.commands.contains($0.command) && configuration.general.cooldownExceptionChannels.contains($0.message.destination.name.lowercased()) == false }),
                    Date().timeIntervalSince(previousCommand.message.raw.time) < cooldown {
                     message.replyPrivate(key: "command.cooldown", fromCommand: ircBotCommand, map: [
                         "command": ircBotCommand.command,
