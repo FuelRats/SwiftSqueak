@@ -53,7 +53,7 @@ class MessageScanner: IRCBotModule {
             return
         }
         
-        if channelMessage.destination.name.lowercased().starts(with: "#drill") && channelMessage.message.range(of: "choo.*choo", options: .regularExpression) != nil {
+        if configuration.general.drillChannels.contains(channelMessage.destination.name.lowercased()) && channelMessage.message.range(of: "ch[o]{1,} ch[o]{1,}", options: .regularExpression) != nil {
             channelMessage.reply(message: "🚂🚃🚃🚃🚃🚃")
         }
         
