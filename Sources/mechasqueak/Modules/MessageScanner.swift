@@ -53,8 +53,9 @@ class MessageScanner: IRCBotModule {
             return
         }
         
-        if configuration.general.drillChannels.contains(channelMessage.destination.name.lowercased()) && channelMessage.message.range(of: "ch[o]{1,} ch[o]{1,}", options: .regularExpression) != nil {
-            channelMessage.reply(message: "🚂🚃🚃🚃🚃🚃")
+        if configuration.general.drillChannels.contains(channelMessage.destination.name.lowercased()), let range = channelMessage.message.range(of: "ch[o]{2,} ch[o]{2,}", options: .regularExpression) {
+            let trainCarriages = String(channelMessage.message[range].filter({ $0 == "O" || $0 == "o" }).map({ _ in return "🚃" }))
+            channelMessage.reply(message: "🚂" + trainCarriages)
         }
         
         var casesUpdatedForMessage: [LocalRescue] = []
