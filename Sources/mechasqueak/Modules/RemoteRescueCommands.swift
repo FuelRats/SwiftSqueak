@@ -309,6 +309,13 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
+        if Int(command.parameters[0]) != nil {
+            var correctedCommand = command
+            correctedCommand.command = "unclose"
+            IRCBotModuleManager.handleIncomingCommand(ircBotCommand: correctedCommand)
+            return
+        }
+        
         guard configuration.general.drillMode == false else {
             command.message.error(key: "rescue.reopen.drillmode", fromCommand: command)
             return
