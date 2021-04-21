@@ -28,6 +28,9 @@ import IRCKit
 import AsyncHTTPClient
 import NIO
 
+let processId = ProcessInfo.processInfo.processIdentifier
+try "\(processId)".write(toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true, encoding: .utf8)
+
 let lingo = try! Lingo(rootPath: "\(FileManager.default.currentDirectoryPath)/localisation", defaultLocale: "en")
 let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
     redirectConfiguration: .none,
