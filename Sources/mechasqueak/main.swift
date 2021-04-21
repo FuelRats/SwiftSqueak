@@ -161,8 +161,12 @@ class MechaSqueak {
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
             mecha.rescueBoard.syncBoard()
-            if CommandLine.arguments.count > 2 {
-                mecha.reportingChannel?.send(message: "Update complete. Changes available here: \(CommandLine.arguments[2])")
+            
+            if let gitDir = configuration.documentationPath {
+                let release = shell("/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let releaseName = release, releaseName.count > 0 {
+                    mecha.reportingChannel?.send(message: "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/\(releaseName)")
+                }
             }
         } else {
             accounts.lookup(user: userJoin.user)
