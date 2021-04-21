@@ -75,17 +75,11 @@ class ManagementCommands: IRCBotModule {
             arguments.append(command.parameters[0])
         }
         
-        
-        let task = Process()
-        task.launchPath = "\(executablePath)/mechasqueak"
-        task.arguments = arguments
-        task.launch()
-        
         for client in mecha.connections {
             client.sendQuit(message: restartMessage)
         }
         loop.next().scheduleTask(in: .seconds(1)) {
-            exit(0)
+            exit(1)
         }
     }
 
