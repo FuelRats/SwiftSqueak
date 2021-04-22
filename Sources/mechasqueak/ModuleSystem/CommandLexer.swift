@@ -26,7 +26,13 @@ import Foundation
 import Regex
 import IRCKit
 
+private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
 
+extension String {
+    var strippingIRCFormatting: String {
+        return ircFormattingExpression.replaceAll(in: self, with: "")
+    }
+}
 
 struct IRCBotCommand {
     var id: UUID
@@ -36,15 +42,12 @@ struct IRCBotCommand {
     var namedOptions: OrderedSet<String>
     var locale: Locale
     let message: IRCPrivateMessage
-    private static let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
     
     init? (from text: String, inMessage privateMessage: IRCPrivateMessage) {
         self.id = UUID()
-        var message = text
-        message = IRCBotCommand.ircFormattingExpression.replaceAll(in: message, with: "")
-        message = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let message = text.strippingIRCFormatting.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        var lexer = Lexer(body: text)
+        var lexer = Lexer(body: message)
         do {
             let tokens = try lexer.lex()
 

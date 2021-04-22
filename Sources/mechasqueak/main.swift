@@ -123,7 +123,8 @@ class MechaSqueak {
             TweetCommands(moduleManager),
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
-            AccountCommands(moduleManager)
+            AccountCommands(moduleManager),
+            SessionLogger(moduleManager)
         ]
         
         if let documentationPath = configuration.documentationPath {
