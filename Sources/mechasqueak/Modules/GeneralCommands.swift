@@ -240,7 +240,7 @@ class GeneralCommands: IRCBotModule {
         category: .utility,
         description: "Roll a dice",
         permission: nil,
-        cooldown: .seconds(60)
+        cooldown: .seconds(90)
     )
     var didReceiveDiceRollCommand = { command in
         guard let diceParam = "(?<num>[0-9]{1})?d(?<value>[0-9]{1,3})(\\+(?<add>[0-9]{1,4}))?".r!.findFirst(in: command.parameters[0]) else {
