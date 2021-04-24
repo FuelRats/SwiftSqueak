@@ -151,18 +151,22 @@ class EDSM {
         }
         
         var bodyType: String {
-            guard self.type == .Star, let spectralClass = self.spectralClass else {
+            guard self.type == .Star else {
                 return subType
+            }
+            guard let spectralClass = self.spectralClass else {
+                let endIndex = subType.firstIndex(of: "(") != nil ? subType.index(before: subType.firstIndex(of: "(")!) : subType.endIndex
+                return String(subType[subType.startIndex..<endIndex])
             }
             let subType = self.subType
             if let firstIndex = subType.firstIndex(of: "("), let end = subType.firstIndex(of: ")") {
                 let start = subType.index(after: firstIndex)
                 if self.isMainSequence {
-                    return "\(spectralClass) \(subType[start..<end]) star"
+                    return "\(spectralClass) star"
                 }
-                return "\(spectralClass) \(subType[start..<end])"
+                return String(subType[start..<end])
             }
-            return "\(spectralClass) \(subType)"
+            return subType
         }
     }
     
