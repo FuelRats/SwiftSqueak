@@ -85,11 +85,7 @@
   "board.remotedeletion": "ATTENTION: Rescue #%{caseId} (%{client}) was deleted remotely and is removed from the board",
 
   "board.frequentclient": "Note: Client %{client} of case #%{caseId} has had %{count} rescues the past 14 days",
-
-  "board.announce": "%{signal} - CMDR %{client} - Reported System: %{systemInfo} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-  "board.announce.nick": "%{signal} - CMDR %{client} - Reported System: %{systemInfo} - Platform: %{platform} - O2: %{oxygen} - Language: %{language} (%{langCode}) - IRC Nick %{nickname} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
-
-  "board.signal": "Received R@TSIGNAL from %{client}. Calling all available rats for %{platform} case in %{systemInfo} %{cr} (\u0002Case #%{caseId}\u0002) %{platformSignal}",
+  
   "board.signal.exists": "CMDR %{client} belongs to existing %{platform} %{cr} \u0002case #%{caseId}\u0002 in %{system}.",
   "board.signal.recentlyclosed": "Ignoring signal from recently closed client %{client} of case #%{caseId}",
   "board.signal.ignore": "Ignoring signal from case where client failed to join channel",

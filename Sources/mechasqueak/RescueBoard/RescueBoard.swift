@@ -267,8 +267,6 @@ class RescueBoard {
 
         self.rescues.append(rescue)
 
-        let caseId = String(rescue.commandIdentifier)
-
         let announceType = initiated == .signal ? "signal" : "announce"
 
         let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
@@ -295,18 +293,17 @@ class RescueBoard {
         }
 
         guard var system = rescue.system else {
-            message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
+            let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
                 "signal": configuration.general.signal.uppercased(),
-                "client": rescue.client ?? "u\u{200B}nknown",
                 "platform": rescue.platform.ircRepresentable,
-                "oxygen": rescue.ircOxygenStatus,
-                "caseId": caseId,
-                "platformSignal": rescue.platform?.signal ?? "",
-                "cr": crStatus,
+                "rescue": rescue,
+                "system": rescue.system as Any,
                 "language": language,
-                "langCode": languageCode,
-                "systemInfo": rescue.system.description
-            ]))
+                "platformSignal": rescue.platform?.signal ?? "",
+                "initiated": initiated,
+                "langCode": languageCode
+            ])
+            message.reply(message: signal)
             rescue.createUpstream()
             self.prepClient(rescue: rescue, message: message, initiated: initiated)
             return
@@ -339,8 +336,8 @@ class RescueBoard {
                 "system": rescue.system as Any,
                 "language": language,
                 "platformSignal": rescue.platform?.signal ?? "",
-                "initiated": initiated
-                
+                "initiated": initiated,
+                "langCode": languageCode
             ])
             message.reply(message: signal)
 

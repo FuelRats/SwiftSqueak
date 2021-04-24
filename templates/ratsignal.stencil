@@ -9,7 +9,7 @@
 {% endif %}
  – {{ "CMDR"|bold }} {{ rescue.client|default:"unknown client" }}
  – {{ "System:"|bold }} {% include "starsystem.stencil" %}
- – {{ "Language:"|bold }} {{ language }}
+ – {{ "Language:"|bold }} {{ language }} ({{ langCode }})
 {% if rescue.clientNick and rescue.clientNick != rescue.client %}
  – {{ "Nick:"|bold }} {{ rescue.clientNick }}
 {% endif %}
