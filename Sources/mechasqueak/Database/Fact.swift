@@ -18,7 +18,6 @@
  */
 
 import Foundation
-import SwiftKuery
 import NIO
 import SQLKit
 import PostgresKit
