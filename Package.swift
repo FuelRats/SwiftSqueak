@@ -22,6 +22,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/websocket-kit", from: Version(2, 1, 2)),
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 7, 2)),
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 0)),
+        .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 0, 14))
     ],
@@ -33,6 +34,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Lingo", package: "Lingo"),
                 "CryptoSwift",
+                "Stencil",
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),

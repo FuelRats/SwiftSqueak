@@ -105,57 +105,12 @@ struct StarSystem: CustomStringConvertible, Codable {
         return bodies.first(where: { $0.name.uppercased() == composedName })
     }
     
-    func description (forLandmarkName landmarkName: String?) -> String? {
-        guard let landmark = landmarks.first(where: { $0.name == landmarkName }) ?? landmarks.first else {
-            if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                let (landmark, distanceString, _) = landmarkName != nil ? procedural.estimatedSolDistance : procedural.estimatedLandmarkDistance
-                
-                guard (1000...80000).contains(procedural.estimatedSolDistance.2) else {
-                    return nil
-                }
-                let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
-                return "Estimated ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
-            }
-            return nil
-        }
-        let distance = NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!
-        
-        if landmark.distance > 1000, let searchResult = searchResult, let landmarkResult = mecha.landmarks.first(where: { $0.name == landmark.name }) {
-            let cardinal = CardinalDirection(bearing: searchResult.coords.bearing(from: landmarkResult.coordinates))
-            return "\(distance) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
-        }
-        return "\(distance) LY from \(landmark.name)"
-    }
-    
     var landmarkDescription: String? {
-        return self.description(forLandmarkName: nil)
-    }
-    
-    func getDescription (preferredLandmarkName: String? = nil) -> String {
-        var systemInfo = "\"\(self.name)\""
-        if let landmarkDescription = self.description(forLandmarkName: preferredLandmarkName) {
-            systemInfo += " ("
-            if let bodyInfo = self.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
-                systemInfo += description
-            }
-            
-            if systemInfo.hasSuffix("(") == false {
-                systemInfo += " "
-            }
-            systemInfo += "\(landmarkDescription))"
-        } else if isInvalid || isIncomplete {
-            systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
-        } else {
-            systemInfo += " (Not found in galaxy database)"
-        }
-        if let permit = self.permit {
-            systemInfo += " " + IRCFormat.color(.Orange, permit.description)
-        }
-        return systemInfo
+        return self.description
     }
 
     var description: String {
-        return getDescription()
+        return try! stencil.renderLine(name: "starsystem.stencil", context: ["system": self])
     }
     
     var shortDescription: String {
@@ -176,39 +131,16 @@ struct StarSystem: CustomStringConvertible, Codable {
         return systemInfo
     }
     
-    func getInfo (preferredLandmarkName: String? = nil) -> String {
-        var description = self.getDescription(preferredLandmarkName: preferredLandmarkName) + "."
-        if let bodies = self.bodies, bodies.count > 1 {
-            description += " \(bodies.count) stellar bodies"
-        }
-        let allStations = self.refuelingStations
-        if allStations.count > 0 {
-            let stations = allStations.filter({ $0.type != .FleetCarrier })
-            let carriers = allStations.filter({ $0.type == .FleetCarrier })
-            if stations.count > 0 {
-                description += ", \(stations.count) \(stations.count > 1 ? "stations" : "station")"
-            }
-            if carriers.count > 0 {
-                description += ", \(carriers.count) fleet \(carriers.count > 1 ? "carriers" : "carrier")"
-            }
-            
-            let station = allStations.first!
-            if station.type == .FleetCarrier {
-                return description
-            }
-            if let economy = station.economy {
-                description += ", Economy: \(economy)"
-            }
-            
-            if let government = station.government {
-                description += ", Government: \(government)"
-            }
-        }
-        return description
-    }
-    
     var info: String {
-        return getInfo()
+        let allStations = self.refuelingStations
+        let stations = allStations.filter({ $0.type != .FleetCarrier })
+        let carriers = allStations.filter({ $0.type == .FleetCarrier })
+        
+        return try! stencil.renderLine(name: "systeminfo.stencil", context: [
+            "system": self,
+            "stations": stations,
+            "carriers": carriers
+        ])
     }
 
     var isIncomplete: Bool {

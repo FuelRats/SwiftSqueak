@@ -1,0 +1,115 @@
+/*
+ Copyright 2021 The Fuel Rats Mischief
+ 
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+ 
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ disclaimer in the documentation and/or other materials provided with the distribution.
+ 
+ 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+ products derived from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import Foundation
+import Stencil
+import IRCKit
+
+private func generateEnvironment () -> Environment {
+    let ext = Extension()
+    let environment = Environment(loader: FileSystemLoader(paths: ["templates/"]), extensions: [ext])
+    
+    ext.registerFilter("color") { (value: Any?, arguments: [Any?]) in
+        if let contents = value as? String, let colorNumber = arguments.first as? Int, let color = IRCColor(rawValue: colorNumber) {
+            if arguments.count > 1, let backgroundColorNumber = arguments[1] as? Int, let backgroundColor = IRCColor(rawValue: backgroundColorNumber) {
+                return IRCFormat.color(color, background: backgroundColor, contents)
+            }
+            return IRCFormat.color(color, contents)
+        } else {
+            throw TemplateSyntaxError("color filter requires a valid irc color")
+        }
+    }
+    
+    ext.registerFilter("bold") { (value: Any?) in
+      if let value = value as? String {
+        return IRCFormat.bold(value)
+      }
+
+      return value
+    }
+    
+    ext.registerFilter("italic") { (value: Any?) in
+      if let value = value as? String {
+        return IRCFormat.italic(value)
+      }
+
+      return value
+    }
+    
+    ext.registerFilter("formatDistance") { (value: Any?) in
+      if let value = value as? Double {
+        return NumberFormatter.englishFormatter().string(from: NSNumber(value: value))!
+      }
+
+      return value
+    }
+    
+    ext.registerFilter("mainStarInfo") { (value: Any?) in
+      if let system = value as? StarSystem {
+        if let bodyInfo = system.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
+            return description
+        }
+      }
+
+      return nil
+    }
+    
+    ext.registerFilter("cardinal") { (value: Any?) in
+      if let system = value as? StarSystem {
+        if let landmark = system.landmark, landmark.distance > 1000, let searchResult = system.searchResult, let landmarkResult = mecha.landmarks.first(where: { $0.name == landmark.name }) {
+            return CardinalDirection(bearing: searchResult.coords.bearing(from: landmarkResult.coordinates)).rawValue
+        }
+      }
+
+      return nil
+    }
+    
+    ext.registerFilter("proceduralInfo") { (value: Any?) in
+      if let system = value as? StarSystem {
+        if let procedural = system.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
+            let (landmark, distanceString, _) = procedural.estimatedLandmarkDistance
+            
+            guard (1000...80000).contains(procedural.estimatedSolDistance.2) else {
+                return nil
+            }
+            let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
+            return "Estimated ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
+        }
+        
+      }
+      return nil
+    }
+    
+    return environment
+}
+
+let stencil = generateEnvironment()
+
+extension Environment {
+    func renderLine (name: String, context: [String: Any]) throws -> String {
+        return try self.renderTemplate(name: name, context: context)
+            .replacingOccurrences(of: "\n", with: "")
+            .replacingOccurrences(of: "[\\s]+", with: " ", options: .regularExpression, range: nil)
+    }
+}

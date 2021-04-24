@@ -1,0 +1,18 @@
+{% include "starsystem.stencil" %}.
+{% if system.bodies and system.bodies.count > 1 %}
+ {{system.bodies.count}} stellar bodies
+{% endif %}
+{% if stations.count > 0 %}
+, {{stations.count}} stations
+{% endif %}
+{% if carriers.count > 0 %}
+, {{carriers.count}} carriers
+{% endif %}
+{% if stations.first.type != "Fleet Carrier" %}
+{% if stations.first.economy %}
+, Economy: {{ stations.first.economy }}
+{% endif %}
+{% if stations.first.government %}
+, Government: {{ stations.first.government }}
+{% endif %}
+{% endif %}

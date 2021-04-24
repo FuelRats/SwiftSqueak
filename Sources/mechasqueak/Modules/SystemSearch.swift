@@ -72,7 +72,7 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["landmark"],
-        [.argument("sol"), .param("system name", "NLTT 48288", .continuous)],
+        [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
         cooldown: .seconds(30)
@@ -83,7 +83,6 @@ class SystemSearch: IRCBotModule {
             system.removeFirst(5)
         }
         
-        let landmarkPreference = command.namedOptions.contains("sol") ? "Sol" : nil
         if let autocorrect = ProceduralSystem.correct(system: system) {
             system = autocorrect
         }
@@ -101,7 +100,7 @@ class SystemSearch: IRCBotModule {
                         ])
                         return
                     }
-                    command.message.reply(message: result.getInfo(preferredLandmarkName: landmarkPreference))
+                    command.message.reply(message: result.info)
             }
         }
     }
