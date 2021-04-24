@@ -1,0 +1,16 @@
+{{ signal|color:0,7|bold }}
+  Case
+{% filter bold %}
+ #{{ rescue.commandIdentifier }}
+{% endfilter %}
+ {{ platform|bold }}
+{% if rescue.codeRed %}
+ ({{ "Code Red"|color:4 }})
+{% endif %}
+ – {{ "CMDR"|bold }} {{ rescue.client|default:"unknown client" }}
+ – {{ "System:"|bold }} {% include "starsystem.stencil" %}
+ – {{ "Language:"|bold }} {{ language }}
+{% if rescue.clientNick and rescue.clientNick != rescue.client %}
+ – {{ "Nick:"|bold }} {{ rescue.clientNick }}
+{% endif %}
+ {{ platformSignal }}

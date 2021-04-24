@@ -264,7 +264,6 @@ class RescueBoard {
                 }
             })
         }
-        
 
         self.rescues.append(rescue)
 
@@ -332,19 +331,18 @@ class RescueBoard {
             if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
                 key += ".nick"
             }
-            message.reply(message: lingo.localize(key, locale: "en", interpolations: [
+            
+            let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
                 "signal": configuration.general.signal.uppercased(),
-                "client": rescue.client ?? "u\u{200B}nknown",
                 "platform": rescue.platform.ircRepresentable,
-                "oxygen": rescue.ircOxygenStatus,
-                "caseId": caseId,
-                "systemInfo": rescue.system.description,
-                "platformSignal": rescue.platform?.signal ?? "",
-                "cr": crStatus,
+                "rescue": rescue,
+                "system": rescue.system as Any,
                 "language": language,
-                "langCode": languageCode,
-                "nickname": rescue.clientNick ?? rescue.clientDescription
-            ]))
+                "platformSignal": rescue.platform?.signal ?? "",
+                "initiated": initiated
+                
+            ])
+            message.reply(message: signal)
 
             if let systemBody = rescue.system?.clientProvidedBody {
                 let bodyDescription = rescue.system?.body(byName: systemBody)?.bodyDescription
