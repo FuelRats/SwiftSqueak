@@ -130,7 +130,7 @@ class LoggingSession {
 extension IRCPrivateMessage {
     var ircLogMessage: String {
         let messageContents = self.message.strippingIRCFormatting
-        let userMode = self.user.highestUserMode != nil ? String(self.user.highestUserMode!.rawValue) : ""
+        let userMode = self.user.highestUserMode != nil ? String(self.user.highestUserMode!.toPrefix(onClient: self.client) ?? "") : ""
         
         let timestampFormatter = DateFormatter()
         timestampFormatter.timeZone = TimeZone(abbreviation: "UTC")
