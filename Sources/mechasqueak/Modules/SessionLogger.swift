@@ -133,6 +133,7 @@ extension IRCPrivateMessage {
         let userMode = self.user.highestUserMode != nil ? String(self.user.highestUserMode!.rawValue) : ""
         
         let timestampFormatter = DateFormatter()
+        timestampFormatter.timeZone = TimeZone(abbreviation: "UTC")
         timestampFormatter.dateFormat = "HH:mm:ss ZZZZ"
         
         let time = timestampFormatter.string(from: self.raw.time)
