@@ -133,8 +133,7 @@ extension IRCPrivateMessage {
         let userMode = self.user.highestUserMode != nil ? String(self.user.highestUserMode!.rawValue) : ""
         
         let timestampFormatter = DateFormatter()
-        timestampFormatter.dateStyle = .none
-        timestampFormatter.timeStyle = .long
+        timestampFormatter.dateFormat = "HH:mm:ss ZZZZ"
         
         let time = timestampFormatter.string(from: self.raw.time)
         return "[\(time)] <\(userMode)\(self.user.nickname)> \(messageContents)"
