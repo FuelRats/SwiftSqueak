@@ -40,7 +40,6 @@ struct StarSystem: CustomStringConvertible, Codable {
     var clientProvidedBody: String?
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
     var bodies: [EDSM.Body]? = nil
-    var stations: [EDSM.Station]? = nil
     var position: Vector3?
 
     init (
@@ -75,7 +74,6 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.landmarks = starSystem.landmarks
         self.proceduralCheck = starSystem.proceduralCheck
         self.bodies = starSystem.bodies
-        self.stations = starSystem.stations
     }
 
     struct Permit: CustomStringConvertible, Codable {
@@ -132,14 +130,14 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
     
     var info: String {
-        let allStations = self.refuelingStations
-        let stations = allStations.filter({ $0.type != .FleetCarrier })
-        let carriers = allStations.filter({ $0.type == .FleetCarrier })
+//        let allStations = self.refuelingStations
+//        let stations = allStations.filter({ $0.type != .FleetCarrier })
+//        let carriers = allStations.filter({ $0.type == .FleetCarrier })
         
         return try! stencil.renderLine(name: "systeminfo.stencil", context: [
             "system": self,
-            "stations": stations,
-            "carriers": carriers
+//            "stations": stations,
+//            "carriers": carriers
         ])
     }
 
@@ -193,16 +191,6 @@ struct StarSystem: CustomStringConvertible, Codable {
             description += "~\(ceil(landmark.distance / 1000))kLY from \(landmark.name)"
         }
         return description
-    }
-    
-    var refuelingStations: [EDSM.Station] {
-        var stations = self.stations?.filter({
-            $0.otherServices.contains("Refuel")
-        }) ?? []
-        stations.sort(by: {
-            $0.type.rating < $1.type.rating
-        })
-        return stations
     }
     
     var coordinates: Vector3? {

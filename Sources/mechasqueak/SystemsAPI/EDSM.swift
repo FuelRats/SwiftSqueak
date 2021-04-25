@@ -43,19 +43,6 @@ class EDSM {
         return httpClient.execute(request: request, forDecodable: BodiesResult.self, withDecoder: decoder)
     }
     
-    static func getStations (forSystem systemName: String) -> EventLoopFuture<StationsResult> {
-        var url = URLComponents(string: "https://www.edsm.net/api-system-v1/stations")!
-        url.queryItems = [URLQueryItem(name: "systemName", value: systemName)]
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(edsmDateFormatter)
-
-        return httpClient.execute(request: request, forDecodable: StationsResult.self, withDecoder: decoder)
-    }
-    
     static let edsmDateFormatter: DateFormatter = {
       let formatter = DateFormatter()
       formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -72,14 +59,6 @@ class EDSM {
         let url: URL
         let bodyCount: Int
         let bodies: [Body]
-    }
-    
-    struct StationsResult: Codable {
-        let id: Int
-        let id64: Int64
-        let name: String
-        let url: URL
-        let stations: [Station]
     }
     
     struct Body: Codable {
@@ -167,87 +146,6 @@ class EDSM {
                 return String(subType[start..<end])
             }
             return subType
-        }
-    }
-    
-    struct Station: Codable {
-        let id: Int
-        let marketId: Int
-        let type: StationType
-        let name: String
-        let distanceToArrival: Double
-        let allegience: String?
-        let government: String?
-        let economy: String?
-        let secondEconomy: String?
-        let haveMarket: Bool
-        let haveShipyard: Bool
-        let haveOutfitting: Bool
-        let otherServices: [String]
-        let updateTime: StationUpdateTimes
-        
-        enum StationType: String, Codable {
-            case CoriolisStarport = "Coriolis Starport"
-            case OcellusStarport = "Ocellus Starport"
-            case OrbisStarport = "Orbis Starport"
-            case Outpost
-            case PlanetaryOutpost = "Planetary Outpost"
-            case PlanetaryPort = "Planetary Port"
-            case AsteroidBase = "Asteroid base"
-            case MegaShip = "Mega ship"
-            case FleetCarrier = "Fleet Carrier"
-            
-            
-            static let ratings: [StationType: UInt] = [
-                .CoriolisStarport: 0,
-                .OcellusStarport: 0,
-                .OrbisStarport: 0,
-                .PlanetaryPort: 1,
-                .PlanetaryOutpost: 1,
-                .AsteroidBase: 2,
-                .MegaShip: 2,
-                .Outpost: 3,
-                .FleetCarrier: 4
-            ]
-            
-            var rating: UInt {
-                return StationType.ratings[self]!
-            }
-        }
-        
-        struct StationUpdateTimes: Codable {
-            let information: Date?
-            let market: Date?
-            let shipyard: Date?
-            let outfitting: Date?
-        }
-        
-        var services: [String] {
-            var services: [String] = []
-            if self.otherServices.contains("Refuel") {
-                services.append("Refuel")
-            }
-            
-            if self.otherServices.contains("Repair") {
-                services.append("Repair")
-            }
-            
-            if self.otherServices.contains("Restock") {
-                services.append("Restock")
-            }
-            
-            if self.haveShipyard {
-                services.append("Shipyard")
-            }
-            
-            if self.haveOutfitting {
-                services.append("Outfitting")
-            }
-            
-            if self.haveMarket {
-                services.append("Market")
-            }
-            return services
         }
     }
 }

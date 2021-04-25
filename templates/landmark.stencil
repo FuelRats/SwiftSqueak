@@ -1,4 +1,4 @@
-{{ system.landmark.distance|formatDistance }} LY
+{{ system.landmark.distance|formatNumber }} LY
 {% if system.landmark.distance > 1000 %}
  "{{ system|cardinal }}" of
 {% else %}

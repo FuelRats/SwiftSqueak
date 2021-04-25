@@ -70,13 +70,12 @@ class SystemsAPI {
                     landmarks: landmarkDocument.landmarks ?? [],
                     proceduralCheck: nil
                 )
-                EDSM.getBodies(forSystem: system.name).and(EDSM.getStations(forSystem: system.name)).whenComplete({ result in
+                EDSM.getBodies(forSystem: system.name).whenComplete({ result in
                     switch result {
                     case .failure(_):
                         promise.succeed(starSystem)
-                    case .success((let bodies, let stations)):
+                    case .success(let bodies):
                         starSystem.bodies = bodies.bodies
-                        starSystem.stations = stations.stations
                         promise.succeed(starSystem)
                     }
                 })
@@ -95,6 +94,27 @@ class SystemsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self).whenComplete({ result in
+            switch result {
+            case .failure(_):
+                promise.succeed(nil)
+                
+            case .success(let document):
+                promise.succeed(document)
+            }
+        })
+        return promise.futureResult
+    }
+    
+    static func getNearestStations (forSystem systemName: String) -> EventLoopFuture<NearestPopulatedDocument?> {
+        let promise = loop.next().makePromise(of: NearestPopulatedDocument?.self)
+        var url = URLComponents(string: "https://system.api.fuelrats.com/nearest_populated")!
+        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self).whenComplete({ result in
             switch result {
             case .failure(_):
                 promise.succeed(nil)
@@ -129,14 +149,13 @@ class SystemsAPI {
                             )
                             
                             if starSystem.landmark != nil && includeEdsm {
-                                EDSM.getBodies(forSystem: properName).and(EDSM.getStations(forSystem: properName)).whenComplete({ result in
+                                EDSM.getBodies(forSystem: properName).whenComplete({ result in
                                     switch result {
                                     case .failure(let error):
                                         debug(String(describing: error))
                                         promise.succeed(starSystem)
-                                    case .success((let bodies, let stations)):
+                                    case .success(let bodies):
                                         starSystem.bodies = bodies.bodies
-                                        starSystem.stations = stations.stations
                                         promise.succeed(starSystem)
                                     }
                                 })
@@ -442,6 +461,112 @@ class SystemsAPI {
                 }
                 return nil
             }
+        }
+    }
+    
+    struct NearestPopulatedDocument: Codable {
+        let meta: Meta
+        let data: [PopulatedSystem]
+        
+        var preferableSystem: PopulatedSystem? {
+            return self.data.sorted(by: {
+                ($0.preferableStation?.hasLargePad == true && $1.preferableStation?.hasLargePad != true) && $1.distance / $0.distance < 10
+            }).first
+        }
+        
+        var largePadSystem: PopulatedSystem? {
+            return self.data.filter({ $0.hasStationWithLargePad }).first
+        }
+        
+        struct PopulatedSystem: Codable {
+            let distance: Double
+            let name: String
+            let id64: Int64
+            let stations: [Station]
+            
+            var hasStationWithLargePad: Bool {
+                return self.stations.contains(where: { $0.hasLargePad })
+            }
+            
+            var preferableStation: Station? {
+                return self.stations.sorted(by: {
+                    ($0.type.rating < $1.type.rating && ($0.distance - $1.distance) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && ($0.distance - $1.distance) < 300000)
+                }).first
+            }
+            
+            var largePadStation: Station? {
+                return self.stations.filter({ $0.hasLargePad }).first
+            }
+            
+            struct Station: Codable {
+                static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Restock"]
+                let name: String
+                let type: StationType
+                let distance: Double
+                let hasMarket: Bool
+                let hasShipyard: Bool
+                let hasOutfitting: Bool
+                let services: [String]
+                
+                enum StationType: String, Codable {
+                    case CoriolisStarport = "Coriolis Starport"
+                    case OcellusStarport = "Ocellus Starport"
+                    case OrbisStarport = "Orbis Starport"
+                    case Outpost
+                    case PlanetaryOutpost = "Planetary Outpost"
+                    case PlanetaryPort = "Planetary Port"
+                    case AsteroidBase = "Asteroid base"
+                    case MegaShip = "Mega ship"
+                    case FleetCarrier = "Fleet Carrier"
+                    
+                    
+                    static let ratings: [StationType: UInt] = [
+                        .CoriolisStarport: 0,
+                        .OcellusStarport: 0,
+                        .OrbisStarport: 0,
+                        .AsteroidBase: 1,
+                        .MegaShip: 1,
+                        .PlanetaryPort: 2,
+                        .PlanetaryOutpost: 3,
+                        .Outpost: 3,
+                        .FleetCarrier: 4
+                    ]
+                    
+                    var rating: UInt {
+                        return StationType.ratings[self]!
+                    }
+                }
+                
+                var hasLargePad: Bool {
+                    return self.type != .Outpost && self.type != .PlanetaryOutpost
+                }
+                
+                var notableServices: [String] {
+                    return allServices.filter({ Station.notableServices.contains($0) })
+                }
+                
+                var allServices: [String] {
+                    var services: [String] = self.services
+                    
+                    if self.hasShipyard {
+                        services.append("Shipyard")
+                    }
+                    
+                    if self.hasOutfitting {
+                        services.append("Outfitting")
+                    }
+                    
+                    if self.hasMarket {
+                        services.append("Market")
+                    }
+                    return services
+                }
+            }
+        }
+        
+        struct Meta: Codable {
+            let name: String?
+            let type: String?
         }
     }
 }

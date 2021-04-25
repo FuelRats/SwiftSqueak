@@ -38,6 +38,7 @@
   "sysc.seterror": "Unable to set system for case #%{caseId} (%{client}) to \"%{system}\" due to an error with the systems API.",
   "sysc.autocorrect": "\u0002ATTENTION:\u0002 System for case #%{caseId} (%{client}) has been automatically corrected to %{system}.",
   "landmark.noresults": "%{system} was not found in the galaxy database.",
+  "station.notfound": "I was unable to find any stations near this system",
   "distance.error": "Unable to calculate distance as an error occured when retrieving system information",
   "distance.notfound": "Unable to calculate distance as one of the systems could not be found",
   "distance.result": "The distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY",
@@ -393,6 +394,8 @@
   "help.command.clear.f": "Force Mecha to close a case without validating the first limpet",
   "help.command.clear.p": "Sends the paperwork to a rat without actually making them the first limpet of the rescue",
   "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
+  "help.command.station.s": "Shows all services available at this station, not just vital ones",
+  "help.command.station.l": "Require the station to have a size L (large) landing pad",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announce.invalidchannel": "Invalid channel given to announce command",

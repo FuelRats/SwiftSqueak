@@ -140,4 +140,35 @@ class SystemSearch: IRCBotModule {
                 }
             })
     }
+    
+    @BotCommand(
+        ["station"],
+        [.param("reference system", "Sagittarius A*", .continuous), .options(["s", "l"])],
+        category: .utility,
+        description: "Get the nearest station to a system",
+        cooldown: .seconds(30)
+    )
+    var didReceiveStationCommand = { command in
+        SystemsAPI.getNearestStations(forSystem: command.param1!).whenSuccess({ response in
+            let requireLargePad = command.options.contains("l")
+            
+            guard
+                let system = requireLargePad ? response?.largePadSystem : response?.preferableSystem,
+                let station = requireLargePad ? system.largePadStation : system.preferableStation
+            else {
+                command.message.error(key: "station.notfound", fromCommand: command)
+                return
+            }
+            
+            command.message.reply(message: try! stencil.renderLine(name: "station.stencil", context: [
+                "system": system,
+                "station": station,
+                "services": station.allServices,
+                "notableServices": station.notableServices,
+                "stationType": station.type.rawValue,
+                "showAllServices": command.options.contains("s"),
+                "additionalServices": station.services.count - station.notableServices.count
+            ]))
+        })
+    }
 }

@@ -57,9 +57,17 @@ private func generateEnvironment () -> Environment {
       return value
     }
     
-    ext.registerFilter("formatDistance") { (value: Any?) in
+    ext.registerFilter("formatNumber") { (value: Any?) in
       if let value = value as? Double {
         return NumberFormatter.englishFormatter().string(from: NSNumber(value: value))!
+      }
+
+      return value
+    }
+    
+    ext.registerFilter("eliteDistance") { (value: Any?) in
+      if let value = value as? Double {
+        return value.eliteDistance
       }
 
       return value
