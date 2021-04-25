@@ -14,11 +14,11 @@ Not found in galaxy database
 )
 {% endfilter %}
 {% if system.permit %}
-{% filter color:7 %}
+ {% filter color:7 %}
 {% if system.permit.name %}
- ({{ system.permit.name }} Permit Required)
+({{ system.permit.name }} Permit Required)
 {% else %}
- (Permit Required)
+(Permit Required)
 {% endif %}
 {% endfilter %}
 {% endif %}
