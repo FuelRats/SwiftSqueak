@@ -510,6 +510,10 @@ class LocalRescue {
     var clientDescription: String {
         return self.client ?? "u\u{200B}nknown client"
     }
+    
+    var isRecentDrill: Bool {
+        return configuration.general.drillMode && Date().timeIntervalSince(self.createdAt) < 5400 && self.channel != nil
+    }
 
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })

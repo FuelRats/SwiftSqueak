@@ -175,6 +175,7 @@
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
+  "board.close.drill": "This is a recent drill/training and can only be closed from the channel in which it was created (%{channel})",
   
   "board.trash.success": "Successfully added case #%{caseId} (%{client}) to the deletion list.",
   "board.trash.error": "Failed to add case #%{caseId} to the deletion list due to an error in the rescue server.",

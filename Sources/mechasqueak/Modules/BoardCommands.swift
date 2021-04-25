@@ -158,6 +158,11 @@ class BoardCommands: IRCBotModule {
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
+        
+        if rescue.isRecentDrill && command.message.destination != rescue.channel {
+            command.message.error(key: "board.close.drill", fromCommand: command, map: [ "channel": rescue.channel?.name ?? "?" ])
+            return
+        }
 
         var firstLimpet: Rat?
         let target = command.parameters[safe: 1] ?? ""
@@ -270,6 +275,11 @@ class BoardCommands: IRCBotModule {
     )
     var didReceiveTrashCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+        
+        if rescue.isRecentDrill && command.message.destination != rescue.channel {
+            command.message.error(key: "board.close.drill", fromCommand: command, map: [ "channel": rescue.channel?.name ?? "?" ])
             return
         }
         let forced = command.forceOverride
