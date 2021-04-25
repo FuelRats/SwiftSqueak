@@ -249,7 +249,7 @@ class RescueBoard {
         
         
         if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
-            guard rescue.channel?.member(named: clientNick) != nil else {
+            guard rescue.channel?.member(named: clientNick) != nil || configuration.general.drillMode else {
                 message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
                 return
             }
