@@ -47,7 +47,6 @@ extension HTTPClient {
                 case .success(let response):
 
                     do {
-                        try! decoder.decode(D.self, from: Data(buffer: response.body!))
                         let result = try decoder.decode(D.self, from: Data(buffer: response.body!))
                         promise.succeed(result)
                     } catch {
