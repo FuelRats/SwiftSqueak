@@ -375,10 +375,6 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .RescueWriteOwn
     )
     var didReceiveUncloseCommand = { command in
-        guard configuration.general.drillMode == false else {
-            command.message.error(key: "rescue.reopen.drillmode", fromCommand: command)
-            return
-        }
         guard let caseNumber = Int(command.parameters[0]), let closedRescue = mecha.rescueBoard.recentlyClosed[caseNumber] else {
             return
         }
@@ -389,6 +385,27 @@ class RemoteRescueCommands: IRCBotModule {
             command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
                 "id": closedRescue.id,
                 "caseId": existingRescue.commandIdentifier
+            ])
+            return
+        }
+        
+        guard configuration.general.drillMode == false else {
+            guard let rescue = mecha.rescueBoard.recentlyClosed[caseNumber] else {
+                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
+                    "id": caseNumber
+                ])
+                return
+            }
+            
+            if mecha.rescueBoard.findRescue(withCaseIdentifier: "\(caseNumber)") != nil {
+                rescue.commandIdentifier = mecha.rescueBoard.getNewIdentifier()
+            }
+            rescue.outcome = nil
+            rescue.status = .Open
+            mecha.rescueBoard.rescues.append(rescue)
+            command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
+                "id": rescue.id.ircRepresentation,
+                "caseId": rescue.commandIdentifier
             ])
             return
         }
