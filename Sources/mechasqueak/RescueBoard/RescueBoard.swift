@@ -229,9 +229,7 @@ class RescueBoard {
             
             return
         }
-
-        let crStatus = rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
-
+        
         var even: Bool? = nil
         if initiated == .insertion {
             if message.user.nickname.lowercased().contains("even") {

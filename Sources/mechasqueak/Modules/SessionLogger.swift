@@ -35,6 +35,22 @@ class SessionLogger: IRCBotModule {
     }
     
     @BotCommand(
+        ["startlogs"],
+        category: .utility,
+        description: "Start a new logging session in this channel",
+        permission: .AnnouncementWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveStartLoggingCommand = { command in
+        guard configuration.general.drillChannels.contains(command.message.destination.name.lowercased()) else {
+            return
+        }
+        
+        sessions[command.message.destination.name] = LoggingSession(message: command.message, include: false)
+        command.message.reply(key: "savelogs.started", fromCommand: command)
+    }
+    
+    @BotCommand(
         ["savelogs"],
         category: .utility,
         description: "Save logs from a drill or training session, use after the session has completed",
@@ -93,10 +109,14 @@ class LoggingSession {
     let initiated: Date
     var messages: [IRCPrivateMessage]
     
-    init (message: IRCPrivateMessage) {
+    init (message: IRCPrivateMessage, include: Bool = true) {
         self.channel = message.destination
         self.initiated = Date()
-        self.messages = [message]
+        if include {
+            self.messages = [message]
+        } else {
+            self.messages = []
+        }
     }
     
     var logs: String {
