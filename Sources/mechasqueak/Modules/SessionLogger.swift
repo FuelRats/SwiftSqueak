@@ -93,7 +93,7 @@ class SessionLogger: IRCBotModule {
     
     static func addSessionMessage (_ message: IRCPrivateMessage) {
         if let session = sessions[message.destination.name] {
-            if Date().timeIntervalSince(session.messages.last!.raw.time) > 1200 {
+            if let time = session.messages.last?.raw.time, Date().timeIntervalSince(time) > 1200 {
                 sessions[message.destination.name] = LoggingSession(message: message)
             } else {
                 session.messages.append(message)
