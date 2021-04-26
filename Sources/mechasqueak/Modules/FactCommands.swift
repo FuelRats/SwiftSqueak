@@ -379,7 +379,7 @@ class FactCommands: IRCBotModule {
                     
                     var smartCommand = command
                     smartCommand.command = "\(platform.factPrefix)\(command.command)"
-                    if command.command == "fr" && targets.contains(where: { $1?.codeRed ?? false == true }) {
+                    if command.command == "fr" && platform == .PC && targets.contains(where: { $1?.codeRed ?? false == true }) {
                         smartCommand.command += "cr"
                     }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
