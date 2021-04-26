@@ -93,6 +93,9 @@ class SessionLogger: IRCBotModule {
     
     static func addSessionMessage (_ message: IRCPrivateMessage) {
         if let session = sessions[message.destination.name] {
+            if message.message.lowercased().starts(with: "!savelogs") || message.message.lowercased().starts(with: "!startlogs") || message.raw.time.timeIntervalSince(session.initiated) < 0.5 {
+                return
+            }
             if let time = session.messages.last?.raw.time, Date().timeIntervalSince(time) > 1200 {
                 sessions[message.destination.name] = LoggingSession(message: message)
             } else {
