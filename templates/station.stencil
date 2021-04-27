@@ -1,4 +1,4 @@
-{% if distance > 0 %}
+{% if system.distance > 0 %}
 Station found {{ system.distance|formatNumber }} LY away in "{{ system.name }}".
 {% else %}
 Station found in "{{ system.name }}".
