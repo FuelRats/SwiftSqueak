@@ -340,7 +340,7 @@ class FactCommands: IRCBotModule {
         if command.parameters.count > 0 {
             let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
                 var target = target
-                if command.message.destination.member(named: target) == nil && Int(target) == nil {
+                if mecha.rescueBoard.findRescue(withCaseIdentifier: target) == nil && Int(target) == nil {
                     if let fuzzyTarget = command.message.destination.members.first(where: {
                         $0.nickname.levenshtein(target) < 3
                     }) {
