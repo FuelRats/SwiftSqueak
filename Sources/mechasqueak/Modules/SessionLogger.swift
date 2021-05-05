@@ -66,7 +66,7 @@ class SessionLogger: IRCBotModule {
         Rodentbin.upload(contents: session.logs).whenSuccess({ result in
             sessions.removeValue(forKey: command.message.destination.name)
             command.message.reply(key: "savelogs.saved", fromCommand: command, map: [
-                "url": "https://paste.fuelrats.com/\(result.key)"
+                "url": "https://paste.fuelrats.com/\(result.key).md"
             ])
         })
     }
@@ -137,7 +137,7 @@ extension IRCPrivateMessage {
         
         let timestampFormatter = DateFormatter()
         timestampFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        timestampFormatter.dateFormat = "HH:mm:ss ZZZZ"
+        timestampFormatter.dateFormat = "HH:mm:ss 'UTC'"
         
         let time = timestampFormatter.string(from: self.raw.time)
         return "[\(time)] <\(userMode)\(self.user.nickname)> \(messageContents)"
