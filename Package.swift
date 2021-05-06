@@ -24,7 +24,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 0)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
         //.package(path: "../IRCKit")
-        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 13, 0))
+        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 14, 0))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
