@@ -49,8 +49,8 @@ class RescueBoard {
         self.distanceFormatter.maximumFractionDigits = 1
         self.distanceFormatter.roundingMode = .halfUp
         
-        if configuration.general.drillMode == false && configuration.api.url.absoluteString.contains("dev.api") == false {
-            loop.next().scheduleRepeatedTask(initialDelay: .minutes(1), delay: .hours(1), self.checkElapsedPaperwork)
+        if configuration.general.drillMode == false {
+            loop.next().scheduleRepeatedTask(initialDelay: .minutes(15), delay: .minutes(15), self.checkElapsedPaperwork)
         }
 
         FuelRatsAPI.getLastRescue(complete: { result in
@@ -602,32 +602,56 @@ class RescueBoard {
                 $0.attributes.status.value == .Closed && Date().timeIntervalSince($0.attributes.updatedAt.value) > 7200.0
             }) ?? []
             
-            for rescue in cases {
+            let casesPerUser = cases.reduce([UUID:[Rescue]](), { caseMap, rescue -> [UUID:[Rescue]] in
+                var caseMap = caseMap
                 var firstLimpet = results.body.includes![Rat.self].first(where: { $0.id.rawValue == rescue.relationships.firstLimpet?.id.rawValue })
                 if firstLimpet == nil {
                     firstLimpet = results.assignedRatsFor(rescue: rescue).first
                 }
-                guard let caseRat = firstLimpet else {
+                
+                if let userId = firstLimpet?.relationships.user?.id.rawValue {
+                    if caseMap[userId] == nil {
+                        caseMap[userId] = []
+                    }
+                    caseMap[userId]?.append(rescue)
+                }
+                return caseMap
+            })
+            
+            for (userId, rescues) in casesPerUser {
+                if let lastReminder = self.lastPaperworkReminder[userId], Date().timeIntervalSince(lastReminder) < 21600 {
                     continue
                 }
                 
-                let presentNicks = caseRat.presence(inIRCChannel: mecha.reportingChannel!)
-                if let lastReminder = self.lastPaperworkReminder[rescue.id.rawValue], Date().timeIntervalSince(lastReminder) < 21600 {
+                var presentNicks = mecha.reportingChannel?.members.filter({
+                    return $0.associatedAPIData?.user?.id.rawValue == userId && $0.lastMessage != nil
+                }) ?? []
+                
+                presentNicks.sort(by: { $0.lastMessage!.raw.time > $1.lastMessage!.raw.time })
+                guard let latestNick = presentNicks.first else {
                     continue
                 }
-                if presentNicks.count > 0 {
-                    self.lastPaperworkReminder[rescue.id.rawValue] = Date()
-                    
-                    for presentNick in presentNicks {
-                        mecha.reportingChannel?.client.sendMessage(toTarget: presentNick.nickname, contents: lingo.localize("rescue.pwreminder", locale: "en-GB", interpolations: [
-                            "nick": presentNick.nickname,
+                self.lastPaperworkReminder[userId] = Date()
+                
+                rescues.map({ URLShortener.attemptShorten(url: $0.editLink) }).flatten(on: loop.next()).whenSuccess({ rescueUrls in
+                    let rescueStrings = rescues.enumerated().map({ (index, rescue) -> String in
+                        return lingo.localize("rescue.pwreminder.rescue", locale: "en-GB", interpolations: [
                             "client": rescue.attributes.client.value ?? "unknown client",
-                            "system": rescue.attributes.system.value ?? "unknown system",
                             "timeAgo": rescue.attributes.updatedAt.value.timeAgo,
-                            "link": rescue.editLink.absoluteString
-                        ]))
+                            "link": rescueUrls[index]
+                        ])
+                    })
+                    
+                    var key = "rescue.pwreminder"
+                    if latestNick.hasPermission(permission: .AnnouncementWrite) {
+                        key += ".meme"
                     }
-                }
+                    
+                    mecha.reportingChannel?.client.sendMessage(toTarget: latestNick.nickname, contents: lingo.localize(key, locale: "en-GB", interpolations: [
+                        "nick": latestNick.nickname,
+                        "rescues": rescueStrings.joined(separator: ", ")
+                    ]))
+                })
             }
         }, error: { _ in })
     }

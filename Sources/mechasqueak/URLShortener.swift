@@ -24,6 +24,7 @@
 
 import Foundation
 import AsyncHTTPClient
+import NIO
 
 class URLShortener {
     static func shorten (
@@ -68,6 +69,16 @@ class URLShortener {
         }, error: { _ in
             complete(url)
         })
+    }
+    
+    static func attemptShorten (url: URL) -> EventLoopFuture<URL> {
+        let future = loop.next().makePromise(of: URL.self)
+        URLShortener.shorten(url: url, keyword: nil, complete: { response in
+            future.succeed(response.shorturl)
+        }, error: { _ in
+            future.succeed(url)
+        })
+        return future.futureResult
     }
 }
 
