@@ -86,11 +86,11 @@ class MechaSqueak {
         }
         self.configPath = configPath
 
-        if configuration.api.websocket != nil {
-            ratSocket = RatSocket()
-        } else {
+//        if configuration.api.websocket != nil {
+//            ratSocket = RatSocket()
+//        } else {
             ratSocket = nil
-        }
+//        }
 
         self.startupTime = Date()
         self.rescueBoard = RescueBoard()
