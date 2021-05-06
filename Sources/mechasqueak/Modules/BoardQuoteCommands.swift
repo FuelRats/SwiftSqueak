@@ -117,11 +117,11 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        let quoteMessage = "<\(clientUser.nickname)> \(lastMessage)"
+        let quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
         if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
             rescue.quotes.append(RescueQuote(
                 author: message.user.nickname,
-                message: "<\(clientUser.nickname)> \(lastMessage)",
+                message: "<\(clientUser.nickname)> \(lastMessage.message)",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: message.user.nickname
@@ -130,7 +130,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
             "clientId": rescue.commandIdentifier,
-            "text": lastMessage
+            "text": lastMessage.message
         ])
 
         rescue.syncUpstream(fromCommand: command)
