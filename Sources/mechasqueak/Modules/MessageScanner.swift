@@ -53,6 +53,10 @@ class MessageScanner: IRCBotModule {
             return
         }
         
+        guard channelMessage.message.starts(with: "!") == false else {
+            return
+        }
+        
         if configuration.general.drillChannels.contains(channelMessage.destination.name.lowercased()), let range = channelMessage.message.range(of: "ch[o]{2,} ch[o]{2,}", options: .regularExpression) {
             let trainCarriages = String(channelMessage.message[range].filter({ $0 == "O" || $0 == "o" }).map({ _ in return "🚃" })).prefix(50)
             channelMessage.reply(message: "🚂" + trainCarriages)
