@@ -26,6 +26,8 @@
   "jumpcall.notprepped": "CAUTION: You have called jumps for a case where the client has not been !prep'd or told to logout. The first rat to respond to a case should always take care of this beforehand.",
   "jumpcall.permit": "CAUTION: You have called jumps for case #%{caseId} which requires %{permit} permit, make sure you have access to this system.",
   "jumpcall.publicpermit": "CAUTION: %{nick} does not have the %{permit} permit required by case #%{caseId}.",
+  "jumpcall.clientodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is using Odyssey, but the rat is not marked as being an Odyssey user",
+  "jumpcall.ratodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is NOT using Odyssey, but the rat is marked as being an Odyssey user",
   
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",

@@ -166,6 +166,33 @@ class MessageScanner: IRCBotModule {
                     message += " (MISSING PERMIT)"
                 }
             }
+            
+            if configuration.general.drillMode == false && rescue.platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform!) {
+                if rescue.odyssey && rat.attributes.odyssey.value == false {
+                    channelMessage.client.sendMessage(
+                        toChannelName: channelMessage.destination.name,
+                        withKey: "jumpcall.clientodyssey",
+                        mapping: [
+                            "caseId": caseId,
+                            "nick": channelMessage.user.nickname
+                        ]
+                    )
+                    
+                    message += " (Missing Odyssey)"
+                }
+                if rescue.odyssey == false && rat.attributes.odyssey.value {
+                    channelMessage.client.sendMessage(
+                        toChannelName: channelMessage.destination.name,
+                        withKey: "jumpcall.ratodyssey",
+                        mapping: [
+                            "caseId": caseId,
+                            "nick": channelMessage.user.nickname
+                        ]
+                    )
+                    
+                    message += " (Using Odyssey)"
+                }
+            }
 
             if let jumpRat = rat ?? channelMessage.user.currentRat {
                 rescue.jumpCalls.append((jumpRat, jumps))
