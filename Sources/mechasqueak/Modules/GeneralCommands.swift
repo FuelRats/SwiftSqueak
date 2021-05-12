@@ -268,7 +268,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["announce"],
-        [.argument("cr"), .param("channel", "#drillrats"), .param("client name", "Space Dawg"), .param("client nick", "SpaceDawg"), .param("PC/XB/PS", "PC"), .param("system", "NLTT 48288", .continuous)],
+        [.argument("cr"), .argument("odyssey"), .param("channel", "#drillrats"), .param("client name", "Space Dawg"), .param("client nick", "SpaceDawg"), .param("PC/XB/PS", "PC"), .param("system", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",
         permission: .AnnouncementWrite
@@ -302,7 +302,11 @@ class GeneralCommands: IRCBotModule {
             "crStatus": crStatus
         ])
 
-        let announcement = lingo.localize("announcement", locale: "en-GB", interpolations: [
+        var key = "announcement"
+        if command.namedOptions.contains("odyssey") {
+            key += ".odyssey"
+        }
+        let announcement = lingo.localize(key, locale: "en-GB", interpolations: [
             "client": clientName,
             "system": system,
             "platform": platform.rawValue.uppercased(),
