@@ -163,6 +163,7 @@ class HelpCommands: IRCBotModule {
 enum HelpCategory: String, CaseIterable {
     case board
     case rescues
+    case queue
     case facts
     case utility
     case account

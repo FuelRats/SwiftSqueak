@@ -86,11 +86,11 @@ class MechaSqueak {
         }
         self.configPath = configPath
 
-//        if configuration.api.websocket != nil {
-//            ratSocket = RatSocket()
-//        } else {
+        if configuration.api.websocket != nil {
+            ratSocket = RatSocket()
+        } else {
             ratSocket = nil
-//        }
+        }
 
         self.startupTime = Date()
         self.rescueBoard = RescueBoard()
@@ -124,7 +124,8 @@ class MechaSqueak {
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
-            SessionLogger(moduleManager)
+            SessionLogger(moduleManager),
+            QueueCommands(moduleManager)
         ]
         
         if let documentationPath = configuration.documentationPath {
@@ -334,6 +335,17 @@ class MechaSqueak {
             } else if channelMessage.message.count > 410 {
                 lastDeltaMessageTime = Date()
             }
+        }
+    }
+    
+    @EventListener<IRCEchoMessageNotification>
+    var onEchoMessage = { echoMessage in
+        guard echoMessage.raw.messageTags["batch"] == nil else {
+            return
+        }
+
+        if echoMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
+            mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: echoMessage))
         }
     }
 

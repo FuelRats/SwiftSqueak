@@ -58,6 +58,7 @@ struct QueueConfiguration: Codable {
 
 struct FuelRatsAPIConfiguration: Codable {
     let url: URL
+    let websocket: URL?
     let userId: UUID
     let token: String
 }

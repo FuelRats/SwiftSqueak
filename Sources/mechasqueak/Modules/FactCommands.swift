@@ -30,7 +30,7 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
-    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "queue"]
+    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue"]
 
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
