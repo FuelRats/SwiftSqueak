@@ -35,6 +35,7 @@ enum RatDescription: ResourceObjectDescription {
         public let name: Attribute<String>
         public var data: Attribute<RatDataObject>
         public let platform: Attribute<GamePlatform>
+        public let odyssey: Attribute<Bool>
         public let frontierId: Attribute<String>?
         public let createdAt: Attribute<Date>
         public let updatedAt: Attribute<Date>

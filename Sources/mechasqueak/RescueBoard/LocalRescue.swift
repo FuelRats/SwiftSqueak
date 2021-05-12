@@ -47,6 +47,7 @@ class LocalRescue {
     var codeRed: Bool
     var notes: String
     var platform: GamePlatform?
+    var odyssey: Bool
     var quotes: [RescueQuote]
     var status: RescueStatus
     var system: StarSystem?
@@ -89,6 +90,7 @@ class LocalRescue {
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
+        self.odyssey = false
 
         let o2StatusString = match.group(at: 4)!
         if o2StatusString.uppercased() == "NOT OK" {
@@ -142,6 +144,7 @@ class LocalRescue {
         if let platformString = signal.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
+        self.odyssey = signal.odyssey
 
         self.codeRed = signal.isCodeRed
 
@@ -190,6 +193,7 @@ class LocalRescue {
         if let platformString = input.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
+        self.odyssey = input.odyssey
 
         self.codeRed = input.isCodeRed
         self.notes = ""
@@ -225,6 +229,7 @@ class LocalRescue {
         } else {
             self.system = nil
         }
+        self.odyssey = attr.odyssey.value
         self.system?.permit = attr.data.value.permit
         self.system?.landmark = attr.data.value.landmark
         self.quotes = attr.quotes.value
@@ -267,6 +272,7 @@ class LocalRescue {
                 )),
                 notes: .init(value: localRescue.notes),
                 platform: .init(value: localRescue.platform),
+                odyssey: .init(value: localRescue.odyssey),
                 system: .init(value: localRescue.system?.name),
                 quotes: .init(value: localRescue.quotes),
                 status: .init(value: localRescue.status),

@@ -38,6 +38,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var data: Attribute<RescueData>
         public var notes: Attribute<String>
         public var platform: Attribute<GamePlatform?>
+        public var odyssey: Attribute<Bool>
         public var system: Attribute<String?>
         public var quotes: Attribute<[RescueQuote]>
         public var status: Attribute<RescueStatus>
