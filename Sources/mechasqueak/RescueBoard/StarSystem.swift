@@ -114,7 +114,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     var shortDescription: String {
         var systemInfo = "\"\(self.name)\""
         if let landmarkDescription = landmarkDescription {
-            systemInfo += " (\(landmarkDescription))"
+            systemInfo = landmarkDescription
         } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
             let (landmark, distance, _) = procedural.estimatedLandmarkDistance
             systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
