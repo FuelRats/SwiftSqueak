@@ -29,7 +29,7 @@ import IRCKit
 import NIO
 
 class LocalRescue {
-    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
+    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
     var clientHost: String?
@@ -90,19 +90,19 @@ class LocalRescue {
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
-        self.odyssey = false
+        self.odyssey = match.group(at: 4) != nil
 
-        let o2StatusString = match.group(at: 4)!
+        let o2StatusString = match.group(at: 5)!
         if o2StatusString.uppercased() == "NOT OK" {
             self.codeRed = true
         } else {
             self.codeRed = false
         }
 
-        let languageCode = match.group(at: 5)!
+        let languageCode = match.group(at: 6)!
         self.clientLanguage = Locale(identifier: languageCode)
 
-        self.clientNick = match.group(at: 6) ?? client
+        self.clientNick = match.group(at: 7) ?? client
 
         self.notes = ""
         self.quotes = [(RescueQuote(
