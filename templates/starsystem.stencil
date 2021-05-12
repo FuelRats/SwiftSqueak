@@ -9,7 +9,7 @@
 {% elif system|proceduralInfo %}
 {{ system|proceduralInfo }}
 {% else %}
-Not found in galaxy database
+{{ "Not found in galaxy database"|color:10 }}
 {% endif %}
 )
 {% endfilter %}
