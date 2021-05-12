@@ -7,6 +7,9 @@
 {% if rescue.codeRed %}
  ({{ "Code Red"|color:4 }})
 {% endif %}
+{% if rescue.odyssey %}
+ ({{ "Odyssey"|color:7 }})
+{% endif %}
  – {{ "CMDR"|bold }} {{ rescue.client|default:"unknown client" }}
  – {{ "System:"|bold }} {% include "starsystem.stencil" %}
  – {{ "Language:"|bold }} {{ language }} ({{ langCode }})
