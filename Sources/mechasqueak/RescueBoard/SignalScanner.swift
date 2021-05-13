@@ -88,17 +88,15 @@ struct SignalScanner {
         } else {
             self.system = nil
         }
-        if self.system == nil, let firstItem = message.firstIndex(of: "|") {
-            let probableSystem = message[message.startIndex...firstItem].dropLast().trimmingCharacters(in: .whitespaces)
-            if probableSystem.components(separatedBy: " ").count < 4 && probableSystem.count > 0 {
-                self.system = String(probableSystem)
-            }
-        }
-        if self.system == nil, let lastItem = message.lastIndex(of: "|") {
-            let probableSystem = message[lastItem..<message.endIndex].dropFirst().trimmingCharacters(in: .whitespaces)
-            if probableSystem.components(separatedBy: " ").count < 4 && probableSystem.count > 0 {
-                self.system = String(probableSystem)
-            }
+        
+        if self.system == nil {
+            self.system = message.components(separatedBy: "|").reduce(nil, { (system: String?, currentComponent: String) -> String? in
+                let probableSystem = currentComponent.trimmingCharacters(in: CharacterSet.whitespaces.union(CharacterSet.punctuationCharacters))
+                if probableSystem.components(separatedBy: " ").count < 6 && probableSystem.count > 0 {
+                    return probableSystem
+                }
+                return system
+            })
         }
     }
 }
