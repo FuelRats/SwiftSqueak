@@ -253,13 +253,6 @@ class RescueBoard {
                 self.recentIdentifiers.append(identifier)
                 self.lastSignalReceived = Date()
                 
-                
-                if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
-                    guard rescue.channel?.member(named: clientNick) != nil || configuration.general.drillMode else {
-                        message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
-                        return
-                    }
-                }
 
                 if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
                     self.prepTimers[rescue.id] = self.group.next().scheduleTask(in: .seconds(180), {
@@ -671,7 +664,7 @@ class RescueBoard {
     func awaitClientJoin (name clientName: String, forRescue rescue: LocalRescue) -> EventLoopFuture<Void> {
         let future = loop.next().makePromise(of: Void.self)
         guard rescue.channel != nil else {
-            future.fail(NSError())
+            future.fail(ClientJoinError.joinFailed)
             return future.futureResult
         }
         
@@ -686,7 +679,7 @@ class RescueBoard {
         // Make a 5 second timeout where mecha will give up on the client joining
         loop.next().scheduleTask(in: .seconds(5), {
             if let (promise, _) = RescueBoard.pendingClientJoins[clientName.lowercased()] {
-                promise.fail(NSError())
+                promise.fail(ClientJoinError.joinFailed)
                 RescueBoard.pendingClientJoins.removeValue(forKey: clientName.lowercased())
             }
         })
@@ -768,4 +761,8 @@ enum RescueInitiationType {
     case announcer
     case signal
     case insertion
+}
+
+enum ClientJoinError: Error {
+    case joinFailed
 }
