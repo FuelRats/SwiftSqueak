@@ -70,7 +70,7 @@ class MessageScanner: IRCBotModule {
             let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
             
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
-                if configuration.general.drillMode == false {
+                if configuration.general.drillMode == false, channelMessage.destination.name.lowercased() == configuration.general.rescueChannel {
                     channelMessage.replyPrivate(message: lingo.localize(
                         "jumpcall.notfound",
                         locale: "en-GB",
