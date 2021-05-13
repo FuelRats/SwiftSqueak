@@ -33,6 +33,7 @@ enum RatSocketEventType: String {
     case rescueCreated = "fuelrats.rescuecreate"
     case rescueUpdated = "fuelrats.rescueupdate"
     case rescueDeleted = "fuelrats.rescuedelete"
+    case userUpdated = "fuelrats.userupdate"
     case channelMessage = "mechasqueak.channelmessage"
 }
 
@@ -113,6 +114,9 @@ class RatSocket {
 
                 case .rescueDeleted:
                     RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
+                    
+                case .userUpdated:
+                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
 
                 default:
                     break

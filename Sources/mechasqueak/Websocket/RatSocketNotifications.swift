@@ -54,6 +54,13 @@ struct RatSocketRescueDeletedNotification: NotificationDescriptor {
     let name = Notification.Name("RatSocketRescueDeleted")
 }
 
+struct RatSocketUserUpdatedNotification: NotificationDescriptor {
+    init () {}
+    
+    typealias Payload = RatSocketEvent<EmptyBody>
+    let name = Notification.Name("RatSocketUserUpdated")
+}
+
 struct EmptyBody: Codable {
 
 }
