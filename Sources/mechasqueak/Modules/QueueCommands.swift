@@ -46,7 +46,7 @@ class QueueCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["maxclients", "maxload"],
+        ["maxqueue", "maxclients", "maxload"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,
         description: "See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value",

@@ -38,7 +38,7 @@ let sql = pools.database(logger: Logger(label: "SQL")).sql()
 
 
 struct Fact: Codable, Hashable {
-    static let platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart"]
+    static let platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team"]
     private static var cache = [String: Fact]()
     
     var id: String
