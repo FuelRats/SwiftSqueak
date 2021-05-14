@@ -388,6 +388,9 @@ class FactCommands: IRCBotModule {
                     if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
                         smartCommand.command = "pcteam"
                     }
+                    if smartCommand.command == "kgbfoam" && targets.contains(where: { $1?.odyssey == true }) {
+                        smartCommand.command = "newkgbfoam"
+                    }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
