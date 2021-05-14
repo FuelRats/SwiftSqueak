@@ -382,6 +382,12 @@ class FactCommands: IRCBotModule {
                     if command.command == "fr" && platform == .PC && targets.contains(where: { $1?.codeRed ?? false == true }) {
                         smartCommand.command += "cr"
                     }
+                    if smartCommand.command == "pcteam" && targets.contains(where: { $1?.odyssey == false }) {
+                        smartCommand.command = "pcwing"
+                    }
+                    if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
+                        smartCommand.command = "pcteam"
+                    }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
