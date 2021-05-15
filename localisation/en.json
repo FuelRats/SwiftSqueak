@@ -354,6 +354,9 @@
   "delpermit.nopermit": "No permit by that name is currently added to your CMDR",
   "delpermit.removed": "Removed %{permit} Permit from CMDR %{name}",
 
+  "useodyssey.norat": "Could not determine a valid rat to change Odyssey status for",
+  "useodyssey.odyssey": "Changed rat %{name} to use Odyssey",
+  "useodyssey.horizons": "Changed rat %{name} to use Horizons",
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.webpage": "A list of commands are also available at: https://t.fuelr.at/mechacmd",

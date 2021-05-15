@@ -370,6 +370,11 @@ class FactCommands: IRCBotModule {
                 ])
             }
             
+            
+            if command.command == "kgbfoam" && targets.contains(where: { $1?.odyssey == true }) {
+                command.command = "newkgbfoam"
+            }
+            
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
                 for platform in GamePlatform.allCases {
                     let platformTargets = targets.filter({ $0.1?.platform == platform })
@@ -387,9 +392,6 @@ class FactCommands: IRCBotModule {
                     }
                     if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
                         smartCommand.command = "pcteam"
-                    }
-                    if smartCommand.command == "kgbfoam" && targets.contains(where: { $1?.odyssey == true }) {
-                        smartCommand.command = "newkgbfoam"
                     }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
