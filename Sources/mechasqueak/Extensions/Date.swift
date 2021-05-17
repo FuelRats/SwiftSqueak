@@ -34,19 +34,19 @@ extension Date {
 
         if minuteAgo < self {
         let diff = Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0
-            return "\(diff) seconds"
+            return lingo.localize("timeago.second", locale: "en-GB", interpolations: ["time": diff])
         } else if hourAgo < self {
             let diff = Calendar.current.dateComponents([.minute], from: self, to: Date()).minute ?? 0
-            return "\(diff) minutes"
+            return lingo.localize("timeago.minute", locale: "en-GB", interpolations: ["time": diff])
         } else if dayAgo < self {
             let diff = Calendar.current.dateComponents([.hour], from: self, to: Date()).hour ?? 0
-            return "\(diff) hours"
+            return lingo.localize("timeago.hour", locale: "en-GB", interpolations: ["time": diff])
         } else if weekAgo < self {
             let diff = Calendar.current.dateComponents([.day], from: self, to: Date()).day ?? 0
-            return "\(diff) days"
+            return lingo.localize("timeago.day", locale: "en-GB", interpolations: ["time": diff])
         }
         let diff = Calendar.current.dateComponents([.weekOfYear], from: self, to: Date()).weekOfYear ?? 0
-        return "\(diff) weeks"
+        return lingo.localize("timeago.week", locale: "en-GB", interpolations: ["time": diff])
     }
 
     var ircRepresentable: String {

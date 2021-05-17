@@ -417,5 +417,26 @@
   "announce.success": "Sending announcement to %{channel} for client %{client}, system \"%{system}\" on %{platform} and O2 status %{crStatus}",
   "savelogs.saved": "Logs saved: %{url}",
   "savelogs.started": "Logging session started",
-  "savelogs.notfound": "I did not find a session in this channel to save"
+  "savelogs.notfound": "I did not find a session in this channel to save",
+  
+  "timeago.second": {
+      "one": "%{time} second",
+      "other": "%{time} seconds",
+  },
+  "timeago.minute": {
+      "one": "%{time} minute",
+      "other": "%{time} minutes",
+  },
+  "timeago.hour": {
+      "one": "%{time} hour",
+      "other": "%{time} hours",
+  },
+  "timeago.day": {
+      "one": "%{time} day",
+      "other": "%{time} days",
+  },
+  "timeago.week": {
+      "one": "%{time} week",
+      "other": "%{time} weeks",
+  },
 }
