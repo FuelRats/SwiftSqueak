@@ -106,6 +106,7 @@
   "board.nopermission": "%{nick} is not in the sudoers file. This incident will be reported.",
   "board.toggleodyssey.on": "Case #%{caseId} (%{client}) is marked as using Odyssey",
   "board.toggleodyssey.off": "Case #%{caseId} (%{client}) is marked as not using Odyssey",
+  "board.toggleodyssey.platform": "Only PC cases can be marked as Odyssey cases",
   
   "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}",
   "board.syschange.autocorrect": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo} \u000304(Automatically corrected)\u0003",

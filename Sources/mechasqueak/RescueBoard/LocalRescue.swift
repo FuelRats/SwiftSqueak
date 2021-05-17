@@ -193,7 +193,12 @@ class LocalRescue {
         if let platformString = input.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
-        self.odyssey = input.odyssey
+        
+        if self.platform == .PC {
+            self.odyssey = input.odyssey
+        } else {
+            self.odyssey = false
+        }
 
         self.codeRed = input.isCodeRed
         self.notes = ""

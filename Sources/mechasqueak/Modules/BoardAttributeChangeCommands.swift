@@ -307,6 +307,11 @@ class BoardAttributeCommands: IRCBotModule {
 
         rescue.odyssey = !rescue.odyssey
         
+        if rescue.odyssey && rescue.platform != .PC {
+            command.message.error(key: "board.toggleodyssey.platform", fromCommand: command)
+            return
+        }
+        
         let key = "board.toggleodyssey." + (rescue.odyssey ? "on" : "off")
         command.message.reply(key: key, fromCommand: command, map: [
             "caseId": rescue.commandIdentifier,
