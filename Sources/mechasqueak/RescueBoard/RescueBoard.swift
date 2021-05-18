@@ -205,6 +205,13 @@ class RescueBoard {
                 message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
                 
             case .success(_):
+                if initiated == .announcer && configuration.queue != nil {
+                    QueueAPI.fetchQueue().whenSuccess({ queue in
+                        queue.first(where: { $0.client.name.lowercased() == rescue.client?.lowercased() })?.setInProgress()
+                    })
+                    QueueAPI.dequeue()
+                }
+                
                 if let (_, recentRescue) = self.recentlyClosed.first(where: {
                     $0.value.client == rescue.client && Date().timeIntervalSince($0.value.updatedAt) < 900
                 }), configuration.general.drillMode == false, initiated != .insertion {

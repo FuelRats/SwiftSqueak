@@ -377,6 +377,9 @@ class LocalRescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
+                    QueueAPI.fetchQueue().whenSuccess({
+                        $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
+                    })
                     onComplete()
                 case .failure(let error):
                     debug(String(describing: error))
@@ -480,6 +483,9 @@ class LocalRescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
+                    QueueAPI.fetchQueue().whenSuccess({
+                        $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
+                    })
                     onComplete()
                 case .failure(let error):
                     debug(String(describing: error))

@@ -34,6 +34,35 @@ class QueueCommands: IRCBotModule {
     }
     
     @BotCommand(
+        ["queue"],
+        category: .queue,
+        description: "Get current information on the queue",
+        permission: .DispatchRead,
+        allowedDestinations: .Channel,
+        cooldown: .seconds(90)
+    )
+    var didReceiveQueueCommand = { command in
+        QueueAPI.fetchQueue().whenSuccess({ queue in
+            let queueItems = queue.filter({ $0.inProgress == false })
+            guard queueItems.count > 0 else {
+                command.message.reply(key: "queue.none", fromCommand: command)
+                return
+            }
+            
+            let queueCount = queue.count
+            let waitTimes = queue.map({ Date().timeIntervalSince($0.arrivalTime) }).sorted()
+            let longestWait = waitTimes.last!
+            let averageWait = waitTimes.reduce(0.0, { $0 + $1 }) / Double(waitTimes.count)
+            
+            command.message.reply(key: "queue.info", fromCommand: command, map: [
+                "count": queueCount,
+                "longest": longestWait.timeSpan,
+                "average": averageWait.timeSpan
+            ])
+        })
+    }
+    
+    @BotCommand(
         ["dequeue"],
         category: .queue,
         description: "Manually move the next client from the queue into the rescue channel",
@@ -42,11 +71,19 @@ class QueueCommands: IRCBotModule {
         cooldown: .seconds(5)
     )
     var didReceiveDeQueueCommand = { command in
-        // TODO: Dequeue logic 
+        QueueAPI.dequeue().whenComplete({ result in
+            switch result {
+            case .failure(_):
+                command.message.error(key: "dequeue.error", fromCommand: command)
+                
+            case .success(_):
+                command.message.reply(key: "dequeue.success", fromCommand: command)
+            }
+        })
     }
     
     @BotCommand(
-        ["maxqueue", "maxclients", "maxload"],
+        ["maxclients", "maxload"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,
         description: "See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value",
@@ -55,19 +92,22 @@ class QueueCommands: IRCBotModule {
     )
     var didReceiveMaxClientsCommand = { command in
         if let queueSizeString = command.param1 {
-            guard let queueSize = Int(queueSizeString) else {
+            guard let queueSize = Int(queueSizeString), (0...25).contains(queueSize) else {
                 command.message.error(key: "maxclients.invalid", fromCommand: command)
                 return
             }
             
-            guard (5...25).contains(queueSize) else {
-                command.message.error(key: "maxclients.range", fromCommand: command)
-                return
-            }
-            
-            // TODO: Set queue size
+            QueueAPI.setMaxActiveClients(queueSize).whenSuccess({ _ in
+                command.message.reply(key: "maxclients.set", fromCommand: command, map: [
+                    "count": queueSize
+                ])
+            })
+        } else {
+            QueueAPI.getConfig().whenSuccess({ config in
+                command.message.reply(key: "maxclients.get", fromCommand: command, map: [
+                    "count": config.maxActiveClients
+                ])
+            })
         }
-        
-        // TODO: Get queue size
     }
 }

@@ -31,7 +31,8 @@
         "signature": "hunter2"
     },
     "queue": {
-        "url": "",
+        "url": "https://api.qms.fuelrats.dev/api/v1",
+        "token": "hunter2",
     },
     "documentationPath": "file:///Users/bob/mechasqueak",
     "connections": [{
