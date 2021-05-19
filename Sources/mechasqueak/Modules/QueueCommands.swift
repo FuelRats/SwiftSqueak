@@ -67,7 +67,7 @@ class QueueCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["dequeue"],
+        ["dequeue", "next"],
         category: .queue,
         description: "Manually move the next client from the queue into the rescue channel",
         permission: .DispatchWrite,
