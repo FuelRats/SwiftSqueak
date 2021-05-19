@@ -42,7 +42,6 @@ class QueueCommands: IRCBotModule {
         category: .queue,
         description: "Get current information on the queue",
         permission: .DispatchRead,
-        allowedDestinations: .Channel,
         cooldown: .seconds(90)
     )
     var didReceiveQueueCommand = { command in
