@@ -66,7 +66,7 @@ class MechaSqueak {
     static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
     static let accounts = NicknameLookupManager()
-    let commands: [IRCBotModule]
+    var commands: [IRCBotModule]
     let connections: [IRCClient]
     let rescueBoard: RescueBoard
     var reportingChannel: IRCChannel?
@@ -124,9 +124,12 @@ class MechaSqueak {
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
-            SessionLogger(moduleManager),
-            QueueCommands(moduleManager)
+            SessionLogger(moduleManager)
         ]
+        
+        if configuration.queue != nil {
+            commands.append(QueueCommands(moduleManager))
+        }
         
         if let documentationPath = configuration.documentationPath {
             ReferenceGenerator.generate(inPath: documentationPath)

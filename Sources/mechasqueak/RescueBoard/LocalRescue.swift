@@ -377,11 +377,13 @@ class LocalRescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
-                    QueueAPI.fetchQueue().whenSuccess({
-                        $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
-                    })
-                    if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
-                        QueueAPI.dequeue()
+                    if configuration.queue != nil {
+                        QueueAPI.fetchQueue().whenSuccess({
+                            $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
+                        })
+                        if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                            QueueAPI.dequeue()
+                        }
                     }
                     onComplete()
                 case .failure(let error):
@@ -486,11 +488,13 @@ class LocalRescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
-                    QueueAPI.fetchQueue().whenSuccess({
-                        $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
-                    })
-                    if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
-                        QueueAPI.dequeue()
+                    if configuration.queue != nil {
+                        QueueAPI.fetchQueue().whenSuccess({
+                            $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
+                        })
+                        if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                            QueueAPI.dequeue()
+                        }
                     }
                     onComplete()
                 case .failure(let error):
