@@ -298,6 +298,7 @@ class GeneralCommands: IRCBotModule {
         if command.namedOptions.contains("odyssey") {
             if platform != .PC {
                 command.message.error(key: "announce.invalidplatform", fromCommand: command)
+                return
             }
             key += ".odyssey"
         }
