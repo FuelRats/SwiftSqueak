@@ -105,6 +105,10 @@ class RescueBoard {
             }
         }
     }
+    
+    var activeCases: Int {
+        return self.rescues.filter({ $0.status == .Open }).count
+    }
 
     func findRescue (withCaseIdentifier caseIdentifier: String) -> LocalRescue? {
         var caseIdentifier = caseIdentifier
@@ -166,6 +170,12 @@ class RescueBoard {
             if rescue.platform != existingRescue.platform && rescue.platform != nil, rescue.platform != .PC {
                 changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
             }
+            
+            if rescue.odyssey != existingRescue.odyssey {
+                let currentExpansion = existingRescue.odyssey ? "Odyssey" : "Horizons"
+                let newExpansion = rescue.odyssey ? "Odyssey" : "Horizons"
+                changes.append("\(IRCFormat.bold("Expansion:")) \(currentExpansion) -> \(newExpansion)")
+            }
             if rescue.system != nil && rescue.system?.name != existingRescue.system?.name {
                 changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)")
                 if let system = rescue.system, rescue.system?.isConfirmed == false {
@@ -206,10 +216,15 @@ class RescueBoard {
                 
             case .success(_):
                 if initiated == .announcer && configuration.queue != nil {
+                    if let promise = QueueAPI.pendingQueueJoins.first(where: {
+                        $0.key.lowercased() == rescue.client?.lowercased()
+                    }) {
+                        promise.value.succeed(())
+                        QueueAPI.pendingQueueJoins.removeValue(forKey: rescue.client!.lowercased())
+                    }
                     QueueAPI.fetchQueue().whenSuccess({ queue in
                         queue.first(where: { $0.client.name.lowercased() == rescue.client?.lowercased() })?.setInProgress()
                     })
-                    QueueAPI.dequeue()
                 }
                 
                 if let (_, recentRescue) = self.recentlyClosed.first(where: {

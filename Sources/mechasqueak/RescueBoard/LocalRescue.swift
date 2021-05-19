@@ -380,6 +380,9 @@ class LocalRescue {
                     QueueAPI.fetchQueue().whenSuccess({
                         $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
                     })
+                    if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                        QueueAPI.dequeue()
+                    }
                     onComplete()
                 case .failure(let error):
                     debug(String(describing: error))
@@ -409,7 +412,7 @@ class LocalRescue {
                 return assigns
             }
 
-            guard let rat = nick.getRatRepresenting(platform: self.platform) else {
+            guard let rat = nick.getRatRepresenting(platform: self.platform), rat.attributes.odyssey.value == self.odyssey else {
                 guard assigns.unidentifiedRats.contains(param) == false && self.unidentifiedRats.contains(param) == false else {
                     assigns.unidentifiedDuplicates.insert(param)
                     return assigns
@@ -486,6 +489,9 @@ class LocalRescue {
                     QueueAPI.fetchQueue().whenSuccess({
                         $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
                     })
+                    if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                        QueueAPI.dequeue()
+                    }
                     onComplete()
                 case .failure(let error):
                     debug(String(describing: error))

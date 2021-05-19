@@ -31,7 +31,7 @@ struct QueueParticipant: Codable, Hashable {
     let arrivalTime: Date
     var pending: Bool
     var inProgress: Bool
-    let client: QueueClient
+    var client: QueueClient
 
     struct QueueClient: Codable, Hashable {
         private enum CodingKeys: String, CodingKey {
@@ -63,6 +63,22 @@ struct QueueParticipant: Codable, Hashable {
         request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
         var queueItem = self
         queueItem.inProgress = true
+        request.body = try! .data(QueueAPI.encoder.encode(queueItem))
+
+        return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+    }
+    
+    @discardableResult
+    func changeName (name: String) -> EventLoopFuture<QueueParticipant> {
+        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
+        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
+
+        print(requestUrl.absoluteString)
+        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
+        var queueItem = self
+        queueItem.client.name = name
         request.body = try! .data(QueueAPI.encoder.encode(queueItem))
 
         return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)

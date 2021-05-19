@@ -48,6 +48,9 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
+            if mecha.rescueBoard.activeCases < QueueCommands.maxClientsCount {
+                QueueAPI.dequeue()
+            }
         }
 
         let status = String(describing: rescue.status)
@@ -142,6 +145,9 @@ class BoardAttributeCommands: IRCBotModule {
         let client = command.parameters[1]
 
         rescue.client = client
+        QueueAPI.fetchQueue().whenSuccess({
+            $0.first(where: { $0.client.name == oldClient })?.changeName(name: client)
+        })
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
             "caseId": rescue.commandIdentifier,

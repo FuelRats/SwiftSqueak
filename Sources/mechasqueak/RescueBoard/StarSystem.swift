@@ -123,9 +123,6 @@ struct StarSystem: CustomStringConvertible, Codable {
         } else {
             systemInfo += " (Not found in galaxy database)"
         }
-        if let permit = self.permit {
-            systemInfo += " " + IRCFormat.color(.Orange, permit.description)
-        }
         return systemInfo
     }
     

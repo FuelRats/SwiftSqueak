@@ -25,8 +25,11 @@
 import Foundation
 import NIO
 import AsyncHTTPClient
+import IRCKit
 
 class QueueAPI {
+    static var pendingQueueJoins: [String: EventLoopPromise<Void>] = [:]
+    
     static var decoder: JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .formatted(.iso8601Full)
@@ -60,7 +63,8 @@ class QueueAPI {
     }
     
     @discardableResult
-    static func dequeue () -> EventLoopFuture<QueueParticipant> {
+    static func dequeue (existingPromise: EventLoopPromise<QueueParticipant>? = nil) -> EventLoopFuture<QueueParticipant> {
+        let promise = existingPromise ?? loop.next().makePromise(of: QueueParticipant.self)
         var requestUrl = configuration.queue!.url.appendingPathComponent("/queue")
         requestUrl.appendPathComponent("/dequeue")
 
@@ -68,7 +72,23 @@ class QueueAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
 
-        return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder)
+        httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder).whenComplete({ result in
+            switch result {
+            case .failure(let error):
+                promise.fail(error)
+                
+            case .success(let participant):
+                awaitQueueJoin(participant: participant).whenComplete({ result in
+                    switch result {
+                    case .failure(_):
+                        dequeue(existingPromise: promise)
+                    case .success(_):
+                        promise.succeed(participant)
+                    }
+                })
+            }
+        })
+        return promise.futureResult
     }
     
     @discardableResult
@@ -83,6 +103,28 @@ class QueueAPI {
 
         return httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: QueueAPI.decoder)
     }
+    
+    static func awaitQueueJoin (participant: QueueParticipant) -> EventLoopFuture<Void> {
+        let future = loop.next().makePromise(of: Void.self)
+        
+        // Immedately resolve if client is already being rescued
+        if mecha.rescueBoard.rescues.first(where: { $0.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+            future.succeed(())
+        }
+        
+        // Add a reference of pending client joins
+        QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] = future
+        
+        // Make a 15 second timeout where mecha will give up on the client joining
+        loop.next().scheduleTask(in: .seconds(15), {
+            if let promise = QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] {
+                promise.fail(ClientJoinError.joinFailed)
+                RescueBoard.pendingClientJoins.removeValue(forKey: participant.client.name.lowercased())
+            }
+        })
+        
+        return future.futureResult
+    }
 }
 
 struct QueueAPIConfiguration: Codable {
@@ -91,4 +133,3 @@ struct QueueAPIConfiguration: Codable {
     let prioritizeCr: Bool
     let prioritizeNonCr: Bool
 }
-

@@ -27,10 +27,14 @@ import IRCKit
 import NIO
 
 class QueueCommands: IRCBotModule {
+    static var maxClientsCount: Int = 15
     var name: String = "QueueCommands"
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
+        QueueAPI.getConfig().whenSuccess({
+            QueueCommands.maxClientsCount = $0.maxActiveClients
+        })
     }
     
     @BotCommand(
@@ -43,14 +47,14 @@ class QueueCommands: IRCBotModule {
     )
     var didReceiveQueueCommand = { command in
         QueueAPI.fetchQueue().whenSuccess({ queue in
-            let queueItems = queue.filter({ $0.inProgress == false })
+            let queueItems = queue.filter({ $0.inProgress == false && $0.pending == false })
             guard queueItems.count > 0 else {
                 command.message.reply(key: "queue.none", fromCommand: command)
                 return
             }
             
-            let queueCount = queue.count
-            let waitTimes = queue.map({ Date().timeIntervalSince($0.arrivalTime) }).sorted()
+            let queueCount = queueItems.count
+            let waitTimes = queueItems.map({ Date().timeIntervalSince($0.arrivalTime) }).sorted()
             let longestWait = waitTimes.last!
             let averageWait = waitTimes.reduce(0.0, { $0 + $1 }) / Double(waitTimes.count)
             
@@ -83,27 +87,30 @@ class QueueCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["maxclients", "maxload"],
+        ["maxclients", "maxload", "maxcases"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,
         description: "See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value",
         permission: .DispatchWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        cooldown: .seconds(60)
     )
     var didReceiveMaxClientsCommand = { command in
         if let queueSizeString = command.param1 {
-            guard let queueSize = Int(queueSizeString), (0...25).contains(queueSize) else {
+            guard let queueSize = Int(queueSizeString), (5...20).contains(queueSize) else {
                 command.message.error(key: "maxclients.invalid", fromCommand: command)
                 return
             }
             
             QueueAPI.setMaxActiveClients(queueSize).whenSuccess({ _ in
+                QueueCommands.maxClientsCount = queueSize
                 command.message.reply(key: "maxclients.set", fromCommand: command, map: [
                     "count": queueSize
                 ])
             })
         } else {
             QueueAPI.getConfig().whenSuccess({ config in
+                QueueCommands.maxClientsCount = config.maxActiveClients
                 command.message.reply(key: "maxclients.get", fromCommand: command, map: [
                     "count": config.maxActiveClients
                 ])

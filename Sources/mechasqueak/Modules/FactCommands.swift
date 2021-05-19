@@ -410,6 +410,13 @@ class FactCommands: IRCBotModule {
                     sendFact(command: command, message: message)
                 }
             } else {
+                if command.command == "pcteam" && targets.contains(where: { $1?.odyssey == false }) {
+                    command.command = "pcwing"
+                }
+                if command.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
+                    command.command = "pcteam"
+                }
+                
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }

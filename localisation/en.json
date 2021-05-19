@@ -362,7 +362,7 @@
   
   "maxclients.invalid": "Parameter must be a number between 5 and 25",
   "maxclients.set": "Maximum clients set to: %{count}",
-  "maxclients.get": "The current maximum clients is currently: %{count}",
+  "maxclients.get": "The maximum clients is currently: %{count}",
   
   "dequeue.error": "Could not dequeue any client",
   "dequeue.success": "Successfully dequeued client",
