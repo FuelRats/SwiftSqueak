@@ -45,14 +45,16 @@ extension HTTPClient {
         httpClient.execute(request: request, deadline: deadline).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success(let response):
-
                     do {
                         let result = try decoder.decode(D.self, from: Data(buffer: response.body!))
                         promise.succeed(result)
                     } catch {
+                        debug(String(data: Data(buffer: response.body!), encoding: .utf8) ?? "")
+                        debug(String(describing: error))
                         promise.fail(error)
                     }
                 case .failure(let restError):
+                    debug(String(describing: restError))
                     promise.fail(restError)
             }
         }
