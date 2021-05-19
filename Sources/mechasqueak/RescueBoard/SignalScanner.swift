@@ -29,10 +29,12 @@ struct SignalScanner {
     private static let platformExpression = "\\b(?:platform(?:\\: )?)?(pc|xbox one|xbox|xb1|xb|playstation(?: 4)?|ps4|ps5|ps)\\b".r!
     private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b".r!
     private static let oxygenExpression = "\\b(?:(?:o2|oxygen)(?:\\:)? )?(ok|not ok|code red|cr)\\b".r!
+    private static let odysseyExpression = "\\b(odyssey)\\b".r!
 
     var system: String?
     let platform: String?
     let crStatus: String?
+    var odyssey: Bool
 
     var isCodeRed: Bool {
         if let crText = self.crStatus {
@@ -72,23 +74,29 @@ struct SignalScanner {
             self.crStatus = nil
         }
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if let odysseyMatch = SignalScanner.odysseyExpression.findFirst(in: message) {
+            self.odyssey = true
+            message = message.replacingOccurrences(of: odysseyMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
+        } else {
+            self.odyssey = false
+        }
+        message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let range = message.range(of: "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b", options: .regularExpression) {
             self.system = String(message[range])
         } else {
             self.system = nil
         }
-        if self.system == nil, let firstItem = message.firstIndex(of: "|") {
-            let probableSystem = message[message.startIndex...firstItem].dropLast().trimmingCharacters(in: .whitespaces)
-            if probableSystem.components(separatedBy: " ").count < 4 && probableSystem.count > 0 {
-                self.system = String(probableSystem)
-            }
-        }
-        if self.system == nil, let lastItem = message.lastIndex(of: "|") {
-            let probableSystem = message[lastItem..<message.endIndex].dropFirst().trimmingCharacters(in: .whitespaces)
-            if probableSystem.components(separatedBy: " ").count < 4 && probableSystem.count > 0 {
-                self.system = String(probableSystem)
-            }
+        
+        if self.system == nil {
+            self.system = message.components(separatedBy: "|").reduce(nil, { (system: String?, currentComponent: String) -> String? in
+                let probableSystem = currentComponent.trimmingCharacters(in: CharacterSet.whitespaces.union(CharacterSet.punctuationCharacters))
+                if probableSystem.components(separatedBy: " ").count < 6 && probableSystem.count > 0 {
+                    return probableSystem
+                }
+                return system
+            })
         }
     }
 }

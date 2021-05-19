@@ -44,6 +44,12 @@ class NicknameLookupManager {
         guard user.account != nil else {
             return
         }
+        
+        guard hasExistingFetchOperation(user: user) == false else {
+            debug("Ignoring fetch for \(user.nickname) due to existing fetch operation")
+            return
+        }
+        
         let operation = NicknameLookupOperation(user: user)
 
         operation.onCompletion = { apiNick in
@@ -69,11 +75,6 @@ class NicknameLookupManager {
             return
         }
 
-        guard hasExistingFetchOperation(user: user) == false else {
-            debug("Ignoring fetch for \(user.nickname) due to existing fetch operation")
-            return
-        }
-
         lookup(user: user)
     }
 
@@ -81,6 +82,18 @@ class NicknameLookupManager {
         return self.queue.operations.contains(where: {
             $0.name == user.account
         })
+    }
+    
+    @EventListener<RatSocketUserUpdatedNotification>
+    var onRemoteUserUpdate = { userUpdateEvent in
+        guard let userId = UUID(uuidString: userUpdateEvent.resourceIdentifier ?? "") else {
+            return
+        }
+        
+        let users = mecha.reportingChannel?.members ?? []
+        for user in users.filter({ $0.associatedAPIData?.user?.id.rawValue == userId }) {
+            MechaSqueak.accounts.lookup(user: user)
+        }
     }
 }
 

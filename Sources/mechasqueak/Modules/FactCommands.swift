@@ -30,7 +30,7 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
-    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "queue"]
+    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue"]
 
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
@@ -370,6 +370,11 @@ class FactCommands: IRCBotModule {
                 ])
             }
             
+            
+            if command.command == "kgbfoam" && targets.contains(where: { $1?.odyssey == true }) {
+                command.command = "newkgbfoam"
+            }
+            
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
                 for platform in GamePlatform.allCases {
                     let platformTargets = targets.filter({ $0.1?.platform == platform })
@@ -381,6 +386,12 @@ class FactCommands: IRCBotModule {
                     smartCommand.command = "\(platform.factPrefix)\(command.command)"
                     if command.command == "fr" && platform == .PC && targets.contains(where: { $1?.codeRed ?? false == true }) {
                         smartCommand.command += "cr"
+                    }
+                    if smartCommand.command == "pcteam" && targets.contains(where: { $1?.odyssey == false }) {
+                        smartCommand.command = "pcwing"
+                    }
+                    if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
+                        smartCommand.command = "pcteam"
                     }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
@@ -399,6 +410,13 @@ class FactCommands: IRCBotModule {
                     sendFact(command: command, message: message)
                 }
             } else {
+                if command.command == "pcteam" && targets.contains(where: { $1?.odyssey == false }) {
+                    command.command = "pcwing"
+                }
+                if command.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
+                    command.command = "pcteam"
+                }
+                
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }

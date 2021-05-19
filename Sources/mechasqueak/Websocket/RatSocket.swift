@@ -26,12 +26,14 @@ import Foundation
 import NIOHTTP1
 import IRCKit
 import WebSocketKit
+import NIO
 
 enum RatSocketEventType: String {
     case connection
     case rescueCreated = "fuelrats.rescuecreate"
     case rescueUpdated = "fuelrats.rescueupdate"
     case rescueDeleted = "fuelrats.rescuedelete"
+    case userUpdated = "fuelrats.userupdate"
     case channelMessage = "mechasqueak.channelmessage"
 }
 
@@ -44,8 +46,12 @@ class RatSocket {
     }
     
     func connect () {
-        WebSocket.connect(to: URL(string: "\(configuration.api.url)?bearer=\(configuration.api.token)")!, headers: HTTPHeaders([("Sec-Websocket-Protocol", "FR-JSONAPI-WS")]), on: loop) { ws in
+        WebSocket.connect(to: URL(string: "\(configuration.api.websocket!)")!, headers: HTTPHeaders([
+            ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
+            ("x-bearer", configuration.api.token)
+        ]), on: loop) { ws in
             self.socket = ws
+            
             ws.onText(self.websocketDidReceiveMessage)
         }.whenComplete({ result in
             switch result {
@@ -89,6 +95,7 @@ class RatSocket {
     }
 
     func websocketDidReceiveMessage (socket: WebSocket, text: String) {
+        debug(text)
         guard let data = text.data(using: .utf8), let initialField = RatSocket.getInitialField(from: data) else {
             return
         }
@@ -107,6 +114,9 @@ class RatSocket {
 
                 case .rescueDeleted:
                     RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
+                    
+                case .userUpdated:
+                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
 
                 default:
                     break
@@ -255,3 +265,4 @@ struct ChannelMessageEventPayload: Codable {
         }
     }
 }
+

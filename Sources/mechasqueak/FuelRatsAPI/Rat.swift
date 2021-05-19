@@ -32,9 +32,10 @@ enum RatDescription: ResourceObjectDescription {
     public static var jsonType: String { return "rats" }
 
     public struct Attributes: JSONAPI.Attributes {
-        public let name: Attribute<String>
+        public var name: Attribute<String>
         public var data: Attribute<RatDataObject>
-        public let platform: Attribute<GamePlatform>
+        public var platform: Attribute<GamePlatform>
+        public var odyssey: Attribute<Bool>
         public let frontierId: Attribute<String>?
         public let createdAt: Attribute<Date>
         public let updatedAt: Attribute<Date>
@@ -130,6 +131,11 @@ extension Rat {
             }
         }
         return promise.futureResult
+    }
+    
+    func setIsUsingOdyssey (_ isUsingOdyssey: Bool) -> EventLoopFuture<Void> {
+        let updatedRat = self.tappingAttributes({ $0.odyssey = .init(value: isUsingOdyssey) })
+        return updatedRat.update()
     }
 }
 

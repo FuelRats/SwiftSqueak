@@ -14,6 +14,7 @@
     
     "api": {
         "url": "https://api.fuelrats.com",
+        "wss": "wss://api.fuelrats.com",
         "userId": "1baf04fe-a1ae-4600-9f63-105be092ebb5",
         "token": "hunter2"
     },
@@ -30,7 +31,8 @@
         "signature": "hunter2"
     },
     "queue": {
-        "url": "",
+        "url": "https://api.qms.fuelrats.dev/api/v1",
+        "token": "hunter2",
     },
     "documentationPath": "file:///Users/bob/mechasqueak",
     "connections": [{

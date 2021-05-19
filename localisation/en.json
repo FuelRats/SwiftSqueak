@@ -26,6 +26,8 @@
   "jumpcall.notprepped": "CAUTION: You have called jumps for a case where the client has not been !prep'd or told to logout. The first rat to respond to a case should always take care of this beforehand.",
   "jumpcall.permit": "CAUTION: You have called jumps for case #%{caseId} which requires %{permit} permit, make sure you have access to this system.",
   "jumpcall.publicpermit": "CAUTION: %{nick} does not have the %{permit} permit required by case #%{caseId}.",
+  "jumpcall.clientodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is using Odyssey, but the rat is not marked as being an Odyssey user",
+  "jumpcall.ratodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is NOT using Odyssey, but the rat is marked as being an Odyssey user",
   
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
@@ -102,6 +104,9 @@
   "board.toggleactive": "Status of case #%{caseId} (%{client}) set to: %{status}.",
   "board.toggleactivemsg": "Status of case #%{caseId} (%{client}) set to: %{status} with message \"%{message}\"",
   "board.nopermission": "%{nick} is not in the sudoers file. This incident will be reported.",
+  "board.toggleodyssey.on": "Case #%{caseId} (%{client}) is marked as using Odyssey",
+  "board.toggleodyssey.off": "Case #%{caseId} (%{client}) is marked as not using Odyssey",
+  "board.toggleodyssey.platform": "Only PC cases can be marked as Odyssey cases",
   
   "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}",
   "board.syschange.autocorrect": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo} \u000304(Automatically corrected)\u0003",
@@ -172,6 +177,7 @@
   "board.close.conflict": "You attempted to close case #%{closeCaseId} to %{rat} but they belong to case #%{conflictId}. If this is not an error, send the same command again within the next 30 seconds.",
   "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
   "board.close.firstLimpetPaperwork": "Here is your paperwork for case #%{caseId} (%{client}): %{link}",
+  "board.close.reportFirstlimpet.aleethia": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Continue ignoring the paperwork: %{link}",
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
@@ -350,6 +356,18 @@
   "delpermit.nopermit": "No permit by that name is currently added to your CMDR",
   "delpermit.removed": "Removed %{permit} Permit from CMDR %{name}",
 
+  "useodyssey.norat": "Could not determine a valid rat to change Odyssey status for",
+  "useodyssey.odyssey": "Changed rat %{name} to use Odyssey",
+  "useodyssey.horizons": "Changed rat %{name} to use Horizons",
+  
+  "maxclients.invalid": "Parameter must be a number between 5 and 25",
+  "maxclients.set": "Maximum clients set to: %{count}",
+  "maxclients.get": "The maximum clients is currently: %{count}",
+  
+  "dequeue.error": "Could not dequeue any client",
+  "dequeue.success": "Successfully dequeued client",
+  "queue.none": "The queue is currently empty",
+  "queue.info": "There are currently %{count} clients in the queue. Average Wait Time: %{average}. Longest Wait Time: %{longest}.",
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.webpage": "A list of commands are also available at: https://t.fuelr.at/mechacmd",
@@ -368,6 +386,7 @@
   "help.category.management": "Admin Commands to manage MechaSqueak and the API",
   "help.category.other": "Commands that don't fit into any category",
   "help.category.account": "Commands to manage your Fuel Rats account",
+  "help.category.queue": "Commands to manage the client queue",
 
   "help.command.list.r": "Show only with assigned rats",
   "help.command.list.u": "Show only with no assigned rats",
@@ -391,6 +410,7 @@
   "help.command.anyfact.locales": "Get all the locales available for this fact",
   "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option.",
   "help.command.announce.cr": "Announces the rescue as a code red",
+  "help.command.announce.odyssey": "announces the rescue as an odyssey client",
   "help.command.clientpw.all": "Lists ALL previous cases for this client",
   "help.command.inject.f": "Forces a new case to be created from this inject bypassing all restrictions",
   "help.command.system.f": "Prevents Mecha from automatically correcting the system name",
@@ -401,10 +421,32 @@
   "help.command.station.l": "Require the station to have a size L (large) landing pad",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
+  "announcement.odyssey": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} (Odyssey) - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announce.invalidchannel": "Invalid channel given to announce command",
   "announce.invalidplatform": "Invalid platform given to announce command",
   "announce.success": "Sending announcement to %{channel} for client %{client}, system \"%{system}\" on %{platform} and O2 status %{crStatus}",
   "savelogs.saved": "Logs saved: %{url}",
   "savelogs.started": "Logging session started",
-  "savelogs.notfound": "I did not find a session in this channel to save"
+  "savelogs.notfound": "I did not find a session in this channel to save",
+  
+  "timeago.second": {
+      "one": "%{time} second",
+      "other": "%{time} seconds",
+  },
+  "timeago.minute": {
+      "one": "%{time} minute",
+      "other": "%{time} minutes",
+  },
+  "timeago.hour": {
+      "one": "%{time} hour",
+      "other": "%{time} hours",
+  },
+  "timeago.day": {
+      "one": "%{time} day",
+      "other": "%{time} days",
+  },
+  "timeago.week": {
+      "one": "%{time} week",
+      "other": "%{time} weeks",
+  },
 }

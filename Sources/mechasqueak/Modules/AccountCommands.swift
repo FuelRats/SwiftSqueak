@@ -336,5 +336,46 @@ class AccountCommands: IRCBotModule {
         })
     }
     
-
+    @BotCommand(
+        ["useodyssey"],
+        category: .account,
+        description: "Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveUseOdysseyCommand = { command in
+        guard let currentRat = command.message.user.getRatRepresenting(platform: .PC) else {
+            command.message.replyPrivate(key: "useodyssey.norat", fromCommand: command)
+            return
+        }
+        
+        let isUsingOdyssey = !currentRat.attributes.odyssey.value
+        currentRat.setIsUsingOdyssey(true).whenSuccess({
+            command.message.reply(key: "useodyssey.odyssey", fromCommand: command, map: [
+                "name": currentRat.attributes.name.value
+            ])
+            command.message.user.flush()
+        })
+    }
+    
+    @BotCommand(
+        ["usehorizons"],
+        category: .account,
+        description: "Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveUseHorizonsCommand = { command in
+        guard let currentRat = command.message.user.getRatRepresenting(platform: .PC) else {
+            command.message.replyPrivate(key: "useodyssey.norat", fromCommand: command)
+            return
+        }
+        
+        currentRat.setIsUsingOdyssey(false).whenSuccess({
+            command.message.reply(key: "useodyssey.horizons", fromCommand: command, map: [
+                "name": currentRat.attributes.name.value
+            ])
+            command.message.user.flush()
+        })
+    }
 }

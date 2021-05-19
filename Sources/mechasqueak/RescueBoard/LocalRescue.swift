@@ -29,7 +29,7 @@ import IRCKit
 import NIO
 
 class LocalRescue {
-    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: (.*) - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
+    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
     var clientHost: String?
@@ -47,6 +47,7 @@ class LocalRescue {
     var codeRed: Bool
     var notes: String
     var platform: GamePlatform?
+    var odyssey: Bool
     var quotes: [RescueQuote]
     var status: RescueStatus
     var system: StarSystem?
@@ -89,18 +90,19 @@ class LocalRescue {
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
+        self.odyssey = match.group(at: 4) != nil
 
-        let o2StatusString = match.group(at: 4)!
+        let o2StatusString = match.group(at: 5)!
         if o2StatusString.uppercased() == "NOT OK" {
             self.codeRed = true
         } else {
             self.codeRed = false
         }
 
-        let languageCode = match.group(at: 5)!
+        let languageCode = match.group(at: 6)!
         self.clientLanguage = Locale(identifier: languageCode)
 
-        self.clientNick = match.group(at: 6) ?? client
+        self.clientNick = match.group(at: 7) ?? client
 
         self.notes = ""
         self.quotes = [(RescueQuote(
@@ -142,6 +144,7 @@ class LocalRescue {
         if let platformString = signal.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
+        self.odyssey = signal.odyssey
 
         self.codeRed = signal.isCodeRed
 
@@ -190,6 +193,12 @@ class LocalRescue {
         if let platformString = input.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
+        
+        if self.platform == .PC {
+            self.odyssey = input.odyssey
+        } else {
+            self.odyssey = false
+        }
 
         self.codeRed = input.isCodeRed
         self.notes = ""
@@ -225,6 +234,7 @@ class LocalRescue {
         } else {
             self.system = nil
         }
+        self.odyssey = attr.odyssey.value
         self.system?.permit = attr.data.value.permit
         self.system?.landmark = attr.data.value.landmark
         self.quotes = attr.quotes.value
@@ -267,6 +277,7 @@ class LocalRescue {
                 )),
                 notes: .init(value: localRescue.notes),
                 platform: .init(value: localRescue.platform),
+                odyssey: .init(value: localRescue.odyssey),
                 system: .init(value: localRescue.system?.name),
                 quotes: .init(value: localRescue.quotes),
                 status: .init(value: localRescue.status),
@@ -366,6 +377,12 @@ class LocalRescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
+                    QueueAPI.fetchQueue().whenSuccess({
+                        $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
+                    })
+                    if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                        QueueAPI.dequeue()
+                    }
                     onComplete()
                 case .failure(let error):
                     debug(String(describing: error))
@@ -395,7 +412,7 @@ class LocalRescue {
                 return assigns
             }
 
-            guard let rat = nick.getRatRepresenting(platform: self.platform) else {
+            guard let rat = nick.getRatRepresenting(platform: self.platform), rat.attributes.odyssey.value == self.odyssey else {
                 guard assigns.unidentifiedRats.contains(param) == false && self.unidentifiedRats.contains(param) == false else {
                     assigns.unidentifiedDuplicates.insert(param)
                     return assigns
@@ -426,9 +443,6 @@ class LocalRescue {
         })
 
         if assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 {
-            if self.status == .Queued {
-                self.status = .Open
-            }
             self.rats.append(contentsOf: assigns.rats)
             if force || configuration.general.drillMode {
                 self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
@@ -472,6 +486,12 @@ class LocalRescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
+                    QueueAPI.fetchQueue().whenSuccess({
+                        $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
+                    })
+                    if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                        QueueAPI.dequeue()
+                    }
                     onComplete()
                 case .failure(let error):
                     debug(String(describing: error))

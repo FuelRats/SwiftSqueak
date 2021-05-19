@@ -216,9 +216,13 @@ class BoardCommands: IRCBotModule {
                 url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!,
                 complete: { shortUrl in
                 if let firstLimpet = firstLimpet {
+                    var key = "board.close.reportFirstlimpet"
+                    if firstLimpet.id.rawValue == UUID(uuidString: "75c90d14-5b45-4054-a391-47c70162de78") {
+                        key += ".aleethia"
+                    }
                     message.client.sendMessage(
                         toChannelName: configuration.general.reportingChannel,
-                        withKey: "board.close.reportFirstlimpet",
+                        withKey: key,
                         mapping: [
                             "caseId": rescue.commandIdentifier,
                             "firstLimpet": target,

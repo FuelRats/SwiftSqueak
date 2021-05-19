@@ -48,6 +48,9 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
+            if mecha.rescueBoard.activeCases < QueueCommands.maxClientsCount {
+                QueueAPI.dequeue()
+            }
         }
 
         let status = String(describing: rescue.status)
@@ -71,68 +74,6 @@ class BoardAttributeCommands: IRCBotModule {
             "caseId": rescue.commandIdentifier,
             "client": rescue.client!,
             "message": message
-        ])
-
-        rescue.syncUpstream(fromCommand: command)
-    }
-
-    @BotCommand(
-        ["queue"],
-        [.param("case id/client", "4")],
-        category: .board,
-        description: "Add a rescue to the queue list, informing the client.",
-        permission: .DispatchWrite,
-        allowedDestinations: .Channel
-    )
-    var didReceiveQueueCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
-            return
-        }
-
-        guard rescue.status != .Queued else {
-            command.message.error(key: "board.queue.already", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
-            ])
-            return
-        }
-        rescue.status = .Queued
-
-        Fact.getWithFallback(name: "pqueue", forLcoale: command.locale).whenSuccess { fact in
-            guard let fact = fact else {
-                return
-            }
-
-            let target = rescue.clientNick ?? ""
-            command.message.reply(message: "\(target): \(fact.message)")
-        }
-
-        rescue.syncUpstream(fromCommand: command)
-    }
-
-    @BotCommand(
-        ["dequeue", "unqueue"],
-        [.param("case id/client", "4")],
-        category: .board,
-        description: "Remove a rescue from the queue list, informing the client.",
-        permission: .DispatchWrite,
-        allowedDestinations: .Channel
-    )
-    var didReceiveDequeueCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
-            return
-        }
-
-        guard rescue.status == .Queued else {
-            command.message.error(key: "board.dequeue.already", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
-            ])
-            return
-        }
-        rescue.status = .Open
-
-        command.message.reply(key: "board.dequeue.response", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.client!
         ])
 
         rescue.syncUpstream(fromCommand: command)
@@ -204,6 +145,9 @@ class BoardAttributeCommands: IRCBotModule {
         let client = command.parameters[1]
 
         rescue.client = client
+        QueueAPI.fetchQueue().whenSuccess({
+            $0.first(where: { $0.client.name == oldClient })?.changeName(name: client)
+        })
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
             "caseId": rescue.commandIdentifier,
@@ -349,6 +293,35 @@ class BoardAttributeCommands: IRCBotModule {
         command.message.reply(key: "board.title.set", fromCommand: command, map: [
             "caseId": rescue.commandIdentifier,
             "title": title
+        ])
+
+        rescue.syncUpstream(fromCommand: command)
+    }
+    
+    @BotCommand(
+        ["odyssey", "horizon", "horizons"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Toggle a case between odyssey or not odyssey",
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveToggleOdysseycommand = { command in
+        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        rescue.odyssey = !rescue.odyssey
+        
+        if rescue.odyssey && rescue.platform != .PC {
+            command.message.error(key: "board.toggleodyssey.platform", fromCommand: command)
+            return
+        }
+        
+        let key = "board.toggleodyssey." + (rescue.odyssey ? "on" : "off")
+        command.message.reply(key: key, fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier,
+            "client": rescue.clientDescription
         ])
 
         rescue.syncUpstream(fromCommand: command)

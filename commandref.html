@@ -278,48 +278,6 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!queue <span style="color: rgb(122,134,154);"></span>&lt;case id/client&gt; </span></span></h3>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Add a rescue to the queue list, informing the client.</span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
-        </span>
-      </span>
-    </p>
-    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!queue 4</span>
-        </span>
-      </span>
-    </p>
-      <br/><h3>
-<span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!dequeue <span style="color: rgb(122,134,154);"></span>&lt;case id/client&gt; </span></span></h3>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Aliases</strong>: !unqueue
-        </span>
-      </span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Remove a rescue from the queue list, informing the client.</span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
-        </span>
-      </span>
-    </p>
-    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!dequeue 4</span>
-        </span>
-      </span>
-    </p>
-      <br/><h3>
-<span style="color: rgb(0,0,0);text-decoration: none;">
     <span style="text-decoration: none;">!cmdr <span style="color: rgb(122,134,154);"></span>&lt;case id/client&gt; &lt;new name...&gt; </span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
@@ -435,6 +393,30 @@
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
           <span style="color: rgb(0,0,0);text-decoration: none;">!title 4 Beyond the Void</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!odyssey <span style="color: rgb(122,134,154);"></span>&lt;case id/client&gt; </span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !horizon !horizons
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Toggle a case between odyssey or not odyssey</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!odyssey 4</span>
         </span>
       </span>
     </p>
@@ -835,6 +817,79 @@
     </p>
       <br/>
     <br/>    <h2>
+      <span style="color: rgb(0,0,0);">Queue</span>
+    </h2>
+    <p>
+      <strong>
+        <span style="color: rgb(0,0,0);">
+          <span style="text-decoration: none;">Commands to manage the client queue</span>
+        </span>
+      </strong>
+    </p>
+    <h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!queue <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Get current information on the queue</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!queue </span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!dequeue <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Manually move the next client from the queue into the rescue channel</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!dequeue </span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!maxclients <span style="color: rgb(122,134,154);"></span><span style="color: rgb(122,134,154);">
+    <em>[number of clients]</em>
+</span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !maxload !maxcases
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!maxclients 10</span>
+        </span>
+      </span>
+    </p>
+      <br/>
+    <br/>    <h2>
       <span style="color: rgb(0,0,0);">Facts</span>
     </h2>
     <p>
@@ -1147,12 +1202,14 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!announce <span style="color: rgb(122,134,154);"><em>[--cr] </em></span>&lt;channel&gt; &lt;client name&gt; &lt;client nick&gt; &lt;PC/XB/PS&gt; &lt;system...&gt; </span></span></h3>    <p style="margin-left: 30.0px;">
+    <span style="text-decoration: none;">!announce <span style="color: rgb(122,134,154);"><em>[--cr] </em><em>[--odyssey] </em></span>&lt;channel&gt; &lt;client name&gt; &lt;client nick&gt; &lt;PC/XB/PS&gt; &lt;system...&gt; </span></span></h3>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;">Create a rescue announcement in a drill channel</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;">Options:</span>
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--cr</strong> Announces the rescue as a code red</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--odyssey</strong> announces the rescue as an odyssey client</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -1595,6 +1652,42 @@
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
           <span style="color: rgb(0,0,0);text-decoration: none;">!delpermit Pilot's Federation District</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!useodyssey <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!useodyssey </span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!usehorizons <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!usehorizons </span>
         </span>
       </span>
     </p>

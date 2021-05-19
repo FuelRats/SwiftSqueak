@@ -38,6 +38,7 @@ class RescueBoard {
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
     var recentlyClosed = [Int: LocalRescue]()
+    static var pendingClientJoins: [String: (EventLoopPromise<Void>, LocalRescue)] = [:]
     
     var lastPaperworkReminder: [UUID: Date] = [:]
 
@@ -104,6 +105,10 @@ class RescueBoard {
             }
         }
     }
+    
+    var activeCases: Int {
+        return self.rescues.filter({ $0.status == .Open }).count
+    }
 
     func findRescue (withCaseIdentifier caseIdentifier: String) -> LocalRescue? {
         var caseIdentifier = caseIdentifier
@@ -165,6 +170,12 @@ class RescueBoard {
             if rescue.platform != existingRescue.platform && rescue.platform != nil, rescue.platform != .PC {
                 changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
             }
+            
+            if rescue.odyssey != existingRescue.odyssey {
+                let currentExpansion = existingRescue.odyssey ? "Odyssey" : "Horizons"
+                let newExpansion = rescue.odyssey ? "Odyssey" : "Horizons"
+                changes.append("\(IRCFormat.bold("Expansion:")) \(currentExpansion) -> \(newExpansion)")
+            }
             if rescue.system != nil && rescue.system?.name != existingRescue.system?.name {
                 changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)")
                 if let system = rescue.system, rescue.system?.isConfirmed == false {
@@ -198,166 +209,182 @@ class RescueBoard {
             return
         }
         
-        if let recentRescue = recentlyClosed.first(where: {
-            $0.value.client == rescue.client && Date().timeIntervalSince($0.value.updatedAt) < 900
-        }), configuration.general.drillMode == false, initiated != .insertion {
-            FuelRatsAPI.getRescue(id: recentRescue.value.id, complete: { result in
-                let apiRescue = result.body.data!.primary.value
-                let rats = result.assignedRats()
-                let firstLimpet = result.firstLimpet()
-
-                let rescue = LocalRescue(
-                    fromAPIRescue: apiRescue,
-                    withRats: rats,
-                    firstLimpet: firstLimpet,
-                    onBoard: mecha.rescueBoard
-                )
-                if rescue.hasConflictingId(inBoard: mecha.rescueBoard) {
-                    rescue.commandIdentifier = mecha.rescueBoard.getNewIdentifier()
-                }
-                rescue.outcome = nil
-                rescue.status = .Open
-
-                mecha.rescueBoard.rescues.append(rescue)
-                rescue.syncUpstream()
-                message.reply(message: lingo.localize("rescue.reopen.opened", locale: "en-GB", interpolations: [
-                    "id": recentRescue.value.id.ircRepresentation,
-                    "caseId": rescue.commandIdentifier
-                ]))
-            }, error: { _ in
-            })
-            
-            return
-        }
-        
-        var even: Bool? = nil
-        if initiated == .insertion {
-            if message.user.nickname.lowercased().contains("even") {
-                even = true
-            } else if message.user.nickname.lowercased().contains("odd") {
-                even = false
-            }
-        }
-
-        let identifier = self.getNewIdentifier(even: even)
-        rescue.commandIdentifier = identifier
-        self.recentIdentifiers.removeAll(where: { $0 == identifier })
-        self.recentIdentifiers.append(identifier)
-        self.lastSignalReceived = Date()
-        
-        
-        if initiated == .announcer, let clientNick = rescue.clientNick ?? rescue.client {
-            guard rescue.channel?.member(named: clientNick) != nil || configuration.general.drillMode else {
+        awaitClientJoin(name: rescue.clientNick ?? rescue.client ?? "", forRescue: rescue).whenComplete({ result in
+            switch result {
+            case .failure(_):
                 message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
-                return
-            }
-        }
-
-        if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
-            prepTimers[rescue.id] = group.next().scheduleTask(in: .seconds(180), {
-                if rescue.codeRed == false || rescue.status == .Inactive {
-                    message.reply(message: lingo.localize("board.notprepped", locale: "en-GB", interpolations: [
-                        "caseId": rescue.commandIdentifier
-                    ]))
+                
+            case .success(_):
+                if initiated == .announcer && configuration.queue != nil {
+                    if let promise = QueueAPI.pendingQueueJoins.first(where: {
+                        $0.key.lowercased() == rescue.client?.lowercased()
+                    }) {
+                        promise.value.succeed(())
+                        QueueAPI.pendingQueueJoins.removeValue(forKey: rescue.client!.lowercased())
+                    }
+                    QueueAPI.fetchQueue().whenSuccess({ queue in
+                        queue.first(where: { $0.client.name.lowercased() == rescue.client?.lowercased() })?.setInProgress()
+                    })
                 }
-            })
-        }
+                
+                if let (_, recentRescue) = self.recentlyClosed.first(where: {
+                    $0.value.client == rescue.client && Date().timeIntervalSince($0.value.updatedAt) < 900
+                }), configuration.general.drillMode == false, initiated != .insertion {
+                    if recentRescue.quotes.contains(where: { $0.message.contains("fuel+") }) == false {
+                        FuelRatsAPI.getRescue(id: recentRescue.id, complete: { result in
+                            let apiRescue = result.body.data!.primary.value
+                            let rats = result.assignedRats()
+                            let firstLimpet = result.firstLimpet()
 
-        self.rescues.append(rescue)
+                            let rescue = LocalRescue(
+                                fromAPIRescue: apiRescue,
+                                withRats: rats,
+                                firstLimpet: firstLimpet,
+                                onBoard: mecha.rescueBoard
+                            )
+                            if rescue.hasConflictingId(inBoard: mecha.rescueBoard) {
+                                rescue.commandIdentifier = mecha.rescueBoard.getNewIdentifier()
+                            }
+                            rescue.outcome = nil
+                            rescue.status = .Open
 
-        let announceType = initiated == .signal ? "signal" : "announce"
-
-        let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
-        let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
-
-        if let clientName = rescue.client, configuration.general.drillMode == false {
-            FuelRatsAPI.getRescuesForClient(client: clientName, complete: { result in
-                let recencyDate = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
-                let recentRescues = result.body.data?.primary.values.filter({
-                    $0.attributes.createdAt.value > recencyDate
-                }) ?? []
-                if recentRescues.count >= 3 {
-                    mecha.reportingChannel?.client.sendMessage(
-                        toChannelName: "#operations",
-                        withKey: "board.frequentclient",
-                        mapping: [
-                            "client": clientName,
-                            "caseId": rescue.commandIdentifier,
-                            "count": recentRescues.count
-                        ]
-                    )
+                            mecha.rescueBoard.rescues.append(rescue)
+                            rescue.syncUpstream()
+                            message.reply(message: lingo.localize("rescue.reopen.opened", locale: "en-GB", interpolations: [
+                                "id": recentRescue.id.ircRepresentation,
+                                "caseId": rescue.commandIdentifier
+                            ]))
+                        }, error: { _ in
+                        })
+                        return
+                    }
                 }
-            })
-        }
+                
+                var even: Bool? = nil
+                if initiated == .insertion {
+                    if message.user.nickname.lowercased().contains("even") {
+                        even = true
+                    } else if message.user.nickname.lowercased().contains("odd") {
+                        even = false
+                    }
+                }
 
-        guard var system = rescue.system else {
-            let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
-                "signal": configuration.general.signal.uppercased(),
-                "platform": rescue.platform.ircRepresentable,
-                "rescue": rescue,
-                "system": rescue.system as Any,
-                "language": language,
-                "platformSignal": rescue.platform?.signal ?? "",
-                "initiated": initiated,
-                "langCode": languageCode
-            ])
-            message.reply(message: signal)
-            rescue.createUpstream()
-            self.prepClient(rescue: rescue, message: message, initiated: initiated)
-            return
-        }
+                let identifier = self.getNewIdentifier(even: even)
+                rescue.commandIdentifier = identifier
+                self.recentIdentifiers.removeAll(where: { $0 == identifier })
+                self.recentIdentifiers.append(identifier)
+                self.lastSignalReceived = Date()
+                
 
-        
-        
-        if let systemName = rescue.system?.name, let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
-            rescue.system?.name = correction
-            if let body = procedural.systemBody {
-                rescue.system?.clientProvidedBody = body
-            }
-        } else if let systemBodiesMatches = ProceduralSystem.systemBodyPattern.findFirst(in: system.name) {
-            system.name.removeLast(systemBodiesMatches.matched.count)
-            let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
-            system.clientProvidedBody = body
-            rescue.system = system
-        }
-        
-        rescue.validateSystem()?.whenComplete({ _ in
-            var key = "board.\(announceType)"
-            if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
-                key += ".nick"
-            }
-            
-            let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
-                "signal": configuration.general.signal.uppercased(),
-                "platform": rescue.platform.ircRepresentable,
-                "rescue": rescue,
-                "system": rescue.system as Any,
-                "language": language,
-                "platformSignal": rescue.platform?.signal ?? "",
-                "initiated": initiated,
-                "langCode": languageCode
-            ])
-            message.reply(message: signal)
+                if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
+                    self.prepTimers[rescue.id] = self.group.next().scheduleTask(in: .seconds(180), {
+                        if rescue.codeRed == false || rescue.status == .Inactive {
+                            message.reply(message: lingo.localize("board.notprepped", locale: "en-GB", interpolations: [
+                                "caseId": rescue.commandIdentifier
+                            ]))
+                        }
+                    })
+                }
 
-            if let systemBody = rescue.system?.clientProvidedBody {
-                let bodyDescription = rescue.system?.body(byName: systemBody)?.bodyDescription
-                message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
-                    "body": systemBody,
-                    "bodyDescription": bodyDescription != nil ? "(\(bodyDescription!))" : ""
-                ]))
-                rescue.quotes.append(RescueQuote(
-                    author: message.client.currentNick,
-                    message: "Client indicated location in system near body \"\(systemBody)\" (\(bodyDescription ?? ""))",
-                    createdAt: Date(),
-                    updatedAt: Date(),
-                    lastAuthor: message.client.currentNick)
-                )
-                rescue.syncUpstream()
+                self.rescues.append(rescue)
+
+                let announceType = initiated == .signal ? "signal" : "announce"
+
+                let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
+                let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
+
+                if let clientName = rescue.client, configuration.general.drillMode == false {
+                    FuelRatsAPI.getRescuesForClient(client: clientName, complete: { result in
+                        let recencyDate = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
+                        let recentRescues = result.body.data?.primary.values.filter({
+                            $0.attributes.createdAt.value > recencyDate
+                        }) ?? []
+                        if recentRescues.count >= 3 {
+                            mecha.reportingChannel?.client.sendMessage(
+                                toChannelName: "#operations",
+                                withKey: "board.frequentclient",
+                                mapping: [
+                                    "client": clientName,
+                                    "caseId": rescue.commandIdentifier,
+                                    "count": recentRescues.count
+                                ]
+                            )
+                        }
+                    })
+                }
+
+                guard var system = rescue.system else {
+                    let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
+                        "signal": configuration.general.signal.uppercased(),
+                        "platform": rescue.platform.ircRepresentable,
+                        "rescue": rescue,
+                        "system": rescue.system as Any,
+                        "language": language,
+                        "platformSignal": rescue.platform?.signal ?? "",
+                        "initiated": initiated,
+                        "langCode": languageCode
+                    ])
+                    message.reply(message: signal)
+                    rescue.createUpstream()
+                    self.prepClient(rescue: rescue, message: message, initiated: initiated)
+                    return
+                }
+
+                
+                
+                if let systemName = rescue.system?.name, let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
+                    rescue.system?.name = correction
+                    if let body = procedural.systemBody {
+                        rescue.system?.clientProvidedBody = body
+                    }
+                } else if let systemBodiesMatches = ProceduralSystem.systemBodyPattern.findFirst(in: system.name) {
+                    system.name.removeLast(systemBodiesMatches.matched.count)
+                    let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
+                    system.clientProvidedBody = body
+                    rescue.system = system
+                }
+                
+                rescue.validateSystem()?.whenComplete({ _ in
+                    var key = "board.\(announceType)"
+                    if initiated == .announcer && rescue.client != rescue.clientNick && rescue.clientNick != nil {
+                        key += ".nick"
+                    }
+                    
+                    let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
+                        "signal": configuration.general.signal.uppercased(),
+                        "platform": rescue.platform.ircRepresentable,
+                        "rescue": rescue,
+                        "system": rescue.system as Any,
+                        "language": language,
+                        "platformSignal": rescue.platform?.signal ?? "",
+                        "initiated": initiated,
+                        "langCode": languageCode
+                    ])
+                    message.reply(message: signal)
+
+                    if let systemBody = rescue.system?.clientProvidedBody {
+                        let bodyDescription = rescue.system?.body(byName: systemBody)?.bodyDescription
+                        message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
+                            "body": systemBody,
+                            "bodyDescription": bodyDescription != nil ? "(\(bodyDescription!))" : ""
+                        ]))
+                        rescue.quotes.append(RescueQuote(
+                            author: message.client.currentNick,
+                            message: "Client indicated location in system near body \"\(systemBody)\" (\(bodyDescription ?? ""))",
+                            createdAt: Date(),
+                            updatedAt: Date(),
+                            lastAuthor: message.client.currentNick)
+                        )
+                        rescue.syncUpstream()
+                    }
+                    self.prepClient(rescue: rescue, message: message, initiated: initiated)
+                })
+
+                rescue.createUpstream()
             }
-            self.prepClient(rescue: rescue, message: message, initiated: initiated)
         })
-
-        rescue.createUpstream()
+        
+        
     }
 
     func prepClient (rescue: LocalRescue, message: IRCPrivateMessage, initiated: RescueInitiationType) {
@@ -655,6 +682,41 @@ class RescueBoard {
             }
         }, error: { _ in })
     }
+    
+    func awaitClientJoin (name clientName: String, forRescue rescue: LocalRescue) -> EventLoopFuture<Void> {
+        let future = loop.next().makePromise(of: Void.self)
+        guard rescue.channel != nil else {
+            future.fail(ClientJoinError.joinFailed)
+            return future.futureResult
+        }
+        
+        // Immedately resolve if client is already in the channel
+        if rescue.channel?.member(named: clientName) != nil || configuration.general.drillMode {
+            future.succeed(())
+        }
+        
+        // Add a reference of pending client joins
+        RescueBoard.pendingClientJoins[clientName.lowercased()] = (future, rescue)
+        
+        // Make a 5 second timeout where mecha will give up on the client joining
+        loop.next().scheduleTask(in: .seconds(5), {
+            if let (promise, _) = RescueBoard.pendingClientJoins[clientName.lowercased()] {
+                promise.fail(ClientJoinError.joinFailed)
+                RescueBoard.pendingClientJoins.removeValue(forKey: clientName.lowercased())
+            }
+        })
+        
+        return future.futureResult
+    }
+    
+    @EventListener<IRCUserJoinedChannelNotification>
+    var onJoinChannel = { joinEvent in
+        // Check if joining user is a client of a pending announcement
+        if let (promise, rescue) = pendingClientJoins[joinEvent.user.nickname.lowercased()], joinEvent.channel == rescue.channel {
+            promise.succeed(())
+            pendingClientJoins.removeValue(forKey: joinEvent.user.nickname.lowercased())
+        }
+    }
 
     @EventListener<RatSocketRescueCreatedNotification>
     var onRemoteRescueCreated = { rescueCreation in
@@ -721,4 +783,8 @@ enum RescueInitiationType {
     case announcer
     case signal
     case insertion
+}
+
+enum ClientJoinError: Error {
+    case joinFailed
 }

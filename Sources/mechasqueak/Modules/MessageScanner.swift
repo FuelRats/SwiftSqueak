@@ -53,6 +53,10 @@ class MessageScanner: IRCBotModule {
             return
         }
         
+        guard channelMessage.message.starts(with: "!") == false else {
+            return
+        }
+        
         if configuration.general.drillChannels.contains(channelMessage.destination.name.lowercased()), let range = channelMessage.message.range(of: "ch[o]{2,} ch[o]{2,}", options: .regularExpression) {
             let trainCarriages = String(channelMessage.message[range].filter({ $0 == "O" || $0 == "o" }).map({ _ in return "🚃" })).prefix(50)
             channelMessage.reply(message: "🚂" + trainCarriages)
@@ -66,7 +70,7 @@ class MessageScanner: IRCBotModule {
             let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
             
             guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
-                if configuration.general.drillMode == false {
+                if configuration.general.drillMode == false, channelMessage.destination.name.lowercased() == configuration.general.rescueChannel {
                     channelMessage.replyPrivate(message: lingo.localize(
                         "jumpcall.notfound",
                         locale: "en-GB",
@@ -164,6 +168,33 @@ class MessageScanner: IRCBotModule {
             if let system = rescue.system, rescue.system?.permit != nil {
                 if rat?.hasPermitFor(system: system) == false {
                     message += " (MISSING PERMIT)"
+                }
+            }
+            
+            if configuration.general.drillMode == false && rescue.platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform!) {
+                if rescue.odyssey && rat.attributes.odyssey.value == false {
+                    channelMessage.client.sendMessage(
+                        toChannelName: channelMessage.destination.name,
+                        withKey: "jumpcall.clientodyssey",
+                        mapping: [
+                            "caseId": caseId,
+                            "nick": channelMessage.user.nickname
+                        ]
+                    )
+                    
+                    message += " (Missing Odyssey)"
+                }
+                if rescue.odyssey == false && rat.attributes.odyssey.value {
+                    channelMessage.client.sendMessage(
+                        toChannelName: channelMessage.destination.name,
+                        withKey: "jumpcall.ratodyssey",
+                        mapping: [
+                            "caseId": caseId,
+                            "nick": channelMessage.user.nickname
+                        ]
+                    )
+                    
+                    message += " (Using Odyssey)"
                 }
             }
 
