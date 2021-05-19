@@ -293,6 +293,14 @@ class GeneralCommands: IRCBotModule {
         }
         let system = command.parameters[4]
         let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
+        
+        var key = "announcement"
+        if command.namedOptions.contains("odyssey") {
+            if platform != .PC {
+                command.message.error(key: "announce.invalidplatform", fromCommand: command)
+            }
+            key += ".odyssey"
+        }
 
         command.message.reply(key: "announce.success", fromCommand: command, map: [
             "channel": channel,
@@ -302,10 +310,6 @@ class GeneralCommands: IRCBotModule {
             "crStatus": crStatus
         ])
 
-        var key = "announcement"
-        if command.namedOptions.contains("odyssey") {
-            key += ".odyssey"
-        }
         let announcement = lingo.localize(key, locale: "en-GB", interpolations: [
             "client": clientName,
             "system": system,
