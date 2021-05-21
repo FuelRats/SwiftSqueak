@@ -52,6 +52,25 @@ struct QueueParticipant: Codable, Hashable {
         var odyssey: Bool
     }
     
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.uuid = try container.decode(UUID.self, forKey: .uuid)
+        if let arrivalTime = try? container.decode(Date.self, forKey: .arrivalTime) {
+            self.arrivalTime = arrivalTime
+        } else {
+            let arrivalTimeString = try container.decode(String.self, forKey: .arrivalTime)
+            if let shortArrivalTime = DateFormatter.iso8601Short.date(from: arrivalTimeString) {
+                self.arrivalTime = shortArrivalTime
+            } else {
+                throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "No valid date found"))
+            }
+        }
+        self.pending = try container.decode(Bool.self, forKey: .pending)
+        self.inProgress = try container.decode(Bool.self, forKey: .inProgress)
+        self.client = try container.decode(QueueClient.self, forKey: .client)
+    }
+    
     @discardableResult
     func setInProgress () -> EventLoopFuture<QueueParticipant> {
         var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
