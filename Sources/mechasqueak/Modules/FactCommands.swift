@@ -340,15 +340,18 @@ class FactCommands: IRCBotModule {
         if command.parameters.count > 0 {
             let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
                 var target = target
-                if mecha.rescueBoard.findRescue(withCaseIdentifier: target) == nil && Int(target) == nil && command.message.destination.member(named: target) != nil {
+                var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
+                if rescue == nil {
+                    rescue = mecha.rescueBoard.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
+                }
+                if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
                     if let fuzzyTarget = command.message.destination.members.first(where: {
                         $0.nickname.levenshtein(target) < 3
                     }) {
                         target = fuzzyTarget.nickname
                     }
                 }
-                
-                if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target) {
+                if let rescue = rescue {
                     if isPrepFact, let timer = mecha.rescueBoard.prepTimers[rescue.id] {
                         timer?.cancel()
                         mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
