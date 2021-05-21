@@ -32,14 +32,14 @@ class QueueAPI {
     
     static var decoder: JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(.iso8601Full)
+        decoder.dateDecodingStrategy = .formatted(.iso8601Broken)
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }
     
     static var encoder: JSONEncoder {
         let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .formatted(.iso8601Full)
+        encoder.dateEncodingStrategy = .formatted(.iso8601Broken)
         encoder.keyEncodingStrategy = .convertToSnakeCase
         return encoder
     }
