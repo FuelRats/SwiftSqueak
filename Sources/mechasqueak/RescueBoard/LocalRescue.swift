@@ -345,6 +345,7 @@ class LocalRescue {
         onComplete: @escaping () -> Void,
         onError: @escaping (Error?) -> Void
     ) {
+        let wasInactive = self.status == .Inactive
         self.status = .Closed
         self.firstLimpet = firstLimpet
         if let firstLimpet = firstLimpet, self.rats.contains(where: {
@@ -381,7 +382,7 @@ class LocalRescue {
                         QueueAPI.fetchQueue().whenSuccess({
                             $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
                         })
-                        if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                        if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
                             QueueAPI.dequeue()
                         }
                     }
@@ -460,6 +461,7 @@ class LocalRescue {
         onComplete: @escaping () -> Void,
         onError: @escaping (Error?) -> Void
     ) {
+        let wasInactive = self.status == .Inactive
         self.status = .Closed
         self.outcome = .Purge
         self.notes = reason
@@ -492,7 +494,7 @@ class LocalRescue {
                         QueueAPI.fetchQueue().whenSuccess({
                             $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
                         })
-                        if mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                         if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
                             QueueAPI.dequeue()
                         }
                     }
