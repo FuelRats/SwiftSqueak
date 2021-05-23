@@ -297,7 +297,7 @@ class RescueBoard {
                     FuelRatsAPI.getRescuesForClient(client: clientName, complete: { result in
                         let recencyDate = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
                         let recentRescues = result.body.data?.primary.values.filter({
-                            $0.attributes.createdAt.value > recencyDate
+                            $0.attributes.createdAt.value > recencyDate && $0.attributes.outcome.value != .Purge
                         }) ?? []
                         if recentRescues.count >= 3 {
                             mecha.reportingChannel?.client.sendMessage(
