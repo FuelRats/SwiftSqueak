@@ -83,6 +83,20 @@ private func generateEnvironment () -> Environment {
       return nil
     }
     
+    ext.registerFilter("caseColor") { (value: Any?, arguments: [Any?]) in
+      if let value = value as? String, let rescue = arguments[0] as? LocalRescue {
+        if rescue.status == .Inactive {
+            return IRCFormat.italic(IRCFormat.color(.Cyan, value))
+        } else if rescue.codeRed {
+            return IRCFormat.color(.LightRed, value)
+        } else {
+            return value
+        }
+      }
+
+      return nil
+    }
+    
     ext.registerFilter("cardinal") { (value: Any?) in
       if let system = value as? StarSystem {
         if let landmark = system.landmark, landmark.distance > 1000, let searchResult = system.searchResult, let landmarkResult = mecha.landmarks.first(where: { $0.name == landmark.name }) {

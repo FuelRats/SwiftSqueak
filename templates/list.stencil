@@ -1,0 +1,23 @@
+{% filter bold %}
+{% if options.includeCaseIds %}
+[{{ rescue.id }}]:
+{% elif rescue.title %}
+ Operation {{ rescue.title }}
+{% else %}
+#{{ rescue.commandIdentifier }}:
+{% endif %}
+{% endfilter %}
+{% filter caseColor:rescue %}
+{% if rescue.client %}
+ {{ rescue.client }}
+{% else %}
+ unknown client
+{% endif %}
+{% endfilter %}
+ ({{ platform }}
+
+{% if rescue.odyssey %}
+ {{ "O"|color:7|bold }}
+{% endif %}
+)
+

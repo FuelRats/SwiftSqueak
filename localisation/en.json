@@ -397,6 +397,8 @@
   "help.command.list.pc": "Show only PC cases",
   "help.command.list.xb": "Show only Xbox cases",
   "help.command.list.ps": "Show only Playstation cases",
+  "help.command.list.horizons": "Show only horizons cases",
+  "help.command.list.odyssey": "Show only odyssey cases",
   "help.command.sctime.g": "Calculate going from one gravitational body to another, rather than towards deep space",
   "help.command.go.a": "Include already assigned rats in the message telling clients who to add",
   "help.command.go.f": "Force mecha to assign someone even if it can't find a valid rat for them",

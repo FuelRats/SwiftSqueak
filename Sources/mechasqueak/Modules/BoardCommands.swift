@@ -54,7 +54,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["list"],
-        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps")],
+        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("horizons"), .argument("odyssey")],
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
         permission: .DispatchRead,
@@ -96,11 +96,19 @@ class BoardCommands: IRCBotModule {
             if arguments.contains(.showOnlyActive) && $0.status != .Open {
                 return false
             }
+            
+            if command.namedOptions.contains("horizons") && command.namedOptions.contains("odyssey") == false && $0.odyssey == true {
+                return false
+            }
+            
+            if command.namedOptions.contains("horizons") == false && command.namedOptions.contains("odyssey") && $0.odyssey == false {
+                return false
+            }
 
             return true
         }).sorted(by: {
-            $1.commandIdentifier > $0.commandIdentifier
-        })
+             $1.commandIdentifier > $0.commandIdentifier
+        }).sorted(by: { $0.status == .Open && $1.status == .Inactive })
 
         guard rescues.count > 0 else {
             var flags = ""
@@ -113,33 +121,15 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        let format = arguments.contains(.includeCaseIds) ? "includeid" : "default"
-
         let generatedList = rescues.map({ (rescue: LocalRescue) -> String in
-            var entryFormat = "board.list.case.\(format)"
-            if rescue.status == .Inactive {
-                entryFormat = "board.list.inactivecase.\(format)"
-            }
-
-            if rescue.status == .Queued {
-                entryFormat = "board.list.queuedcase.\(format)"
-            }
-
-            return lingo.localize(entryFormat, locale: "en-GB", interpolations: [
-                "caseId": rescue.commandIdentifier,
-                "id": rescue.id.ircRepresentation,
-                "client": rescue.client ?? "?",
-                "platform": rescue.platform.ircRepresentable,
-                "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : "",
-                "assigned": rescue.assignList != nil
-                    && arguments.contains(.showOnlyAssigned) ? "Assigned: \(rescue.assignList!)" : ""
+            let output = try! stencil.renderLine(name: "list.stencil", context: [
+                "rescue": rescue,
+                "platform": rescue.platform.ircRepresentable
             ])
-        }).joined(separator: ", ")
-
-        command.message.reply(key: "board.list.cases", fromCommand: command, map: [
-            "cases": generatedList,
-            "count": rescues.count
-        ])
+            return output
+        })
+        
+        command.message.reply(list: generatedList, separator: ", ", heading: "\(generatedList.count) rescues found: ")
     }
 
     @BotCommand(
@@ -483,6 +473,8 @@ enum ListCommandArgument: String {
     case showOnlyPC = "pc"
     case showOnlyXbox = "xb"
     case showOnlyPS = "ps"
+    case showOnlyHorizons = "horizons"
+    case showOnlyOdyssey = "odyssey"
 
     var description: String {
         let maps: [ListCommandArgument: String] = [
@@ -494,7 +486,9 @@ enum ListCommandArgument: String {
             .includeCaseIds: "Include UUIDs",
             .showOnlyPC: "Show only PC cases",
             .showOnlyXbox: "Show only Xbox cases",
-            .showOnlyPS: "Show only Playstation cases"
+            .showOnlyPS: "Show only Playstation cases",
+            .showOnlyHorizons: "Show only Horizons cases",
+            .showOnlyOdyssey: "Show only Odyssey cases"
         ]
         return maps[self]!
     }
