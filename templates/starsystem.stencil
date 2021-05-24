@@ -5,6 +5,9 @@
 {% if system|mainStarInfo %}
 {{ system|mainStarInfo }}
  {% endif %}
+{% if region and region.name != "The Inner Orion Spur" %}
+ in {{ region.name }}
+ {% endif %}
 {% include "landmark.stencil" %}
 {% elif system|proceduralInfo %}
 {{ system|proceduralInfo }}

@@ -133,6 +133,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         
         return try! stencil.renderLine(name: "systeminfo.stencil", context: [
             "system": self,
+            "region": self.galacticRegion as Any
 //            "stations": stations,
 //            "carriers": carriers
         ])
