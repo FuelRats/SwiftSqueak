@@ -175,11 +175,20 @@ class GeneralCommands: IRCBotModule {
             }
         }
 
-        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted
+        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".,")).inverted
 
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
-        guard var distance = Double(distanceString) else {
+        
+        let numberParser = NumberFormatter()
+        numberParser.locale = Locale(identifier: "en-GB")
+        numberParser.numberStyle = .decimal
+        
+        if distanceString.contains(",") && distanceString.contains(".") == false {
+            numberParser.decimalSeparator = ","
+        }
+        
+        guard var number = numberParser.number(from: distanceString), var distance = Double(exactly: number) else {
             command.message.reply(key: "sctime.error", fromCommand: command)
             return
         }
