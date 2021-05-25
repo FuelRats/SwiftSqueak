@@ -12,7 +12,7 @@
 {% elif system|proceduralInfo %}
 {{ system|proceduralInfo }}
 {% else %}
-{{ "Not found in galaxy database"|color:10 }}
+{{ "Unconfirmed"|color:10 }}
 {% endif %}
 )
 {% endfilter %}
