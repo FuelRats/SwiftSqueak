@@ -251,6 +251,13 @@ class LocalRescue {
         self.rats = rats
         self.firstLimpet = firstLimpet
         self.jumpCalls = []
+        
+        if var system = self.system {
+            SystemsAPI.performSystemCheck(forSystem: system.name).whenSuccess({ newSystem in
+                system.merge(newSystem)
+                self.system = system
+            })
+        }
     }
 
     var toApiRescue: Rescue {
