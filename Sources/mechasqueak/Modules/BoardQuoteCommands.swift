@@ -44,17 +44,13 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        let format = rescue.title != nil ? "board.quote.operation" : "board.quote.title"
-
-        command.message.replyPrivate(key: format, fromCommand: command, map: [
-            "title": rescue.title ?? "",
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.clientDescription,
-            "nick": rescue.clientNick ?? "?",
-            "system": rescue.system.description,
+        let output = try! stencil.renderLine(name: "quote.stencil", context: [
+            "rescue": rescue,
             "platform": rescue.platform.ircRepresentable,
-            "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
+            "system": rescue.system as Any,
+            "status": rescue.status.rawValue
         ])
+        command.message.reply(message: output)
 
         command.message.replyPrivate(key: "board.quote.dates", fromCommand: command, map: [
             "created": rescue.createdAt.ircRepresentable,

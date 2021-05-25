@@ -1,0 +1,23 @@
+{% if status == "inactive" %}
+Inactive
+ {% endif %}
+{{ platform|bold }}
+ Case
+{% filter bold %}
+ #{{ rescue.commandIdentifier }}:
+{% endfilter %}
+{% filter caseColor:rescue %}
+{% if rescue.client %}
+ CMDR {{ rescue.client }}
+{% else %}
+ unknown client
+{% endif %}
+{% endfilter %}
+{% if rescue.clientNick and rescue.client != rescue.clientNick %}
+ (Nick: {{ rescue.clientNick }})
+{% endif %}
+{% if rescue.odyssey %}
+ ({{ "Odyssey"|color:7 }})
+{% endif %}
+ in
+  {% include "starsystem.stencil" %}
