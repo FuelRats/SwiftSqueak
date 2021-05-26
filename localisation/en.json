@@ -158,15 +158,7 @@
   
   "board.list.cases": "%{count} cases found, %{cases}",
   "board.list.none": "No matching cases found.  %{flags}",
-  "board.list.case.default": "[%{caseId}] %{client} (%{platform}) %{cr} %{assigned}",
-  "board.list.inactivecase.default": "[%{caseId}] %{client} (%{platform}) %{cr} \u000315(Inactive)\u0003 %{assigned}",
-  "board.list.queuedcase.default": "[%{caseId}] %{client} (%{platform}) %{cr} \u000307(Queued)\u0003 %{assigned}",
-  "board.list.case.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} %{assigned}",
-  "board.list.inactivecase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} \u000315(Inactive)\u0003 %{assigned}",
-  "board.list.queuedcase.includeid": "[%{caseId}] (%{id}) %{client} (%{platform}) %{cr} \u000307(Queued)\u0003 %{assigned}",
   
-  "board.quote.title": "Case #%{caseId} CMDR %{client} (IRC Nick: %{nick}) in %{system} (%{platform}) %{cr}",
-  "board.quote.operation": "\"Operation %{title}\" (Case #%{caseId}) (%{client}) in %{system} (%{platform}) %{cr}",
   "board.quote.dates": "Opened %{created}, last updated %{updated}",
   
   "board.quote.quote": "[%{index}] %{author} (%{time}): %{message}",

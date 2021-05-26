@@ -115,21 +115,6 @@ struct StarSystem: CustomStringConvertible, Codable {
         return try! stencil.renderLine(name: "starsystem.stencil", context: ["system": self, "invalid": self.isInvalid])
     }
     
-    var shortDescription: String {
-        var systemInfo = "\"\(self.name)\""
-        if let landmarkDescription = landmarkDescription {
-            systemInfo = landmarkDescription
-        } else if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-            let (landmark, distance, _) = procedural.estimatedLandmarkDistance
-            systemInfo += " (Estimated ~\(distance) LY from \(landmark.name))"
-        } else if isInvalid || isIncomplete {
-            systemInfo += IRCFormat.color(.Grey, " (Invalid system name)")
-        } else {
-            systemInfo += " (Not found in galaxy database)"
-        }
-        return systemInfo
-    }
-    
     var info: String {
 //        let allStations = self.refuelingStations
 //        let stations = allStations.filter({ $0.type != .FleetCarrier })
@@ -215,13 +200,6 @@ extension Optional where Wrapped == StarSystem {
     var description: String {
         if let system = self {
             return system.description
-        }
-        return "u\u{200B}nknown system"
-    }
-    
-    var shortDescription: String {
-        if let system = self {
-            return system.shortDescription
         }
         return "u\u{200B}nknown system"
     }

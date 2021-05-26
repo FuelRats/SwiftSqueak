@@ -189,7 +189,7 @@ class MechaSqueak {
                     "caseId": rescue.commandIdentifier,
                     "client": rescue.clientDescription,
                     "platform": rescue.platform.ircRepresentable,
-                    "system": rescue.system.shortDescription
+                    "system": rescue.system.description
                 ])
             } else if let rescue = mecha.rescueBoard.rescues.first(where: {
                 $0.clientHost == userJoin.user.hostmask
