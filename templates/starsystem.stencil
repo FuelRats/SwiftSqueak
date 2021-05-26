@@ -11,6 +11,8 @@
 {% include "landmark.stencil" %}
 {% elif system|proceduralInfo %}
 {{ system|proceduralInfo }}
+{% elif invalid %}
+{{ "Invalid system name"|color:4 }}
 {% else %}
 {{ "Unconfirmed"|color:10 }}
 {% endif %}

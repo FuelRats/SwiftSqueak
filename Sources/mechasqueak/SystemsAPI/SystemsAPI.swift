@@ -68,7 +68,8 @@ class SystemsAPI {
                     availableCorrections: nil,
                     landmark: landmarkDocument.first,
                     landmarks: landmarkDocument.landmarks ?? [],
-                    proceduralCheck: nil
+                    proceduralCheck: nil,
+                    lookupAttempted: true
                 )
                 EDSM.getBodies(forSystem: system.name).whenComplete({ result in
                     switch result {
@@ -145,7 +146,8 @@ class SystemsAPI {
                                 availableCorrections: searchResults.data,
                                 landmark: landmarkResults.first,
                                 landmarks: landmarkResults.landmarks ?? [],
-                                proceduralCheck: proceduralResult
+                                proceduralCheck: proceduralResult,
+                                lookupAttempted: true
                             )
                             
                             if starSystem.landmark != nil && includeEdsm {

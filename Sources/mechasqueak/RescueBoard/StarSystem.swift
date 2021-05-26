@@ -41,6 +41,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
     var bodies: [EDSM.Body]? = nil
     var position: Vector3?
+    var lookupAttempted: Bool = false
 
     init (
         name: String,
@@ -50,7 +51,8 @@ struct StarSystem: CustomStringConvertible, Codable {
         landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil,
         landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = [],
         clientProvidedBody: String? = nil,
-        proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
+        proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil,
+        lookupAttempted: Bool = false
     ) {
         self.name = name.prefix(64).uppercased()
         self.manuallyCorrected = manuallyCorrected
@@ -63,6 +65,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.landmarks = landmarks
         self.clientProvidedBody = clientProvidedBody
         self.proceduralCheck = proceduralCheck
+        self.lookupAttempted = lookupAttempted
     }
 
     mutating func merge (_ starSystem: StarSystem) {
@@ -74,6 +77,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.landmarks = starSystem.landmarks
         self.proceduralCheck = starSystem.proceduralCheck
         self.bodies = starSystem.bodies
+        self.lookupAttempted = starSystem.lookupAttempted
     }
 
     struct Permit: CustomStringConvertible, Codable {
@@ -108,7 +112,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
 
     var description: String {
-        return try! stencil.renderLine(name: "starsystem.stencil", context: ["system": self])
+        return try! stencil.renderLine(name: "starsystem.stencil", context: ["system": self, "invalid": self.isInvalid])
     }
     
     var shortDescription: String {
@@ -133,14 +137,11 @@ struct StarSystem: CustomStringConvertible, Codable {
         
         return try! stencil.renderLine(name: "systeminfo.stencil", context: [
             "system": self,
-            "region": self.galacticRegion as Any
+            "region": self.galacticRegion as Any,
+            "invalid": self.isInvalid
 //            "stations": stations,
 //            "carriers": carriers
         ])
-    }
-    
-    var verificationAttemped: Bool {
-        return self.landmark != nil || self.availableCorrections != nil
     }
 
     var isIncomplete: Bool {
@@ -160,10 +161,10 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
     
     var isInvalid: Bool {
-        if let procedural = ProceduralSystem(string: self.name) {
+        if ProceduralSystem.proceduralSystemExpression.matches(self.name), let procedural = ProceduralSystem(string: self.name) {
             return (self.proceduralCheck?.isPgSystem == false || (self.proceduralCheck?.isPgSector == false && self.proceduralCheck?.sectordata.handauthored == false)) || !procedural.isValid
         }
-        return false
+        return self.lookupAttempted && self.landmark == nil
     }
 
     var isConfirmed: Bool {
