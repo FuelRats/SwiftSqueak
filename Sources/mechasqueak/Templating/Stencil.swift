@@ -112,6 +112,9 @@ private func generateEnvironment () -> Environment {
         if let procedural = system.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
             let (landmark, distanceString, _) = procedural.estimatedLandmarkDistance
             
+            guard regions.count == 0 || procedural.galacticRegion != nil else {
+                return nil
+            }
             guard (1000...80000).contains(procedural.estimatedSolDistance.2) else {
                 return nil
             }
