@@ -50,7 +50,7 @@ class BoardQuoteCommands: IRCBotModule {
             "system": rescue.system as Any,
             "status": rescue.status.rawValue
         ])
-        command.message.reply(message: output)
+        command.message.replyPrivate(message: output)
 
         command.message.replyPrivate(key: "board.quote.dates", fromCommand: command, map: [
             "created": rescue.createdAt.ircRepresentable,
