@@ -77,7 +77,7 @@ class MechaSqueak {
     var sectors: [StarSector] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
-    let ratSocket: RatSocket?
+    //let ratSocket: RatSocket?
 
     init () {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -86,11 +86,6 @@ class MechaSqueak {
         }
         self.configPath = configPath
 
-        if configuration.api.websocket != nil {
-            ratSocket = RatSocket()
-        } else {
-            ratSocket = nil
-        }
 
         self.startupTime = Date()
         self.rescueBoard = RescueBoard()
@@ -325,7 +320,7 @@ class MechaSqueak {
         }
 
         if channelMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
-            mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
+            // mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
         }
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
@@ -348,7 +343,7 @@ class MechaSqueak {
         }
 
         if echoMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
-            mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: echoMessage))
+            // mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: echoMessage))
         }
     }
 

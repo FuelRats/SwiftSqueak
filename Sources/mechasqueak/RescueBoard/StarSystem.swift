@@ -138,6 +138,10 @@ struct StarSystem: CustomStringConvertible, Codable {
 //            "carriers": carriers
         ])
     }
+    
+    var verificationAttemped: Bool {
+        return self.landmark != nil || self.availableCorrections != nil
+    }
 
     var isIncomplete: Bool {
         if self.landmark != nil || (self.proceduralCheck != nil && self.isInvalid == false) {
