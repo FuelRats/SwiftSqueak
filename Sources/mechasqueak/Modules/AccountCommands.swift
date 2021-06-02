@@ -62,8 +62,11 @@ class AccountCommands: IRCBotModule {
             return
         }
 
-        let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({
-            "\($0.attributes.name.value) (\($0.attributes.platform.value.ircRepresentable))"
+        let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
+            if rat.odyssey {
+                return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable)) (\(IRCFormat.color(.Orange, "Odyssey")))"
+            }
+            return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
 
         let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
@@ -132,8 +135,11 @@ class AccountCommands: IRCBotModule {
             return
         }
 
-        let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({
-            "\($0.attributes.name.value) (\($0.attributes.platform.value.ircRepresentable))"
+        let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
+            if rat.odyssey {
+                return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable)) (\(IRCFormat.color(.Orange, "Odyssey")))"
+            }
+            return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
 
         let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
