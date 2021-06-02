@@ -48,6 +48,10 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
+            if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
+                prepTimer?.cancel()
+                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
+            }
             if mecha.rescueBoard.activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
                 QueueAPI.dequeue()
             }
