@@ -29,7 +29,7 @@ import IRCKit
 import NIO
 
 class LocalRescue {
-    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?)\\)(?: - IRC Nickname: (.*))?".r!
+    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?".r!
     var synced = false
     var isClosing = false
     var clientHost: String?
