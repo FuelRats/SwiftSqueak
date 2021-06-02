@@ -79,13 +79,13 @@ struct ProceduralSystem: CustomStringConvertible {
         }
         var proceduralStart: String.Index? = nil
         if let sectorComponent = components.first(where: { $0.count > 3 && $0.lowercased().levenshtein("sector") <= 2 }) {
-            hasSectorSuffix = true
             let sectorRange = systemName.range(of: sectorComponent)!
-            guard sectorRange.lowerBound > systemName.startIndex else {
-                return nil
+            if sectorRange.lowerBound > systemName.startIndex && sectorRange.upperBound < systemName.endIndex {
+                hasSectorSuffix = true
+                proceduralStart = systemName.index(before: sectorRange.lowerBound)
+                systemName.removeSubrange(sectorRange)
             }
-            proceduralStart = systemName.index(before: sectorRange.lowerBound)
-            systemName.removeSubrange(sectorRange)
+            
         }
         self.hasSectorSuffix = hasSectorSuffix
         
@@ -93,16 +93,31 @@ struct ProceduralSystem: CustomStringConvertible {
         if hyphenIndex != nil && proceduralStart == nil {
             proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<hyphenIndex!)?.lowerBound
         }
-        guard proceduralStart != nil else {
+        guard var proceduralStart = proceduralStart else {
             return nil
         }
         
-        self.sectorName = String(systemName[systemName.startIndex..<proceduralStart!]).trimmingCharacters(in: .whitespaces)
-        let proceduralStartIndex = systemName.index(after: proceduralStart!)
-        let procedural = String(systemName[proceduralStartIndex..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
+        if systemName[systemName.index(after: proceduralStart)] == "-" {
+            guard let adjustStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<proceduralStart) else {
+                return nil
+            }
+            proceduralStart = adjustStart.lowerBound
+        }
+        
+        var procedural = String(systemName[systemName.index(after: proceduralStart)..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
+        var sectorName = String(systemName[systemName.startIndex..<proceduralStart]).trimmingCharacters(in: .whitespaces)
+        
+        while (procedural.components(separatedBy: " ").count < 2 || sectorName.components(separatedBy: " ").last?.count == 3) && sectorName.components(separatedBy: " ").count > 1 {
+            proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<proceduralStart)!.lowerBound
+            procedural = String(systemName[systemName.index(after: proceduralStart)..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
+            sectorName = String(systemName[systemName.startIndex..<proceduralStart]).trimmingCharacters(in: .whitespaces)
+        }
+        
+        
+        self.sectorName = sectorName
         var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted).filter({ $0.count > 0 })
         
-        guard proceduralComponents.count > 2 && proceduralComponents.first!.count > 1 else {
+        guard proceduralComponents.count > 1 && proceduralComponents.first!.count > 1 else {
             return nil
         }
         let part1: Character = proceduralComponents[0].removeFirst()
@@ -115,21 +130,25 @@ struct ProceduralSystem: CustomStringConvertible {
         
         if suffix == nil {
             suffix = proceduralComponents[0].removeFirst()
-            proceduralComponents.removeFirst()
         }
         self.cubeId = CubeID(part1: part1, part2: part2, suffix: suffix!)
-        
-        guard proceduralComponents.count > 1 else {
-            return nil
-        }
         
         if proceduralComponents[0].count == 0 {
             proceduralComponents.removeFirst()
         }
+        
+        guard proceduralComponents.count > 0 else {
+            return nil
+        }
+        
         self.massCategory = proceduralComponents[0].removeFirst()
         var cubePosition: String = proceduralComponents[0]
         proceduralComponents.removeFirst()
+        
         if cubePosition.count == 0 {
+            guard proceduralComponents.count > 0 else {
+                return nil
+            }
             cubePosition.append(proceduralComponents[0])
             proceduralComponents.removeFirst()
         }
@@ -137,12 +156,16 @@ struct ProceduralSystem: CustomStringConvertible {
         
         var systemId = ""
         while proceduralComponents.count > 0 {
-            let comp = proceduralComponents[0]
-            if comp.allSatisfy({ $0.isNumber }) == false {
-                break
+            while let first = proceduralComponents[0].first, (first.isNumber || (systemId.count == 0 && ProceduralSystem.letterSubstitutions[first] != nil)) {
+                systemId += String(first)
+                proceduralComponents[0].removeFirst()
             }
-            systemId += comp
-            proceduralComponents.removeFirst()
+            if proceduralComponents[0].count > 0 {
+                break
+            } else {
+                proceduralComponents.removeFirst()
+            }
+            
         }
         if systemId.count > 0 {
             self.systemId = systemId
@@ -152,9 +175,6 @@ struct ProceduralSystem: CustomStringConvertible {
             if let systemBody = ProceduralSystem.systemBodyPattern.findFirst(in: remaining) {
                 self.systemBody = systemBody.matched.trimmingCharacters(in: .whitespaces)
             }
-        }
-        if ProceduralSystem.proceduralSystemExpression.matches(self.description) == false {
-            return nil
         }
     }
     
@@ -257,9 +277,9 @@ struct ProceduralSystem: CustomStringConvertible {
         if system.cubePosition.rangeOfCharacter(from: .letters) != nil {
             system.cubePosition = ProceduralSystem.performLetterSubstitution(value: system.cubePosition)
         }
-//        if let systemId = system.systemId, systemId.rangeOfCharacter(from: .letters) != nil {
-//            system.systemId = ProceduralSystem.performLetterSubstitution(value: systemId)
-//        }
+        if let systemId = system.systemId, systemId.rangeOfCharacter(from: .letters) != nil {
+            system.systemId = ProceduralSystem.performLetterSubstitution(value: systemId)
+        }
         
         if system.isValid == false {
             return nil

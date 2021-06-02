@@ -119,7 +119,7 @@ private func generateEnvironment () -> Environment {
                 return nil
             }
             let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
-            return "Estimated ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
+            return "Unconfirmed ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
         }
         
       }

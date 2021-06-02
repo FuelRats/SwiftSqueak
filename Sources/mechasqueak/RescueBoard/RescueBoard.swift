@@ -358,7 +358,8 @@ class RescueBoard {
                         "language": language,
                         "platformSignal": rescue.platform?.signal ?? "",
                         "initiated": initiated,
-                        "langCode": languageCode
+                        "langCode": languageCode,
+                        "invalid": rescue.system?.isInvalid ?? false
                     ])
                     message.reply(message: signal)
 
