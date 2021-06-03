@@ -163,6 +163,7 @@ class SystemSearch: IRCBotModule {
             command.message.reply(message: try! stencil.renderLine(name: "station.stencil", context: [
                 "system": system,
                 "station": station,
+                "travelTime": station.distance.distanceToSeconds(destinationGravity: true).timeSpan,
                 "services": station.allServices,
                 "notableServices": station.notableServices,
                 "stationType": station.type.rawValue,

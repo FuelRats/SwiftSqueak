@@ -7,7 +7,11 @@ Station found in "{{ system.name }}".
  {% filter italic %}
 ({{ stationType }}),
 {% endfilter %}
- {{ station.distance|eliteDistance }} from hyperspace entry point.
+ {{ station.distance|eliteDistance }}
+{% if station.distance > 1000 %}
+ (~{{ travelTime }})
+{% endif %}
+ from hyperspace entry point.
  {{ "Services:"|bold }}
 {% if showAllServices %}
 {% for service in services %}

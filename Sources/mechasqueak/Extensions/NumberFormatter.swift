@@ -100,8 +100,7 @@ extension Double {
             time = "\(hours.clean) hours, and \(minutes.clean) minutes"
         } else if seconds > 60 {
             let minutes = seconds / 60
-            let seconds = (seconds.truncatingRemainder(dividingBy: 60))
-            time = "\(minutes.clean) minutes, and \(seconds.clean) seconds"
+            time = "\(minutes.clean) minutes"
         } else {
             time = "\(seconds.clean) seconds"
         }
