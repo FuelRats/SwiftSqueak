@@ -70,7 +70,6 @@ struct ProceduralSystem: CustomStringConvertible {
     
     init? (string systemName: String) {
         var systemName = systemName.uppercased()
-        
         var hasSectorSuffix = false
         
         let components = systemName.components(separatedBy: CharacterSet.alphanumerics.inverted)

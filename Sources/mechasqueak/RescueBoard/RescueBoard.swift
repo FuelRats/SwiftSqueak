@@ -330,9 +330,10 @@ class RescueBoard {
                     return
                 }
 
-                
-                
-                if let systemName = rescue.system?.name, let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
+                if let systemName = rescue.system?.name, let systemForNamedBody = namedBodies[systemName.lowercased()] {
+                    rescue.system?.name = systemForNamedBody
+                    rescue.system?.clientProvidedBody = systemName
+                } else if let systemName = rescue.system?.name, let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
                     rescue.system?.name = correction
                     if let body = procedural.systemBody {
                         rescue.system?.clientProvidedBody = body

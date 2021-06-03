@@ -227,6 +227,21 @@ func loadRegions () -> [GalacticRegion] {
 
 let regions = loadRegions()
 
+func loadNamedBodies () -> [String: String] {
+    let namedBodyPath = URL(
+        fileURLWithPath: FileManager.default.currentDirectoryPath
+    ).appendingPathComponent("namedbodies.json")
+
+    guard let bodyData = try? Data(contentsOf: namedBodyPath) else {
+        fatalError("Could not locate named bodies file in \(namedBodyPath.absoluteString)")
+    }
+
+    let bodyDecoder = JSONDecoder()
+    return try! bodyDecoder.decode([String: String].self, from: bodyData)
+}
+
+let namedBodies = loadNamedBodies()
+
 struct GalacticRegion: Decodable {
     let id: Int
     let name: String
