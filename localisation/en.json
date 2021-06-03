@@ -250,6 +250,8 @@
   "rescue.clientpw.heading": "Listing all previouses cases for client \"%{client}\":",
   "rescue.clientpw.entry": "%{index}) in %{system} created %{created} (Link: %{link})",
   
+  "rescue.renameid.renamed": "Successfully changed client name of past rescue",
+  
   "shorten.invalidurl": "Could not shorten URL as an invalid url was provided.",
   "shorten.error": "Was unable to shorten URL due to a request error.",
   "shorten.shortened": "URL has been shortened to: %{url} - Title: %{title}",

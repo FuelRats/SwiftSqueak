@@ -25,6 +25,7 @@
 import Foundation
 import JSONAPI
 import AsyncHTTPClient
+import NIO
 
 enum RescueDescription: ResourceObjectDescription {
     public static var jsonType: String { return "rescues" }
@@ -181,7 +182,8 @@ extension Rescue {
         return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
     }
     
-    func update (complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
+    func update () -> EventLoopFuture<Void> {
+        let promise = loop.next().makePromise(of: Void.self)
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self),
@@ -201,11 +203,12 @@ extension Rescue {
         httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
             switch result {
                 case .success:
-                    complete()
+                    promise.succeed(())
                 case .failure(let restError):
-                    error(restError)
+                    promise.fail(restError)
             }
         }
+        return promise.futureResult
     }
 }
 

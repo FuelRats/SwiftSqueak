@@ -204,20 +204,21 @@ class RemoteRescueCommands: IRCBotModule {
 
             rescue = rescue.tappingAttributes({ $0.outcome = .init(value: nil) })
 
-            rescue.update(complete: {
-                command.message.reply(key: "rescue.restore.restored", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
-            }, error: { _ in
-                command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
+            rescue.update().whenComplete({ result in
+                switch result {
+                case .success(_):
+                    command.message.reply(key: "rescue.restore.restored", fromCommand: command, map: [
+                        "id": id.ircRepresentation
+                    ])
+                    
+                case .failure(_):
+                    command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
+                        "id": id.ircRepresentation
+                    ])
+                }
             })
-
         }, error: { _ in
-            command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
+            
         })
     }
 
@@ -410,34 +411,7 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        FuelRatsAPI.getRescue(id: closedRescue.id, complete: { result in
-            let apiRescue = result.body.data!.primary.value
-            let rats = result.assignedRats()
-            let firstLimpet = result.firstLimpet()
-
-            let rescue = LocalRescue(
-                fromAPIRescue: apiRescue,
-                withRats: rats,
-                firstLimpet: firstLimpet,
-                onBoard: mecha.rescueBoard
-            )
-            if rescue.hasConflictingId(inBoard: mecha.rescueBoard) {
-                rescue.commandIdentifier = mecha.rescueBoard.getNewIdentifier()
-            }
-            rescue.outcome = nil
-            rescue.status = .Open
-
-            mecha.rescueBoard.rescues.append(rescue)
-            rescue.syncUpstream(fromCommand: command)
-            command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
-                "id": closedRescue.id.ircRepresentation,
-                "caseId": rescue.commandIdentifier
-            ])
-        }, error: { _ in
-            command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                "id": closedRescue.id
-            ])
-        })
+        
     }
 
     @BotCommand(
@@ -486,6 +460,44 @@ class RemoteRescueCommands: IRCBotModule {
             })
         }, error: { _ in
 
+        })
+    }
+    
+    @BotCommand(
+        ["renameid"],
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"), .param("client name", "SpaceDawg")],
+        category: .rescues,
+        description: "Change the client name of a closed case",
+        permission: .RescueWrite
+    )
+    var didReceiveRenameIDCommand = { command in
+        guard let id = UUID(uuidString: command.parameters[0]) else {
+            command.message.error(key: "rescue.restore.invalid", fromCommand: command, map: [
+                "id": command.parameters[0]
+            ])
+            return
+        }
+
+        FuelRatsAPI.getRescue(id: id, complete: { result in
+            var rescue = result.body.data!.primary.value
+
+            rescue = rescue.tappingAttributes({ $0.client = .init(value: command.parameters[1]) })
+
+            rescue.update().whenComplete({ result in
+                switch result {
+                case .success(_):
+                    command.message.reply(key: "rescue.renameid.renamed", fromCommand: command, map: [
+                        "id": id.ircRepresentation
+                    ])
+                    
+                case .failure(_):
+                    command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
+                        "id": id.ircRepresentation
+                    ])
+                }
+            })
+        }, error: { _ in
+            
         })
     }
 }
