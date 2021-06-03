@@ -335,6 +335,13 @@ class FactCommands: IRCBotModule {
             return
         }
         
+        if command.locale.identifier == "cn" {
+            command.locale = Locale(identifier: "zh")
+            mecha.reportingChannel?.send(key: "facts.cncorrection", map: [
+                "nick": command.message.user.nickname
+            ])
+        }
+        
         let isPrepFact = prepFacts.contains(where: { $0 == command.command })
         
         if command.parameters.count > 0 {
