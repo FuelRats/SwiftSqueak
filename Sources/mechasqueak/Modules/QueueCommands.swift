@@ -53,15 +53,45 @@ class QueueCommands: IRCBotModule {
             }
             
             let queueCount = queueItems.count
-            let waitTimes = queueItems.map({ Date().timeIntervalSince($0.arrivalTime) }).sorted()
-            let longestWait = waitTimes.last!
-            let averageWait = waitTimes.reduce(0.0, { $0 + $1 }) / Double(waitTimes.count)
             
             command.message.reply(key: "queue.info", fromCommand: command, map: [
-                "count": queueCount,
-                "longest": longestWait.timeSpan,
-                "average": averageWait.timeSpan
+                "count": queueCount
             ])
+        })
+    }
+    
+    @BotCommand(
+        ["queuestats"],
+        [.param("start date", "2021-04-01", .standard, .optional)],
+        category: .queue,
+        description: "Get statistics from the queueing system",
+        permission: .DispatchRead,
+        cooldown: .seconds(90)
+    )
+    var didReceiveQueueStatsCommand = { command in
+        var date = Date()
+        if command.parameters.count > 0 {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "YYYY-MM-dd"
+
+            if let userSuppliedDate = formatter.date(from: command.parameters[0]) {
+                date = userSuppliedDate
+            } else {
+                command.message.error(key: "queuestats.date", fromCommand: command)
+            }
+        }
+        QueueAPI.fetchStatistics(fromDate: date).whenSuccess({ stats in
+            command.message.reply(key: "queuestats.stats", fromCommand: command, map: [
+                "totalClients": stats.totalClients ?? 0,
+                "instantJoin": stats.instantJoin ?? 0,
+                "queuedJoin": stats.queuedJoin ?? 0,
+                "averageQueuetime": stats.averageQueuetimeSpan,
+                "averageRescuetime": stats.averageRescuetimeSpan,
+                "longestQueuetime": stats.longestQueuetimeSpan,
+                "lostQueues": stats.lostQueues ?? 0,
+                "successfulQueues": stats.successfulQueues ?? 0,
+            ])
+            print(stats)
         })
     }
     

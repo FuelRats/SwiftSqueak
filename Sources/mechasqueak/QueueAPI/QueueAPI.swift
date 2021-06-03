@@ -52,6 +52,22 @@ class QueueAPI {
 
         return httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
     }
+    
+    static func fetchStatistics (fromDate date: Date) -> EventLoopFuture<QueueAPIStatistics> {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "YYYY-MM-dd"
+        
+        let formattedDate = dateFormatter.string(from: date)
+        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
+        requestUrl.path.append("/queue/statistics/")
+        requestUrl.queryItems = [URLQueryItem(name: "daterequested", value: formattedDate), URLQueryItem(name: "detailed", value: "false")]
+        
+        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+
+        return httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
+    }
 
     static func fetchQueue () -> EventLoopFuture<[QueueParticipant]> {
         let requestUrl = configuration.queue!.url.appendingPathComponent("/queue/")
@@ -132,4 +148,36 @@ struct QueueAPIConfiguration: Codable {
     let clearOnRestart: Bool
     let prioritizeCr: Bool
     let prioritizeNonCr: Bool
+}
+
+struct QueueAPIStatistics: Codable {
+    let totalClients: Int?
+    let instantJoin: Int?
+    let queuedJoin: Int?
+    let averageQueuetime: Int?
+    let averageRescuetime: Int?
+    let longestQueuetime: Int?
+    let lostQueues: Int?
+    let successfulQueues: Int?
+    
+    var averageQueuetimeSpan: String {
+        if let time = self.averageQueuetime {
+            return Double(time).timeSpan
+        }
+        return 0.0.timeSpan
+    }
+    
+    var averageRescuetimeSpan: String {
+        if let time = self.averageRescuetime {
+            return Double(time).timeSpan
+        }
+        return 0.0.timeSpan
+    }
+    
+    var longestQueuetimeSpan: String {
+        if let time = self.longestQueuetime {
+            return Double(time).timeSpan
+        }
+        return 0.0.timeSpan
+    }
 }

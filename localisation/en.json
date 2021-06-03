@@ -361,7 +361,9 @@
   "dequeue.error": "Could not dequeue any client",
   "dequeue.success": "Successfully dequeued client",
   "queue.none": "The queue is currently empty",
-  "queue.info": "There are currently %{count} clients in the queue. Average Wait Time: %{average}. Longest Wait Time: %{longest}.",
+  "queue.info": "There are currently %{count} clients in the queue.",
+  "queuestats.date": "A valid date must be given to !queuestats as year-month-day",
+  "queuestats.stats": "%{totalClients} total clients where %{instantJoin} instantly joined and %{queuedJoin} were queued. Average queue time was %{averageQueuetime} and the average rescue time was %{averageRescuetime}. The longest queuetime was %{longestQueuetime} and %{lostQueues} clients were lost in the queue.",
 
   "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
   "help.webpage": "A list of commands are also available at: https://t.fuelr.at/mechacmd",
