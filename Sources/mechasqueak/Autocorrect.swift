@@ -106,7 +106,7 @@ struct ProceduralSystem: CustomStringConvertible {
         var procedural = String(systemName[systemName.index(after: proceduralStart)..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
         var sectorName = String(systemName[systemName.startIndex..<proceduralStart]).trimmingCharacters(in: .whitespaces)
         
-        while (procedural.components(separatedBy: " ").count < 2 || sectorName.components(separatedBy: " ").last?.count == 3) && sectorName.components(separatedBy: " ").count > 1 {
+        while (procedural.components(separatedBy: " ").count < 2 || sectorName.components(separatedBy: " ").last?.count == 3) && sectorName.components(separatedBy: " ").count > 1 && procedural.components(separatedBy: " ").first?.contains("-") == false {
             proceduralStart = systemName.range(of: " ", options: .backwards, range: systemName.startIndex..<proceduralStart)!.lowerBound
             procedural = String(systemName[systemName.index(after: proceduralStart)..<systemName.endIndex]).trimmingCharacters(in: .whitespaces)
             sectorName = String(systemName[systemName.startIndex..<proceduralStart]).trimmingCharacters(in: .whitespaces)
