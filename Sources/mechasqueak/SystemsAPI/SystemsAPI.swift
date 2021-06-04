@@ -129,6 +129,10 @@ class SystemsAPI {
 
     static func performSystemCheck (forSystem systemName: String, includeEdsm: Bool = true) -> EventLoopFuture<StarSystem> {
         let promise = loop.next().makePromise(of: StarSystem.self)
+        var systemName = systemName
+        if systemName.uppercased() == "SABIYHAN" {
+            systemName = "CRUCIS SECTOR ZP-P A5-2"
+        }
 
         performSearch(forSystem: systemName, quickSearch: true)
             .and(performProceduralCheck(forSystem: systemName))
