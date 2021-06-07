@@ -54,6 +54,7 @@ typealias User = JSONEntity<UserDescription>
 typealias UserGetDocument = Document<SingleResourceBody<User>, Include7<Rat, Ship, Epic, Nickname, Client, Decal, Group>>
 
 extension User {
+    @available(*, deprecated, message: "Use get(id) async instead")
     static func get (id: UUID) -> EventLoopFuture<UserGetDocument> {
         var url = configuration.api.url
         url.appendPathComponent("/users")
@@ -64,7 +65,19 @@ extension User {
 
         return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
+    
+    static func get (id: UUID) async throws -> UserGetDocument {
+        var url = configuration.api.url
+        url.appendPathComponent("/users")
+        url.appendPathComponent(id.uuidString)
+        var request = try! HTTPClient.Request(url: url, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
 
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+
+    @available(*, deprecated, message: "Use update(attributes) async instead")
     @discardableResult
     func update (attributes: [String: Any]) throws -> EventLoopFuture<UserGetDocument> {
         let body: [String: Any] = [
@@ -87,14 +100,46 @@ extension User {
 
         return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
+    
+    @discardableResult
+    func update (attributes: [String: Any]) async throws -> UserGetDocument {
+        let body: [String: Any] = [
+            "data": [
+                "type": "users",
+                "id": self.id.rawValue.uuidString,
+                "attributes": attributes
+            ]
+        ]
 
+        var url = configuration.api.url
+        url.appendPathComponent("/users")
+        url.appendPathComponent(self.id.rawValue.uuidString)
+
+        var request = try! HTTPClient.Request(url: url, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
+
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+
+    @available(*, deprecated, message: "Use suspend() async instead")
     @discardableResult
     func suspend (date: Date) -> EventLoopFuture<UserGetDocument> {
         return try! self.update(attributes: [
             "suspended": DateFormatter.iso8601Full.string(from: date)
         ])
     }
+    
+    @discardableResult
+    func suspend (date: Date) async throws -> UserGetDocument {
+        return try await self.update(attributes: [
+            "suspended": DateFormatter.iso8601Full.string(from: date)
+        ])
+    }
 
+    @available(*, deprecated, message: "Use changeEmail(to email) async instead")
     func changeEmail (to email: String) -> EventLoopFuture<UserGetDocument> {
         let body: [String: Any] = [
             "data": [
@@ -118,6 +163,31 @@ extension User {
         request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
 
         return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+    
+    func changeEmail (to email: String) async throws -> UserGetDocument {
+        let body: [String: Any] = [
+            "data": [
+                "type": "email-changes",
+                "id": self.id.rawValue.uuidString,
+                "attributes": [
+                    "email": email
+                ]
+            ]
+        ]
+
+        var url = configuration.api.url
+        url.appendPathComponent("/users")
+        url.appendPathComponent(self.id.rawValue.uuidString)
+        url.appendPathComponent("/email")
+
+        var request = try! HTTPClient.Request(url: url, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
+
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
 }
 

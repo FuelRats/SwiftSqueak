@@ -104,6 +104,7 @@ extension Rat {
         })
     }
     
+    @available(*, deprecated, message: "Use update() async instead")
     func update () -> EventLoopFuture<Void> {
         let promise = loop.next().makePromise(of: Void.self)
         let patchDocument = SingleDocument(
@@ -131,6 +132,26 @@ extension Rat {
             }
         }
         return promise.futureResult
+    }
+    
+    func update() async throws {
+        let patchDocument = SingleDocument(
+            apiDescription: .none,
+            body: .init(resourceObject: self),
+            includes: .none,
+            meta: .none,
+            links: .none
+        )
+
+        let url = URLComponents(string: "\(configuration.api.url)/rats/\(self.id.rawValue.uuidString)")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        
+        request.body = try .encodable(patchDocument)
+        
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
     }
     
     func setIsUsingOdyssey (_ isUsingOdyssey: Bool) -> EventLoopFuture<Void> {
