@@ -33,7 +33,46 @@ extension HTTPClient {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }
+    
+    func execute (
+        request: Request,
+        deadline: NIODeadline? = nil,
+        expecting statusCode: Int
+    ) async throws -> HTTPClient.Response {
+        try await withCheckedThrowingContinuation({ continuation in
+            self.execute(request: request, deadline: deadline).whenComplete { result in
+                switch result {
+                    case .success(let response):
+                        if response.status.code == statusCode {
+                            continuation.resume(returning: response)
+                        } else {
+                            continuation.resume(throwing: response)
+                        }
 
+                    case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        })
+    }
+    
+    func execute<D> (
+        request: Request,
+        forDecodable decodable: D.Type,
+        deadline: NIODeadline? = nil,
+        withDecoder decoder: JSONDecoder = defaultJsonDecoder
+    ) async throws -> D where D: Decodable {
+        let response = try await self.execute(request: request, deadline: deadline, expecting: 200)
+        do {
+            return try decoder.decode(D.self, from: Data(buffer: response.body!))
+        } catch {
+            debug(String(data: Data(buffer: response.body!), encoding: .utf8) ?? "")
+            debug(String(describing: error))
+            throw error
+        }
+    }
+
+    @available(*, deprecated, message: "Use execute(request:forDecodable:deadline:withDecoder) async instead")
     func execute<D> (
         request: Request,
         forDecodable decodable: D.Type,
@@ -64,6 +103,7 @@ extension HTTPClient {
 }
 
 extension EventLoopFuture where Value == HTTPClient.Response {
+    @available(*, deprecated, message: "Use execute(request:deadline:expecting statusCode) async instead")
     func whenCompleteExpecting(status: Int, complete: @escaping (Result<HTTPClient.Response, Error>) -> Void) {
         self.whenComplete { result in
             switch result {
