@@ -154,9 +154,15 @@ extension Rat {
         _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
     }
     
+    @available(*, deprecated, message: "Use setIsUsingOdyssey(_ isUsingOdyssey) async instead")
     func setIsUsingOdyssey (_ isUsingOdyssey: Bool) -> EventLoopFuture<Void> {
         let updatedRat = self.tappingAttributes({ $0.odyssey = .init(value: isUsingOdyssey) })
         return updatedRat.update()
+    }
+    
+    func setIsUsingOdyssey (_ isUsingOdyssey: Bool) async throws {
+        let updatedRat = self.tappingAttributes({ $0.odyssey = .init(value: isUsingOdyssey) })
+        return try await updatedRat.update()
     }
 }
 

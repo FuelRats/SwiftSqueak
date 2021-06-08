@@ -194,7 +194,7 @@ class AccountCommands: IRCBotModule {
         ])
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["changeemail", "changemail"],
         [.param("email", "spacedawg@fuelrats.com")],
         category: .account,
@@ -207,19 +207,16 @@ class AccountCommands: IRCBotModule {
             command.message.error(key: "changemail.notloggedin", fromCommand: command)
             return
         }
-
-        user.changeEmail(to: command.parameters[0]).whenComplete({ result in
-            switch result {
-                case .failure(let error):
-                    print(String(describing: error))
-                    command.message.error(key: "changemail.error", fromCommand: command)
-
-                case .success(_):
-                    command.message.reply(key: "changemail.success", fromCommand: command, map: [
-                        "email": command.parameters[0]
-                    ])
-            }
-        })
+        
+        do {
+            try await user.changeEmail(to: command.parameters[0])
+        } catch {
+            command.message.error(key: "changemail.error", fromCommand: command)
+        }
+        
+        command.message.reply(key: "changemail.success", fromCommand: command, map: [
+            "email": command.parameters[0]
+        ])
     }
     
     @BotCommand(
@@ -248,7 +245,7 @@ class AccountCommands: IRCBotModule {
         command.message.replyPrivate(list: permits, separator: ", ", heading: "\(heading) ")
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["addpermit", "permitadd"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .account,
@@ -263,50 +260,45 @@ class AccountCommands: IRCBotModule {
             return
         }
         
-        SystemsAPI.performSearch(forSystem: systemName).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    command.message.error(key: "addpermit.searcherror", fromCommand: command, map: [
-                        "system": systemName
-                    ])
-                    
-                case .success(let searchResult):
-                    guard
-                        searchResult.data?.count ?? 0 > 0,
-                        let system = searchResult.data?[0],
-                        system.similarity == 1,
-                        system.permitRequired
-                    else {
-                        command.message.error(key: "addpermit.nosystem", fromCommand: command, map: [
-                            "system": systemName
-                        ])
-                        return
-                    }
-                    
-                    var ratData = currentRat.attributes.data.value
-                    var permits = ratData.permits ?? []
-                    let permitName = system.permitName ?? system.name
-                    if permits.contains(permitName) == false {
-                        permits.append(permitName)
-                    }
-                    ratData.permits = permits
-                    currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
-                    
-                    currentRat.update().whenSuccess({
-                        command.message.user.flush()
-                        command.message.reply(key: "addpermit.added", fromCommand: command, map: [
-                            "name": currentRat.attributes.name.value,
-                            "permit": permitName
-                        ])
-                    })
+        do {
+            let searchResult = try await SystemsAPI.performSearch(forSystem: systemName)
+            
+            guard
+                searchResult.data?.count ?? 0 > 0,
+                let system = searchResult.data?[0],
+                system.similarity == 1,
+                system.permitRequired
+            else {
+                command.message.error(key: "addpermit.nosystem", fromCommand: command, map: [
+                    "system": systemName
+                ])
+                return
             }
             
-        })
-        
-
+            var ratData = currentRat.attributes.data.value
+            var permits = ratData.permits ?? []
+            let permitName = system.permitName ?? system.name
+            if permits.contains(permitName) == false {
+                permits.append(permitName)
+            }
+            ratData.permits = permits
+            currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
+            
+            try await currentRat.update()
+            command.message.user.flush()
+            command.message.reply(key: "addpermit.added", fromCommand: command, map: [
+                "name": currentRat.attributes.name.value,
+                "permit": permitName
+            ])
+            
+        } catch {
+            command.message.error(key: "addpermit.searcherror", fromCommand: command, map: [
+                "system": systemName
+            ])
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["delpermit", "permitdel"],
         [.param("permit name", "Pilot's Federation District", .continuous)],
         category: .account,
@@ -333,16 +325,20 @@ class AccountCommands: IRCBotModule {
         ratData.permits = permits
         currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
         
-        currentRat.update().whenSuccess({
+        do {
+            try await currentRat.update()
+            
             command.message.user.flush()
             command.message.reply(key: "delpermit.removed", fromCommand: command, map: [
                 "name": currentRat.attributes.name.value,
                 "permit": permitName
             ])
-        })
+        } catch {
+            command.error(error)
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["useodyssey"],
         category: .account,
         description: "Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
@@ -356,15 +352,19 @@ class AccountCommands: IRCBotModule {
         }
         
         let isUsingOdyssey = !currentRat.attributes.odyssey.value
-        currentRat.setIsUsingOdyssey(true).whenSuccess({
+        
+        do {
+            try await currentRat.setIsUsingOdyssey(true)
+            command.message.user.flush()
             command.message.reply(key: "useodyssey.odyssey", fromCommand: command, map: [
                 "name": currentRat.attributes.name.value
             ])
-            command.message.user.flush()
-        })
+        } catch {
+            command.error(error)
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["usehorizons"],
         category: .account,
         description: "Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
@@ -377,11 +377,14 @@ class AccountCommands: IRCBotModule {
             return
         }
         
-        currentRat.setIsUsingOdyssey(false).whenSuccess({
+        do {
+            try await currentRat.setIsUsingOdyssey(false)
             command.message.reply(key: "useodyssey.horizons", fromCommand: command, map: [
                 "name": currentRat.attributes.name.value
             ])
             command.message.user.flush()
-        })
+        } catch {
+            command.error(error)
+        }
     }
 }

@@ -148,6 +148,11 @@ struct IRCBotCommand {
     var param5: (String?, String?, String?, String?, String?) {
         return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2], self.parameters[safe: 3], self.parameters[safe: 4])
     }
+    
+    func error (_ error: Error) {
+        debug(String(describing: error))
+        self.message.error(key: "genericerror", fromCommand: self)
+    }
 }
 
 enum Token {

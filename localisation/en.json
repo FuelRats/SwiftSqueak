@@ -448,4 +448,6 @@
       "one": "%{time} week",
       "other": "%{time} weeks",
   },
+  
+  "genericerror": "Command failed to due an unknown error"
 }
