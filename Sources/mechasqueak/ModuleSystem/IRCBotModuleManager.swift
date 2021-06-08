@@ -85,7 +85,7 @@ class IRCBotModuleManager {
             var helpCommand = ircBotCommand
             helpCommand.command = "!help"
             helpCommand.parameters = ["!\(ircBotCommand.command)"]
-            mecha.helpModule.didReceiveHelpCommand(helpCommand)
+            await mecha.helpModule.didReceiveHelpCommand(helpCommand)
             return
         }
 
