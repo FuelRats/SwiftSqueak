@@ -53,7 +53,9 @@ class BoardAttributeCommands: IRCBotModule {
                 mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
             }
             if mecha.rescueBoard.activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
-                QueueAPI.dequeue()
+                detach {
+                    try? await QueueAPI.dequeue()
+                }
             }
         }
 
@@ -83,7 +85,7 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["system", "sys", "loc", "location"],
         [.options(["f"]), .param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
@@ -96,43 +98,41 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
 
-        var system = command.parameters[1].uppercased()
-        if system.hasSuffix(" SYSTEM") {
-            system.removeLast(7)
+        var systemName = command.parameters[1].uppercased()
+        if systemName.hasSuffix(" SYSTEM") {
+            systemName.removeLast(7)
         }
         
         var key = "board.syschange"
-        if let correction = ProceduralSystem.correct(system: system), command.forceOverride == false {
+        if let correction = ProceduralSystem.correct(system: systemName), command.forceOverride == false {
             key += ".autocorrect"
-            system = correction
+            systemName = correction
         }
 
-        SystemsAPI.performSystemCheck(forSystem: system).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    rescue.system = StarSystem(
-                        name: system,
-                        manuallyCorrected: true
-                    )
-                case .success(let system):
-                    if rescue.system != nil {
-                        rescue.system?.merge(system)
-                    } else {
-                        rescue.system = system
-                    }
-                    rescue.system?.manuallyCorrected = true
+        do {
+            let system = try await SystemsAPI.performSystemCheck(forSystem: systemName)
+            if rescue.system != nil {
+                rescue.system?.merge(system)
+            } else {
+                rescue.system = system
             }
-            
-            rescue.syncUpstream(fromCommand: command)
-            command.message.reply(key: key, fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.client!,
-                "systemInfo": rescue.system.description
-            ])
-        })
+            rescue.system?.manuallyCorrected = true
+        } catch {
+            rescue.system = StarSystem(
+                name: systemName,
+                manuallyCorrected: true
+            )
+        }
+        
+        rescue.syncUpstream(fromCommand: command)
+        command.message.reply(key: key, fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier,
+            "client": rescue.client!,
+            "systemInfo": rescue.system.description
+        ])
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["cmdr", "client", "commander"],
         [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continuous)],
         category: .board,
@@ -150,9 +150,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         rescue.client = client
         if configuration.queue != nil {
-            QueueAPI.fetchQueue().whenSuccess({
-                $0.first(where: { $0.client.name == oldClient })?.changeName(name: client)
-            })
+            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == oldClient })?.changeName(name: client)
         }
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
