@@ -28,6 +28,7 @@ import AsyncHTTPClient
 import NIO
 
 class Rodentbin {
+    @available(*, deprecated, message: "Use upload(contents) async instead")
     static func upload (contents: String) -> EventLoopFuture<Rodentbin.Response> {
         var request = try! HTTPClient.Request(url: "https://paste.fuelrats.com/documents", method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
@@ -36,6 +37,16 @@ class Rodentbin {
         request.body = .data(contents.data(using: .utf8)!)
 
         return httpClient.execute(request: request, forDecodable: Response.self, deadline: .now() + .seconds(2))
+    }
+    
+    static func upload (contents: String) async throws -> Rodentbin.Response {
+        var request = try! HTTPClient.Request(url: "https://paste.fuelrats.com/documents", method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Content-Type", value: "application/json")
+
+        request.body = .data(contents.data(using: .utf8)!)
+
+        return try await httpClient.execute(request: request, forDecodable: Response.self, deadline: .now() + .seconds(2))
     }
     
     struct Response: Codable {
