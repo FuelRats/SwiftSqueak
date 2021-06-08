@@ -53,6 +53,7 @@ struct Fact: Codable, Hashable {
         return "\(self.fact.lowercased())-\(self.language)"
     }
     
+    @available(*, deprecated, message: "Use get(name, forLocale locale) async instead")
     public static func get (name: String, forLocale locale: Locale) -> EventLoopFuture<Fact?> {
         let factName = name.lowercased()
         let localeString = locale.short
@@ -87,7 +88,44 @@ struct Fact: Codable, Hashable {
         
         return future.futureResult
     }
+    
+    public static func get (name: String, forLocale locale: Locale) async throws -> Fact? {
+        let factName = name.lowercased()
+        let localeString = locale.short
+        
+        if let cachedFact = cache["\(factName)-\(localeString)"] {
+            return cachedFact
+        } else {
+            return try await withCheckedThrowingContinuation({ continuation in
+                sql.select().column("*")
+                    .from("facts")
+                    .join("factmessages", method: .inner, on: "facts.id=factmessages.fact and factmessages.language='\(localeString)'")
+                    .where("alias", .equal, factName)
+                    .first().whenComplete({ result in
+                        switch result {
+                            case .failure(let error):
+                                continuation.resume(throwing: error)
+                                
+                            case .success(let row):
+                                guard let row = row else {
+                                    continuation.resume(returning: nil)
+                                    return
+                                }
+                                
+                                let fact = try? row.decode(model: Fact.self)
+                                if let cacheFact = fact {
+                                    cache["\(factName)-\(localeString)"] = cacheFact
+                                }
+                            continuation.resume(returning: fact)
+                        }
+                    })
+            })
+            
+        }
+        
+    }
 
+    @available(*, deprecated, message: "Use getWithFallback(name, forLocale locale) async instead")
     public static func getWithFallback (name: String, forLcoale locale: Locale) -> EventLoopFuture<Fact?> {
         return Fact.get(name: name, forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
             guard let fact = fact else {
@@ -98,25 +136,40 @@ struct Fact: Codable, Hashable {
         })
     }
     
+    public static func getWithFallback (name: String, forLocale locale: Locale) async throws -> Fact? {
+        if let fact = try await Fact.get(name: name, forLocale: locale) {
+            return fact
+        }
+        
+        return try await Fact.get(name: name, forLocale: Locale(identifier: "en"))
+    }
+    
+    @available(*, deprecated, message: "Use getAllFacts() async instead")
     public static var all: EventLoopFuture<[Fact]> {
         let future = loop.next().makePromise(of: [Fact].self)
-        sql.select().column("*")
-            .from("facts")
-            .join("factmessages", method: .inner, on: "facts.id=factmessages.fact")
-            .all().whenComplete({ result in
-                switch result {
-                case .failure(let error):
-                    future.fail(error)
-                
-                case .success(let rows):
-                    let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
-                    for fact in facts {
-                        cache[fact.cacheIdentifier] = fact
-                    }
-                    future.succeed(facts)
-                }
-            })
+        
         return future.futureResult
+    }
+    
+    public static func getAllFacts() async throws -> [Fact] {
+        return try await withCheckedThrowingContinuation({ continuation in
+            sql.select().column("*")
+                .from("facts")
+                .join("factmessages", method: .inner, on: "facts.id=factmessages.fact")
+                .all().whenComplete({ result in
+                    switch result {
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    
+                    case .success(let rows):
+                        let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
+                        for fact in facts {
+                            cache[fact.cacheIdentifier] = fact
+                        }
+                        continuation.resume(returning: facts)
+                    }
+                })
+        })
     }
     
     public static func create (name: String, author: String, message: String, forLocale locale: Locale = Locale(identifier: "en")) -> EventLoopFuture<Fact> {
@@ -155,9 +208,23 @@ struct Fact: Codable, Hashable {
             
             return queries
         })
-        
     }
     
+    public static func create (name: String, author: String, message: String, forLocale locale: Locale = Locale(identifier: "en")) async throws -> Fact {
+        return try await withCheckedThrowingContinuation({ continuation in
+            Fact.create(name: name, author: author, message: message, forLocale: locale).whenComplete { result in
+                switch result {
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                    
+                case .success(let fact):
+                    continuation.resume(returning: fact)
+                }
+            }
+        })
+    }
+    
+    @available(*, deprecated, message: "Use create(alias, forName name) async instead")
     public static func create (alias: String, forName name: String) -> EventLoopFuture<Void> {
         let createDate = Date()
         return sql.insert(into: "facts")
@@ -166,6 +233,15 @@ struct Fact: Codable, Hashable {
             .run()
     }
     
+    public static func create (alias: String, forName name: String) async throws {
+        let createDate = Date()
+        return try await sql.insert(into: "facts")
+            .columns("id", "alias", "createdAt", "updatedAt")
+            .values(SQLBind(name), SQLBind(alias), SQLBind(createDate), SQLBind(createDate))
+            .run().asContinuation()
+    }
+    
+    @available(*, deprecated, message: "Use create(message, forName name, inLocale locale, withAuthor author) async instead")
     public static func create (message: String, forName name: String, inLocale locale: Locale, withAuthor author: String) -> EventLoopFuture<Void> {
         let createDate = Date()
         let localeString = locale.short
@@ -176,6 +252,17 @@ struct Fact: Codable, Hashable {
             .run()
     }
     
+    public static func create (message: String, forName name: String, inLocale locale: Locale, withAuthor author: String) async throws {
+        let createDate = Date()
+        let localeString = locale.short
+        
+        return try await sql.insert(into: "factmessages")
+            .columns("fact", "language", "message", "author", "createdAt", "updatedAt")
+            .values(SQLBind(name), SQLBind(localeString), SQLBind(message), SQLBind(author), SQLBind(createDate), SQLBind(createDate))
+            .run().asContinuation()
+    }
+    
+    @available(*, deprecated, message: "Use update(locale, forFact fact, withMessage message, fromAuthor author) async instead")
     public static func update (locale: Locale, forFact fact: String, withMessage message: String, fromAuthor author: String) -> EventLoopFuture<Void> {
         let updateDate = Date()
         cache.removeValue(forKey: "\(fact)-\(locale.short)")
@@ -188,6 +275,19 @@ struct Fact: Codable, Hashable {
             .run()
     }
     
+    public static func update (locale: Locale, forFact fact: String, withMessage message: String, fromAuthor author: String) async throws {
+        let updateDate = Date()
+        cache.removeValue(forKey: "\(fact)-\(locale.short)")
+        return try await sql.update("factmessages")
+            .set("message", to: message)
+            .set("author", to: author)
+            .set("updatedAt", to: updateDate)
+            .where("fact", .equal, SQLBind(fact))
+            .where("locale", .equal, SQLBind(locale.short))
+            .run().asContinuation()
+    }
+    
+    @available(*, deprecated, message: "Use delete(locale, forFact fact) async instead")
     public static func delete (locale: Locale, forFact fact: String) -> EventLoopFuture<Void> {
         cache.removeValue(forKey: "\(fact)-\(locale.short)")
         return sql.delete(from: "factmessages")
@@ -196,6 +296,15 @@ struct Fact: Codable, Hashable {
             .run()
     }
     
+    public static func delete (locale: Locale, forFact fact: String) async throws {
+        cache.removeValue(forKey: "\(fact)-\(locale.short)")
+        return try await sql.delete(from: "factmessages")
+            .where("fact", .equal, SQLBind(fact))
+            .where("language", .equal, SQLBind(locale.short))
+            .run().asContinuation()
+    }
+    
+    @available(*, deprecated, message: "Use drop(name) async instead")
     public static func drop (name: String) -> EventLoopFuture<Void> {
         for item in cache.filter({ $0.key.starts(with: "\(name)-") }) {
             cache.removeValue(forKey: item.key)
@@ -205,6 +314,16 @@ struct Fact: Codable, Hashable {
             .run()
     }
     
+    public static func drop (name: String) async throws {
+        for item in cache.filter({ $0.key.starts(with: "\(name)-") }) {
+            cache.removeValue(forKey: item.key)
+        }
+        return try await sql.delete(from: "facts")
+            .where("id", .equal, SQLBind(name))
+            .run().asContinuation()
+    }
+    
+    @available(*, deprecated, message: "Use delete(alias) async instead")
     public static func delete (alias: String) -> EventLoopFuture<Void> {
         for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {
             cache.removeValue(forKey: item.key)
@@ -212,6 +331,15 @@ struct Fact: Codable, Hashable {
         return sql.delete(from: "facts")
             .where("alias", .equal, SQLBind(alias))
             .run()
+    }
+    
+    public static func delete (alias: String) async throws {
+        for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {
+            cache.removeValue(forKey: item.key)
+        }
+        return try await sql.delete(from: "facts")
+            .where("alias", .equal, SQLBind(alias))
+            .run().asContinuation()
     }
 }
 
@@ -258,6 +386,7 @@ struct GroupedFact: Codable {
         }
     }
     
+    @available(*, deprecated, message: "Use get(name) async instead")
     static func get (name: String) -> EventLoopFuture<GroupedFact?> {
         let future = loop.next().makePromise(of: GroupedFact?.self)
         sql.select().columns([
@@ -288,6 +417,28 @@ struct GroupedFact: Codable {
                 }
             })
         return future.futureResult
+    }
+    
+    static func get (name: String) async throws -> GroupedFact? {
+        let facts = try await sql.select().columns([
+                SQLColumn("id", table: "aliases"),
+                SQLAlias(SQLColumn("alias", table: "aliases"), as: SQLIdentifier("fact")),
+                SQLColumn("createdAt", table: "factmessages"),
+                SQLColumn("updatedAt", table: "factmessages"),
+                SQLColumn("language", table: "factmessages"),
+                SQLColumn("author", table: "factmessages"),
+                SQLColumn("message", table: "factmessages")
+            ])
+            .from("facts")
+            .join(
+                SQLAlias(SQLIdentifier("facts"), as: SQLIdentifier("aliases")),
+                method: SQLJoinMethod.left,
+                on: SQLColumn("id", table: "facts"), .equal, SQLColumn("id", table: "aliases")
+            )
+            .join("factmessages", method: .left, on: "facts.id=factmessages.fact")
+            .where(SQLColumn("alias", table: "facts"), .equal, SQLBind(name))
+            .all(decoding: Fact.self).asContinuation()
+        return facts.grouped.values.first
     }
 }
 
