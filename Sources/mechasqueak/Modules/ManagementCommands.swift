@@ -141,7 +141,7 @@ class ManagementCommands: IRCBotModule {
         ])
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["addgroup"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
@@ -160,8 +160,10 @@ class ManagementCommands: IRCBotModule {
             ])
             return
         }
-
-        Group.list().whenSuccess({ groupSearch in
+        
+        do {
+            let groupSearch = try await Group.getList()
+            
             guard let group = groupSearch.body.data?.primary.values.first(where: {
                 $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
             }) else {
@@ -170,25 +172,20 @@ class ManagementCommands: IRCBotModule {
                 ])
                 return
             }
-
-            group.addUser(id: userId).whenComplete({ result in
-                switch result {
-                    case .success(_):
-                        command.message.reply(key: "addgroup.success", fromCommand: command, map: [
-                            "group": group.attributes.name.value,
-                            "groupId": group.id.rawValue.ircRepresentation,
-                            "userId": userId.ircRepresentation
-                        ])
-
-                    case .failure(let error):
-                        debug(String(describing: error))
-                        command.message.error(key: "addgroup.error", fromCommand: command)
-                }
-            })
-        })
+            
+            try await group.addUser(id: userId)
+            
+            command.message.reply(key: "addgroup.success", fromCommand: command, map: [
+                "group": group.attributes.name.value,
+                "groupId": group.id.rawValue.ircRepresentation,
+                "userId": userId.ircRepresentation
+            ])
+        } catch {
+            command.message.error(key: "addgroup.error", fromCommand: command)
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["delgroup"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
@@ -207,8 +204,10 @@ class ManagementCommands: IRCBotModule {
             ])
             return
         }
+        
+        do {
+            let groupSearch = try await Group.getList()
 
-        Group.list().whenSuccess({ groupSearch in
             guard let group = groupSearch.body.data?.primary.values.first(where: {
                 $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
             }) else {
@@ -217,25 +216,20 @@ class ManagementCommands: IRCBotModule {
                 ])
                 return
             }
-
-            group.delUser(id: userId).whenComplete({ result in
-                switch result {
-                    case .success(_):
-                        command.message.reply(key: "delgroup.success", fromCommand: command, map: [
-                            "group": group.attributes.name.value,
-                            "groupId": group.id.rawValue.ircRepresentation,
-                            "userId": userId.ircRepresentation
-                        ])
-
-                    case .failure(let error):
-                        debug(String(describing: error))
-                        command.message.error(key: "delgroup.error", fromCommand: command)
-                }
-            })
-        })
+            
+            try await group.removeUser(id: userId)
+            
+            command.message.reply(key: "delgroup.success", fromCommand: command, map: [
+                "group": group.attributes.name.value,
+                "groupId": group.id.rawValue.ircRepresentation,
+                "userId": userId.ircRepresentation
+            ])
+        } catch {
+            command.message.error(key: "delgroup.error", fromCommand: command)
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["suspend"],
         [.param("nickname/user id", "SpaceDawg"), .param("timespan", "7d")],
         category: .management,
@@ -263,29 +257,18 @@ class ManagementCommands: IRCBotModule {
         }
 
         let date = Date().addingTimeInterval(timespan)
-
-        User.get(id: userId).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    command.message.error(key: "suspend.nouser", fromCommand: command)
-
-                case .success(let userDocument):
-                    userDocument.body.primaryResource?.value.suspend(date: date).whenComplete({ result in
-                        switch result {
-                            case .failure(let error):
-                                debug(String(describing: error))
-                                command.message.error(key: "suspend.error", fromCommand: command)
-
-                            case .success(_):
-                                command.message.reply(key: "suspend.success", fromCommand: command, map: [
-                                    "userId": userId.ircRepresentation,
-                                    "date": date.ircRepresentable
-                                ])
-                        }
-                    })
-
-            }
-        })
+        
+        do {
+            let userDocument = try await User.get(id: userId)
+            try await userDocument.body.primaryResource?.value.suspend(date: date)
+            
+            command.message.reply(key: "suspend.success", fromCommand: command, map: [
+                "userId": userId.ircRepresentation,
+                "date": date.ircRepresentable
+            ])
+        } catch {
+            command.message.error(key: "suspend.error", fromCommand: command)
+        }
     }
 
     @BotCommand(
