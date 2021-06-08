@@ -30,6 +30,7 @@ import IRCKit
 class EDSM {
     static let mainSequence: [Character] = ["O", "B", "A", "F", "G", "K", "M"]
     
+    @available(*, deprecated, message: "Use getBodies(forSYstem systemName) async instead")
     static func getBodies (forSystem systemName: String) -> EventLoopFuture<BodiesResult> {
         var url = URLComponents(string: "https://www.edsm.net/api-system-v1/bodies")!
         url.queryItems = [URLQueryItem(name: "systemName", value: systemName)]
@@ -41,6 +42,19 @@ class EDSM {
         decoder.dateDecodingStrategy = .formatted(edsmDateFormatter)
 
         return httpClient.execute(request: request, forDecodable: BodiesResult.self, withDecoder: decoder)
+    }
+    
+    static func getBodies (forSystem systemName: String) async throws -> BodiesResult {
+        var url = URLComponents(string: "https://www.edsm.net/api-system-v1/bodies")!
+        url.queryItems = [URLQueryItem(name: "systemName", value: systemName)]
+
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(edsmDateFormatter)
+
+        return try await httpClient.execute(request: request, forDecodable: BodiesResult.self, withDecoder: decoder)
     }
     
     static let edsmDateFormatter: DateFormatter = {
