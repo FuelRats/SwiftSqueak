@@ -28,7 +28,7 @@ import IRCKit
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["shorten", "short", "shortener"],
         [.param("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"), .param("custom link", "importantinfo", .standard, .optional)],
         category: .utility,
@@ -46,15 +46,17 @@ class ShortenURLCommands: IRCBotModule {
             command.message.error(key: "shorten.invalidurl", fromCommand: command)
             return
         }
-
-        URLShortener.shorten(url: url, keyword: keyword, complete: { response in
+        
+        do {
+            let response = try await URLShortener.shorten(url: url, keyword: keyword)
+            
             command.message.reply(key: "shorten.shortened", fromCommand: command, map: [
                 "url": response.shorturl,
                 "title": response.title
             ])
-        }, error: { _ in
+        } catch {
             command.message.error(key: "shorten.error", fromCommand: command)
-        })
+        }
     }
 
     required init(_ moduleManager: IRCBotModuleManager) {
