@@ -71,7 +71,7 @@ class BoardAssignCommands: IRCBotModule {
         )
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["gofr", "assignfr", "frgo", "f"],
         [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
@@ -115,21 +115,12 @@ class BoardAssignCommands: IRCBotModule {
         }
 
         var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
-
-        Fact.get(name: factName, forLocale: command.locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
-            guard let fact = fact else {
-                return Fact.get(name: factName, forLocale: Locale(identifier: "en"))
-            }
-
-            return loop.next().makeSucceededFuture(fact)
-        }).whenSuccess { fact in
-            guard fact != nil else {
-                return
-            }
-
-            let client = rescue.clientNick ?? rescue.client ?? ""
-            message.reply(message: "\(client) \(fact!.message)")
+        guard let fact = try? await Fact.getWithFallback(name: factName, forLocale: command.locale) else {
+            return
         }
+        
+        let client = rescue.clientNick ?? rescue.client ?? ""
+        message.reply(message: "\(client) \(fact.message)")
     }
 
     @discardableResult
