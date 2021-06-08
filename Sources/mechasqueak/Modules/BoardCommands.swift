@@ -132,7 +132,7 @@ class BoardCommands: IRCBotModule {
         command.message.reply(list: generatedList, separator: ", ", heading: "\(generatedList.count) rescues found: ")
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["clear", "close"],
         [.options(["f", "p"]), .param("case id/client", "4"), .param("first limpet rat", "SpaceDawg", .standard, .optional)],
         category: .board,
@@ -181,7 +181,10 @@ class BoardCommands: IRCBotModule {
          }
 
         var closeFl = noFirstLimpet ? nil : firstLimpet
-        rescue.close(fromBoard: mecha.rescueBoard, firstLimpet: closeFl, onComplete: {
+        
+        do {
+            try await rescue.close(firstLimpet: closeFl)
+            
             mecha.rescueBoard.rescues.removeAll(where: {
                 $0.id == rescue.id
             })
@@ -201,66 +204,63 @@ class BoardCommands: IRCBotModule {
             guard configuration.general.drillMode == false else {
                 return
             }
-
-            URLShortener.attemptShorten(
-                url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!,
-                complete: { shortUrl in
-                if let firstLimpet = firstLimpet {
-                    var key = "board.close.reportFirstlimpet"
-                    if firstLimpet.id.rawValue == UUID(uuidString: "75c90d14-5b45-4054-a391-47c70162de78") {
-                        key += ".aleethia"
-                    }
-                    message.client.sendMessage(
-                        toChannelName: configuration.general.reportingChannel,
-                        withKey: key,
-                        mapping: [
-                            "caseId": rescue.commandIdentifier,
-                            "firstLimpet": target,
-                            "client": rescue.clientDescription,
-                            "link": shortUrl
-                        ]
-                    )
-
-                    message.client.sendMessage(
-                        toChannelName: command.parameters[1],
-                        withKey: "board.close.firstLimpetPaperwork",
-                        mapping: [
-                            "caseId": rescue.commandIdentifier,
-                            "client": rescue.clientDescription,
-                            "link": shortUrl
-                        ]
-                    )
-                    return
-                } else {
-                    message.client.sendMessage(
-                        toChannelName: command.message.user.nickname,
-                        withKey: "board.close.firstLimpetPaperwork",
-                        mapping: [
-                            "caseId": rescue.commandIdentifier,
-                            "client": rescue.clientDescription,
-                            "link": shortUrl
-                        ]
-                    )
+            
+            let shortUrl = await URLShortener.attemptShorten(url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!)
+            
+            if let firstLimpet = firstLimpet {
+                var key = "board.close.reportFirstlimpet"
+                if firstLimpet.id.rawValue == UUID(uuidString: "75c90d14-5b45-4054-a391-47c70162de78") {
+                    key += ".aleethia"
                 }
                 message.client.sendMessage(
                     toChannelName: configuration.general.reportingChannel,
-                    withKey: "board.close.report",
+                    withKey: key,
                     mapping: [
                         "caseId": rescue.commandIdentifier,
-                        "link": shortUrl,
-                        "client": rescue.clientDescription
+                        "firstLimpet": target,
+                        "client": rescue.clientDescription,
+                        "link": shortUrl
                     ]
                 )
-            })
 
-        }, onError: { _ in
+                message.client.sendMessage(
+                    toChannelName: command.parameters[1],
+                    withKey: "board.close.firstLimpetPaperwork",
+                    mapping: [
+                        "caseId": rescue.commandIdentifier,
+                        "client": rescue.clientDescription,
+                        "link": shortUrl
+                    ]
+                )
+                return
+            } else {
+                message.client.sendMessage(
+                    toChannelName: command.message.user.nickname,
+                    withKey: "board.close.firstLimpetPaperwork",
+                    mapping: [
+                        "caseId": rescue.commandIdentifier,
+                        "client": rescue.clientDescription,
+                        "link": shortUrl
+                    ]
+                )
+            }
+            message.client.sendMessage(
+                toChannelName: configuration.general.reportingChannel,
+                withKey: "board.close.report",
+                mapping: [
+                    "caseId": rescue.commandIdentifier,
+                    "link": shortUrl,
+                    "client": rescue.clientDescription
+                ]
+            )
+        } catch {
             command.message.reply(key: "board.close.error", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier
             ])
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["trash", "md", "purge", "mdadd"],
         [.options(["f"]), .param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
         category: .board,
@@ -294,7 +294,9 @@ class BoardCommands: IRCBotModule {
 
         let reason = command.parameters[1]
 
-        rescue.trash(fromBoard: mecha.rescueBoard, reason: reason, onComplete: {
+        do {
+            try await rescue.trash(reason: reason)
+            
             mecha.rescueBoard.rescues.removeAll(where: {
                 $0.id == rescue.id
             })
@@ -308,14 +310,14 @@ class BoardCommands: IRCBotModule {
                 timer?.cancel()
                 mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
             }
-        }, onError: { _ in
+        } catch {
             command.message.reply(key: "board.trash.error", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier
             ])
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["paperwork", "pwl"],
         [.param("case id/client", "4")],
         category: .board,
@@ -327,14 +329,11 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        URLShortener.attemptShorten(
-            url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!,
-            complete: { shortUrl in
-            command.message.reply(key: "board.pwl.generated", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
-                "link": shortUrl
-            ])
-        })
+        let shortUrl = await URLShortener.attemptShorten(url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!)
+        command.message.reply(key: "board.pwl.generated", fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier,
+            "link": shortUrl
+        ])
     }
 
     @BotCommand(
@@ -388,7 +387,7 @@ class BoardCommands: IRCBotModule {
         ])
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["sysc"],
         [.param("case id/client", "4"), .param("number", "1")],
         category: .board,
@@ -416,17 +415,18 @@ class BoardCommands: IRCBotModule {
             return
         }
         let selectedCorrection = corrections[index - 1]
+        
+        guard let starSystem = try? await SystemsAPI.getSystemInfo(forSystem: selectedCorrection) else {
+            return
+        }
+        rescue.system?.merge(starSystem)
+        rescue.syncUpstream(fromCommand: command)
 
-        SystemsAPI.getSystemInfo(forSystem: selectedCorrection).whenSuccess({ starSystem in
-            rescue.system?.merge(starSystem)
-            rescue.syncUpstream(fromCommand: command)
-
-            command.message.reply(key: "board.syschange", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.clientDescription,
-                "systemInfo": rescue.system.description
-            ])
-        })
+        command.message.reply(key: "board.syschange", fromCommand: command, map: [
+            "caseId": rescue.commandIdentifier,
+            "client": rescue.clientDescription,
+            "systemInfo": rescue.system.description
+        ])
     }
 
     static func assertGetRescueId (command: IRCBotCommand) -> LocalRescue? {

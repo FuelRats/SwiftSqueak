@@ -346,6 +346,7 @@ class LocalRescue {
         return promise.futureResult
     }
 
+    @available(*, deprecated, message: "Use close(firstLimpet) async instead")
     func close (
         fromBoard board: RescueBoard,
         firstLimpet: Rat? = nil,
@@ -397,6 +398,48 @@ class LocalRescue {
                 case .failure(let error):
                     debug(String(describing: error))
                     onError(error)
+            }
+        }
+    }
+    
+    func close (firstLimpet: Rat? = nil) async throws {
+        let wasInactive = self.status == .Inactive
+        self.status = .Closed
+        self.firstLimpet = firstLimpet
+        if let firstLimpet = firstLimpet, self.rats.contains(where: {
+            $0.id.rawValue == firstLimpet.id.rawValue
+        }) == false {
+            self.rats.append(firstLimpet)
+        }
+
+        if configuration.general.drillMode {
+            return
+        }
+
+        let patchDocument = SingleDocument(
+            apiDescription: .none,
+            body: .init(resourceObject: self.toApiRescue),
+            includes: .none,
+            meta: .none,
+            links: .none
+        )
+
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        
+        request.body = try .encodable(patchDocument)
+        
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
+        
+        if configuration.queue != nil {
+            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == self.client?.lowercased() })?.delete()
+            if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                detach {
+                    try? await QueueAPI.dequeue()
+                }
             }
         }
     }
@@ -462,6 +505,7 @@ class LocalRescue {
         return assigns
     }
 
+    @available(*, deprecated, message: "Use trash(reason) async instead")
     func trash (
         fromBoard board: RescueBoard,
         reason: String,
@@ -509,6 +553,44 @@ class LocalRescue {
                 case .failure(let error):
                     debug(String(describing: error))
                     onError(error)
+            }
+        }
+    }
+    
+    func trash (reason: String) async throws {
+        let wasInactive = self.status == .Inactive
+        self.status = .Closed
+        self.outcome = .Purge
+        self.notes = reason
+
+        if configuration.general.drillMode {
+            return
+        }
+
+        let patchDocument = SingleDocument(
+            apiDescription: .none,
+            body: .init(resourceObject: self.toApiRescue),
+            includes: .none,
+            meta: .none,
+            links: .none
+        )
+
+        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
+        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+
+        request.body = try .encodable(patchDocument)
+        
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
+        
+        if configuration.queue != nil {
+            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == self.client?.lowercased() })?.delete()
+            if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+                detach {
+                    try? await QueueAPI.dequeue()
+                }
             }
         }
     }
