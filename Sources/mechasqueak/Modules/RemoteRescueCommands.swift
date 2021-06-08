@@ -33,7 +33,7 @@ class RemoteRescueCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["closed", "recent"],
         [.param("number of cases", "10", .standard, .optional)],
         category: .rescues,
@@ -59,7 +59,8 @@ class RemoteRescueCommands: IRCBotModule {
             closeCount = count
         }
 
-        FuelRatsAPI.getRecentlyClosedRescues(count: closeCount, complete: { results in
+        do {
+            let results = try await FuelRatsAPI.getRecentlyClosedRescues(count: closeCount)
             let rescueList = results.body.data!.primary.values.enumerated().map({ (index, rescue) in
                 return lingo.localize("rescue.closed.entry", locale: command.locale.short, interpolations: [
                     "index": index,
@@ -75,12 +76,12 @@ class RemoteRescueCommands: IRCBotModule {
             ])
 
             command.message.replyPrivate(list: rescueList, separator: " - ")
-        }, error: { _ in
+        } catch {
             command.message.error(key: "rescue.closed.error", fromCommand: command)
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["delete"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -102,26 +103,26 @@ class RemoteRescueCommands: IRCBotModule {
             ])
             return
         }
-
-        FuelRatsAPI.deleteRescue(id: id, complete: {
-            command.message.reply(key: "rescue.delete.success", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
-        }, error: { error in
+        
+        do {
+            try await FuelRatsAPI.deleteRescue(id: id)
+        } catch {
             command.message.reply(key: "rescue.delete.failure", fromCommand: command, map: [
                 "id": id.ircRepresentation
             ])
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["deleteall", "cleartrash"],
         category: .rescues,
         description: "Delete all rescues currently in the trashlist",
         permission: .RescueWrite
     )
     var didReceiveDeleteAllCommand = { command in
-        FuelRatsAPI.getRescuesInTrash(complete: { results in
+        do {
+            let results = try await FuelRatsAPI.getRescuesInTrash()
+            
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
@@ -129,29 +130,32 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             for rescue in rescues {
-                FuelRatsAPI.deleteRescue(id: rescue.id.rawValue, complete: {
+                do {
+                    try await FuelRatsAPI.deleteRescue(id: rescue.id.rawValue)
                     command.message.replyPrivate(key: "rescue.delete.success", fromCommand: command, map: [
                         "id": rescue.id.rawValue.ircRepresentation
                     ])
-                }, error: { error in
+                } catch {
                     command.message.error(key: "rescue.delete.failure", fromCommand: command, map: [
                         "id": rescue.id.rawValue.ircRepresentation
                     ])
-                })
+                }
             }
-        }, error: { _ in
+        } catch {
             command.message.error(key: "rescue.trashlist.error", fromCommand: command)
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["trashlist", "mdlist", "purgelist", "listtrash"],
         category: .rescues,
         description: "Shows all the rescues that have been added to the trash list but not yet deleted",
         permission: .DispatchRead
     )
     var didReceiveListTrashcommand = { command in
-        FuelRatsAPI.getRescuesInTrash(complete: { results in
+        do {
+            let results = try await FuelRatsAPI.getRescuesInTrash()
+            
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
@@ -172,12 +176,12 @@ class RemoteRescueCommands: IRCBotModule {
                     "reason": rescue.notes
                 ])
             }
-        }, error: { _ in
+        } catch {
             command.message.error(key: "rescue.trashlist.error", fromCommand: command)
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["restore", "mdremove", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -192,7 +196,14 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        FuelRatsAPI.getRescue(id: id, complete: { result in
+        do {
+            guard let result = try await FuelRatsAPI.getRescue(id: id) else {
+                command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
+                    "id": id.ircRepresentation
+                ])
+                return
+            }
+            
             var rescue = result.body.data!.primary.value
 
             guard rescue.outcome == .Purge else {
@@ -204,25 +215,15 @@ class RemoteRescueCommands: IRCBotModule {
 
             rescue = rescue.tappingAttributes({ $0.outcome = .init(value: nil) })
 
-            rescue.update().whenComplete({ result in
-                switch result {
-                case .success(_):
-                    command.message.reply(key: "rescue.restore.restored", fromCommand: command, map: [
-                        "id": id.ircRepresentation
-                    ])
-                    
-                case .failure(_):
-                    command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                        "id": id.ircRepresentation
-                    ])
-                }
-            })
-        }, error: { _ in
-            
-        })
+            try await rescue.update()
+        } catch {
+            command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
+                "id": id.ircRepresentation
+            ])
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["unfiled", "pwn", "paperworkneeded", "needspaperwork", "npw"],
         category: .rescues,
         description: "Get a list of rescues that have not had their paperwork completed.",
@@ -230,7 +231,9 @@ class RemoteRescueCommands: IRCBotModule {
         allowedDestinations: .PrivateMessage
     )
     var didReceiveUnfiledListCommand = { command in
-        FuelRatsAPI.getUnfiledRescues(complete: { results in
+        do {
+            let results = try await FuelRatsAPI.getUnfiledRescues()
+            
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.replyPrivate(key: "rescue.unfiled.empty", fromCommand: command)
@@ -255,12 +258,12 @@ class RemoteRescueCommands: IRCBotModule {
                     "timeAgo": rescue.attributes.updatedAt.value.timeAgo
                 ])
             }
-        }, error: { _ in
+        } catch {
             command.message.error(key: "rescue.unfiled.error", fromCommand: command)
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["quoteid"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -274,9 +277,14 @@ class RemoteRescueCommands: IRCBotModule {
             ])
             return
         }
-
-        FuelRatsAPI.getRescue(id: id, complete: { result in
-            let rescue = result.body.data!.primary.value
+        
+        do {
+            guard let rescue = try await FuelRatsAPI.getRescue(id: id)?.body.data?.primary.value else {
+                command.message.error(key: "rescue.quoteid.error", fromCommand: command, map: [
+                    "id": id.ircRepresentation
+                ])
+                return
+            }
 
             command.message.replyPrivate(key: "rescue.quoteid.title", fromCommand: command, map: [
                 "client": rescue.client ?? "u\u{200B}nknown client",
@@ -295,14 +303,14 @@ class RemoteRescueCommands: IRCBotModule {
                     "message": quote.message
                 ])
             }
-        }, error: { _ in
+        } catch {
             command.message.error(key: "rescue.quoteid.error", fromCommand: command, map: [
                 "id": id.ircRepresentation
             ])
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["reopen"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -313,8 +321,7 @@ class RemoteRescueCommands: IRCBotModule {
         if Int(command.parameters[0]) != nil {
             var correctedCommand = command
             correctedCommand.command = "unclose"
-            // TODO: FIXME
-            // IRCBotModuleManager.handleIncomingCommand(ircBotCommand: correctedCommand)
+            await IRCBotModuleManager.handleIncomingCommand(ircBotCommand: correctedCommand)
             return
         }
         
@@ -338,8 +345,15 @@ class RemoteRescueCommands: IRCBotModule {
             ])
             return
         }
-
-        FuelRatsAPI.getRescue(id: id, complete: { result in
+        
+        do {
+            guard let result = try await FuelRatsAPI.getRescue(id: id) else {
+                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
+                    "id": id.ircRepresentation
+                ])
+                return
+            }
+            
             let apiRescue = result.body.data!.primary.value
             let rats = result.assignedRats()
             let firstLimpet = result.firstLimpet()
@@ -362,11 +376,11 @@ class RemoteRescueCommands: IRCBotModule {
                 "id": id.ircRepresentation,
                 "caseId": rescue.commandIdentifier
             ])
-        }, error: { _ in
+        } catch {
             command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
                 "id": id.ircRepresentation
             ])
-        })
+        }
     }
 
     @BotCommand(
@@ -415,7 +429,7 @@ class RemoteRescueCommands: IRCBotModule {
         
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["clientpw", "pwclient"],
         [.argument("all"), .param("client name", "SpaceDawg")],
         category: .rescues,
@@ -423,7 +437,9 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .DispatchRead
     )
     var didReceiveClientPaperworkCommand = { command in
-        FuelRatsAPI.getRescuesForClient(client: command.parameters[0], complete: { results in
+        do {
+            let results = try await FuelRatsAPI.getRescues(forClient: command.parameters[0])
+            
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.error(key: "rescue.clientpw.error", fromCommand: command, map: [
@@ -450,21 +466,18 @@ class RemoteRescueCommands: IRCBotModule {
 
             let rescue = rescues[0]
 
-            URLShortener.attemptShorten(
-                url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit")!,
-                complete: { shortUrl in
-                    command.message.reply(key: "rescue.clientpw.response", fromCommand: command, map: [
-                        "client": rescue.attributes.client.value ?? "u\u{200B}nknown client",
-                        "created": rescue.attributes.createdAt.value.ircRepresentable,
-                        "link": shortUrl
-                    ])
-            })
-        }, error: { _ in
-
-        })
+            let shortUrl = await URLShortener.attemptShorten(url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit")!)
+            command.message.reply(key: "rescue.clientpw.response", fromCommand: command, map: [
+                "client": rescue.attributes.client.value ?? "u\u{200B}nknown client",
+                "created": rescue.attributes.createdAt.value.ircRepresentable,
+                "link": shortUrl
+            ])
+        } catch {
+            command.error(error)
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["renameid"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"), .param("client name", "SpaceDawg")],
         category: .rescues,
@@ -479,26 +492,25 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        FuelRatsAPI.getRescue(id: id, complete: { result in
+        do {
+            guard let result = try await FuelRatsAPI.getRescue(id: id) else {
+                command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
+                    "id": id.ircRepresentation
+                ])
+                return
+            }
             var rescue = result.body.data!.primary.value
 
             rescue = rescue.tappingAttributes({ $0.client = .init(value: command.parameters[1]) })
-
-            rescue.update().whenComplete({ result in
-                switch result {
-                case .success(_):
-                    command.message.reply(key: "rescue.renameid.renamed", fromCommand: command, map: [
-                        "id": id.ircRepresentation
-                    ])
-                    
-                case .failure(_):
-                    command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                        "id": id.ircRepresentation
-                    ])
-                }
-            })
-        }, error: { _ in
+            try await rescue.update()
             
-        })
+            command.message.reply(key: "rescue.renameid.renamed", fromCommand: command, map: [
+                "id": id.ircRepresentation
+            ])
+        } catch {
+            command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
+                "id": id.ircRepresentation
+            ])
+        }
     }
 }
