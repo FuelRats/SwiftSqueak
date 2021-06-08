@@ -108,7 +108,7 @@ class GeneralCommands: IRCBotModule {
         ])
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["sysstats", "syscount", "systems"],
         category: .utility,
         description: "See statistics about the systems API.",
@@ -116,7 +116,9 @@ class GeneralCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveSystemStatisticsCommand = { command in
-        SystemsAPI.performStatisticsQuery(onComplete: { results in
+        do {
+            let results = try await SystemsAPI.getStatistics()
+            
             let result = results.data[0]
             guard let date = Double(result.id) else {
                 return
@@ -130,9 +132,9 @@ class GeneralCommands: IRCBotModule {
                 "stars": numberFormatter.string(from: result.attributes.starcount)!,
                 "bodies": numberFormatter.string(from: result.attributes.bodycount)!
             ])
-        }, onError: { _ in
+        } catch {
             command.message.error(key: "sysstats.error", fromCommand: command)
-        })
+        }
     }
 
     @BotCommand(

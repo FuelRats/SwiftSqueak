@@ -32,7 +32,7 @@ class HelpCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["help"],
         [.param("category/command", "!assign", .continuous, .optional)],
         category: nil,
@@ -88,25 +88,27 @@ class HelpCommands: IRCBotModule {
             }
             
             if category == .facts {
-                Fact.all.whenSuccess({ facts in
-                    var facts = Array(facts.grouped.values).sorted(by: { $0.cannonicalName < $1.cannonicalName })
-                    
-                    var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
-                    facts = facts.filter({ $0.isPlatformFact == false })
-                    
-                    command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
-                        "language": command.locale.englishDescription,
-                        "count": facts.count,
-                        "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
+                guard let facts = try? await Fact.getAllFacts() else {
+                    return
+                }
+                
+                var groupedFacts = Array(facts.grouped.values).sorted(by: { $0.cannonicalName < $1.cannonicalName })
+                
+                var platformFacts = groupedFacts.filter({ $0.isPlatformFact }).platformGrouped
+                groupedFacts = groupedFacts.filter({ $0.isPlatformFact == false })
+                
+                command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+                    "language": command.locale.englishDescription,
+                    "count": groupedFacts.count,
+                    "facts": groupedFacts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
+                ])
+                
+                if platformFacts.count > 0 {
+                    command.message.replyPrivate(key: "facts.list.platform", fromCommand: command, map: [
+                        "count": platformFacts.count,
+                        "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(separator: ", ")
                     ])
-                    
-                    if platformFacts.count > 0 {
-                        command.message.replyPrivate(key: "facts.list.platform", fromCommand: command, map: [
-                            "count": platformFacts.count,
-                            "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(separator: ", ")
-                        ])
-                    }
-                })
+                }
             }
             return
         }
