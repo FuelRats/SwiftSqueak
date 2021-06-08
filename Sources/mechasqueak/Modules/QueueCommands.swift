@@ -32,12 +32,17 @@ class QueueCommands: IRCBotModule {
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
-        QueueAPI.getConfig().whenSuccess({
-            QueueCommands.maxClientsCount = $0.maxActiveClients
-        })
+        
+        detach {
+            guard let queueConfig = try? await QueueAPI.getConfig() else {
+                return
+            }
+            
+            QueueCommands.maxClientsCount = queueConfig.maxActiveClients
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["queue"],
         category: .queue,
         description: "Get current information on the queue",
@@ -45,22 +50,24 @@ class QueueCommands: IRCBotModule {
         cooldown: .seconds(90)
     )
     var didReceiveQueueCommand = { command in
-        QueueAPI.fetchQueue().whenSuccess({ queue in
-            let queueItems = queue.filter({ $0.inProgress == false && $0.pending == false })
-            guard queueItems.count > 0 else {
-                command.message.reply(key: "queue.none", fromCommand: command)
-                return
-            }
-            
-            let queueCount = queueItems.count
-            
-            command.message.reply(key: "queue.info", fromCommand: command, map: [
-                "count": queueCount
-            ])
-        })
+        guard let queue = try? await QueueAPI.fetchQueue() else {
+            return
+        }
+        
+        let queueItems = queue.filter({ $0.inProgress == false && $0.pending == false })
+        guard queueItems.count > 0 else {
+            command.message.reply(key: "queue.none", fromCommand: command)
+            return
+        }
+        
+        let queueCount = queueItems.count
+        
+        command.message.reply(key: "queue.info", fromCommand: command, map: [
+            "count": queueCount
+        ])
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["queuestats"],
         [.param("start date", "2021-04-01", .standard, .optional)],
         category: .queue,
@@ -80,22 +87,22 @@ class QueueCommands: IRCBotModule {
                 command.message.error(key: "queuestats.date", fromCommand: command)
             }
         }
-        QueueAPI.fetchStatistics(fromDate: date).whenSuccess({ stats in
-            command.message.reply(key: "queuestats.stats", fromCommand: command, map: [
-                "totalClients": stats.totalClients ?? 0,
-                "instantJoin": stats.instantJoin ?? 0,
-                "queuedJoin": stats.queuedJoin ?? 0,
-                "averageQueuetime": stats.averageQueuetimeSpan,
-                "averageRescuetime": stats.averageRescuetimeSpan,
-                "longestQueuetime": stats.longestQueuetimeSpan,
-                "lostQueues": stats.lostQueues ?? 0,
-                "successfulQueues": stats.successfulQueues ?? 0,
-            ])
-            print(stats)
-        })
+        guard let stats = try? await QueueAPI.fetchStatistics(fromDate: date) else {
+            return
+        }
+        command.message.reply(key: "queuestats.stats", fromCommand: command, map: [
+            "totalClients": stats.totalClients ?? 0,
+            "instantJoin": stats.instantJoin ?? 0,
+            "queuedJoin": stats.queuedJoin ?? 0,
+            "averageQueuetime": stats.averageQueuetimeSpan,
+            "averageRescuetime": stats.averageRescuetimeSpan,
+            "longestQueuetime": stats.longestQueuetimeSpan,
+            "lostQueues": stats.lostQueues ?? 0,
+            "successfulQueues": stats.successfulQueues ?? 0,
+        ])
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["dequeue", "next"],
         category: .queue,
         description: "Manually move the next client from the queue into the rescue channel",
@@ -104,18 +111,15 @@ class QueueCommands: IRCBotModule {
         cooldown: .seconds(5)
     )
     var didReceiveDeQueueCommand = { command in
-        QueueAPI.dequeue().whenComplete({ result in
-            switch result {
-            case .failure(_):
-                command.message.error(key: "dequeue.error", fromCommand: command)
-                
-            case .success(_):
-                command.message.reply(key: "dequeue.success", fromCommand: command)
-            }
-        })
+        do {
+            try await QueueAPI.dequeue()
+            command.message.reply(key: "dequeue.success", fromCommand: command)
+        } catch {
+            command.message.error(key: "dequeue.error", fromCommand: command)
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["maxclients", "maxload", "maxcases"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,
@@ -131,19 +135,25 @@ class QueueCommands: IRCBotModule {
                 return
             }
             
-            QueueAPI.setMaxActiveClients(queueSize).whenSuccess({ _ in
+            do {
+                try await QueueAPI.setMaxActiveClients(queueSize)
                 QueueCommands.maxClientsCount = queueSize
                 command.message.reply(key: "maxclients.set", fromCommand: command, map: [
                     "count": queueSize
                 ])
-            })
+            } catch {
+                command.error(error)
+            }
         } else {
-            QueueAPI.getConfig().whenSuccess({ config in
+            do {
+                let config = try await QueueAPI.getConfig()
                 QueueCommands.maxClientsCount = config.maxActiveClients
                 command.message.reply(key: "maxclients.get", fromCommand: command, map: [
                     "count": config.maxActiveClients
                 ])
-            })
+            } catch {
+                command.error(error)
+            }
         }
     }
 }
