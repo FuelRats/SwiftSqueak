@@ -313,7 +313,8 @@ class RemoteRescueCommands: IRCBotModule {
         if Int(command.parameters[0]) != nil {
             var correctedCommand = command
             correctedCommand.command = "unclose"
-            IRCBotModuleManager.handleIncomingCommand(ircBotCommand: correctedCommand)
+            // TODO: FIXME
+            // IRCBotModuleManager.handleIncomingCommand(ircBotCommand: correctedCommand)
             return
         }
         

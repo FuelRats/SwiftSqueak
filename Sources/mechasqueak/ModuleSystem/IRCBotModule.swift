@@ -32,6 +32,8 @@ enum AllowedCommandDestination {
 }
 
 typealias BotCommandFunction = (IRCBotCommand) -> Void
+typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
+
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
     
@@ -64,6 +66,38 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
     }
 }
 
+@propertyWrapper struct AsyncBotCommand {
+    var wrappedValue: AsyncBotCommandFunction
+    
+    init (
+        wrappedValue value: @escaping AsyncBotCommandFunction,
+        _ commands: [String],
+        _ body: [CommandBody] = [],
+        category: HelpCategory?,
+        description: String,
+        permission: AccountPermission? = nil,
+        allowedDestinations: AllowedCommandDestination = .All,
+        cooldown: DispatchTimeInterval? = nil
+    ) {
+        self.wrappedValue = value
+
+        let declaration = IRCBotCommandDeclaration(
+            commands: commands,
+            asyncOnCommand: self.wrappedValue,
+            parameters: body.parameters,
+            options: body.options,
+            namedOptions: body.namedOptions,
+            category: category,
+            description: description,
+            permission: permission,
+            allowedDestinations: allowedDestinations,
+            cooldown: TimeInterval(dispatchTimeInterval: cooldown)
+        )
+
+        MechaSqueak.commands.append(declaration)
+    }
+}
+
 struct IRCBotCommandDeclaration {
     let commands: [String]
     let options: OrderedSet<Character>
@@ -76,10 +110,12 @@ struct IRCBotCommandDeclaration {
     var parameters: [CommandBody]
 
     var onCommand: BotCommandFunction?
+    var asyncOnCommand: AsyncBotCommandFunction?
 
     init (
         commands: [String],
-        onCommand: BotCommandFunction?,
+        onCommand: BotCommandFunction? = nil,
+        asyncOnCommand: AsyncBotCommandFunction? = nil,
         parameters: [CommandBody],
         options: OrderedSet<Character> = [],
         namedOptions: OrderedSet<String> = [],
@@ -95,6 +131,7 @@ struct IRCBotCommandDeclaration {
         self.namedOptions = namedOptions
         self.permission = permission
         self.onCommand = onCommand
+        self.asyncOnCommand = asyncOnCommand
         self.allowedDestinations = allowedDestinations
         self.category = category
         self.description = description
@@ -164,5 +201,15 @@ struct IRCBotCommandDeclaration {
     init (wrappedValue value: @escaping (T.Payload) -> Void) {
         self.wrappedValue = value
         self.token = NotificationCenter.default.addObserver(descriptor: T(), using: self.wrappedValue)
+    }
+}
+
+@propertyWrapper struct AsyncEventListener<T: NotificationDescriptor> {
+    var wrappedValue: (T.Payload) async -> Void
+    let token: NotificationToken
+
+    init (wrappedValue value: @escaping (T.Payload) async -> Void) {
+        self.wrappedValue = value
+        self.token = NotificationCenter.default.addAsyncObserver(descriptor: T(), using: self.wrappedValue)
     }
 }

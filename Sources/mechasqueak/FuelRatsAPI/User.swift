@@ -165,6 +165,7 @@ extension User {
         return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
     
+    @discardableResult
     func changeEmail (to email: String) async throws -> UserGetDocument {
         let body: [String: Any] = [
             "data": [
