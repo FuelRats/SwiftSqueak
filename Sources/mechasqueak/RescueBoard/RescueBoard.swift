@@ -238,7 +238,7 @@ class RescueBoard {
             }
         }
         
-        guard var system = rescue.system else {
+        guard let system = rescue.system else {
             let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
                 "signal": configuration.general.signal.uppercased(),
                 "platform": rescue.platform.ircRepresentable,
@@ -255,21 +255,7 @@ class RescueBoard {
             return
         }
 
-        if let systemName = rescue.system?.name, let systemForNamedBody = namedBodies[systemName.lowercased()] {
-            rescue.system?.name = systemForNamedBody
-            rescue.system?.clientProvidedBody = systemName
-        } else if let systemName = rescue.system?.name, let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
-            rescue.system?.name = correction
-            if let body = procedural.systemBody {
-                rescue.system?.clientProvidedBody = body
-            }
-        } else if let systemBodiesMatches = ProceduralSystem.systemBodyPattern.findFirst(in: system.name) {
-            system.name.removeLast(systemBodiesMatches.matched.count)
-            let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
-            system.clientProvidedBody = body
-            rescue.system = system
-        }
-        
+        rescue.system = autocorrect(system: system)
         try? await rescue.validateSystem()
         
         let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [

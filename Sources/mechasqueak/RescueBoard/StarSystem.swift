@@ -32,6 +32,7 @@ struct StarSystem: CustomStringConvertible, Codable {
         }
     }
     var manuallyCorrected: Bool = false
+    var automaticallyCorrected: Bool = false
     var searchResult: SystemsAPI.SearchDocument.SearchResult? = nil
     var permit: Permit? = nil
     var availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil
