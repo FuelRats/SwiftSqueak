@@ -33,7 +33,7 @@ class SystemSearch: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["search"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
@@ -42,35 +42,35 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
-        SystemsAPI.performSearch(forSystem: system).whenComplete({ request in
-            switch request {
-                case .success(let searchResults):
-                    guard var results = searchResults.data else {
-                        command.message.error(key: "systemsearch.error", fromCommand: command)
-                        return
-                    }
-
-                    guard results.count > 0 else {
-                        command.message.reply(key: "systemsearch.noresults", fromCommand: command)
-                        return
-                    }
-
-                    let resultString = results.map({
-                        $0.textRepresentation
-                    }).joined(separator: ", ")
-
-                    command.message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
-                        "system": system,
-                        "results": resultString
-                    ])
-
-                case .failure:
-                    command.message.error(key: "systemsearch.error", fromCommand: command)
+        
+        do {
+            let searchResults = try await SystemsAPI.performSearch(forSystem: system)
+            
+            guard var results = searchResults.data else {
+                command.message.error(key: "systemsearch.error", fromCommand: command)
+                return
             }
-        })
+
+            guard results.count > 0 else {
+                command.message.reply(key: "systemsearch.noresults", fromCommand: command)
+                return
+            }
+
+            let resultString = results.map({
+                $0.textRepresentation
+            }).joined(separator: ", ")
+
+            command.message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
+                "system": system,
+                "results": resultString
+            ])
+
+        } catch {
+            command.message.error(key: "systemsearch.error", fromCommand: command)
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["landmark"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
@@ -86,26 +86,25 @@ class SystemSearch: IRCBotModule {
         if let autocorrect = ProceduralSystem.correct(system: system) {
             system = autocorrect
         }
-
-        SystemsAPI.performSystemCheck(forSystem: system).whenComplete { apiResult in
-            switch apiResult {
-                case .failure(_):
-                    command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                        "system": system
-                    ])
-                case .success(let result):
-                    guard let landmarkDescription = result.landmarkDescription else {
-                        command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
-                            "system": system
-                        ])
-                        return
-                    }
-                    command.message.reply(message: result.info)
+        
+        do {
+            let result = try await SystemsAPI.performSystemCheck(forSystem: system)
+            
+            guard let landmarkDescription = result.landmarkDescription else {
+                command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                    "system": system
+                ])
+                return
             }
+            command.message.reply(message: result.info)
+        } catch {
+            command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+                "system": system
+            ])
         }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["distance", "distanceto"],
         [.param("departure system", "NLTT 48288"), .param("arrival system", "Sagittarius A*")],
         category: .utility,
@@ -114,34 +113,32 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveDistanceCommand = { command in
         let (depSystem, arrSystem) = command.param2 as! (String, String)
-        SystemsAPI.performSystemCheck(forSystem: depSystem, includeEdsm: false)
-            .and(SystemsAPI.performSystemCheck(forSystem: arrSystem, includeEdsm: false)).whenComplete({ result in
-                switch result {
-                    case .failure(_):
-                        command.message.error(key: "distance.error", fromCommand: command)
-                    
-                    case .success((let departure, let arrival)):
-                        guard let depCoords = departure.coordinates, let arrCoords = arrival.coordinates else {
-                            command.message.error(key: "distance.notfound", fromCommand: command)
-                            return
-                        }
-                        
-                        let distance = arrCoords.distance(from: depCoords)
-                        let formatter = NumberFormatter.englishFormatter()
-                        
-                        let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
-                        
-                        var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
-                        command.message.reply(key: key, fromCommand: command, map: [
-                            "departure": departure.name,
-                            "arrival": arrival.name,
-                            "distance": formatter.string(from: distance)!
-                        ])
-                }
-            })
+        
+        do {
+            let (departure, arrival) = try await (SystemsAPI.performSystemCheck(forSystem: depSystem, includeEdsm: false), SystemsAPI.performSystemCheck(forSystem: arrSystem, includeEdsm: false))
+            
+            guard let depCoords = departure.coordinates, let arrCoords = arrival.coordinates else {
+                command.message.error(key: "distance.notfound", fromCommand: command)
+                return
+            }
+            
+            let distance = arrCoords.distance(from: depCoords)
+            let formatter = NumberFormatter.englishFormatter()
+            
+            let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
+            
+            var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
+            command.message.reply(key: key, fromCommand: command, map: [
+                "departure": departure.name,
+                "arrival": arrival.name,
+                "distance": formatter.string(from: distance)!
+            ])
+        } catch {
+            command.message.error(key: "distance.error", fromCommand: command)
+        }
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["station"],
         [.param("reference system", "Sagittarius A*", .continuous), .options(["s", "l"])],
         category: .utility,
@@ -149,11 +146,13 @@ class SystemSearch: IRCBotModule {
         cooldown: .seconds(30)
     )
     var didReceiveStationCommand = { command in
-        SystemsAPI.getNearestStations(forSystem: command.param1!).whenSuccess({ response in
+        do {
+            let response = try await SystemsAPI.getNearestStations(forSystem: command.param1!)
+            
             let requireLargePad = command.options.contains("l")
             
             guard
-                let system = requireLargePad ? response?.largePadSystem : response?.preferableSystem,
+                let system = requireLargePad ? response.largePadSystem : response.preferableSystem,
                 let station = requireLargePad ? system.largePadStation : system.preferableStation
             else {
                 command.message.error(key: "station.notfound", fromCommand: command)
@@ -170,6 +169,8 @@ class SystemSearch: IRCBotModule {
                 "showAllServices": command.options.contains("s"),
                 "additionalServices": station.services.count - station.notableServices.count
             ]))
-        })
+        } catch {
+            command.error(error)
+        }
     }
 }
