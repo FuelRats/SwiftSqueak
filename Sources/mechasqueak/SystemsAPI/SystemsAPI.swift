@@ -100,8 +100,8 @@ class SystemsAPI {
             systemName = "CRUCIS SECTOR ZP-P A5-2"
         }
         
-        let (searchResults, proceduralResult) = await (try performSearch(forSystem: systemName, quickSearch: true), try performProceduralCheck(forSystem: systemName))
-        let searchResult = searchResults.data?.first(where: {
+        let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
+        let searchResult = searchResults?.data?.first(where: {
             $0.similarity == 1
         })
         let properName = searchResult?.name ?? systemName
@@ -110,7 +110,7 @@ class SystemsAPI {
         var starSystem = StarSystem(
             name: searchResult?.name ?? systemName,
             searchResult: searchResult,
-            availableCorrections: searchResults.data,
+            availableCorrections: searchResults?.data,
             landmark: landmarkResults.first,
             landmarks: landmarkResults.landmarks ?? [],
             proceduralCheck: proceduralResult,
