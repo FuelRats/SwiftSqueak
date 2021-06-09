@@ -71,55 +71,8 @@ extension HTTPClient {
             throw error
         }
     }
-
-    @available(*, deprecated, message: "Use execute(request:forDecodable:deadline:withDecoder) async instead")
-    func execute<D> (
-        request: Request,
-        forDecodable decodable: D.Type,
-        deadline: NIODeadline? = nil,
-        withDecoder decoder: JSONDecoder = defaultJsonDecoder
-    ) -> EventLoopFuture<D> where D: Decodable {
-        let promise = loop.next().makePromise(of: D.self)
-
-        httpClient.execute(request: request, deadline: deadline).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    do {
-                        let result = try decoder.decode(D.self, from: Data(buffer: response.body!))
-                        promise.succeed(result)
-                    } catch {
-                        debug(String(data: Data(buffer: response.body!), encoding: .utf8) ?? "")
-                        debug(String(describing: error))
-                        promise.fail(error)
-                    }
-                case .failure(let restError):
-                    debug(String(describing: restError))
-                    promise.fail(restError)
-            }
-        }
-
-        return promise.futureResult
-    }
 }
 
-extension EventLoopFuture where Value == HTTPClient.Response {
-    @available(*, deprecated, message: "Use execute(request:deadline:expecting statusCode) async instead")
-    func whenCompleteExpecting(status: Int, complete: @escaping (Result<HTTPClient.Response, Error>) -> Void) {
-        self.whenComplete { result in
-            switch result {
-                case .success(let response):
-                    if response.status.code == status {
-                        complete(result)
-                    } else {
-                        complete(Result.failure(response))
-                    }
-
-                case .failure:
-                    complete(result)
-            }
-        }
-    }
-}
 
 extension HTTPClient.Response: Error {}
 

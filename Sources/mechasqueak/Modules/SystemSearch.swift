@@ -134,6 +134,7 @@ class SystemSearch: IRCBotModule {
                 "distance": formatter.string(from: distance)!
             ])
         } catch {
+            print(error)
             command.message.error(key: "distance.error", fromCommand: command)
         }
     }

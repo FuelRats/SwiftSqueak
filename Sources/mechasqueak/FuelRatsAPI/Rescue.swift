@@ -182,36 +182,6 @@ extension Rescue {
         return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
     }
     
-    @available(*, deprecated, message: "Use update() async instead")
-    func update () -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
-        let patchDocument = SingleDocument(
-            apiDescription: .none,
-            body: .init(resourceObject: self),
-            includes: .none,
-            meta: .none,
-            links: .none
-        )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    promise.succeed(())
-                case .failure(let restError):
-                    promise.fail(restError)
-            }
-        }
-        return promise.futureResult
-    }
-    
     func update () async throws {
         let patchDocument = SingleDocument(
             apiDescription: .none,

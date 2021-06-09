@@ -115,17 +115,6 @@ typealias Group = JSONEntity<GroupDescription>
 typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 
 extension Group {
-    @available(*, deprecated, message: "Use getList() async instead")
-    static func list () -> EventLoopFuture<GroupSearchDocument> {
-        var url = configuration.api.url
-        url.appendPathComponent("/groups")
-        var request = try! HTTPClient.Request(url: url, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-
-        return httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
-    }
-    
     static func getList () async throws -> GroupSearchDocument {
         var url = configuration.api.url
         url.appendPathComponent("/groups")
@@ -136,38 +125,6 @@ extension Group {
         return try await httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
     }
 
-    @available(*, deprecated, message: "Use addUser(id) async instead")
-    func addUser (id: UUID) -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
-
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
-
-        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
-            type: "groups",
-            id: self.id.rawValue
-        )])
-
-        var request = try! HTTPClient.Request(url: url, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try! .encodable(relationship)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
-            switch result {
-                case .success(_):
-                    promise.succeed(())
-
-                case .failure(let error):
-                    promise.fail(error)
-            }
-        })
-        return promise.futureResult
-    }
-    
     func addUser (id: UUID) async throws {
         var url = configuration.api.url
         url.appendPathComponent("/users")
@@ -186,38 +143,6 @@ extension Group {
         request.body = try! .encodable(relationship)
         
         _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
-    }
-    
-    @available(*, deprecated, message: "Use removeUser(id) async instead")
-    func delUser (id: UUID) -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
-
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
-
-        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
-            type: "groups",
-            id: self.id.rawValue
-        )])
-
-        var request = try! HTTPClient.Request(url: url, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try! .encodable(relationship)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
-            switch result {
-                case .success(_):
-                    promise.succeed(())
-
-                case .failure(let error):
-                    promise.fail(error)
-            }
-        })
-        return promise.futureResult
     }
     
     func removeUser (id: UUID) async throws {

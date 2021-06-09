@@ -44,16 +44,6 @@ class QueueAPI {
         return encoder
     }
     
-    @available(*, deprecated, message: "Use getConfig() async instead")
-    static func getConfig () -> EventLoopFuture<QueueAPIConfiguration> {
-        let requestUrl = configuration.queue!.url.appendingPathComponent("/config/")
-        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
-    }
-    
     static func getConfig () async throws -> QueueAPIConfiguration {
         let requestUrl = configuration.queue!.url.appendingPathComponent("/config/")
         var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
@@ -61,23 +51,6 @@ class QueueAPI {
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
-    }
-    
-    @available(*, deprecated, message: "Use fetchStatistics(fromDate date) async instead")
-    static func fetchStatistics (fromDate date: Date) -> EventLoopFuture<QueueAPIStatistics> {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "YYYY-MM-dd"
-        
-        let formattedDate = dateFormatter.string(from: date)
-        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
-        requestUrl.path.append("/queue/statistics/")
-        requestUrl.queryItems = [URLQueryItem(name: "daterequested", value: formattedDate), URLQueryItem(name: "detailed", value: "false")]
-        
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
     }
     
     static func fetchStatistics (fromDate date: Date) async throws -> QueueAPIStatistics {
@@ -95,16 +68,6 @@ class QueueAPI {
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
     }
-
-    @available(*, deprecated, message: "Use fetchQueue() async instead")
-    static func fetchQueue () -> EventLoopFuture<[QueueParticipant]> {
-        let requestUrl = configuration.queue!.url.appendingPathComponent("/queue/")
-        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request, forDecodable: [QueueParticipant].self, withDecoder: decoder)
-    }
     
     static func fetchQueue () async throws -> [QueueParticipant] {
         let requestUrl = configuration.queue!.url.appendingPathComponent("/queue/")
@@ -113,36 +76,6 @@ class QueueAPI {
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
 
         return try await httpClient.execute(request: request, forDecodable: [QueueParticipant].self, withDecoder: decoder)
-    }
-    
-    @available(*, deprecated, message: "Use dequeue() async instead")
-    @discardableResult
-    static func dequeue (existingPromise: EventLoopPromise<QueueParticipant>? = nil) -> EventLoopFuture<QueueParticipant> {
-        let promise = existingPromise ?? loop.next().makePromise(of: QueueParticipant.self)
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue")
-        requestUrl.appendPathComponent("/dequeue")
-
-        var request = try! HTTPClient.Request(url: requestUrl, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder).whenComplete({ result in
-            switch result {
-            case .failure(let error):
-                promise.fail(error)
-                
-            case .success(let participant):
-                awaitQueueJoin(participant: participant).whenComplete({ result in
-                    switch result {
-                    case .failure(_):
-                        dequeue(existingPromise: promise)
-                    case .success(_):
-                        promise.succeed(participant)
-                    }
-                })
-            }
-        })
-        return promise.futureResult
     }
     
     @discardableResult
@@ -162,20 +95,6 @@ class QueueAPI {
         } catch {
             return try await dequeue()
         }
-    }
-    
-    @available(*, deprecated, message: "Use setMaxActiveClients(_ maxActiveClients) async instead")
-    @discardableResult
-    static func setMaxActiveClients (_ maxActiveClients: Int) -> EventLoopFuture<QueueAPIConfiguration> {
-        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
-        requestUrl.path.append("/config/max_active_clients")
-        requestUrl.queryItems = [URLQueryItem(name: "max_active_clients", value: String(maxActiveClients))]
-
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: QueueAPI.decoder)
     }
     
     @discardableResult

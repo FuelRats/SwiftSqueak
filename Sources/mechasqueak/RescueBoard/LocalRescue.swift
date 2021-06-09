@@ -346,62 +346,6 @@ class LocalRescue {
         mecha.rescueBoard.queue.addOperation(operation)
         return promise.futureResult
     }
-
-    @available(*, deprecated, message: "Use close(firstLimpet) async instead")
-    func close (
-        fromBoard board: RescueBoard,
-        firstLimpet: Rat? = nil,
-        onComplete: @escaping () -> Void,
-        onError: @escaping (Error?) -> Void
-    ) {
-        let wasInactive = self.status == .Inactive
-        self.status = .Closed
-        self.firstLimpet = firstLimpet
-        if let firstLimpet = firstLimpet, self.rats.contains(where: {
-            $0.id.rawValue == firstLimpet.id.rawValue
-        }) == false {
-            self.rats.append(firstLimpet)
-        }
-
-        if configuration.general.drillMode {
-            onComplete()
-            return
-        }
-
-        let patchDocument = SingleDocument(
-            apiDescription: .none,
-            body: .init(resourceObject: self.toApiRescue),
-            includes: .none,
-            meta: .none,
-            links: .none
-        )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-        
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    if configuration.queue != nil {
-                        QueueAPI.fetchQueue().whenSuccess({
-                            $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
-                        })
-                        if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
-                            QueueAPI.dequeue()
-                        }
-                    }
-                    onComplete()
-                case .failure(let error):
-                    debug(String(describing: error))
-                    onError(error)
-            }
-        }
-    }
     
     func close (firstLimpet: Rat? = nil) async throws {
         let wasInactive = self.status == .Inactive
@@ -505,58 +449,6 @@ class LocalRescue {
         }
         return assigns
     }
-
-    @available(*, deprecated, message: "Use trash(reason) async instead")
-    func trash (
-        fromBoard board: RescueBoard,
-        reason: String,
-        onComplete: @escaping () -> Void,
-        onError: @escaping (Error?) -> Void
-    ) {
-        let wasInactive = self.status == .Inactive
-        self.status = .Closed
-        self.outcome = .Purge
-        self.notes = reason
-
-        if configuration.general.drillMode {
-            onComplete()
-            return
-        }
-
-        let patchDocument = SingleDocument(
-            apiDescription: .none,
-            body: .init(resourceObject: self.toApiRescue),
-            includes: .none,
-            meta: .none,
-            links: .none
-        )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    if configuration.queue != nil {
-                        QueueAPI.fetchQueue().whenSuccess({
-                            $0.first(where: { $0.client.name.lowercased() == self.client?.lowercased() })?.delete()
-                        })
-                         if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
-                            QueueAPI.dequeue()
-                        }
-                    }
-                    onComplete()
-                case .failure(let error):
-                    debug(String(describing: error))
-                    onError(error)
-            }
-        }
-    }
     
     func trash (reason: String) async throws {
         let wasInactive = self.status == .Inactive
@@ -633,73 +525,6 @@ class LocalRescue {
 
     var channel: IRCChannel? {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
-    }
-
-    @available(*, deprecated, message: "Use validateSystem() async instead")
-    func validateSystem () -> EventLoopFuture<()>? {
-        let promise = loop.next().makePromise(of: Void.self)
-
-        guard let system = self.system else {
-            return nil
-        }
-
-        SystemsAPI.performSystemCheck(forSystem: system.name).whenComplete({ result in
-            switch result {
-                case .failure(let error):
-                    promise.fail(error)
-
-                case .success(let starSystem):
-                    self.system?.merge(starSystem)
-                    promise.succeed(())
-                    guard starSystem.isConfirmed == false && starSystem.isIncomplete == false else {
-                        return
-                    }
-
-                    SystemsAPI.performSearch(forSystem: system.name).whenSuccess({ result in
-                        guard var results = result.data, results.count > 0 else {
-                            return
-                        }
-
-                        let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
-                        var approvedCorrections = ratedCorrections.filter({ $1 != nil })
-                        approvedCorrections.sort(by: { $0.1! < $1.1! })
-
-                        if let autoCorrectableResult = approvedCorrections.first?.0 {
-                            SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult).whenSuccess({ starSystem in
-                                self.system?.merge(starSystem)
-                                self.syncUpstream()
-                                mecha.reportingChannel?.client.sendMessage(
-                                    toChannelName: self.channelName,
-                                    withKey: "sysc.autocorrect",
-                                    mapping: [
-                                        "caseId": self.commandIdentifier,
-                                        "client": self.clientDescription,
-                                        "system": self.system.description
-                                    ]
-                                )
-                            })
-                            return
-                        }
-                        if results.count > 9 {
-                            results.removeSubrange(9...)
-                        }
-
-                        self.system?.availableCorrections = results
-
-                        let resultString = results.enumerated().map({
-                            $0.element.correctionRepresentation(index: $0.offset + 1)
-                        }).joined(separator: ", ")
-
-                        self.channel?.send(key: "sysc.nearestmatches", map: [
-                            "caseId": self.commandIdentifier,
-                            "client": self.clientDescription,
-                            "systems": resultString
-                        ])
-                    })
-
-            }
-        })
-        return promise.futureResult
     }
     
     func validateSystem () async throws {

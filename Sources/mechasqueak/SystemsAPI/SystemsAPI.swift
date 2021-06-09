@@ -28,22 +28,6 @@ import IRCKit
 import NIO
 
 class SystemsAPI {
-    @available(*, deprecated, message: "Use performSearch(forSystem systemName) async instead")
-    static func performSearch (forSystem systemName: String, quickSearch: Bool = false) -> EventLoopFuture<SearchDocument> {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        if quickSearch {
-            url.queryItems?.append(URLQueryItem(name: "fast", value: "true"))
-        }
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(60))
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        return httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
-    }
-    
     static func performSearch (forSystem systemName: String, quickSearch: Bool = false) async throws -> SearchDocument {
         var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
@@ -58,18 +42,6 @@ class SystemsAPI {
 
         return try await httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
-
-    @available(*, deprecated, message: "Use performLandmarkCheck(forSystem systemName) async instead")
-    static func performLandmarkCheck (forSystem systemName: String) -> EventLoopFuture<LandmarkDocument> {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        return httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
-    }
     
     static func performLandmarkCheck (forSystem systemName: String) async throws -> LandmarkDocument {
         var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
@@ -80,38 +52,6 @@ class SystemsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         return try await httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
-    }
-    
-    @available(*, deprecated, message: "Use getSystemInfo(forSystem system) async instead")
-    static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) -> EventLoopFuture<StarSystem> {
-        let promise = loop.next().makePromise(of: StarSystem.self)
-        self.performLandmarkCheck(forSystem: system.name).whenComplete({ result in
-            switch result {
-            case .failure(let error):
-                promise.fail(error)
-                
-            case .success(let landmarkDocument):
-                var starSystem = StarSystem(
-                    name: system.name,
-                    searchResult: system,
-                    availableCorrections: nil,
-                    landmark: landmarkDocument.first,
-                    landmarks: landmarkDocument.landmarks ?? [],
-                    proceduralCheck: nil,
-                    lookupAttempted: true
-                )
-                EDSM.getBodies(forSystem: system.name).whenComplete({ result in
-                    switch result {
-                    case .failure(_):
-                        promise.succeed(starSystem)
-                    case .success(let bodies):
-                        starSystem.bodies = bodies.bodies
-                        promise.succeed(starSystem)
-                    }
-                })
-            }
-        })
-        return promise.futureResult
     }
     
     static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) async throws -> StarSystem {
@@ -132,28 +72,6 @@ class SystemsAPI {
         return starSystem
     }
 
-    @available(*, deprecated, message: "Use performProceduralCheck(forSystem systemName) async instead")
-    static func performProceduralCheck (forSystem systemName: String) -> EventLoopFuture<ProceduralCheckDocument?> {
-        let promise = loop.next().makePromise(of: ProceduralCheckDocument?.self)
-        var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self).whenComplete({ result in
-            switch result {
-            case .failure(_):
-                promise.succeed(nil)
-                
-            case .success(let document):
-                promise.succeed(document)
-            }
-        })
-        return promise.futureResult
-    }
-    
     static func performProceduralCheck (forSystem systemName: String) async throws -> ProceduralCheckDocument {
         var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
@@ -165,28 +83,6 @@ class SystemsAPI {
         return try await httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
     }
     
-    @available(*, deprecated, message: "Use getNearestStations(forSystem systemName) async instead")
-    static func getNearestStations (forSystem systemName: String) -> EventLoopFuture<NearestPopulatedDocument?> {
-        let promise = loop.next().makePromise(of: NearestPopulatedDocument?.self)
-        var url = URLComponents(string: "https://system.api.fuelrats.com/nearest_populated")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self).whenComplete({ result in
-            switch result {
-            case .failure(_):
-                promise.succeed(nil)
-                
-            case .success(let document):
-                promise.succeed(document)
-            }
-        })
-        return promise.futureResult
-    }
-    
     static func getNearestStations (forSystem systemName: String) async throws -> NearestPopulatedDocument {
         var url = URLComponents(string: "https://system.api.fuelrats.com/nearest_populated")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
@@ -196,60 +92,6 @@ class SystemsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
-    }
-
-    @available(*, deprecated, message: "Use performSystemCheck(forSystem systemName, includeEdsm) async instead")
-    static func performSystemCheck (forSystem systemName: String, includeEdsm: Bool = true) -> EventLoopFuture<StarSystem> {
-        let promise = loop.next().makePromise(of: StarSystem.self)
-        var systemName = systemName
-        if systemName.uppercased() == "SABIYHAN" {
-            systemName = "CRUCIS SECTOR ZP-P A5-2"
-        }
-        
-
-        performSearch(forSystem: systemName, quickSearch: true)
-            .and(performProceduralCheck(forSystem: systemName))
-            .whenComplete({ result in
-                switch result {
-                    case .success(let (searchResults, proceduralResult)):
-                        let searchResult = searchResults.data?.first(where: {
-                            $0.similarity == 1
-                        })
-                        let properName = searchResult?.name ?? systemName
-                        performLandmarkCheck(forSystem: properName).whenSuccess({ landmarkResults in
-                            var starSystem = StarSystem(
-                                name: searchResult?.name ?? systemName,
-                                searchResult: searchResult,
-                                availableCorrections: searchResults.data,
-                                landmark: landmarkResults.first,
-                                landmarks: landmarkResults.landmarks ?? [],
-                                proceduralCheck: proceduralResult,
-                                lookupAttempted: true
-                            )
-                            
-                            if starSystem.landmark != nil && includeEdsm {
-                                EDSM.getBodies(forSystem: properName).whenComplete({ result in
-                                    switch result {
-                                    case .failure(let error):
-                                        debug(String(describing: error))
-                                        promise.succeed(starSystem)
-                                    case .success(let bodies):
-                                        starSystem.bodies = bodies.bodies
-                                        promise.succeed(starSystem)
-                                    }
-                                })
-                            } else {
-                                promise.succeed(starSystem)
-                            }
-                        })
-
-                    case .failure(let error):
-                        promise.fail(error)
-                }
-
-            })
-
-        return promise.futureResult
     }
     
     static func performSystemCheck (forSystem systemName: String, includeEdsm: Bool = true) async throws -> StarSystem {
@@ -282,37 +124,6 @@ class SystemsAPI {
         }
         return starSystem
     }
-
-    @available(*, deprecated, message: "Use getStatistics() async instead")
-    static func performStatisticsQuery (
-        onComplete: @escaping (StatisticsDocument) -> Void,
-        onError: @escaping (Error?) -> Void
-    ) {
-        let url = URLComponents(string: "https://system.api.fuelrats.com/api/stats")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-                    do {
-                        let result = try decoder.decode(
-                            StatisticsDocument.self,
-                            from: Data(buffer: response.body!)
-                        )
-                        onComplete(result)
-                    } catch let error {
-                        debug(String(describing: error))
-                        onError(error)
-                    }
-                case .failure(let restError):
-                    onError(restError)
-            }
-        }
-    }
     
     static func getStatistics () async throws -> StatisticsDocument {
         let url = URLComponents(string: "https://system.api.fuelrats.com/api/stats")!
@@ -329,61 +140,12 @@ class SystemsAPI {
         )
     }
     
-    @available(*, deprecated, message: "Use fetchLandmarkList() async instead")
-    static func fetchLandmarkList () -> EventLoopFuture<[LandmarkListDocument.LandmarkListEntry]> {
-        let promise = loop.next().makePromise(of: [LandmarkListDocument.LandmarkListEntry].self)
-        
-        let url = URLComponents(string: "https://systems.api.fuelrats.com/landmark?list")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    let fallbackLandmark = LandmarkListDocument.LandmarkListEntry(name: "Sol", coordinates: Vector3(0, 0, 0))
-                    promise.succeed([fallbackLandmark])
-                    
-                case .success(let document):
-                    promise.succeed(document.landmarks)
-            }
-        })
-        return promise.futureResult
-    }
-    
     static func fetchLandmarkList () async throws -> [LandmarkListDocument.LandmarkListEntry] {
         let url = URLComponents(string: "https://systems.api.fuelrats.com/landmark?list")!
         var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         return try await httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).landmarks
-    }
-    
-    @available(*, deprecated, message: "Use fetchSectorList() async instead")
-    static func fetchSectorList () -> EventLoopFuture<[StarSector]> {
-        let promise = loop.next().makePromise(of: [StarSector].self)
-        
-        let url = URLComponents(string: "https://systems.api.fuelrats.com/get_ha_regions")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request, forDecodable: [String].self).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    promise.succeed([])
-                    
-                case .success(let sectors):
-                    promise.succeed(sectors.map({ sector -> StarSector in
-                        var name = sector.uppercased()
-                        var hasSector = false
-                        if name.hasSuffix(" SECTOR") {
-                            name.removeLast(7)
-                            hasSector = true
-                        }
-                        return StarSector(name: name, hasSector: hasSector)
-                    }))
-            }
-        })
-        return promise.futureResult
     }
     
     static func fetchSectorList () async throws -> [StarSector] {

@@ -71,23 +71,6 @@ struct QueueParticipant: Codable, Hashable {
         self.client = try container.decode(QueueClient.self, forKey: .client)
     }
     
-    @available(*, deprecated, message: "Use setInProgress() async instead")
-    @discardableResult
-    func setInProgress () -> EventLoopFuture<QueueParticipant> {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
-
-        print(requestUrl.absoluteString)
-        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
-        var queueItem = self
-        queueItem.inProgress = true
-        request.body = try! .data(QueueAPI.encoder.encode(queueItem))
-
-        return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
-    }
-    
     @discardableResult
     func setInProgress () async throws -> QueueParticipant {
         var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
@@ -104,23 +87,6 @@ struct QueueParticipant: Codable, Hashable {
         return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
     
-    @available(*, deprecated, message: "Use changeName(name) async instead")
-    @discardableResult
-    func changeName (name: String) -> EventLoopFuture<QueueParticipant> {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
-
-        print(requestUrl.absoluteString)
-        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
-        var queueItem = self
-        queueItem.client.name = name
-        request.body = try! .data(QueueAPI.encoder.encode(queueItem))
-
-        return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
-    }
-    
     @discardableResult
     func changeName (name: String) async throws -> QueueParticipant {
         var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
@@ -135,19 +101,6 @@ struct QueueParticipant: Codable, Hashable {
         request.body = try! .data(QueueAPI.encoder.encode(queueItem))
 
         return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
-    }
-    
-    @available(*, deprecated, message: "Use delete() async instead")
-    @discardableResult
-    func delete () -> EventLoopFuture<HTTPClient.Response> {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString)
-
-        var request = try! HTTPClient.Request(url: requestUrl, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request)
     }
     
     @discardableResult

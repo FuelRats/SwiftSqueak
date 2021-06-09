@@ -27,28 +27,6 @@ import CryptoSwift
 import AsyncHTTPClient
 
 class Twitter {
-    @available(*, deprecated, message: "Use tweet(message) async instead")
-    static func tweet (message: String, complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
-        let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/json")
-
-        request.body = .data(try! JSONSerialization.data(withJSONObject: [
-            "message": message
-        ], options: []))
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    complete()
-                case .failure(let restError):
-                    error(restError)
-            }
-        }
-    }
-    
     static func tweet (message: String) async throws {
         let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
         var request = try! HTTPClient.Request(url: url.url!, method: .POST)
