@@ -130,13 +130,10 @@ class MechaSqueak {
             ReferenceGenerator.generate(inPath: documentationPath)
         }
         
-        SystemsAPI.fetchLandmarkList().whenSuccess({ landmarks in
-            self.landmarks = landmarks
-        })
-        
-        SystemsAPI.fetchSectorList().whenSuccess({ sectors in
-            self.sectors = sectors
-        })
+        detach {
+            self.landmarks = try await SystemsAPI.fetchLandmarkList()
+            self.sectors = try await SystemsAPI.fetchSectorList()
+        }
     }
 
 
@@ -247,7 +244,7 @@ class MechaSqueak {
 
     }
 
-    @EventListener<IRCUserQuitNotification>
+    @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
         if
             let sender = userQuit.raw.sender,
@@ -270,26 +267,31 @@ class MechaSqueak {
                 if rescue.rats.count > 0 {
                     rescue.notes = "Client was banned"
                     let url = "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit"
-                    rescue.close(fromBoard: mecha.rescueBoard, onComplete: {
+                    
+                    do {
+                        try await rescue.close()
+                        
                         mecha.reportingChannel?.send(key: "board.bannedclose", map: [
                             "caseId": rescue.commandIdentifier,
                             "link": url,
                             "client": rescue.clientDescription
                         ])
                         mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
-                    }, onError: { _ in
+                    } catch {
                         
-                    })
+                    }
                 } else {
-                    rescue.trash(fromBoard: mecha.rescueBoard, reason: "Client was banned", onComplete: {
+                    do {
+                        try await rescue.trash(reason: "Client was banned")
+                        
                         mecha.reportingChannel?.send(key: "board.bannedmd", map: [
                             "caseId": rescue.commandIdentifier,
                             "client": rescue.clientDescription
                         ])
                         mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
-                    }, onError: { _ in
+                    } catch {
                         
-                    })
+                    }
                 }
                 return
             }

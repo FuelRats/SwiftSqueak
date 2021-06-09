@@ -132,7 +132,7 @@ class BoardQuoteCommands: IRCBotModule {
         rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["inject"],
         [.options(["f"]), .param("case id/client", "4"), .param("text", "client is in the EZ", .continuous)],
         category: .board,
@@ -176,7 +176,7 @@ class BoardQuoteCommands: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: message.user.nickname
                 ))
-                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, initiated: .insertion)
+                try? await mecha.rescueBoard.insert(rescue: rescue!, fromMessage: message, initiated: .insertion)
             } else {
                 command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": client

@@ -47,7 +47,7 @@ class MessageScanner: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @EventListener<IRCChannelMessageNotification>
+    @AsyncEventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination.channelModes.keys.contains(.isSecret) == false else {
             // Do not interpret commands from playback of old messages or in secret channels
@@ -220,7 +220,7 @@ class MessageScanner: IRCBotModule {
             guard let rescue = LocalRescue(fromAnnouncer: channelMessage) else {
                 return
             }
-            mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage, initiated: .announcer)
+            try? await mecha.rescueBoard.insert(rescue: rescue, fromMessage: channelMessage, initiated: .announcer)
             return
         }
 
@@ -231,7 +231,7 @@ class MessageScanner: IRCBotModule {
                 return
             }
 
-            mecha.rescueBoard.add(rescue: rescue, fromMessage: channelMessage, initiated: .signal)
+            try? await mecha.rescueBoard.insert(rescue: rescue, fromMessage: channelMessage, initiated: .signal)
             return
         }
 

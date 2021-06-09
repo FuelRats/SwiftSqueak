@@ -252,11 +252,12 @@ class LocalRescue {
         self.firstLimpet = firstLimpet
         self.jumpCalls = []
         
-        if var system = self.system {
-            SystemsAPI.performSystemCheck(forSystem: system.name).whenSuccess({ newSystem in
+        detach {
+            if var system = self.system {
+                let newSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
                 system.merge(newSystem)
                 self.system = system
-            })
+            }
         }
     }
 
@@ -634,6 +635,7 @@ class LocalRescue {
         return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
     }
 
+    @available(*, deprecated, message: "Use validateSystem() async instead")
     func validateSystem () -> EventLoopFuture<()>? {
         let promise = loop.next().makePromise(of: Void.self)
 
@@ -698,6 +700,62 @@ class LocalRescue {
             }
         })
         return promise.futureResult
+    }
+    
+    func validateSystem () async throws {
+        guard let system = self.system else {
+            return
+        }
+        
+        let starSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
+        self.system?.merge(starSystem)
+        detach {
+            guard starSystem.isConfirmed == false && starSystem.isIncomplete == false else {
+                return
+            }
+            
+            guard var results = try await SystemsAPI.performSearch(forSystem: system.name).data, results.count > 0 else {
+                return
+            }
+            
+            let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
+            var approvedCorrections = ratedCorrections.filter({ $1 != nil })
+            approvedCorrections.sort(by: { $0.1! < $1.1! })
+
+            if let autoCorrectableResult = approvedCorrections.first?.0 {
+                let starSystem = try await SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult)
+                
+                self.system?.merge(starSystem)
+                self.syncUpstream()
+                mecha.reportingChannel?.client.sendMessage(
+                    toChannelName: self.channelName,
+                    withKey: "sysc.autocorrect",
+                    mapping: [
+                        "caseId": self.commandIdentifier,
+                        "client": self.clientDescription,
+                        "system": self.system.description
+                    ]
+                )
+                return
+            }
+            
+            if results.count > 9 {
+                results.removeSubrange(9...)
+            }
+
+            self.system?.availableCorrections = results
+
+            let resultString = results.enumerated().map({
+                $0.element.correctionRepresentation(index: $0.offset + 1)
+            }).joined(separator: ", ")
+
+            self.channel?.send(key: "sysc.nearestmatches", map: [
+                "caseId": self.commandIdentifier,
+                "client": self.clientDescription,
+                "systems": resultString
+            ])
+        }
+        return
     }
 }
 
