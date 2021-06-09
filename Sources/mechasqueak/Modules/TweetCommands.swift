@@ -32,7 +32,7 @@ class TweetCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
@@ -62,15 +62,16 @@ class TweetCommands: IRCBotModule {
             command.message.error(key: "tweet.confidential", fromCommand: command)
             return
         }
-
-        Twitter.tweet(message: contents, complete: {
+        
+        do {
+            try await Twitter.tweet(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
-        }, error: { _ in
+        } catch {
             command.message.error(key: "tweet.error", fromCommand: command)
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,
@@ -113,8 +114,10 @@ class TweetCommands: IRCBotModule {
             "id": shortId.lowercased(),
             "link": url.absoluteString
         ])
-
-        Twitter.tweet(message: tweet, complete: {
+        
+        do {
+            try await Twitter.tweet(message: tweet)
+            
             command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
                 "tweet": tweet
             ])
@@ -126,10 +129,10 @@ class TweetCommands: IRCBotModule {
                 lastAuthor: command.message.user.nickname
             ))
             rescue.syncUpstream(representing: command.message.user)
-        }, error: { _ in
+        } catch {
             command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier
             ])
-        })
+        }
     }
 }
