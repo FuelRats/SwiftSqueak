@@ -119,7 +119,7 @@ class MessageScanner: IRCBotModule {
                 }
             }
 
-            if rescue.system?.isIncomplete == true {
+            if rescue.system?.isIncomplete == true && channelMessage.message.lowercased().contains(" if ") == false {
                 channelMessage.client.sendMessage(
                     toChannelName: channelMessage.destination.name,
                     withKey: "jumpcall.incompletesys",
