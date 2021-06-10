@@ -75,7 +75,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["grab"],
         [.param("case id/client/assigned rat", "SpaceDawg")],
         category: .board,
@@ -129,7 +129,7 @@ class BoardQuoteCommands: IRCBotModule {
             "text": lastMessage.message
         ])
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -197,11 +197,11 @@ class BoardQuoteCommands: IRCBotModule {
                 "text": injectMessage
             ])
 
-            rescue?.syncUpstream()
+            try? await rescue?.syncUpstream()
         }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["sub"],
         [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continuous, .optional)],
         category: .board,
@@ -252,7 +252,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     static func isLikelyAccidentalInject (clientParam: String) -> Bool {

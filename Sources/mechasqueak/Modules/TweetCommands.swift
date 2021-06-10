@@ -128,7 +128,7 @@ class TweetCommands: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: command.message.user.nickname
             ))
-            rescue.syncUpstream(representing: command.message.user)
+            try? await rescue.syncUpstream(representing: command.message.user)
         } catch {
             command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
                 "caseId": rescue.commandIdentifier

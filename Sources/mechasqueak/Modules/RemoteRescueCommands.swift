@@ -371,7 +371,7 @@ class RemoteRescueCommands: IRCBotModule {
             rescue.status = .Open
 
             mecha.rescueBoard.rescues.append(rescue)
-            rescue.syncUpstream(fromCommand: command)
+            try? await rescue.syncUpstream(fromCommand: command)
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
                 "id": id.ircRepresentation,
                 "caseId": rescue.commandIdentifier

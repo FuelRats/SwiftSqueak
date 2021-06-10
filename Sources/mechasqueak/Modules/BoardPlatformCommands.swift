@@ -31,7 +31,7 @@ class BoardPlatformCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    static func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand) {
+    static func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand) async {
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
             return
         }
@@ -42,10 +42,10 @@ class BoardPlatformCommands: IRCBotModule {
             "caseId": rescue.commandIdentifier,
             "client": rescue.client!
         ])
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["xb"],
         [.param("case id/client", "4")],
         category: .board,
@@ -54,10 +54,10 @@ class BoardPlatformCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveXboxPlatformCommand = { command in
-        platformChangeCommand(platform: .Xbox, command: command)
+        await platformChangeCommand(platform: .Xbox, command: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["pc"],
         [.param("case id/client", "4")],
         category: .board,
@@ -66,10 +66,10 @@ class BoardPlatformCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceivePCPlatformCommand = { command in
-        platformChangeCommand(platform: .PC, command: command)
+        await platformChangeCommand(platform: .PC, command: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["ps", "ps4", "ps5"],
         [.param("case id/client", "4")],
         category: .board,
@@ -78,6 +78,6 @@ class BoardPlatformCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceivePS4PlatformCommand = { command in
-        platformChangeCommand(platform: .PS, command: command)
+        await platformChangeCommand(platform: .PS, command: command)
     }
 }

@@ -192,7 +192,7 @@ class RescueBoard {
                 rescue.status = .Open
 
                 mecha.rescueBoard.rescues.append(rescue)
-                rescue.syncUpstream()
+                try? await rescue.syncUpstream()
                 message.reply(message: lingo.localize("rescue.reopen.opened", locale: "en-GB", interpolations: [
                     "id": recentRescue.id.ircRepresentation,
                     "caseId": rescue.commandIdentifier
@@ -271,20 +271,19 @@ class RescueBoard {
         ])
         message.reply(message: signal)
 
-        if let systemBody = rescue.system?.clientProvidedBody {
-            let bodyDescription = rescue.system?.body(byName: systemBody)?.bodyDescription
+        if let system = rescue.system, let systemBody = rescue.system?.clientProvidedBody {
+            let bodyDescription = system.systemBodyDescription(forBody: systemBody)
             message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
-                "body": systemBody,
-                "bodyDescription": bodyDescription != nil ? "(\(bodyDescription!))" : ""
+                "bodyDescription": bodyDescription
             ]))
             rescue.quotes.append(RescueQuote(
                 author: message.client.currentNick,
-                message: "Client indicated location in system near body \"\(systemBody)\" (\(bodyDescription ?? ""))",
+                message: "Client indicated location in system near body \(bodyDescription)",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: message.client.currentNick)
             )
-            rescue.syncUpstream()
+            try? await rescue.syncUpstream()
         }
         await self.prep(rescue: rescue, message: message, initiated: initiated)
     }
@@ -469,9 +468,9 @@ class RescueBoard {
             $0.createUpstream()
         })
 
-        futures.append(contentsOf: pendingUpstreamUpdate.map({
-            $0.syncUpstream()
-        }))
+//        futures.append(contentsOf: pendingUpstreamUpdate.map({
+//            $0.syncUpstream()
+//        }))
 
         EventLoopFuture.whenAllSucceed(futures, on: loop.next()).whenSuccess { _ in
             mecha.rescueBoard.synced = true
@@ -660,7 +659,7 @@ class RescueBoard {
                 }
 
                 existingRescue.system = system
-                existingRescue.syncUpstream()
+                try? await existingRescue.syncUpstream()
 
                 message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
                     "caseId": existingRescue.commandIdentifier,

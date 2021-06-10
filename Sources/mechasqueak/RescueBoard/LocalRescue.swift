@@ -319,32 +319,30 @@ class LocalRescue {
         return promise.futureResult
     }
     
-    @discardableResult
-    func syncUpstream (fromCommand command: IRCBotCommand) -> EventLoopFuture<LocalRescue> {
-        return self.syncUpstream(representing: command.message.user)
+    func syncUpstream (fromCommand command: IRCBotCommand) async throws {
+        try await self.syncUpstream(representing: command.message.user)
     }
-
-    @discardableResult
-    func syncUpstream (representing: IRCUser? = nil) -> EventLoopFuture<LocalRescue> {
+    
+    func syncUpstream (representing: IRCUser? = nil) async throws -> Void {
         if let representing = representing, let user = representing.associatedAPIData?.user {
             if self.dispatchers.contains(user.id.rawValue) == false {
                 self.dispatchers.append(user.id.rawValue)
             }
         }
         
-        let promise = loop.next().makePromise(of: LocalRescue.self)
+        return try await withCheckedThrowingContinuation({ continuation in
+            let operation = RescueUpdateOperation(rescue: self)
+            
+            operation.onCompletion = {
+                continuation.resume(returning: ())
+            }
 
-        let operation = RescueUpdateOperation(rescue: self)
-        operation.onCompletion = {
-            promise.succeed(self)
-        }
+            operation.onError = { error in
+                continuation.resume(throwing: error)
+            }
 
-        operation.onError = { error in
-            promise.fail(error)
-        }
-
-        mecha.rescueBoard.queue.addOperation(operation)
-        return promise.futureResult
+            mecha.rescueBoard.queue.addOperation(operation)
+        })
     }
     
     func close (firstLimpet: Rat? = nil) async throws {
@@ -389,7 +387,7 @@ class LocalRescue {
         }
     }
 
-    func assign (_ assignParams: [String], fromChannel channel: IRCChannel, force: Bool = false) -> RescueAssignments {
+    func assign (_ assignParams: [String], fromChannel channel: IRCChannel, force: Bool = false) async -> RescueAssignments {
         let assigns: (RescueAssignments) = assignParams.reduce(RescueAssignments(), { assigns, param in
             var assigns = assigns
             guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param.lowercased() }) == false else {
@@ -445,7 +443,7 @@ class LocalRescue {
             if force || configuration.general.drillMode {
                 self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
             }
-            self.syncUpstream()
+            try? await self.syncUpstream()
         }
         return assigns
     }
@@ -551,7 +549,7 @@ class LocalRescue {
                 let starSystem = try await SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult)
                 
                 self.system?.merge(starSystem)
-                self.syncUpstream()
+                try? await self.syncUpstream()
                 mecha.reportingChannel?.client.sendMessage(
                     toChannelName: self.channelName,
                     withKey: "sysc.autocorrect",

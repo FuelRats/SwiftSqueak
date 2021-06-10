@@ -420,7 +420,7 @@ class BoardCommands: IRCBotModule {
             return
         }
         rescue.system?.merge(starSystem)
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
 
         command.message.reply(key: "board.syschange", fromCommand: command, map: [
             "caseId": rescue.commandIdentifier,

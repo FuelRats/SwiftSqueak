@@ -212,7 +212,7 @@ class MessageScanner: IRCBotModule {
                 ))
                 casesUpdatedForMessage.append(rescue)
 
-                rescue.syncUpstream()
+                try? await rescue.syncUpstream()
             }
         }
 
@@ -263,7 +263,7 @@ class MessageScanner: IRCBotModule {
             ))
             casesUpdatedForMessage.append(rescue)
 
-            rescue.syncUpstream()
+            try? await rescue.syncUpstream()
         }
     }
 

@@ -151,7 +151,7 @@ class MechaSqueak {
         accounts.lookupIfNotExists(user: user)
     }
 
-    @EventListener<IRCUserJoinedChannelNotification>
+    @AsyncEventListener<IRCUserJoinedChannelNotification>
     var onUserJoin = { userJoin in
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
@@ -178,7 +178,7 @@ class MechaSqueak {
                         updatedAt: Date(),
                         lastAuthor: userJoin.raw.client.currentNick)
                     )
-                    rescue.syncUpstream()
+                    try? await rescue.syncUpstream()
 
                 var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
                 rescue.clientHost = userJoin.user.hostmask
@@ -201,7 +201,7 @@ class MechaSqueak {
                     updatedAt: Date(),
                     lastAuthor: userJoin.raw.client.currentNick)
                 )
-                rescue.syncUpstream()
+                try? await rescue.syncUpstream()
 
                 rescue.clientNick = userJoin.user.nickname
                 userJoin.channel.send(key: "board.clientjoinhost", map: [
@@ -213,7 +213,7 @@ class MechaSqueak {
         }
     }
 
-    @EventListener<IRCUserLeftChannelNotification>
+    @AsyncEventListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
         if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
             guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
@@ -234,7 +234,7 @@ class MechaSqueak {
                 updatedAt: Date(),
                 lastAuthor: userPart.raw.client.currentNick)
             )
-            rescue.syncUpstream()
+            try? await rescue.syncUpstream()
 
             userPart.channel.send(key: "board.clientquit", map: [
                 "caseId": rescue.commandIdentifier,
@@ -303,7 +303,7 @@ class MechaSqueak {
                 updatedAt: Date(),
                 lastAuthor: userQuit.raw.client.currentNick)
             )
-            rescue.syncUpstream()
+            try? await rescue.syncUpstream()
 
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
@@ -349,13 +349,13 @@ class MechaSqueak {
         }
     }
 
-    @EventListener<IRCUserChangedNickNotification>
+    @AsyncEventListener<IRCUserChangedNickNotification>
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
         if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname) {
             rescue.clientNick = nickChange.newNick
-            rescue.syncUpstream()
+            try? await rescue.syncUpstream()
 
             nickChange.raw.client.sendMessage(
                 toChannelName: rescue.channelName,

@@ -31,7 +31,7 @@ class BoardAttributeCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["active", "inactive", "activate", "deactivate"],
         [.param("case id/client", "4"), .param("message", "client left irc", .continuous, .optional)],
         category: .board,
@@ -82,7 +82,7 @@ class BoardAttributeCommands: IRCBotModule {
             "message": message
         ])
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -124,7 +124,7 @@ class BoardAttributeCommands: IRCBotModule {
             )
         }
         
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
         command.message.reply(key: key, fromCommand: command, map: [
             "caseId": rescue.commandIdentifier,
             "client": rescue.client!,
@@ -169,10 +169,10 @@ class BoardAttributeCommands: IRCBotModule {
             ])
         }
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["nick", "ircnick", "nickname"],
         [.param("case id/client", "4"), .param("new nick", "SpaceDawg")],
         category: .board,
@@ -204,10 +204,10 @@ class BoardAttributeCommands: IRCBotModule {
             ])
         }
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["lang", "language"],
         [.param("case id/client", "4"), .param("language code", "de")],
         category: .board,
@@ -236,10 +236,10 @@ class BoardAttributeCommands: IRCBotModule {
             "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
         ])
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["cr", "codered", "casered"],
         [.param("case id/client", "4")],
         category: .board,
@@ -275,10 +275,10 @@ class BoardAttributeCommands: IRCBotModule {
                 ])
             }
         }
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["title", "operation"],
         [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continuous)],
         category: .board,
@@ -299,10 +299,10 @@ class BoardAttributeCommands: IRCBotModule {
             "title": title
         ])
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["odyssey", "horizon", "horizons"],
         [.param("case id/client", "4")],
         category: .board,
@@ -328,6 +328,6 @@ class BoardAttributeCommands: IRCBotModule {
             "client": rescue.clientDescription
         ])
 
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 }

@@ -32,7 +32,7 @@ class BoardAssignCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["go", "assign", "add"],
         [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
@@ -60,7 +60,7 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
 
-        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
+        let assigns = await rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
 
         sendAssignMessages(
             assigns: assigns,
@@ -100,7 +100,7 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
 
-        let assigns = rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
+        let assigns = await rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
 
         let didSend = sendAssignMessages(
             assigns: assigns,
@@ -201,7 +201,7 @@ class BoardAssignCommands: IRCBotModule {
         return sent
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["unassign", "deassign", "rm", "remove", "standdown"],
         [.param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
@@ -271,6 +271,6 @@ class BoardAssignCommands: IRCBotModule {
             "caseId": rescue.commandIdentifier,
             "rats": unassignedRats
         ])
-        rescue.syncUpstream(fromCommand: command)
+        try? await rescue.syncUpstream(fromCommand: command)
     }
 }
