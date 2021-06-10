@@ -40,7 +40,7 @@ struct StarSystem: CustomStringConvertible, Codable {
     var landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = []
     var clientProvidedBody: String?
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
-    var bodies: [EDSM.Body]? = nil
+    var data: SystemGetDocument?
     var position: Vector3?
     var lookupAttempted: Bool = false
 
@@ -77,8 +77,28 @@ struct StarSystem: CustomStringConvertible, Codable {
         self.landmark = starSystem.landmark
         self.landmarks = starSystem.landmarks
         self.proceduralCheck = starSystem.proceduralCheck
-        self.bodies = starSystem.bodies
+        self.data = starSystem.data
         self.lookupAttempted = starSystem.lookupAttempted
+    }
+    
+    func getBody (byName bodyName: String) -> SystemsAPI.Body? {
+        return self.data?.body.includes?[SystemsAPI.Body].first(where: { $0.name == "\($0.systemName) \(bodyName)" || $0.name == bodyName })
+    }
+    
+    func getStar (byName starName: String) -> SystemsAPI.Star? {
+        return self.data?.body.includes?[SystemsAPI.Star].first(where: { $0.name == "\($0.systemName) \(starName)" || $0.name == starName })
+    }
+    
+    func systemBodyDescription (forBody body: String) -> String {
+        if let systemStar = self.getStar(byName: body) {
+            if let starClass = systemStar.spectralClass {
+                return "\(body) (\(starClass) \(systemStar.description))"
+            }
+            return systemStar.description
+        } else if let systemBody = self.getBody(byName: body) {
+            return "\(body) \(systemBody.description)"
+        }
+        return body
     }
 
     struct Permit: CustomStringConvertible, Codable {
@@ -97,15 +117,6 @@ struct StarSystem: CustomStringConvertible, Codable {
             }
             self.name = result.permitName
         }
-    }
-    
-    func body (byName name: String) -> EDSM.Body? {
-        guard let bodies = self.bodies, bodies.count > 0 else {
-            return nil
-        }
-        
-        let composedName = "\(self.name.uppercased()) \(name.uppercased())"
-        return bodies.first(where: { $0.name.uppercased() == composedName })
     }
     
     var landmarkDescription: String? {

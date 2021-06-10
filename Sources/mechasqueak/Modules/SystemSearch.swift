@@ -115,7 +115,7 @@ class SystemSearch: IRCBotModule {
         let (depSystem, arrSystem) = command.param2 as! (String, String)
         
         do {
-            let (departure, arrival) = try await (SystemsAPI.performSystemCheck(forSystem: depSystem, includeEdsm: false), SystemsAPI.performSystemCheck(forSystem: arrSystem, includeEdsm: false))
+            let (departure, arrival) = try await (SystemsAPI.performSystemCheck(forSystem: depSystem), SystemsAPI.performSystemCheck(forSystem: arrSystem))
             
             guard let depCoords = departure.coordinates, let arrCoords = arrival.coordinates else {
                 command.message.error(key: "distance.notfound", fromCommand: command)

@@ -55,7 +55,7 @@ class SystemsAPI {
     }
     
     static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) async throws -> StarSystem {
-        let landmarkDocument = try await performLandmarkCheck(forSystem: system.name)
+        let (landmarkDocument, systemData) = try await (performLandmarkCheck(forSystem: system.name), getSystemData(forId: system.id64))
         var starSystem = StarSystem(
             name: system.name,
             searchResult: system,
@@ -65,10 +65,7 @@ class SystemsAPI {
             proceduralCheck: nil,
             lookupAttempted: true
         )
-        
-        do {
-            starSystem.bodies = try await EDSM.getBodies(forSystem: system.name).bodies
-        }
+        starSystem.data = systemData
         return starSystem
     }
 
@@ -83,6 +80,17 @@ class SystemsAPI {
         return try await httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
     }
     
+    
+    static func getSystemData (forId id: Int64) async throws -> SystemGetDocument {
+        var url = URL(string: "https://systems.api.fuelrats.com/api/systems/")!
+        url.appendPathComponent(String(id))
+
+        var request = try! HTTPClient.Request(url: url, method: .GET)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+        return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)
+    }
+    
     static func getNearestStations (forSystem systemName: String) async throws -> NearestPopulatedDocument {
         var url = URLComponents(string: "https://system.api.fuelrats.com/nearest_populated")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
@@ -94,7 +102,7 @@ class SystemsAPI {
         return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
     }
     
-    static func performSystemCheck (forSystem systemName: String, includeEdsm: Bool = true) async throws -> StarSystem {
+    static func performSystemCheck (forSystem systemName: String) async throws -> StarSystem {
         var systemName = systemName
         if systemName.uppercased() == "SABIYHAN" {
             systemName = "CRUCIS SECTOR ZP-P A5-2"
@@ -105,23 +113,25 @@ class SystemsAPI {
             $0.similarity == 1
         })
         let properName = searchResult?.name ?? systemName
-        let landmarkResults = try await performLandmarkCheck(forSystem: systemName)
         
         var starSystem = StarSystem(
-            name: searchResult?.name ?? systemName,
+            name: properName,
             searchResult: searchResult,
             availableCorrections: searchResults?.data,
-            landmark: landmarkResults.first,
-            landmarks: landmarkResults.landmarks ?? [],
+            landmark: nil,
+            landmarks: [],
             proceduralCheck: proceduralResult,
             lookupAttempted: true
         )
         
-        if starSystem.landmark != nil && includeEdsm {
-            do {
-                starSystem.bodies = try await EDSM.getBodies(forSystem: properName).bodies
-            }
+        guard let searchResult = searchResult else {
+            return starSystem
         }
+        
+        let (landmarkResults, systemData) = try await (performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64))
+        starSystem.landmark = landmarkResults.first
+        starSystem.landmarks = landmarkResults.landmarks ?? []
+        starSystem.data = systemData
         return starSystem
     }
     
