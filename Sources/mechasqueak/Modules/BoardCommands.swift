@@ -266,7 +266,7 @@ class BoardCommands: IRCBotModule {
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
         permission: .DispatchWrite,
-        allowDestinations: .Channel
+        allowedDestinations: .Channel
     )
     var didReceiveTrashCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
