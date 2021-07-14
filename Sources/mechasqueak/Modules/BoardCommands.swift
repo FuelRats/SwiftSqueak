@@ -265,7 +265,8 @@ class BoardCommands: IRCBotModule {
         [.options(["f"]), .param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
-        permission: .DispatchWrite
+        permission: .DispatchWrite,
+        allowDestinations: .Channel
     )
     var didReceiveTrashCommand = { command in
         guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
