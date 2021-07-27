@@ -65,7 +65,7 @@ class GeneralCommands: IRCBotModule {
     }
 
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["needsrats", "needrats", "nr"],
         category: .utility,
         description: "Get a list of cases that currently require rats to call jumps",
@@ -73,7 +73,7 @@ class GeneralCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var needsRatsCommand = { command in
-        let needsRats = mecha.rescueBoard.rescues.filter({ rescue in
+        let needsRats = await mecha.rescueBoard.rescues.filter({ (_, rescue) in
             guard rescue.system != nil && rescue.status == .Open else {
                 return false
             }
@@ -88,7 +88,7 @@ class GeneralCommands: IRCBotModule {
             return
         }
 
-        var formattedCases = needsRats.map({ (rescue: LocalRescue) -> String in
+        var formattedCases = needsRats.map({ (caseId: Int, rescue: Rescue) -> String in
             var format = "needsrats.case"
 
             if rescue.codeRed {
@@ -96,7 +96,7 @@ class GeneralCommands: IRCBotModule {
             }
 
             return lingo.localize(format, locale: "en-GB", interpolations: [
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "client": rescue.client ?? "?",
                 "platform": rescue.platform.ircRepresentable,
                 "systemInfo": rescue.system.description

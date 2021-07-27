@@ -63,14 +63,14 @@ class MessageScanner: IRCBotModule {
             channelMessage.reply(message: "🚂" + trainCarriages)
         }
         
-        var casesUpdatedForMessage: [LocalRescue] = []
+        var casesUpdatedForMessage: [Rescue] = []
 
         if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
             ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
             let caseId = jumpCallMatch.group(named: "case")!
             let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
             
-            guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
+            guard let (_, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
                 if configuration.general.drillMode == false, channelMessage.destination.name.lowercased() == configuration.general.rescueChannel {
                     channelMessage.replyPrivate(message: lingo.localize(
                         "jumpcall.notfound",
@@ -83,7 +83,7 @@ class MessageScanner: IRCBotModule {
                 return
             }
 
-            if rescue.isPrepped == false && configuration.general.drillMode == false && rescue.codeRed == false {
+            if await rescue.isPrepped() == false && configuration.general.drillMode == false && rescue.codeRed == false {
                 // User called jumps for a case where the client has not been prepped, yell at them.
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.notprepped",
@@ -119,7 +119,7 @@ class MessageScanner: IRCBotModule {
                 }
             }
 
-            if rescue.system?.isIncomplete == true && channelMessage.message.lowercased().contains(" if ") == false {
+            if rescue.system?.isIncomplete == true && channelMessage.message.components(separatedBy: " ").count < 4 {
                 channelMessage.client.sendMessage(
                     toChannelName: channelMessage.destination.name,
                     withKey: "jumpcall.incompletesys",
@@ -132,7 +132,7 @@ class MessageScanner: IRCBotModule {
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)
-                if rats.first(where: { (rat: Rat) -> Bool in
+                if await rats.first(where: { (rat: Rat) -> Bool in
                     return rat.attributes.platform.value == rescue.platform
                 }) == nil {
                     if configuration.general.drillMode == false {
@@ -166,13 +166,14 @@ class MessageScanner: IRCBotModule {
                 message += " (Not Drilled)"
             }
             
-            if let system = rescue.system, rescue.system?.permit != nil {
+            if let system = await rescue.system, system.permit != nil {
                 if rat?.hasPermitFor(system: system) == false {
                     message += " (MISSING PERMIT)"
                 }
             }
             
-            if configuration.general.drillMode == false && rescue.platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform!) {
+            let platform = await rescue.platform
+            if configuration.general.drillMode == false && platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: platform!) {
                 if rescue.odyssey && rat.attributes.odyssey.value == false {
                     channelMessage.client.sendMessage(
                         toChannelName: channelMessage.destination.name,
@@ -185,7 +186,7 @@ class MessageScanner: IRCBotModule {
                     
                     message += " (Missing Odyssey)"
                 }
-                if rescue.odyssey == false && rat.attributes.odyssey.value {
+                if await rescue.odyssey == false && rat.attributes.odyssey.value {
                     channelMessage.client.sendMessage(
                         toChannelName: channelMessage.destination.name,
                         withKey: "jumpcall.ratodyssey",
@@ -212,12 +213,11 @@ class MessageScanner: IRCBotModule {
                 ))
                 casesUpdatedForMessage.append(rescue)
 
-                try? await rescue.syncUpstream()
             }
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
-            guard let rescue = LocalRescue(fromAnnouncer: channelMessage) else {
+            guard let rescue = Rescue(fromAnnouncer: channelMessage) else {
                 return
             }
             try? await mecha.rescueBoard.insert(rescue: rescue, fromMessage: channelMessage, initiated: .announcer)
@@ -227,7 +227,7 @@ class MessageScanner: IRCBotModule {
         if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased())
             && channelMessage.message.trimmingCharacters(in: .whitespaces).starts(with: "!") == false
         {
-            guard let rescue = LocalRescue(fromRatsignal: channelMessage) else {
+            guard let rescue = Rescue(fromRatsignal: channelMessage) else {
                 return
             }
 
@@ -235,9 +235,10 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        let mentionedRescues = mentionedCasesInMessage(message: channelMessage)
-        for rescue in mentionedRescues {
-            guard channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescue.channel else {
+        let mentionedRescues = await mecha.rescueBoard.findMentionedCasesIn(message: channelMessage)
+        for (caseId, rescue) in mentionedRescues {
+            let rescueChannel = rescue.channel
+            guard await channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescueChannel else {
                 continue
             }
             
@@ -248,13 +249,13 @@ class MessageScanner: IRCBotModule {
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
                 continue
             }
-            guard MessageScanner.caseRelevantPhrases.first(where: {
+            guard await MessageScanner.caseRelevantPhrases.first(where: {
                 channelMessage.message.lowercased().contains($0)
             }) != nil else {
                 continue
             }
 
-            rescue.quotes.append(RescueQuote(
+            rescue.appendQuote(RescueQuote(
                 author: channelMessage.client.currentNick,
                 message: "<\(channelMessage.user.nickname)> \(channelMessage.message)",
                 createdAt: Date(),
@@ -262,17 +263,6 @@ class MessageScanner: IRCBotModule {
                 lastAuthor: channelMessage.client.currentNick
             ))
             casesUpdatedForMessage.append(rescue)
-
-            try? await rescue.syncUpstream()
         }
-    }
-
-    static func mentionedCasesInMessage (message: IRCPrivateMessage) -> [LocalRescue] {
-        MessageScanner.caseMentionExpression.findAll(in: message.message).compactMap({
-            guard let caseId = $0.group(at: 1) else {
-                return nil
-            }
-            return mecha.rescueBoard.findRescue(withCaseIdentifier: caseId)
-        })
     }
 }

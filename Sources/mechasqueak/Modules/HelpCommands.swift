@@ -55,7 +55,7 @@ class HelpCommands: IRCBotModule {
                     $0.category == category
                 })
 
-                let commandList = commands.map({ (command: IRCBotCommandDeclaration) -> String in
+                let commandList = await commands.map({ (command: IRCBotCommandDeclaration) -> String in
                     return "!\(command.commands[0])"
                 }).joined(separator: " ")
                 message.replyPrivate(message: "Commands: \(commandList)")
@@ -97,7 +97,7 @@ class HelpCommands: IRCBotModule {
                 var platformFacts = groupedFacts.filter({ $0.isPlatformFact }).platformGrouped
                 groupedFacts = groupedFacts.filter({ $0.isPlatformFact == false })
                 
-                command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+                await command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
                     "language": command.locale.englishDescription,
                     "count": groupedFacts.count,
                     "facts": groupedFacts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
@@ -114,7 +114,7 @@ class HelpCommands: IRCBotModule {
         }
 
         let commandText = String(command.parameters[0].dropFirst()).lowercased()
-        guard let helpCommand = MechaSqueak.commands.first(where: {
+        guard let helpCommand = await MechaSqueak.commands.first(where: {
             $0.commands.contains(commandText)
         }) else {
             message.error(key: "help.commanderror", fromCommand: command, map: [

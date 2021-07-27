@@ -191,6 +191,7 @@ struct Lexer {
 
     private mutating func nextToken () throws -> Token? {
         guard let current = self.peek() else { return nil }
+        
         let next = self.peek(aheadBy: 1)
         let isIdentifier = current.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
         let nextIsIdentifier = next?.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })

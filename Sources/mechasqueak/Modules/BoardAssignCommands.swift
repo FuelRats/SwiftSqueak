@@ -46,7 +46,7 @@ class BoardAssignCommands: IRCBotModule {
         let force = command.forceOverride
 
         // Find case by rescue ID or client name
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
         var command = command
@@ -60,19 +60,12 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
 
-        let assigns = await rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
+        let assigns = await Array(command.parameters[1...]).map({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
 
-        sendAssignMessages(
-            assigns: assigns,
-            forRescue: rescue,
-            fromCommand: command,
-            includeExistingAssigns: command.options.contains("a"),
-            force: force
-        )
     }
 
     @AsyncBotCommand(
-        ["gofr", "assignfr", "frgo", "f"],
+        ["gofr", "assignfr", "frgo"],
         [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
@@ -85,7 +78,7 @@ class BoardAssignCommands: IRCBotModule {
         let force = command.forceOverride
 
         // Find case by rescue ID or client name
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -99,20 +92,9 @@ class BoardAssignCommands: IRCBotModule {
             command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
+        
+        let assigns = await Array(command.parameters[1...]).map({ await ($0, rescue.assign($0, fromChannel: command.message.destination, force: force)) })
 
-        let assigns = await rescue.assign(Array(command.parameters[1...]), fromChannel: command.message.destination, force: force)
-
-        let didSend = sendAssignMessages(
-            assigns: assigns,
-            forRescue: rescue,
-            fromCommand: command,
-            includeExistingAssigns: command.options.contains("a"),
-            force: force
-        )
-
-        guard didSend else {
-            return
-        }
 
         var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
         guard let fact = try? await Fact.getWithFallback(name: factName, forLocale: command.locale) else {
@@ -121,84 +103,6 @@ class BoardAssignCommands: IRCBotModule {
         
         let client = rescue.clientNick ?? rescue.client ?? ""
         message.reply(message: "\(client) \(fact.message)")
-    }
-
-    @discardableResult
-    static func sendAssignMessages (
-        assigns: RescueAssignments,
-        forRescue rescue: LocalRescue,
-        fromCommand command: IRCBotCommand,
-        includeExistingAssigns: Bool = false,
-        force: Bool = false
-    ) -> Bool {
-        var sent = false
-        if assigns.blacklisted.count > 0 {
-            command.message.error(key: "board.assign.banned", fromCommand: command, map: [
-                "rats": assigns.blacklisted.joined(separator: ", ")
-            ])
-        }
-        
-        if assigns.jumpConflicts.count > 0 {
-            command.message.error(key: "board.assign.jumpconflict", fromCommand: command, map: [
-                
-                "rats": assigns.jumpConflicts.joined(separator: ", ")
-            ])
-        }
-
-        if assigns.notFound.count > 0 {
-            command.message.error(key: "board.assign.notexist", fromCommand: command, map: [
-                "rats": assigns.notFound.joined(separator: ", ")
-            ])
-        }
-
-        if assigns.invalid.count > 0 {
-            command.message.error(key: "board.assign.invalid", fromCommand: command, map: [
-                "rats": assigns.notFound.joined(separator: ", ")
-            ])
-        }
-        
-        if assigns.unidentifiedRats.count > 0 {
-        }
-
-        var allRats = assigns.rats.union(assigns.duplicates).map({ $0.attributes.name.value })
-            + assigns.unidentifiedDuplicates
-
-        if includeExistingAssigns {
-            allRats = rescue.rats.map({ $0.attributes.name.value })
-        }
-        
-        if force || configuration.general.drillMode {
-            allRats.append(contentsOf: rescue.unidentifiedRats)
-        }
-
-        let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
-        if allRats.count > 0 {
-            command.message.reply(key: format, fromCommand: command, map: [
-                "client": rescue.clientNick!,
-                "rats": allRats.map({
-                    "\"\($0)\""
-                }).joined(separator: ", "),
-                "count": allRats.count
-            ])
-            sent = true
-        }
-
-
-        if assigns.unidentifiedRats.count > 0 && configuration.general.drillMode == false {
-            if force {
-                command.message.reply(key: "board.assign.unidentified", fromCommand: command, map: [
-                    "platform": rescue.platform!.ircRepresentable,
-                    "rats": assigns.unidentifiedRats.map({
-                        "\"\($0)\""
-                    }).joined(separator: ", ")
-                ])
-            } else {
-                command.message.error(key: "board.assign.norat", fromCommand: command, map: [
-                    "rats": assigns.unidentifiedRats.joined(separator: ", ")
-                ])
-            }
-        }
-        return sent
     }
 
     @AsyncBotCommand(
@@ -212,7 +116,7 @@ class BoardAssignCommands: IRCBotModule {
     var didReceiveUnassignCommand = { command in
         let message = command.message
 
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -259,7 +163,7 @@ class BoardAssignCommands: IRCBotModule {
             }
             command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                 "rats": unassign,
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
         }
 
@@ -268,9 +172,111 @@ class BoardAssignCommands: IRCBotModule {
         }
         let unassignedRats = removed.joined(separator: ", ")
         command.message.reply(key: "board.unassign.removed", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "rats": unassignedRats
         ])
-        try? await rescue.syncUpstream(fromCommand: command)
+    }
+    
+    static func sendAssignMessages (assigns: [Result<AssignmentResult, RescueAssignError>], forRescue rescue: Rescue, fromCommand command: IRCBotCommand) -> Bool {
+        let force = command.forceOverride
+        let includeExistingAssigns = command.options.contains("a")
+        
+        let failedAssigns = assigns.compactMap({ assign -> RescueAssignError? in
+            if case let .failure(result) = assign {
+                return result
+            }
+            return nil
+        })
+        
+        if failedAssigns.count > 0 {
+            var errorMessage = "\(failedAssigns.count) rats failed to assign: "
+            let notFound = failedAssigns.compactMap({ assign -> String? in
+                if case let .notFound(rat) = assign {
+                    return rat
+                }
+                return nil
+            })
+            if notFound.count > 0 {
+                errorMessage += "\(notFound.joined(separator: ", ")) was not found in the channel. "
+            }
+            
+            let invalid = failedAssigns.compactMap({ assign -> String? in
+                if case let .invalid(rat) = assign {
+                    return rat
+                }
+                return nil
+            })
+            if invalid.count > 0 {
+                errorMessage += "\(invalid.joined(separator: ", ")) as they are not a fuel rat. "
+            }
+            
+            let unidentified = failedAssigns.compactMap({ assign -> String? in
+                if case let .unidentified(rat) = assign {
+                    return rat
+                }
+                return nil
+            })
+            if unidentified.count > 0 {
+                errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
+            }
+            
+            let jumpCallConflicts = failedAssigns.compactMap({ assign -> String? in
+                if case let .jumpCallConflict(rat) = assign {
+                    return rat.name
+                }
+                return nil
+            })
+            if jumpCallConflicts.count > 0 {
+                errorMessage += "\(jumpCallConflicts.joined(separator: ", ")) called for a different case and not this one. "
+            }
+            errorMessage += "To override send the same command again within the next 30 seconds."
+            command.message.reply(message: errorMessage)
+            
+            let blacklisted = failedAssigns.compactMap({ assign -> String? in
+                if case let .blacklisted(rat) = assign {
+                    return rat
+                }
+                return nil
+            })
+            if blacklisted.count > 0 {
+                command.message.error(key: "board.assign.banned", fromCommand: command, map: [
+                                "rats": blacklisted.joined(separator: ", ")
+                ])
+            }
+        }
+            
+        
+        let successfulAssigns = assigns.compactMap({ assign -> AssignmentResult? in
+            if case let .success(result) = assign {
+                return result
+            }
+            return nil
+        })
+        if successfulAssigns.count > 0 {
+            let names = successfulAssigns.compactMap({ assign -> String? in
+                switch assign {
+                case .assigned(let rat):
+                    return rat.name
+                case .unidentified(let unidentifiedRat):
+                    return unidentifiedRat
+                case .duplicate(let ratName):
+                    if includeExistingAssigns {
+                        return ratName
+                    }
+                }
+                return nil
+            })
+            
+            let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
+            command.message.reply(key: format, fromCommand: command, map: [
+                            "client": rescue.clientNick!,
+                            "rats": names.map({
+                                "\"\($0)\""
+                            }).joined(separator: ", "),
+                            "count": names.count
+                        ])
+            return true
+        }
+        return false
     }
 }

@@ -84,24 +84,24 @@ extension Rat {
         return permits.contains(where: { $0.lowercased() == permitName })
     }
     
-    var currentRescues: [LocalRescue] {
+    func getCurrentRescues () async -> [(key: Int, value: Rescue)] {
         guard let userId = self.relationships.user?.id?.rawValue else {
             return []
         }
         
-        return mecha.rescueBoard.rescues.filter({ rescue in
+        return try! await mecha.rescueBoard.filter({ (_, rescue) in
             rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
-        })
+        }).getAllResults()
     }
     
-    var currentJumpCalls: [LocalRescue] {
+    func getCurrentJumpCalls () async -> [(key: Int, value: Rescue)] {
         guard let userId = self.relationships.user?.id?.rawValue else {
             return []
         }
         
-        return mecha.rescueBoard.rescues.filter({ rescue in
+        return try! await mecha.rescueBoard.filter({ (_, rescue) in
             rescue.jumpCalls.contains(where: { $0.0.relationships.user?.id?.rawValue == userId })
-        })
+        }).getAllResults()
     }
     
     func update() async throws {

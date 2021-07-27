@@ -75,7 +75,7 @@ class IRCBotModuleManager {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
 
-        guard let command = MechaSqueak.commands.first(where: {
+        guard let command = await MechaSqueak.commands.first(where: {
             $0.commands.contains(ircBotCommand.command)
         }) else {
             return
@@ -145,7 +145,7 @@ class IRCBotModuleManager {
             while paramIndex < maxParameters && paramIndex < ircBotCommand.parameters.count {
                 if paramIndex == maxParameters - 1 {
                     var remainderComponents = Array(ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex])
-                    remainderComponents = remainderComponents.map({
+                    remainderComponents = await remainderComponents.map({
                         if $0.contains(" ") {
                             return "\"\($0)\""
                         }

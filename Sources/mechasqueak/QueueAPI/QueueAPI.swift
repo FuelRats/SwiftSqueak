@@ -115,27 +115,29 @@ class QueueAPI {
         let future = loop.next().makePromise(of: Void.self)
         
         // Immedately resolve if client is already being rescued
-        if mecha.rescueBoard.rescues.first(where: { $0.client?.lowercased() == participant.client.name.lowercased() }) != nil {
-            future.succeed(())
-        }
-        
-        // Add a reference of pending client joins
-        QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] = future
-        
-        // Make a 15 second timeout where mecha will give up on the client joining
-        loop.next().scheduleTask(in: .seconds(15), {
-            if let promise = QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] {
-                promise.fail(ClientJoinError.joinFailed)
-                RescueBoard.pendingClientJoins.removeValue(forKey: participant.client.name.lowercased())
+        detach {
+            if await mecha.rescueBoard.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+                future.succeed(())
             }
-        })
+            
+            // Add a reference of pending client joins
+            QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] = future
+            
+            // Make a 15 second timeout where mecha will give up on the client joining
+            loop.next().scheduleTask(in: .seconds(15), {
+                if let promise = QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] {
+                    promise.fail(ClientJoinError.joinFailed)
+                    RescueBoard.pendingClientJoins.removeValue(forKey: participant.client.name.lowercased())
+                }
+            })
+        }
         
         return future.futureResult
     }
     
     static func anticipateQueueJoin (participant: QueueParticipant) async throws -> Void {
         // Immedately resolve if client is already being rescued
-        if mecha.rescueBoard.rescues.first(where: { $0.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+        if await mecha.rescueBoard.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
             return
         }
         

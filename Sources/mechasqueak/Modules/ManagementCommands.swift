@@ -164,7 +164,7 @@ class ManagementCommands: IRCBotModule {
         do {
             let groupSearch = try await Group.getList()
             
-            guard let group = groupSearch.body.data?.primary.values.first(where: {
+            guard let group = await groupSearch.body.data?.primary.values.first(where: {
                 $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
             }) else {
                 command.message.reply(key: "addgroup.nogroup", fromCommand: command, map: [
@@ -208,7 +208,7 @@ class ManagementCommands: IRCBotModule {
         do {
             let groupSearch = try await Group.getList()
 
-            guard let group = groupSearch.body.data?.primary.values.first(where: {
+            guard let group = await groupSearch.body.data?.primary.values.first(where: {
                 $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
             }) else {
                 command.message.reply(key: "delgroup.nogroup", fromCommand: command, map: [

@@ -109,7 +109,7 @@ class SystemsAPI {
         }
         
         let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
-        let searchResult = searchResults?.data?.first(where: {
+        let searchResult = await searchResults?.data?.first(where: {
             $0.similarity == 1
         })
         let properName = searchResult?.name ?? systemName
@@ -164,7 +164,7 @@ class SystemsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         let sectors = try await httpClient.execute(request: request, forDecodable: [String].self)
-        return sectors.map({ sector -> StarSector in
+        return await sectors.map({ sector -> StarSector in
             var name = sector.uppercased()
             var hasSector = false
             if name.hasSuffix(" SECTOR") {

@@ -71,7 +71,7 @@ class FactCommands: IRCBotModule {
         var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
         facts = facts.filter({ $0.isPlatformFact == false })
         
-        command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+        await command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
             "language": command.locale.englishDescription,
             "count": facts.count,
             "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
@@ -304,8 +304,7 @@ class FactCommands: IRCBotModule {
         
     }
 
-
-    func onMessage (_ message: IRCPrivateMessage) {
+    func onMessage (_ message: IRCPrivateMessage) async {
         guard message.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
             return
@@ -329,24 +328,21 @@ class FactCommands: IRCBotModule {
         let isPrepFact = prepFacts.contains(where: { $0 == command.command })
         
         if command.parameters.count > 0 {
-            let targets: [(String, LocalRescue?)] = command.parameters.map({ target in
+            let targets: [(String, Rescue?)] = await command.parameters.map({ target in
                 var target = target
-                var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: target)
+                var (_, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: target) ?? (nil, nil)
                 if rescue == nil {
-                    rescue = mecha.rescueBoard.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
+                    rescue = await mecha.rescueBoard.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
                 }
                 if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
-                    if let fuzzyTarget = command.message.destination.members.first(where: {
+                    if let fuzzyTarget = await command.message.destination.members.first(where: {
                         $0.nickname.levenshtein(target) < 3
                     }) {
                         target = fuzzyTarget.nickname
                     }
                 }
                 if let rescue = rescue {
-                    if isPrepFact, let timer = mecha.rescueBoard.prepTimers[rescue.id] {
-                        timer?.cancel()
-                        mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-                    }
+                    await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
                     return (rescue.clientNick ?? target, rescue)
                 }
                 return (target, nil)
@@ -387,13 +383,13 @@ class FactCommands: IRCBotModule {
                     if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
                         smartCommand.command = "pcteam"
                     }
-                    smartCommand.parameters = platformTargets.map({ $0.0 })
+                    smartCommand.parameters = await platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
                 if command.command == "quit" {
                     command.command = "prepcr"
                 }
-                let unknownTargets = targets.compactMap({ target -> String? in
+                let unknownTargets = await targets.compactMap({ target -> String? in
                     if target.1 != nil && target.1?.platform != nil {
                         return nil
                     }
@@ -411,7 +407,7 @@ class FactCommands: IRCBotModule {
                     command.command = "pcteam"
                 }
                 
-                command.parameters = targets.map({ $0.0 })
+                command.parameters = await targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }
         } else if command.namedOptions.contains("locales") {
@@ -531,11 +527,11 @@ class FactCommands: IRCBotModule {
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
 
-        self.channelMessageObserver = NotificationCenter.default.addObserver(
+        self.channelMessageObserver = NotificationCenter.default.addAsyncObserver(
             descriptor: IRCChannelMessageNotification(),
             using: onMessage(_:)
         )
-        self.privateMessageObserver = NotificationCenter.default.addObserver(
+        self.privateMessageObserver = NotificationCenter.default.addAsyncObserver(
             descriptor: IRCPrivateMessageNotification(),
             using: onMessage(_:)
         )

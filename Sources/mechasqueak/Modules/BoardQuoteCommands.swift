@@ -32,7 +32,7 @@ class BoardQuoteCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["quote"],
         [.param("case id/client", "4")],
         category: .board,
@@ -40,7 +40,7 @@ class BoardQuoteCommands: IRCBotModule {
         permission: .DispatchRead
     )
     var didReceiveQuoteCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -87,11 +87,11 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var getRescue: LocalRescue? = command.message.destination.member(named: clientParam)?.assignedRescue
+        var getRescue: Rescue? = await command.message.destination.member(named: clientParam)?.getAssignedRescue()
         var isClient = false
         if getRescue == nil {
             isClient = true
-            getRescue = BoardCommands.assertGetRescueId(command: command)
+            (_, getRescue) = await BoardCommands.assertGetRescueId(command: command) ?? (nil, nil)
         }
         guard let rescue = getRescue else {
             return
@@ -115,7 +115,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         let quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
         if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
-            rescue.quotes.append(RescueQuote(
+            rescue.appendQuote(RescueQuote(
                 author: message.user.nickname,
                 message: "<\(clientUser.nickname)> \(lastMessage.message)",
                 createdAt: Date(),
@@ -123,13 +123,13 @@ class BoardQuoteCommands: IRCBotModule {
                 lastAuthor: message.user.nickname
             ))
         }
+        
+        let caseId = await mecha.rescueBoard.getId(forRescue: rescue)
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-            "clientId": rescue.commandIdentifier,
+            "clientId": caseId ?? 0,
             "text": lastMessage.message
         ])
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -145,7 +145,7 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam)
+        var (caseId, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam) ?? (nil, nil)
         if rescue == nil && Int(clientParam) != nil && clientParam.count < 3 {
             command.message.error(key: "board.casenotfound", fromCommand: command, map: [
                 "caseIdentifier": command.parameters[0]
@@ -167,7 +167,7 @@ class BoardQuoteCommands: IRCBotModule {
                 return
             }
 
-            rescue = LocalRescue(text: injectMessage, clientName: clientNick, fromCommand: command)
+            rescue = Rescue(text: injectMessage, clientName: clientNick, fromCommand: command)
             if rescue != nil {
                 rescue?.quotes.append(RescueQuote(
                     author: message.user.nickname,
@@ -193,11 +193,9 @@ class BoardQuoteCommands: IRCBotModule {
             ))
 
             command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-                "clientId": rescue!.commandIdentifier,
+                "clientId": caseId,
                 "text": injectMessage
             ])
-
-            try? await rescue?.syncUpstream()
         }
     }
 
@@ -212,7 +210,7 @@ class BoardQuoteCommands: IRCBotModule {
     var didReceiveSubstituteCommand = { command in
         let message = command.message
 
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -226,7 +224,7 @@ class BoardQuoteCommands: IRCBotModule {
         guard quoteIndex >= 0 && quoteIndex < rescue.quotes.count else {
             command.message.error(key: "board.sub.outofbounds", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
             return
         }
@@ -240,19 +238,16 @@ class BoardQuoteCommands: IRCBotModule {
             rescue.quotes[quoteIndex] = quote
             command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "contents": contents
             ])
         } else {
             rescue.quotes.remove(at: quoteIndex)
             command.message.reply(key: "board.sub.deleted", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
         }
-
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     static func isLikelyAccidentalInject (clientParam: String) -> Bool {

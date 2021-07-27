@@ -49,10 +49,10 @@ class BoardCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSyncCommand = { command in
-        mecha.rescueBoard.syncBoard()
+        //mecha.rescueBoard.syncBoard()
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["list"],
         [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("horizons"), .argument("odyssey")],
         category: .board,
@@ -73,47 +73,47 @@ class BoardCommands: IRCBotModule {
             GamePlatform(rawValue: $0)
         })
 
-        let rescues = mecha.rescueBoard.rescues.filter({
-            if filteredPlatforms.count > 0 && ($0.platform == nil || filteredPlatforms.contains($0.platform!)) == false {
+        let rescues = await mecha.rescueBoard.rescues.filter({ (caseId, rescue) in
+            if filteredPlatforms.count > 0 && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false {
                 return false
             }
-            if arguments.contains(.showOnlyAssigned) && $0.rats.count == 0 && $0.unidentifiedRats.count == 0 {
-                return false
-            }
-
-            if arguments.contains(.showOnlyUnassigned) && ($0.rats.count > 0 || $0.unidentifiedRats.count > 0) {
+            if arguments.contains(.showOnlyAssigned) && rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 {
                 return false
             }
 
-            if arguments.contains(.showOnlyQueued) && $0.status != .Queued {
+            if arguments.contains(.showOnlyUnassigned) && (rescue.rats.count > 0 || rescue.unidentifiedRats.count > 0) {
                 return false
             }
 
-            if arguments.contains(.showOnlyInactive) && $0.status != .Inactive {
+            if arguments.contains(.showOnlyQueued) && rescue.status != .Queued {
                 return false
             }
 
-            if arguments.contains(.showOnlyActive) && $0.status != .Open {
+            if arguments.contains(.showOnlyInactive) && rescue.status != .Inactive {
+                return false
+            }
+
+            if arguments.contains(.showOnlyActive) && rescue.status != .Open {
                 return false
             }
             
-            if command.namedOptions.contains("horizons") && command.namedOptions.contains("odyssey") == false && $0.odyssey == true {
+            if command.namedOptions.contains("horizons") && command.namedOptions.contains("odyssey") == false && rescue.odyssey == true {
                 return false
             }
             
-            if command.namedOptions.contains("horizons") == false && command.namedOptions.contains("odyssey") && $0.odyssey == false {
+            if command.namedOptions.contains("horizons") == false && command.namedOptions.contains("odyssey") && rescue.odyssey == false {
                 return false
             }
 
             return true
         }).sorted(by: {
-             $1.commandIdentifier > $0.commandIdentifier
-        }).sorted(by: { $0.status == .Open && $1.status == .Inactive })
+            $1.0 > $0.0
+        }).sorted(by: { $0.1.status == .Open && $1.1.status == .Inactive })
 
         guard rescues.count > 0 else {
             var flags = ""
             if arguments.count > 0 {
-                flags = "(Flags: \(arguments.map({ $0.description }).joined(separator: ", ")))"
+                flags = "(Flags: \(await arguments.map({ $0.description }).joined(separator: ", ")))"
             }
             command.message.reply(key: "board.list.none", fromCommand: command, map: [
                 "flags": flags
@@ -121,7 +121,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        let generatedList = rescues.map({ (rescue: LocalRescue) -> String in
+        let generatedList = await rescues.map({ (id: Int, rescue: Rescue) -> String in
             let output = try! stencil.renderLine(name: "list.stencil", context: [
                 "rescue": rescue,
                 "platform": rescue.platform.ircRepresentable
@@ -145,7 +145,7 @@ class BoardCommands: IRCBotModule {
         let override = command.forceOverride
         let noFirstLimpet = command.options.contains("p")
         
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
         
@@ -161,7 +161,7 @@ class BoardCommands: IRCBotModule {
                 let rat = message.destination.member(named: command.parameters[1])?.getRatRepresenting(platform: rescue.platform)
             else {
                 command.message.error(key: "board.close.notfound", fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier,
+                    "caseId": caseId,
                     "firstLimpet": command.parameters[1]
                 ])
                 return
@@ -169,12 +169,12 @@ class BoardCommands: IRCBotModule {
             
             firstLimpet = rat
             
-            let currentRescues = rat.currentRescues
-            if currentRescues.contains(where: { $0.id == rescue.id }) == false, let conflictCase = currentRescues.first, override == false {
+            let currentRescues = await rat.getCurrentRescues()
+            if currentRescues.contains(where: { $0.1.id == rescue.id }) == false, let conflictCase = currentRescues.first, override == false {
                 command.message.error(key: "board.close.conflict", fromCommand: command, map: [
                     "rat": target,
-                    "closeCaseId": rescue.commandIdentifier,
-                    "conflictId": conflictCase.commandIdentifier
+                    "closeCaseId": caseId,
+                    "conflictId": conflictCase.0
                 ])
                 return
             }
@@ -185,19 +185,10 @@ class BoardCommands: IRCBotModule {
         do {
             try await rescue.close(firstLimpet: closeFl)
             
-            mecha.rescueBoard.rescues.removeAll(where: {
-                $0.id == rescue.id
-            })
-
-            mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue
-
-            if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
-                timer?.cancel()
-                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-            }
+            await mecha.rescueBoard.remove(id: caseId)
 
             command.message.reply(key: "board.close.success", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "client": rescue.clientDescription
             ])
 
@@ -216,7 +207,7 @@ class BoardCommands: IRCBotModule {
                     toChannelName: configuration.general.reportingChannel,
                     withKey: key,
                     mapping: [
-                        "caseId": rescue.commandIdentifier,
+                        "caseId": caseId,
                         "firstLimpet": target,
                         "client": rescue.clientDescription,
                         "link": shortUrl
@@ -227,7 +218,7 @@ class BoardCommands: IRCBotModule {
                     toChannelName: command.parameters[1],
                     withKey: "board.close.firstLimpetPaperwork",
                     mapping: [
-                        "caseId": rescue.commandIdentifier,
+                        "caseId": caseId,
                         "client": rescue.clientDescription,
                         "link": shortUrl
                     ]
@@ -238,7 +229,7 @@ class BoardCommands: IRCBotModule {
                     toChannelName: command.message.user.nickname,
                     withKey: "board.close.firstLimpetPaperwork",
                     mapping: [
-                        "caseId": rescue.commandIdentifier,
+                        "caseId": caseId,
                         "client": rescue.clientDescription,
                         "link": shortUrl
                     ]
@@ -248,14 +239,14 @@ class BoardCommands: IRCBotModule {
                 toChannelName: configuration.general.reportingChannel,
                 withKey: "board.close.report",
                 mapping: [
-                    "caseId": rescue.commandIdentifier,
+                    "caseId": caseId,
                     "link": shortUrl,
                     "client": rescue.clientDescription
                 ]
             )
         } catch {
             command.message.reply(key: "board.close.error", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
         }
     }
@@ -265,10 +256,11 @@ class BoardCommands: IRCBotModule {
         [.options(["f"]), .param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
-        permission: .DispatchWrite
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
     )
     var didReceiveTrashCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
         
@@ -280,14 +272,14 @@ class BoardCommands: IRCBotModule {
         
         guard rescue.banned == false else {
             command.message.reply(key: "board.trash.banned", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
             return
         }
 
         guard (rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0) || forced else {
             command.message.reply(key: "board.trash.assigned", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
             return
         }
@@ -297,22 +289,15 @@ class BoardCommands: IRCBotModule {
         do {
             try await rescue.trash(reason: reason)
             
-            mecha.rescueBoard.rescues.removeAll(where: {
-                $0.id == rescue.id
-            })
-            mecha.rescueBoard.recentlyClosed[rescue.commandIdentifier] = rescue
+            await mecha.rescueBoard.remove(id: caseId)
 
             command.message.reply(key: "board.trash.success", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "client": rescue.clientDescription
             ])
-            if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
-                timer?.cancel()
-                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-            }
         } catch {
             command.message.reply(key: "board.trash.error", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
         }
     }
@@ -325,18 +310,18 @@ class BoardCommands: IRCBotModule {
         permission: .DispatchRead
     )
     var didReceivePaperworkLinkCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         let shortUrl = await URLShortener.attemptShorten(url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit")!)
         command.message.reply(key: "board.pwl.generated", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "link": shortUrl
         ])
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["quiet", "last"],
         category: .other,
         description: "Displays the amount of time since the last rescue",
@@ -344,12 +329,12 @@ class BoardCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
-        guard let lastSignalDate = mecha.rescueBoard.lastSignalReceived else {
+        guard let lastSignalDate = await mecha.rescueBoard.lastSignalReceived else {
             command.message.reply(key: "board.quiet.unknown", fromCommand: command)
             return
         }
 
-        guard mecha.rescueBoard.rescues.first(where: { rescue in
+        guard await mecha.rescueBoard.rescues.first(where: { (caseId, rescue) -> Bool in
             return rescue.status != .Inactive && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
@@ -357,8 +342,8 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard mecha.rescueBoard.rescues.first(where: { rescue in
-            return rescue.status != .Inactive
+        guard await mecha.rescueBoard.rescues.first(where: { rescue in
+            return rescue.1.status != .Inactive
         }) == nil else {
             command.message.reply(key: "board.quiet.current", fromCommand: command)
             return
@@ -396,13 +381,13 @@ class BoardCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSystemCorrectionCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         guard let corrections = rescue.system?.availableCorrections, corrections.count > 0 else {
             command.message.error(key: "sysc.nocorrections", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "client": rescue.clientDescription
             ])
             return
@@ -420,17 +405,16 @@ class BoardCommands: IRCBotModule {
             return
         }
         rescue.system?.merge(starSystem)
-        try? await rescue.syncUpstream(fromCommand: command)
 
         command.message.reply(key: "board.syschange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.clientDescription,
             "systemInfo": rescue.system.description
         ])
     }
 
-    static func assertGetRescueId (command: IRCBotCommand) -> LocalRescue? {
-        guard let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]) else {
+    static func assertGetRescueId (command: IRCBotCommand) async -> (Int, Rescue)? {
+        guard let rescue = await mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]) else {
             command.message.error(key: "board.casenotfound", fromCommand: command, map: [
                 "caseIdentifier": command.parameters[0]
             ])
@@ -440,7 +424,7 @@ class BoardCommands: IRCBotModule {
         return rescue
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["sprep"],
         [.param("case id/client", "4")],
         category: .board,
@@ -449,16 +433,13 @@ class BoardCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSilencePrepCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
-        if let timer = mecha.rescueBoard.prepTimers[rescue.id] {
-            timer?.cancel()
-            mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-        }
+        await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
         command.message.reply(key: "board.sprep", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier
+            "caseId": caseId
         ])
     }
 }

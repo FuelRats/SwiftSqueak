@@ -56,7 +56,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var firstLimpet: ToOneRelationship<Rat?>?
     }
 }
-typealias Rescue = JSONEntity<RescueDescription>
+typealias RemoteRescue = JSONEntity<RescueDescription>
 
 struct RescueData: Codable, Equatable {
     static func == (lhs: RescueData, rhs: RescueData) -> Bool {
@@ -122,9 +122,9 @@ struct AssignMeta: Codable {
     let beaconDistance: UInt?
 }
 
-typealias RescueSearchDocument = Document<ManyResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
-typealias RescueGetDocument = Document<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
-typealias RescueEventDocument = EventDocument<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueSearchDocument = Document<ManyResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueGetDocument = Document<SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueEventDocument = EventDocument<SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,
     NoMetadata,
@@ -142,7 +142,7 @@ extension RescueSearchDocument {
         return try decoder.decode(RescueSearchDocument.self, from: documentData)
     }
 
-    func assignedRatsFor (rescue: Rescue) -> [Rat] {
+    func assignedRatsFor (rescue: RemoteRescue) -> [Rat] {
         return rescue.relationships.rats.ids.compactMap({ ratId in
             return self.body.includes![Rat.self].first(where: {
                 $0.id.rawValue == ratId.rawValue
@@ -150,7 +150,7 @@ extension RescueSearchDocument {
         })
     }
 
-    func firstLimpetFor (rescue: Rescue) -> Rat? {
+    func firstLimpetFor (rescue: RemoteRescue) -> Rat? {
         guard let firstLimpetId = rescue.relationships.firstLimpet?.id.rawValue else {
             return nil
         }
@@ -160,20 +160,20 @@ extension RescueSearchDocument {
         })
     }
 
-    func convertToLocalRescues (onBoard board: RescueBoard) -> [LocalRescue] {
+    func convertToLocalRescues (onBoard board: RescueBoard) -> [Rescue] {
         guard let rescueList = self.body.data?.primary.values else {
             return []
         }
 
-        return rescueList.map({ (apiRescue) -> LocalRescue in
+        return rescueList.map({ (apiRescue) -> Rescue in
             let rats = self.assignedRatsFor(rescue: apiRescue)
             let firstLimpet = self.firstLimpetFor(rescue: apiRescue)
-            return LocalRescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board)
+            return Rescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board)
         })
     }
 }
 
-extension Rescue {
+extension RemoteRescue {
     var viewLink: URL {
         return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())")!
     }

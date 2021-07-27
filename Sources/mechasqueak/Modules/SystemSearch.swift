@@ -56,7 +56,7 @@ class SystemSearch: IRCBotModule {
                 return
             }
 
-            let resultString = results.map({
+            let resultString = await results.map({
                 $0.textRepresentation
             }).joined(separator: ", ")
 

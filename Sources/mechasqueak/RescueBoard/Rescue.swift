@@ -28,21 +28,19 @@ import Regex
 import IRCKit
 import NIO
 
-class LocalRescue {
+class Rescue {
     private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?".r!
-    var synced = false
-    var isClosing = false
-    var clientHost: String?
+    
     var channelName: String
     var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
+    var syncStatus: SyncStatus = .pendingCreation
 
     let id: UUID
 
     var client: String?
     var clientNick: String?
     var clientLanguage: Locale?
-    var commandIdentifier: Int
     var banned: Bool = false
     var codeRed: Bool
     var notes: String
@@ -61,15 +59,8 @@ class LocalRescue {
     var firstLimpet: Rat?
     var rats: [Rat]
 
-    var ircOxygenStatus: String {
-        if self.codeRed {
-            return IRCFormat.color(.LightRed, "NOT OK")
-        }
-        return "OK"
-    }
-
     init? (fromAnnouncer message: IRCPrivateMessage) {
-        guard let match = LocalRescue.announcerExpression.findFirst(in: message.message) else {
+        guard let match = Rescue.announcerExpression.findFirst(in: message.message) else {
             return nil
         }
         guard message.user.channelUserModes.contains(.admin) else {
@@ -77,16 +68,11 @@ class LocalRescue {
         }
 
         self.id = UUID()
-        self.commandIdentifier = 0
 
         let client = match.group(at: 1)!
         self.channelName = message.destination.name
         self.client = client
-        var system = match.group(at: 2)!.uppercased()
-        if system.hasSuffix(" SYSTEM") {
-            system.removeLast(7)
-        }
-        self.system = StarSystem(name: system)
+        self.system = StarSystem(name: match.group(at: 2)!.uppercased())
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
@@ -129,10 +115,8 @@ class LocalRescue {
         }
 
         self.id = UUID()
-        self.commandIdentifier = 0
         self.client = message.user.nickname
         self.clientNick = message.user.nickname
-        self.clientHost = message.user.hostmask
         self.channelName = message.destination.name
 
         if let systemName = signal.system {
@@ -173,7 +157,6 @@ class LocalRescue {
         }
 
         self.id = UUID()
-        self.commandIdentifier = 0
 
         self.client = clientName
         self.clientNick = clientName
@@ -185,10 +168,6 @@ class LocalRescue {
         }
 
         self.channelName = command.message.destination.name
-
-        if let ircUser = command.message.destination.member(named: clientName) {
-            self.clientHost = ircUser.hostmask
-        }
 
         if let platformString = input.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
@@ -214,16 +193,14 @@ class LocalRescue {
         self.updatedAt = Date()
     }
 
-    init (fromAPIRescue apiRescue: Rescue, withRats rats: [Rat], firstLimpet: Rat?, onBoard board: RescueBoard) {
+    init (fromAPIRescue apiRescue: RemoteRescue, withRats rats: [Rat], firstLimpet: Rat?, onBoard board: RescueBoard) {
         self.id = apiRescue.id.rawValue
-        self.synced = true
 
         let attr = apiRescue.attributes
 
         self.client = attr.client.value
         self.clientNick = attr.clientNick.value
         self.clientLanguage = attr.clientLanguage.value != nil ? Locale(identifier: attr.clientLanguage.value!) : nil
-        self.commandIdentifier = attr.commandIdentifier.value
         self.channelName = configuration.general.rescueChannel
 
         self.codeRed = attr.codeRed.value
@@ -256,93 +233,135 @@ class LocalRescue {
             if var system = self.system {
                 let newSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
                 system.merge(newSystem)
-                self.system = system
+                // self.system = system
             }
         }
     }
+    
+    var ircOxygenStatus: String {
+        if self.codeRed {
+            return IRCFormat.color(.LightRed, "NOT OK")
+        }
+        return "OK"
+    }
 
-    var toApiRescue: Rescue {
-        let localRescue = self
+    var clientDescription: String {
+        return self.client ?? "u\u{200B}nknown client"
+    }
+    
+    var isRecentDrill: Bool {
+        return configuration.general.drillMode && Date().timeIntervalSince(self.createdAt) < 5400 && self.channel != nil
+    }
 
-        let rats: ToManyRelationship<Rat> = .init(ids: localRescue.rats.map({
+    var channel: IRCChannel? {
+        return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
+    }
+    
+    var assignList: String? {
+        guard self.rats.count > 0 || self.unidentifiedRats.count > 0 else {
+            return nil
+        }
+
+        var assigns = self.rats.map({
+            $0.name
+        })
+
+        assigns.append(contentsOf: self.unidentifiedRats.map({
+            "\($0) (\(IRCFormat.color(.Grey, "unidentified")))"
+        }))
+
+        return assigns.joined(separator: ", ")
+    }
+
+    var toApiRescue: RemoteRescue {
+        let rats: ToManyRelationship<Rat> = .init(ids: self.rats.map({
             $0.id
         }))
 
-        let firstLimpet: ToOneRelationship<Rat?> = .init(id: localRescue.firstLimpet?.id)
+        let firstLimpet: ToOneRelationship<Rat?> = .init(id: self.firstLimpet?.id)
 
-        let rescue = Rescue(
-            id: Rescue.ID(rawValue: self.id),
-            attributes: Rescue.Attributes.init(
-                client: .init(value: localRescue.client),
-                clientNick: .init(value: localRescue.clientNick),
-                clientLanguage: .init(value: localRescue.clientLanguage?.identifier),
-                commandIdentifier: .init(value: localRescue.commandIdentifier),
-                codeRed: .init(value: localRescue.codeRed),
+        let rescue = RemoteRescue(
+            id: RemoteRescue.ID(rawValue: self.id),
+            attributes: RemoteRescue.Attributes.init(
+                client: .init(value: self.client),
+                clientNick: .init(value: self.clientNick),
+                clientLanguage: .init(value: self.clientLanguage?.identifier),
+                commandIdentifier: .init(value: 0),
+                codeRed: .init(value: self.codeRed),
                 data: .init(value: RescueData(
-                    permit: localRescue.system?.permit,
-                    landmark: localRescue.system?.landmark,
-                    dispatchers: localRescue.dispatchers
+                    permit: self.system?.permit,
+                    landmark: self.system?.landmark,
+                    dispatchers: self.dispatchers
                 )),
-                notes: .init(value: localRescue.notes),
-                platform: .init(value: localRescue.platform),
-                odyssey: .init(value: localRescue.odyssey),
-                system: .init(value: localRescue.system?.name),
-                quotes: .init(value: localRescue.quotes),
-                status: .init(value: localRescue.status),
-                title: .init(value: localRescue.title),
-                outcome: .init(value: localRescue.outcome),
-                unidentifiedRats: .init(value: localRescue.unidentifiedRats),
-                createdAt: .init(value: localRescue.createdAt),
-                updatedAt: .init(value: localRescue.updatedAt)
+                notes: .init(value: self.notes),
+                platform: .init(value: self.platform),
+                odyssey: .init(value: self.odyssey),
+                system: .init(value: self.system?.name),
+                quotes: .init(value: self.quotes),
+                status: .init(value: self.status),
+                title: .init(value: self.title),
+                outcome: .init(value: self.outcome),
+                unidentifiedRats: .init(value: self.unidentifiedRats),
+                createdAt: .init(value: self.createdAt),
+                updatedAt: .init(value: self.updatedAt)
             ),
-            relationships: Rescue.Relationships.init(rats: rats, firstLimpet: firstLimpet),
-            meta: Rescue.Meta.none,
-            links: Rescue.Links.none
+            relationships: RemoteRescue.Relationships.init(rats: rats, firstLimpet: firstLimpet),
+            meta: RemoteRescue.Meta.none,
+            links: RemoteRescue.Links.none
         )
         return rescue
     }
-
+    
+    func setClientNick (_ nick: String?) {
+        self.clientNick = nick
+    }
+    
+    func setSystem (_ starSystem: StarSystem?) {
+        self.system = starSystem
+    }
+    
+    func setQuotes (_ quotes: [RescueQuote]) {
+        self.quotes = quotes
+    }
+    
+    func appendQuote (_ quote: RescueQuote) {
+        self.quotes.append(quote)
+    }
+    
+    func setNotes (_ notes: String) {
+        self.notes = notes
+    }
+    
     @discardableResult
-    func createUpstream () -> EventLoopFuture<LocalRescue> {
-        let promise = loop.next().makePromise(of: LocalRescue.self)
-
-        let operation = RescueCreateOperation(rescue: self)
-        operation.onCompletion = {
-            promise.succeed(self)
-        }
-
-        operation.onError = { error in
-            promise.fail(error)
-        }
-
-        mecha.rescueBoard.queue.addOperation(operation)
-        return promise.futureResult
+    func removeQuote (at index: Int) -> RescueQuote? {
+        return self.quotes.remove(at: index)
     }
     
-    func syncUpstream (fromCommand command: IRCBotCommand) async throws {
-        try await self.syncUpstream(representing: command.message.user)
-    }
-    
-    func syncUpstream (representing: IRCUser? = nil) async throws -> Void {
-        if let representing = representing, let user = representing.associatedAPIData?.user {
-            if self.dispatchers.contains(user.id.rawValue) == false {
-                self.dispatchers.append(user.id.rawValue)
-            }
-        }
-        
-        return try await withCheckedThrowingContinuation({ continuation in
-            let operation = RescueUpdateOperation(rescue: self)
+    func prep (message: IRCPrivateMessage, initiated: RescueInitiationType) async {
+        if initiated == .signal && self.codeRed == false {
+            message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
+                "client": self.clientNick ?? self.client ?? ""
+            ]))
+        } else if initiated != .insertion && self.codeRed == true {
+            let factKey = self.platform != nil ? "\(self.platform!.factPrefix)quit" : "prepcr"
+            let locale = self.clientLanguage ?? Locale(identifier: "en")
             
-            operation.onCompletion = {
-                continuation.resume(returning: ())
+            var fact = try? await Fact.get(name: factKey, forLocale: locale)
+            if fact == nil && self.platform != nil {
+                // If platform specific quit is not available in this language, try !prepcr in this language
+                fact = try? await Fact.get(name: "prepcr", forLocale: self.clientLanguage!)
             }
-
-            operation.onError = { error in
-                continuation.resume(throwing: error)
+            if fact == nil && self.clientLanguage != nil && self.platform != nil {
+                // If neiher quit or prepcr is available in this language, fall back to English.
+                fact = try? await Fact.get(name: factKey, forLocale: Locale(identifier: "en"))
             }
-
-            mecha.rescueBoard.queue.addOperation(operation)
-        })
+            guard let fact = fact else {
+                return
+            }
+            
+            let client = self.clientNick ?? self.client ?? ""
+            message.reply(message: "\(client) \(fact.message)")
+        }
     }
     
     func close (firstLimpet: Rat? = nil) async throws {
@@ -379,73 +398,57 @@ class LocalRescue {
         
         if configuration.queue != nil {
             _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == self.client?.lowercased() })?.delete()
-            if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+            let activeCases = await mecha.rescueBoard.activeCases
+            if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
                 detach {
                     try? await QueueAPI.dequeue()
                 }
             }
         }
     }
-
-    func assign (_ assignParams: [String], fromChannel channel: IRCChannel, force: Bool = false) async -> RescueAssignments {
-        let assigns: (RescueAssignments) = assignParams.reduce(RescueAssignments(), { assigns, param in
-            var assigns = assigns
-            guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param.lowercased() }) == false else {
-                assigns.blacklisted.insert(param)
-                return assigns
-            }
-
-            guard
-                param.lowercased() != self.clientNick?.lowercased()
-                && param.lowercased() != self.client?.lowercased()
-            else {
-                assigns.invalid.insert(param)
-                return assigns
-            }
-
-            guard let nick = channel.member(named: param) else {
-                assigns.notFound.insert(param)
-                return assigns
-            }
-
-            guard let rat = nick.getRatRepresenting(platform: self.platform), rat.attributes.odyssey.value == self.odyssey else {
-                guard assigns.unidentifiedRats.contains(param) == false && self.unidentifiedRats.contains(param) == false else {
-                    assigns.unidentifiedDuplicates.insert(param)
-                    return assigns
-                }
-
-                assigns.unidentifiedRats.insert(param)
-                return assigns
-            }
-            
-            if rat.currentJumpCalls.first(where: { $0.id == self.id }) == nil && rat.currentJumpCalls.first(where: { $0.id != self.id }) != nil && force == false {
-                assigns.jumpConflicts.append(param)
-                return assigns
-            }
-
-            guard assigns.rats.contains(where: {
-                $0.id.rawValue == rat.id.rawValue
-            }) == false && self.rats.contains(where: {
-                $0.id.rawValue == rat.id.rawValue
-            }) == false else {
-                assigns.duplicates.insert(rat)
-                return assigns
-            }
-
-            self.unidentifiedRats.removeAll(where: { $0.lowercased() == param.lowercased() })
-            assigns.rats.insert(rat)
-
-            return assigns
-        })
-
-        if assigns.rats.count > 0 || assigns.unidentifiedRats.count > 0 {
-            self.rats.append(contentsOf: assigns.rats)
-            if force || configuration.general.drillMode {
-                self.unidentifiedRats.append(contentsOf: assigns.unidentifiedRats)
-            }
-            try? await self.syncUpstream()
+    
+    func assign (_ param: String, fromChannel channel: IRCChannel, force: Bool = false) async -> Result<AssignmentResult, RescueAssignError> {
+        let param = param.lowercased()
+        guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param }) == false else {
+            return Result.failure(RescueAssignError.blacklisted(param))
         }
-        return assigns
+        
+        guard
+            param != self.clientNick?.lowercased()
+            && param != self.client?.lowercased()
+        else {
+            return Result.failure(RescueAssignError.invalid(param))
+        }
+        
+        guard let nick = channel.member(named: param) else {
+            return Result.failure(RescueAssignError.notFound(param))
+        }
+        
+        guard let rat = nick.getRatRepresenting(platform: self.platform), rat.attributes.odyssey.value == self.odyssey else {
+            guard self.unidentifiedRats.contains(param) == false else {
+                return Result.success(.duplicate(param))
+            }
+
+            self.unidentifiedRats.append(param)
+            return Result.success(.unidentified(param))
+        }
+        
+        let currentJumpCalls = await rat.getCurrentJumpCalls()
+        let existingCallsForCase = await currentJumpCalls.first(where: { $0.1.id == self.id })
+        let existingCallsForOtherCase = await currentJumpCalls.first(where: { $0.1.id != self.id })
+        
+        if existingCallsForCase == nil && existingCallsForOtherCase != nil && force == false {
+            return Result.failure(RescueAssignError.jumpCallConflict(rat))
+        }
+
+        guard self.rats.contains(where: { $0.id.rawValue == rat.id.rawValue }) == false else {
+            return Result.success(.duplicate(rat.name))
+        }
+
+        self.unidentifiedRats.removeAll(where: { $0.lowercased() == param.lowercased() })
+        self.rats.append(rat)
+
+        return Result.success(.assigned(rat))
     }
     
     func trash (reason: String) async throws {
@@ -478,7 +481,8 @@ class LocalRescue {
         
         if configuration.queue != nil {
             _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == self.client?.lowercased() })?.delete()
-            if wasInactive == false && mecha.rescueBoard.activeCases <= QueueCommands.maxClientsCount {
+            let activeCases = await mecha.rescueBoard.activeCases
+            if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
                 detach {
                     try? await QueueAPI.dequeue()
                 }
@@ -486,43 +490,8 @@ class LocalRescue {
         }
     }
 
-    func hasConflictingId (inBoard board: RescueBoard) -> Bool {
-        return board.rescues.contains(where: {
-            debug("Conflict Comparison: \(String(describing: self.commandIdentifier)) = \(String(describing: $0.commandIdentifier))")
-            return $0.commandIdentifier == self.commandIdentifier
-        })
-    }
-
-    var assignList: String? {
-        guard self.rats.count > 0 || self.unidentifiedRats.count > 0 else {
-            return nil
-        }
-
-        var assigns = self.rats.map({
-            $0.name
-        })
-
-        assigns.append(contentsOf: self.unidentifiedRats.map({
-            "\($0) (\(IRCFormat.color(.Grey, "unidentified")))"
-        }))
-
-        return assigns.joined(separator: ", ")
-    }
-
-    var isPrepped: Bool {
-        return mecha.rescueBoard.prepTimers[self.id] == nil
-    }
-
-    var clientDescription: String {
-        return self.client ?? "u\u{200B}nknown client"
-    }
-    
-    var isRecentDrill: Bool {
-        return configuration.general.drillMode && Date().timeIntervalSince(self.createdAt) < 5400 && self.channel != nil
-    }
-
-    var channel: IRCChannel? {
-        return mecha.reportingChannel?.client.channels.first(where: { $0.name.lowercased() == self.channelName.lowercased() })
+    func isPrepped () async -> Bool {
+        return await mecha.rescueBoard.prepTimers[self.id] == nil
     }
     
     func validateSystem () async throws {
@@ -541,20 +510,21 @@ class LocalRescue {
                 return
             }
             
-            let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
+            let ratedCorrections = await results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
             var approvedCorrections = ratedCorrections.filter({ $1 != nil })
             approvedCorrections.sort(by: { $0.1! < $1.1! })
 
+            let caseId = await mecha.rescueBoard.getId(forRescue: self)
             if let autoCorrectableResult = approvedCorrections.first?.0 {
                 let starSystem = try await SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult)
                 
-                self.system?.merge(starSystem)
-                try? await self.syncUpstream()
-                mecha.reportingChannel?.client.sendMessage(
-                    toChannelName: self.channelName,
-                    withKey: "sysc.autocorrect",
-                    mapping: [
-                        "caseId": self.commandIdentifier,
+                // self.system?.merge(starSystem)
+                // try? await self.syncUpstream()
+                
+                self.channel?.send(
+                    key: "sysc.autocorrect",
+                    map: [
+                        "caseId": caseId,
                         "client": self.clientDescription,
                         "system": self.system.description
                     ]
@@ -566,14 +536,14 @@ class LocalRescue {
                 results.removeSubrange(9...)
             }
 
-            self.system?.availableCorrections = results
+            // self.system?.availableCorrections = results
 
             let resultString = results.enumerated().map({
                 $0.element.correctionRepresentation(index: $0.offset + 1)
             }).joined(separator: ", ")
 
             self.channel?.send(key: "sysc.nearestmatches", map: [
-                "caseId": self.commandIdentifier,
+                "caseId": caseId,
                 "client": self.clientDescription,
                 "systems": resultString
             ])
@@ -582,14 +552,24 @@ class LocalRescue {
     }
 }
 
-struct RescueAssignments {
-    var rats = OrderedSet<Rat>()
-    var unidentifiedRats = OrderedSet<String>()
-    var duplicates = OrderedSet<Rat>()
-    var unidentifiedDuplicates = OrderedSet<String>()
-    var blacklisted = OrderedSet<String>()
-    var notFound = OrderedSet<String>()
-    var invalid = OrderedSet<String>()
-    var jumpConflicts = OrderedSet<String>()
+enum RescueAssignError: Error {
+    case blacklisted(String)
+    case invalid(String)
+    case notFound(String)
+    case jumpCallConflict(Rat)
+    case unidentified(String)
+    
 }
 
+enum AssignmentResult {
+    case assigned(Rat)
+    case unidentified(String)
+    case duplicate(String)
+}
+
+enum SyncStatus {
+    case pendingCreation
+    case synced
+    case pendingChanges
+    case needsUpdate
+}

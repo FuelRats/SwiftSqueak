@@ -32,17 +32,16 @@ class BoardPlatformCommands: IRCBotModule {
     }
 
     static func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand) async {
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         rescue.platform = platform
         command.message.reply(key: "board.platformset", fromCommand: command, map: [
             "platform": rescue.platform!.ircRepresentable,
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.client!
         ])
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(

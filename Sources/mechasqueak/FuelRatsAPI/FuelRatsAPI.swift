@@ -25,10 +25,19 @@
 import Foundation
 import AsyncHTTPClient
 import NIO
+import NIOHTTP1
 
 class FuelRatsAPI {
     static internal var deadline: NIODeadline {
         return .now() + .seconds(30)
+    }
+    
+    static func request (url: URL, method: HTTPMethod) throws -> HTTPClient.Request {
+        var request = try HTTPClient.Request(url: url, method: method)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        return request
     }
     
     static func getNickname (forIRCAccount account: String) async throws -> NicknameSearchDocument? {

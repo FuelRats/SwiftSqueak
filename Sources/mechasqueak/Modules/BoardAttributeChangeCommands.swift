@@ -40,7 +40,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveToggleCaseActiveCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -48,11 +48,9 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
-            if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
-                prepTimer?.cancel()
-                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-            }
-            if mecha.rescueBoard.activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
+            await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
+            let activeCases = await mecha.rescueBoard.activeCases
+            if activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
                 detach {
                     try? await QueueAPI.dequeue()
                 }
@@ -77,12 +75,10 @@ class BoardAttributeCommands: IRCBotModule {
 
         command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
             "status": status,
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.client!,
             "message": message
         ])
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -94,7 +90,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSystemChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -124,9 +120,8 @@ class BoardAttributeCommands: IRCBotModule {
             )
         }
         
-        try? await rescue.syncUpstream(fromCommand: command)
         command.message.reply(key: key, fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.client!,
             "systemInfo": rescue.system.description
         ])
@@ -141,7 +136,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveClientChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -154,22 +149,20 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         command.message.reply(key: "board.clientchange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "oldClient": oldClient,
             "client": client
         ])
 
 
-        if let existingCase = mecha.rescueBoard.rescues.first(where: {
-            $0.client?.lowercased() == client.lowercased() && $0.id != rescue.id
+        if let existingCase = await mecha.rescueBoard.rescues.first(where: {
+            $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.commandIdentifier,
+                "caseId": existingCase.key,
                 "client": client
             ])
         }
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -181,7 +174,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveClientNickChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -189,22 +182,20 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.clientNick = nick
 
         command.message.reply(key: "board.nickchange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.client!,
             "nick": nick
         ])
 
 
-        if let existingCase = mecha.rescueBoard.rescues.first(where: {
-            $0.clientNick?.lowercased() == nick.lowercased() && $0.id != rescue.id
+        if let existingCase = await mecha.rescueBoard.rescues.first(where: {
+            $0.1.clientNick?.lowercased() == nick.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.commandIdentifier,
+                "caseId": existingCase.key,
                 "nick": nick
             ])
         }
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -216,7 +207,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveLanguageChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -231,12 +222,11 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.clientLanguage = newLanguage
 
         command.message.reply(key: "board.languagechange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.client!,
             "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
         ])
 
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -248,25 +238,25 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveCodeRedToggleCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         if rescue.codeRed == true {
             rescue.codeRed = false
             command.message.reply(key: "board.codered.no", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "client": rescue.client!
             ])
         } else {
             rescue.codeRed = true
             command.message.reply(key: "board.codered.active", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
+                "caseId": caseId,
                 "client": rescue.client!
             ])
 
             if rescue.rats.count > 0 {
-                let rats = rescue.rats.map({
+                let rats = await rescue.rats.map({
                     $0.currentNick(inIRCChannel: command.message.destination) ?? $0.attributes.name.value
                 }).joined(separator: ", ")
 
@@ -275,7 +265,6 @@ class BoardAttributeCommands: IRCBotModule {
                 ])
             }
         }
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 
     @AsyncBotCommand(
@@ -287,7 +276,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSetTitleCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -295,11 +284,9 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.title = title
 
         command.message.reply(key: "board.title.set", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "title": title
         ])
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
     
     @AsyncBotCommand(
@@ -311,7 +298,7 @@ class BoardAttributeCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveToggleOdysseycommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -324,10 +311,8 @@ class BoardAttributeCommands: IRCBotModule {
         
         let key = "board.toggleodyssey." + (rescue.odyssey ? "on" : "off")
         command.message.reply(key: key, fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "client": rescue.clientDescription
         ])
-
-        try? await rescue.syncUpstream(fromCommand: command)
     }
 }
