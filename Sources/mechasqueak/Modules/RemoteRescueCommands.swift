@@ -432,6 +432,12 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             if command.namedOptions.contains("all") {
+                guard command.message.user.hasPermission(permission: .UserRead) else {
+                    command.message.error(key: "board.nopermission", fromCommand: command, map: [
+                        "nick": command.message.user.nickname
+                    ])
+                    return
+                }
                 command.message.replyPrivate(key: "rescue.clientpw.heading", fromCommand: command, map: [
                     "client": command.parameters[0]
                 ])
