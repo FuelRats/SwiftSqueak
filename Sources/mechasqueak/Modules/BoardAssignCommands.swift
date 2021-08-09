@@ -182,11 +182,13 @@ class BoardAssignCommands: IRCBotModule {
 
         let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
         if allRats.count > 0 {
+            let allRatsString = allRats.map({
+                    "\"\($0)\""
+                }).sorted(by: { $0 > $1 }).joined(separator: ", ")
+         
             command.message.reply(key: format, fromCommand: command, map: [
                 "client": rescue.clientNick!,
-                "rats": allRats.map({
-                    "\"\($0)\""
-                }).joined(separator: ", "),
+                "rats": allRatsString,
                 "count": allRats.count
             ])
             sent = true
