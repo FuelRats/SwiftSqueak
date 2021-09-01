@@ -347,6 +347,7 @@ actor RescueBoard {
         try! await rescue.validateSystem()
         
         let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
+            "caseId": identifier,
             "signal": configuration.general.signal.uppercased(),
             "platform": rescue.platform.ircRepresentable,
             "rescue": rescue,

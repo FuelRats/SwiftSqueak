@@ -242,7 +242,7 @@ class Rescue {
             if var system = self.system {
                 let newSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
                 system.merge(newSystem)
-                // self.system = system
+                self.system = system
             }
         }
     }

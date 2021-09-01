@@ -74,7 +74,6 @@ extension SystemsAPI.Star {
     }
     
     var description: String {
-        print(self.spectralClass)
         switch (self.spectralClass, self.luminosity) {
         case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.Ia]) == true:
             return "Blue hypergiant"

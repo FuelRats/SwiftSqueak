@@ -104,6 +104,7 @@ class RescueUpdateOperation: Operation {
                         
                         continuation.resume(throwing: response)
                         debug(String(response.status.code))
+                        debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
                     }
                     
                 case .failure(let error):
@@ -123,7 +124,7 @@ class RescueUpdateOperation: Operation {
         do {
             return try await attemptUpload()
         } catch {
-            await Task.sleep(30 * 1000 * 1000)
+            await Task.sleep(30 * 1_000_000_000)
             return try await performUploadUntilSuccess()
         }
     }
