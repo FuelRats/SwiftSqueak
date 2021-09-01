@@ -33,15 +33,15 @@ enum StarDescription: ResourceObjectDescription {
     public struct Attributes: JSONAPI.Attributes {
         public let bodyId: Attribute<Int64>
         public var name: Attribute<String>
-        public var type: Attribute<SystemsAPI.CelestialBodyType>
+        public var type: Attribute<String>
         public var subType: Attribute<String>
-        public var parents: Attribute<[[String: Int64]]>
+        public var parents: Attribute<[[String: Int64]]?>
         public var distanceToArrival: Attribute<Int64?>
         public var isMainStar: Attribute<Bool?>
         public var isScoopable: Attribute<Bool>
         public var age: Attribute<Int64>
         public var luminosity: Attribute<SystemsAPI.Star.YerkesLuminosity>
-        public var absoluteMagnitude: Attribute<Double>
+        public var absoluteMagnitude: Attribute<Double?>
         public var solarMasses: Attribute<Double>
         public var solarRadius: Attribute<Double?>
         public var surfaceTemperature: Attribute<Double>
@@ -53,7 +53,7 @@ enum StarDescription: ResourceObjectDescription {
         public var rotationalPeriod: Attribute<Double?>
         public var rotationalPeriodTidallyLocked: Attribute<Bool?>
         public var axialTilt: Attribute<Double?>
-        public var belts: Attribute<[SystemsAPI.Belt]>
+        public var belts: Attribute<[SystemsAPI.Belt]?>
         public var systemName: Attribute<String>
     }
 
@@ -67,7 +67,10 @@ extension SystemsAPI {
 
 extension SystemsAPI.Star {
     var spectralClass: SystemsAPI.Star.SpectralClass? {
-        return SpectralClass.from(subType: self.subType)
+        if self.type == "Star" {
+            return SpectralClass.from(subType: self.subType)
+        }
+        return SpectralClass.from(subType: self.type)
     }
     
     var description: String {
