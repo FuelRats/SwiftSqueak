@@ -262,7 +262,7 @@ class BoardAttributeCommands: IRCBotModule {
             ])
 
             if rescue.rats.count > 0 {
-                let rats = await rescue.rats.map({
+                let rats = rescue.rats.map({
                     $0.currentNick(inIRCChannel: command.message.destination) ?? $0.attributes.name.value
                 }).joined(separator: ", ")
 

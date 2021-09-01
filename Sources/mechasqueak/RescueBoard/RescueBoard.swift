@@ -517,7 +517,7 @@ actor RescueBoard {
                     }
                 }
                 
-                let rescueStrings = await rescues.map({ rescue -> String in
+                let rescueStrings = rescues.map({ rescue -> String in
                     return lingo.localize("rescue.pwreminder.rescue", locale: "en-GB", interpolations: [
                         "client": rescue.attributes.client.value ?? "unknown client",
                         "timeAgo": rescue.attributes.updatedAt.value.timeAgo,

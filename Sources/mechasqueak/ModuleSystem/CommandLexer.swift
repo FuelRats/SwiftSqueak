@@ -58,7 +58,7 @@ struct IRCBotCommand {
             self.message = privateMessage
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
-
+            print(tokens)
 
             self.namedOptions = OrderedSet(tokens.compactMap({
                 guard case let .NamedOption(option) = $0 else {

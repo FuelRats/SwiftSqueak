@@ -503,7 +503,7 @@ class Rescue {
                 return
             }
             
-            let ratedCorrections = await results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
+            let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
             var approvedCorrections = ratedCorrections.filter({ $1 != nil })
             approvedCorrections.sort(by: { $0.1! < $1.1! })
 

@@ -163,7 +163,7 @@ class SystemsAPI {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         let sectors = try await httpClient.execute(request: request, forDecodable: [String].self)
-        return await sectors.map({ sector -> StarSector in
+        return sectors.map({ sector -> StarSector in
             var name = sector.uppercased()
             var hasSector = false
             if name.hasSuffix(" SECTOR") {

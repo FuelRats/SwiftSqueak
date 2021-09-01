@@ -55,7 +55,7 @@ class HelpCommands: IRCBotModule {
                     $0.category == category
                 })
 
-                let commandList = await commands.map({ (command: IRCBotCommandDeclaration) -> String in
+                let commandList = commands.map({ (command: IRCBotCommandDeclaration) -> String in
                     return "!\(command.commands[0])"
                 }).joined(separator: " ")
                 message.replyPrivate(message: "Commands: \(commandList)")
@@ -97,7 +97,7 @@ class HelpCommands: IRCBotModule {
                 var platformFacts = groupedFacts.filter({ $0.isPlatformFact }).platformGrouped
                 groupedFacts = groupedFacts.filter({ $0.isPlatformFact == false })
                 
-                await command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+                command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
                     "language": command.locale.englishDescription,
                     "count": groupedFacts.count,
                     "facts": groupedFacts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")

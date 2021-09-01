@@ -25,7 +25,7 @@
 import Foundation
 
 extension Array {
-    func map<T> (_ transform: @escaping (Element) async throws -> T) async rethrows -> [T] {
+    func asyncMap<T> (_ transform: @escaping (Element) async throws -> T) async rethrows -> [T] {
         var mappedElements: [T] = []
         try await withThrowingTaskGroup(of: T.self) { group in
             for element in self {

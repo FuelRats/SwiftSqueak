@@ -113,7 +113,7 @@ class BoardCommands: IRCBotModule {
         guard rescues.count > 0 else {
             var flags = ""
             if arguments.count > 0 {
-                flags = "(Flags: \(await arguments.map({ $0.description }).joined(separator: ", ")))"
+                flags = "(Flags: \(arguments.map({ $0.description }).joined(separator: ", ")))"
             }
             command.message.reply(key: "board.list.none", fromCommand: command, map: [
                 "flags": flags
@@ -121,7 +121,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        let generatedList = await rescues.map({ (id: Int, rescue: Rescue) -> String in
+        let generatedList = rescues.map({ (id: Int, rescue: Rescue) -> String in
             let output = try! stencil.renderLine(name: "list.stencil", context: [
                 "caseId": id,
                 "rescue": rescue,

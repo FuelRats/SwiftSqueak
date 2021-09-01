@@ -71,7 +71,7 @@ class FactCommands: IRCBotModule {
         var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
         facts = facts.filter({ $0.isPlatformFact == false })
         
-        await command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+        command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
             "language": command.locale.englishDescription,
             "count": facts.count,
             "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
@@ -328,7 +328,7 @@ class FactCommands: IRCBotModule {
         let isPrepFact = prepFacts.contains(where: { $0 == command.command })
         
         if command.parameters.count > 0 {
-            let targets: [(String, Rescue?)] = await command.parameters.map({ target in
+            let targets: [(String, Rescue?)] = await command.parameters.asyncMap({ target in
                 var target = target
                 var (_, rescue) = await board.findRescue(withCaseIdentifier: target) ?? (nil, nil)
                 if rescue == nil {
@@ -383,7 +383,7 @@ class FactCommands: IRCBotModule {
                     if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
                         smartCommand.command = "pcteam"
                     }
-                    smartCommand.parameters = await platformTargets.map({ $0.0 })
+                    smartCommand.parameters = platformTargets.map({ $0.0 })
                     sendFact(command: smartCommand, message: message)
                 }
                 if command.command == "quit" {
@@ -407,7 +407,7 @@ class FactCommands: IRCBotModule {
                     command.command = "pcteam"
                 }
                 
-                command.parameters = await targets.map({ $0.0 })
+                command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }
         } else if command.namedOptions.contains("locales") {
