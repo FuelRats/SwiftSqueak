@@ -146,7 +146,7 @@ class IRCBotModuleManager {
                 if paramIndex == maxParameters - 1 {
                     var remainderComponents = Array(ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex])
                     remainderComponents = remainderComponents.map({
-                        if $0.contains(" ") {
+                        if $0.contains(" ") && $0.count < remainderComponents.count {
                             return "\"\($0)\""
                         }
                         return $0
