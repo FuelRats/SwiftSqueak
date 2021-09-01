@@ -191,6 +191,9 @@ struct ProceduralSystem: CustomStringConvertible {
                 break
             } else {
                 proceduralComponents.removeFirst()
+                if systemId.last == "0" {
+                    break
+                }
             }
             
         }
