@@ -39,7 +39,7 @@ enum StationDescription: ResourceObjectDescription {
         public var haveMarket: Attribute<Bool>
         public var haveShipyard: Attribute<Bool>
         public var haveOutfitting: Attribute<Bool>
-        public var otherServices: Attribute<String>
+        public var otherServices: Attribute<[String]>
         public var systemName: Attribute<String>
     }
 
@@ -48,5 +48,5 @@ enum StationDescription: ResourceObjectDescription {
 }
 
 extension SystemsAPI {
-    typealias Station = JSONEntity<StationDescription>
+    typealias Station = SystemsAPIJSONEntity<StationDescription>
 }

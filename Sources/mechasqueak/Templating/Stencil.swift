@@ -76,7 +76,7 @@ private func generateEnvironment () -> Environment {
     
     ext.registerFilter("mainStarInfo") { (value: Any?) in
       if let system = value as? StarSystem {
-          if let mainStar = system.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.isMainStar }) {
+          if let mainStar = system.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.isMainStar ?? false }) {
               return mainStar.description
           }
       }

@@ -41,19 +41,19 @@ enum BodyDescription: ResourceObjectDescription {
         public var radius: Attribute<Double>
         public var surfaceTemperature: Attribute<Double>
         public var surfacePressure: Attribute<Double>
-        public var volcanismType: Attribute<String>
+        public var volcanismType: Attribute<String?>
         public var atmosphereType: Attribute<String?>
         public var atmosphereComposition: Attribute<[String: Double]>
         public var solidComposition: Attribute<[String: Double]>
         public var terraformingState: Attribute<String>
-        public var orbitalPeriod: Attribute<Double>
-        public var semiMajorAxis: Attribute<Double>
-        public var orbitalEccentricity: Attribute<Double>
-        public var oribtalInclination: Attribute<Double>
-        public var argOfPeriapsis: Attribute<Double>
-        public var rotationalPeriod: Attribute<Double>
-        public var rotationalPeriodTidallyLocked: Attribute<Double>
-        public var axialTilt: Attribute<Double>
+        public var orbitalPeriod: Attribute<Double?>
+        public var semiMajorAxis: Attribute<Double?>
+        public var orbitalEccentricity: Attribute<Double?>
+        public var oribtalInclination: Attribute<Double>?
+        public var argOfPeriapsis: Attribute<Double?>
+        public var rotationalPeriod: Attribute<Double?>
+        public var rotationalPeriodTidallyLocked: Attribute<Bool?>
+        public var axialTilt: Attribute<Double?>
         public var rings: Attribute<[SystemsAPI.Belt]>
         public var materials: Attribute<[String: Double]>
         public var systemName: Attribute<String>
@@ -65,7 +65,7 @@ enum BodyDescription: ResourceObjectDescription {
 
 
 extension SystemsAPI {
-    typealias Body = JSONEntity<BodyDescription>
+    typealias Body = SystemsAPIJSONEntity<BodyDescription>
 }
 
 extension SystemsAPI.Body {

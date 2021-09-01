@@ -37,22 +37,22 @@ enum StarDescription: ResourceObjectDescription {
         public var subType: Attribute<String>
         public var parents: Attribute<[[String: Int64]]>
         public var distanceToArrival: Attribute<Int64?>
-        public var isMainStar: Attribute<Bool>
+        public var isMainStar: Attribute<Bool?>
         public var isScoopable: Attribute<Bool>
         public var age: Attribute<Int64>
         public var luminosity: Attribute<SystemsAPI.Star.YerkesLuminosity>
         public var absoluteMagnitude: Attribute<Double>
         public var solarMasses: Attribute<Double>
-        public var solarRadius: Attribute<Double>
+        public var solarRadius: Attribute<Double?>
         public var surfaceTemperature: Attribute<Double>
-        public var orbitalPeriod: Attribute<Double>
-        public var semiMajorAxis: Attribute<Double>
-        public var orbitalEccentricity: Attribute<Double>
-        public var oribtalInclination: Attribute<Double>
-        public var argOfPeriapsis: Attribute<Double>
-        public var rotationalPeriod: Attribute<Double>
-        public var rotationalPeriodTidallyLocked: Attribute<Double>
-        public var axialTilt: Attribute<Double>
+        public var orbitalPeriod: Attribute<Double?>
+        public var semiMajorAxis: Attribute<Double?>
+        public var orbitalEccentricity: Attribute<Double?>
+        public var oribtalInclination: Attribute<Double>?
+        public var argOfPeriapsis: Attribute<Double?>
+        public var rotationalPeriod: Attribute<Double?>
+        public var rotationalPeriodTidallyLocked: Attribute<Bool?>
+        public var axialTilt: Attribute<Double?>
         public var belts: Attribute<[SystemsAPI.Belt]>
         public var systemName: Attribute<String>
     }
@@ -62,7 +62,7 @@ enum StarDescription: ResourceObjectDescription {
 }
 
 extension SystemsAPI {
-    typealias Star = JSONEntity<StarDescription>
+    typealias Star = SystemsAPIJSONEntity<StarDescription>
 }
 
 extension SystemsAPI.Star {
@@ -71,6 +71,7 @@ extension SystemsAPI.Star {
     }
     
     var description: String {
+        print(self.spectralClass)
         switch (self.spectralClass, self.luminosity) {
         case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.Ia]) == true:
             return "Blue hypergiant"
@@ -108,25 +109,25 @@ extension SystemsAPI.Star {
         case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.IV]) == true:
             return "Red sub-giant"
             
-        case (.O, .V):
+        case (.O, _):
             return "Blue-white star"
             
-        case (.B, .V):
+        case (.B, _):
             return "Blue star"
             
-        case (.A, .V):
+        case (.A, _):
             return "White star"
             
-        case (.F, .V):
+        case (.F, _):
             return "Yellow-white star"
             
-        case (.G, .V):
+        case (.G, _):
             return "Yellow dwarf"
             
-        case (.K, .V):
+        case (.K, _):
             return "Orange dwarf"
             
-        case (.M, .V):
+        case (.M, _):
             return "Red dwarf"
             
         case (let spectral, _) where spectral?.within([.L, .T, .Y]) == true:

@@ -82,10 +82,9 @@ class SystemsAPI {
     
     
     static func getSystemData (forId id: Int64) async throws -> SystemGetDocument {
-        var url = URL(string: "https://systems.api.fuelrats.com/api/systems/")!
-        url.appendPathComponent(String(id))
-
-        var request = try! HTTPClient.Request(url: url, method: .GET)
+        var url = URLComponents(string: "https://systems.api.fuelrats.com/api/systems/\(id)")!
+        url.queryItems = [URLQueryItem(name: "include", value: "stars,planets,stations")]
+        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)

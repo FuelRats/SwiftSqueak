@@ -32,9 +32,18 @@ extension Int64: CreatableRawIdType {
 }
 
 typealias SystemsAPIJSONEntity<Description: ResourceObjectDescription> =
-    JSONAPI.ResourceObject<Description, NoMetadata, NoLinks, Int64>
+    JSONAPI.ResourceObject<Description, NoMetadata, NoLinks, String>
 
-typealias SystemGetDocument = Document<SingleResourceBody<SystemsAPI.System>, Include3<SystemsAPI.Star, SystemsAPI.Body, SystemsAPI.Station>>
+typealias SystemsAPIDocument<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include> = JSONAPI.Document<
+    PrimaryResourceBody,
+    NoMetadata,
+    JSONAPILinks,
+    IncludeType,
+    NoAPIDescription,
+    BasicJSONAPIError<String>
+>
+
+typealias SystemGetDocument = SystemsAPIDocument<SingleResourceBody<SystemsAPI.System>, Include3<SystemsAPI.Star, SystemsAPI.Body, SystemsAPI.Station>>
 
 enum SystemDescription: ResourceObjectDescription {
     public static var jsonType: String { return "systems" }
@@ -60,7 +69,7 @@ extension SystemsAPI {
     }
     
     struct Belt: Codable, Equatable {
-        public var mass: String
+        public var mass: Double
         public var name: String
         public var type: String
         public var innerRadius: Double
