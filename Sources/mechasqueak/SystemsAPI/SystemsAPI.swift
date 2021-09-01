@@ -28,6 +28,13 @@ import IRCKit
 import NIO
 
 class SystemsAPI {
+    private static var shortNamesCapitalisation = [
+        "IX": "Ix",
+        "H": "h",
+        "AO": "Ao",
+        "EL": "El"
+    ]
+    
     static func performSearch (forSystem systemName: String, quickSearch: Bool = false) async throws -> SearchDocument {
         var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
         url.queryItems = [URLQueryItem(name: "name", value: systemName)]
@@ -105,6 +112,9 @@ class SystemsAPI {
         var systemName = systemName
         if systemName.uppercased() == "SABIYHAN" {
             systemName = "CRUCIS SECTOR ZP-P A5-2"
+        }
+        if let shortNameCorrection = shortNamesCapitalisation[systemName.uppercased()] {
+            systemName = shortNameCorrection
         }
         
         let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
