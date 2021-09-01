@@ -235,7 +235,6 @@ class Rescue {
         self.jumpCalls = []
         
         self.system?.permit = attr.data.value.permit
-        self.system?.landmark = attr.data.value.landmark
         self.uploaded = true
         
         Task {

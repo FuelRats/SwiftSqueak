@@ -48,6 +48,7 @@ class BoardQuoteCommands: IRCBotModule {
             "rescue": rescue,
             "platform": rescue.platform.ircRepresentable,
             "system": rescue.system as Any,
+            "landmark": rescue.system?.landmark as Any,
             "status": rescue.status.rawValue
         ])
         command.message.replyPrivate(message: output)

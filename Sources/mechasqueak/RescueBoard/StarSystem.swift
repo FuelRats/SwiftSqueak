@@ -40,7 +40,6 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     var searchResult: SystemsAPI.SearchDocument.SearchResult? = nil
     var permit: Permit? = nil
     var availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil
-    var landmark: SystemsAPI.LandmarkDocument.LandmarkResult? = nil
     var landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = []
     var clientProvidedBody: String?
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
@@ -66,7 +65,6 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             self.permit = StarSystem.Permit(fromSearchResult: searchResult)
         }
         self.availableCorrections = availableCorrections
-        self.landmark = landmark
         self.landmarks = landmarks
         self.clientProvidedBody = clientProvidedBody
         self.proceduralCheck = proceduralCheck
@@ -78,7 +76,6 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         self.searchResult = starSystem.searchResult
         self.permit = starSystem.permit
         self.availableCorrections = starSystem.availableCorrections
-        self.landmark = starSystem.landmark
         self.landmarks = starSystem.landmarks
         self.proceduralCheck = starSystem.proceduralCheck
         self.data = starSystem.data
@@ -128,7 +125,11 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
 
     var description: String {
-        return try! stencil.renderLine(name: "starsystem.stencil", context: ["system": self, "invalid": self.isInvalid])
+        return try! stencil.renderLine(name: "starsystem.stencil", context: [
+            "system": self,
+            "landmark": self.landmark as Any,
+            "invalid": self.isInvalid]
+        )
     }
     
     var info: String {
@@ -138,6 +139,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         
         return try! stencil.renderLine(name: "systeminfo.stencil", context: [
             "system": self,
+            "landmark": self.landmark as Any,
             "region": self.galacticRegion as Any,
             "invalid": self.isInvalid
 //            "stations": stations,
@@ -170,6 +172,12 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
 
     var isConfirmed: Bool {
         return self.landmark != nil || (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata.handauthored == true))
+    }
+    
+    
+    var landmark: SystemsAPI.LandmarkDocument.LandmarkResult? {
+        let systemName = self.name.uppercased()
+        return self.landmarks.first(where: { $0.name.uppercased() != systemName }) ?? self.landmarks.first
     }
 
     var twitterDescription: String? {

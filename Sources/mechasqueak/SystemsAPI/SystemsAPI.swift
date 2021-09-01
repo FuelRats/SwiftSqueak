@@ -138,7 +138,6 @@ class SystemsAPI {
         }
         
         let (landmarkResults, systemData) = try await (performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64))
-        starSystem.landmark = landmarkResults.first
         starSystem.landmarks = landmarkResults.landmarks ?? []
         starSystem.data = systemData
         return starSystem

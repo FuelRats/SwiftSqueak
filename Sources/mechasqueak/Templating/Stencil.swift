@@ -84,6 +84,14 @@ private func generateEnvironment () -> Environment {
       return nil
     }
     
+    ext.registerFilter("landmark") { (value: Any?) in
+        if let system = value as? StarSystem {
+            return system.landmark
+        }
+        
+        return nil
+    }
+    
     ext.registerFilter("cardinal") { (value: Any?) in
       if let system = value as? StarSystem {
         if let landmark = system.landmark, landmark.distance > 1000, let searchResult = system.searchResult, let landmarkResult = mecha.landmarks.first(where: { $0.name == landmark.name }) {
