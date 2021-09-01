@@ -34,7 +34,7 @@ class BoardAssignCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["go", "assign", "add"],
-        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
+        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
         permission: .DispatchWrite,
@@ -59,8 +59,10 @@ class BoardAssignCommands: IRCBotModule {
             command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
+        
+        var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
 
-        let assigns = await Array(command.parameters[1...]).asyncMap({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
+        let assigns = await params.asyncMap({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
         try? rescue.save(command)
         
         _ = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
@@ -69,7 +71,7 @@ class BoardAssignCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["gofr", "assignfr", "frgo"],
-        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
+        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
         permission: .DispatchWrite,
@@ -96,7 +98,9 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
         
-        let assigns = await Array(command.parameters[1...]).asyncMap({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
+        var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
+        
+        let assigns = await params.asyncMap({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
         try? rescue.save(command)
 
         let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
@@ -261,20 +265,26 @@ class BoardAssignCommands: IRCBotModule {
             }
             return nil
         })
-        if successfulAssigns.count > 0 {
-            let names = successfulAssigns.compactMap({ assign -> String? in
+        if successfulAssigns.count > 0 || includeExistingAssigns || assigns.count == 0 {
+            var names = successfulAssigns.compactMap({ assign -> String? in
                 switch assign {
                 case .assigned(let rat):
                     return rat.name
                 case .unidentified(let unidentifiedRat):
                     return unidentifiedRat
-                case .duplicate(let ratName):
-                    if includeExistingAssigns {
-                        return ratName
-                    }
+                case .duplicate(_):
+                    return nil
                 }
-                return nil
             })
+            
+            if assigns.count == 0 || includeExistingAssigns {
+                names = rescue.rats.map({
+                    $0.name
+                }) + rescue.unidentifiedRats
+            }
+            guard names.count > 0 else {
+                return false
+            }
             
             let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
             command.message.reply(key: format, fromCommand: command, map: [

@@ -408,8 +408,8 @@ class Rescue {
         }
         
         guard
-            param != self.clientNick?.lowercased()
-            && param != self.client?.lowercased()
+            (param != self.clientNick?.lowercased()
+            && param != self.client?.lowercased()) || force
         else {
             return Result.failure(RescueAssignError.invalid(param))
         }
