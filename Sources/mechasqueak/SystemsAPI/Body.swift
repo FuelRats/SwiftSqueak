@@ -34,7 +34,7 @@ enum BodyDescription: ResourceObjectDescription {
         public var type: Attribute<SystemsAPI.CelestialBodyType>
         public var subType: Attribute<String>
         public var parents: Attribute<[[String: Int64]]>
-        public var distanceToArrival: Attribute<Int64?>
+        public var distanceToArrival: Attribute<Double?>
         public var isLandable: Attribute<Bool>
         public var gravity: Attribute<Double>
         public var earthMasses: Attribute<Double>

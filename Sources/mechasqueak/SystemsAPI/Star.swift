@@ -36,7 +36,7 @@ enum StarDescription: ResourceObjectDescription {
         public var type: Attribute<String>
         public var subType: Attribute<String>
         public var parents: Attribute<[[String: Int64]]?>
-        public var distanceToArrival: Attribute<Int64?>
+        public var distanceToArrival: Attribute<Double?>
         public var isMainStar: Attribute<Bool?>
         public var isScoopable: Attribute<Bool>
         public var age: Attribute<Int64>

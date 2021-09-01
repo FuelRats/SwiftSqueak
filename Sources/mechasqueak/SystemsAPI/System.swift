@@ -69,10 +69,10 @@ extension SystemsAPI {
     }
     
     struct Belt: Codable, Equatable {
-        public var mass: Double
-        public var name: String
-        public var type: String
-        public var innerRadius: Double
-        public var outerRadius: Double
+        public var mass: Double?
+        public var name: String?
+        public var type: String?
+        public var innerRadius: Double?
+        public var outerRadius: Double?
     }
 }
