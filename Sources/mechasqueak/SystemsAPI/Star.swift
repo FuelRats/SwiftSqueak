@@ -156,6 +156,9 @@ extension SystemsAPI.Star {
         case (.HAeBe, _):
             return "Herbig Ae/Be star"
             
+        case (.N, _):
+            return "Neutron star"
+            
         default:
             return self.subType
         }
@@ -200,6 +203,7 @@ extension SystemsAPI.Star {
         case MS
         case DA
         case HAeBe
+        case N // N is not actually used for neutron stars in astronomy but on EDDN it apparantly is
         
         func within (_ classes: [SpectralClass]) -> Bool {
             return classes.contains(self)
