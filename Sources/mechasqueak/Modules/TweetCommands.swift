@@ -46,7 +46,7 @@ class TweetCommands: IRCBotModule {
             command.message.error(key: "tweet.minlength", fromCommand: command)
             return
         }
-        if await mecha.rescueBoard.first(where: { (caseId, rescue) in
+        if await board.first(where: { (caseId, rescue) in
             if let system = rescue.system {
                 if contents.lowercased().contains(system.name.lowercased()) {
                     return true

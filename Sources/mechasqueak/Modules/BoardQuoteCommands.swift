@@ -123,8 +123,9 @@ class BoardQuoteCommands: IRCBotModule {
                 lastAuthor: message.user.nickname
             ))
         }
+        try? rescue.save(command)
         
-        let caseId = await mecha.rescueBoard.getId(forRescue: rescue)
+        let caseId = await board.getId(forRescue: rescue)
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
             "clientId": caseId ?? 0,
@@ -145,7 +146,7 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var (caseId, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam) ?? (nil, nil)
+        var (caseId, rescue) = await board.findRescue(withCaseIdentifier: clientParam) ?? (nil, nil)
         if rescue == nil && Int(clientParam) != nil && clientParam.count < 3 {
             command.message.error(key: "board.casenotfound", fromCommand: command, map: [
                 "caseIdentifier": command.parameters[0]
@@ -176,7 +177,7 @@ class BoardQuoteCommands: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: message.user.nickname
                 ))
-                try? await mecha.rescueBoard.insert(rescue: rescue!, fromMessage: message, initiated: .insertion)
+                try? await board.insert(rescue: rescue!, fromMessage: message, initiated: .insertion)
             } else {
                 command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
                     "client": client
@@ -191,9 +192,10 @@ class BoardQuoteCommands: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: message.user.nickname
             ))
+            try? rescue?.save(command)
 
             command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-                "clientId": caseId,
+                "clientId": caseId ?? 0,
                 "text": injectMessage
             ])
         }
@@ -236,6 +238,8 @@ class BoardQuoteCommands: IRCBotModule {
             quote.message = contents
             quote.lastAuthor = message.user.nickname
             rescue.quotes[quoteIndex] = quote
+            try? rescue.save(command)
+            
             command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
                 "index": quoteIndex,
                 "caseId": caseId,
@@ -243,6 +247,8 @@ class BoardQuoteCommands: IRCBotModule {
             ])
         } else {
             rescue.quotes.remove(at: quoteIndex)
+            try? rescue.save(command)
+            
             command.message.reply(key: "board.sub.deleted", fromCommand: command, map: [
                 "index": quoteIndex,
                 "caseId": caseId

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -31,7 +31,6 @@ import NIO
 let processId = ProcessInfo.processInfo.processIdentifier
 try "\(processId)".write(toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true, encoding: .utf8)
 
-let lingo = try! Lingo(rootPath: "\(FileManager.default.currentDirectoryPath)/localisation", defaultLocale: "en")
 let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
     redirectConfiguration: .none,
     timeout: .init(connect: .seconds(5), read: .seconds(60))
@@ -60,6 +59,7 @@ func debug (_ output: String) {
 }
 
 let configuration = loadConfiguration()
+let lingo = try! Lingo(rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 class MechaSqueak {
     let configPath: URL
@@ -68,7 +68,6 @@ class MechaSqueak {
     static let accounts = NicknameLookupManager()
     var commands: [IRCBotModule]
     let connections: [IRCClient]
-    let rescueBoard: RescueBoard
     var reportingChannel: IRCChannel?
     let helpModule: HelpCommands
     let startupTime: Date
@@ -77,7 +76,7 @@ class MechaSqueak {
     var sectors: [StarSector] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
-    //let ratSocket: RatSocket?
+    let ratSocket: RatSocket?
 
     init () {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -88,7 +87,6 @@ class MechaSqueak {
 
 
         self.startupTime = Date()
-        self.rescueBoard = RescueBoard()
 
         self.connections = configuration.connections.map({
             let client = IRCClient(configuration: $0)
@@ -126,11 +124,11 @@ class MechaSqueak {
             commands.append(QueueCommands(moduleManager))
         }
         
-        if let documentationPath = configuration.documentationPath {
-            ReferenceGenerator.generate(inPath: documentationPath)
-        }
+        ReferenceGenerator.generate(inPath: configuration.sourcePath)
         
-        detach {
+        ratSocket = RatSocket()
+        
+        Task {
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
             self.sectors = try await SystemsAPI.fetchSectorList()
         }
@@ -157,16 +155,16 @@ class MechaSqueak {
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
+            try? await board.sync()
             
-            if let gitDir = configuration.documentationPath {
-                let release = shell("/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let releaseName = release, releaseName.count > 0 {
-                    mecha.reportingChannel?.send(message: "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/\(releaseName)")
-                }
+            let gitDir = configuration.sourcePath
+            let release = shell("/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let releaseName = release, releaseName.count > 0 {
+                mecha.reportingChannel?.send(message: "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/\(releaseName)")
             }
         } else {
             accounts.lookup(user: userJoin.user)
-            if let (caseId, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: userJoin.user.nickname) {
+            if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: userJoin.user.nickname) {
                 var quotes = rescue.quotes
                     quotes.removeAll(where: {
                         $0.message.starts(with: "Client rejoined the rescue channel")
@@ -194,11 +192,11 @@ class MechaSqueak {
 
     @AsyncEventListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
-        if let (caseId, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
+        if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: userPart.user.nickname) {
             guard rescue.channel == userPart.channel else {
                 return
             }
-            await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
+            await board.cancelPrepTimer(forRescue: rescue)
 
             var quotes = rescue.quotes
             quotes.removeAll(where: {
@@ -225,9 +223,9 @@ class MechaSqueak {
     var onUserQuit = { userQuit in
         if
             let sender = userQuit.raw.sender,
-            let (caseId, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
+            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname)
         {
-            await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
+            await board.cancelPrepTimer(forRescue: rescue)
             var quotes = rescue.quotes
             quotes.removeAll(where: {
                 $0.message == "Client left the rescue channel"
@@ -235,7 +233,7 @@ class MechaSqueak {
             
             if let quitMessage = userQuit.raw.parameters.first, quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ") {
                 if rescue.rats.count > 0 {
-                    rescue.setNotes("Client was banned")
+                    rescue.notes = "Client was banned"
                     let url = "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit"
                     
                     do {
@@ -246,7 +244,7 @@ class MechaSqueak {
                             "link": url,
                             "client": rescue.clientDescription
                         ])
-                        await mecha.rescueBoard.remove(id: caseId)
+                        await board.remove(id: caseId)
                     } catch {
                         
                     }
@@ -258,7 +256,7 @@ class MechaSqueak {
                             "caseId": caseId,
                             "client": rescue.clientDescription
                         ])
-                        await mecha.rescueBoard.remove(id: caseId)
+                        await board.remove(id: caseId)
                     } catch {
                         
                     }
@@ -291,7 +289,7 @@ class MechaSqueak {
         }
 
         if channelMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
-            // mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
+             mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
         }
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
@@ -314,7 +312,7 @@ class MechaSqueak {
         }
 
         if echoMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
-            // mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: echoMessage))
+             mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: echoMessage))
         }
     }
 
@@ -322,8 +320,8 @@ class MechaSqueak {
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
-        if let (caseId, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname) {
-            rescue.setClientNick(nickChange.newNick)
+        if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
+            rescue.clientNick = nickChange.newNick
 
             rescue.channel?.send(key: "board.clientnick", map: [
                 "caseId": caseId,
@@ -353,5 +351,6 @@ func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
     return loop.next().makePromise(of: type)
 }
 let mecha = MechaSqueak()
+let board = RescueBoard()
 
 RunLoop.main.run()

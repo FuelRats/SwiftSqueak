@@ -116,29 +116,18 @@ typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 
 extension Group {
     static func getList () async throws -> GroupSearchDocument {
-        var url = configuration.api.url
-        url.appendPathComponent("/groups")
-        var request = try! HTTPClient.Request(url: url, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        let request = try! HTTPClient.Request(apiPath: "/groups", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
     }
 
     func addUser (id: UUID) async throws {
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
-
         let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
             type: "groups",
             id: self.id.rawValue
         )])
 
-        var request = try! HTTPClient.Request(url: url, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try! .encodable(relationship)
         
@@ -146,19 +135,12 @@ extension Group {
     }
     
     func removeUser (id: UUID) async throws {
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
-
         let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
             type: "groups",
             id: self.id.rawValue
         )])
 
-        var request = try! HTTPClient.Request(url: url, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try! .encodable(relationship)
 

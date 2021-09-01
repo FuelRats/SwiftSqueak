@@ -96,7 +96,7 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        if let (boardId, boardRescue) = await mecha.rescueBoard.rescues.first(where: { $0.value.id == id }) {
+        if let (boardId, boardRescue) = await board.rescues.first(where: { $0.value.id == id }) {
             command.message.reply(key: "rescue.delete.active", fromCommand: command, map: [
                 "id": boardRescue.id.ircRepresentation,
                 "caseId": boardId
@@ -336,7 +336,7 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        if let (existingId, existingRescue) = await mecha.rescueBoard.rescues.first(where: {
+        if let (existingId, existingRescue) = await board.rescues.first(where: {
             $0.value.id == id
         }) {
             command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
@@ -362,11 +362,11 @@ class RemoteRescueCommands: IRCBotModule {
                 fromAPIRescue: apiRescue,
                 withRats: rats,
                 firstLimpet: firstLimpet,
-                onBoard: mecha.rescueBoard
+                onBoard: board
             )
             rescue.outcome = nil
             rescue.status = .Open
-            let caseId = await mecha.rescueBoard.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
+            let caseId = await board.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
             
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
                 "id": id.ircRepresentation,
@@ -387,11 +387,11 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .RescueWriteOwn
     )
     var didReceiveUncloseCommand = { command in
-        guard let caseNumber = Int(command.parameters[0]), let closedRescue = await mecha.rescueBoard.recentlyClosed[caseNumber] else {
+        guard let caseNumber = Int(command.parameters[0]), let closedRescue = await board.recentlyClosed[caseNumber] else {
             return
         }
 
-        if let existingRescue = await mecha.rescueBoard.rescues.first(where: {
+        if let existingRescue = await board.rescues.first(where: {
             $0.value.id == closedRescue.id
         }) {
             command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
@@ -402,7 +402,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
         
         guard configuration.general.drillMode == false else {
-            guard let rescue = await mecha.rescueBoard.recentlyClosed[caseNumber] else {
+            guard let rescue = await board.recentlyClosed[caseNumber] else {
                 command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
                     "id": caseNumber
                 ])
@@ -412,7 +412,7 @@ class RemoteRescueCommands: IRCBotModule {
             rescue.outcome = nil
             rescue.status = .Open
             
-            let caseId = await mecha.rescueBoard.insert(rescue: rescue, preferringIdentifier: caseNumber)
+            let caseId = await board.insert(rescue: rescue, preferringIdentifier: caseNumber)
             command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
                 "id": rescue.id.ircRepresentation,
                 "caseId": caseId
@@ -443,6 +443,12 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             if command.namedOptions.contains("all") {
+                guard command.message.user.hasPermission(permission: .UserRead) else {
+                    command.message.error(key: "board.nopermission", fromCommand: command, map: [
+                        "nick": command.message.user.nickname
+                    ])
+                    return
+                }
                 command.message.replyPrivate(key: "rescue.clientpw.heading", fromCommand: command, map: [
                     "client": command.parameters[0]
                 ])

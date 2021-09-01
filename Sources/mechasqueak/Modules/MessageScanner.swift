@@ -70,7 +70,7 @@ class MessageScanner: IRCBotModule {
             let caseId = jumpCallMatch.group(named: "case")!
             let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
             
-            guard let (_, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: caseId) else {
+            guard let (_, rescue) = await board.findRescue(withCaseIdentifier: caseId) else {
                 if configuration.general.drillMode == false, channelMessage.destination.name.lowercased() == configuration.general.rescueChannel {
                     channelMessage.replyPrivate(message: lingo.localize(
                         "jumpcall.notfound",
@@ -166,13 +166,13 @@ class MessageScanner: IRCBotModule {
                 message += " (Not Drilled)"
             }
             
-            if let system = await rescue.system, system.permit != nil {
+            if let system = rescue.system, system.permit != nil {
                 if rat?.hasPermitFor(system: system) == false {
                     message += " (MISSING PERMIT)"
                 }
             }
             
-            let platform = await rescue.platform
+            let platform = rescue.platform
             if configuration.general.drillMode == false && platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: platform!) {
                 if rescue.odyssey && rat.attributes.odyssey.value == false {
                     channelMessage.client.sendMessage(
@@ -186,7 +186,7 @@ class MessageScanner: IRCBotModule {
                     
                     message += " (Missing Odyssey)"
                 }
-                if await rescue.odyssey == false && rat.attributes.odyssey.value {
+                if rescue.odyssey == false && rat.attributes.odyssey.value {
                     channelMessage.client.sendMessage(
                         toChannelName: channelMessage.destination.name,
                         withKey: "jumpcall.ratodyssey",
@@ -220,7 +220,7 @@ class MessageScanner: IRCBotModule {
             guard let rescue = Rescue(fromAnnouncer: channelMessage) else {
                 return
             }
-            try? await mecha.rescueBoard.insert(rescue: rescue, fromMessage: channelMessage, initiated: .announcer)
+            try? await board.insert(rescue: rescue, fromMessage: channelMessage, initiated: .announcer)
             return
         }
 
@@ -231,11 +231,11 @@ class MessageScanner: IRCBotModule {
                 return
             }
 
-            try? await mecha.rescueBoard.insert(rescue: rescue, fromMessage: channelMessage, initiated: .signal)
+            try? await board.insert(rescue: rescue, fromMessage: channelMessage, initiated: .signal)
             return
         }
 
-        let mentionedRescues = await mecha.rescueBoard.findMentionedCasesIn(message: channelMessage)
+        let mentionedRescues = await board.findMentionedCasesIn(message: channelMessage)
         for (caseId, rescue) in mentionedRescues {
             let rescueChannel = rescue.channel
             guard await channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescueChannel else {

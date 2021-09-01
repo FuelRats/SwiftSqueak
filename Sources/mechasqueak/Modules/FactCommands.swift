@@ -330,9 +330,9 @@ class FactCommands: IRCBotModule {
         if command.parameters.count > 0 {
             let targets: [(String, Rescue?)] = await command.parameters.map({ target in
                 var target = target
-                var (_, rescue) = await mecha.rescueBoard.findRescue(withCaseIdentifier: target) ?? (nil, nil)
+                var (_, rescue) = await board.findRescue(withCaseIdentifier: target) ?? (nil, nil)
                 if rescue == nil {
-                    rescue = await mecha.rescueBoard.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
+                    rescue = await board.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
                 }
                 if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
                     if let fuzzyTarget = await command.message.destination.members.first(where: {
@@ -342,7 +342,7 @@ class FactCommands: IRCBotModule {
                     }
                 }
                 if let rescue = rescue {
-                    await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
+                    await board.cancelPrepTimer(forRescue: rescue)
                     return (rescue.clientNick ?? target, rescue)
                 }
                 return (target, nil)
@@ -425,7 +425,7 @@ class FactCommands: IRCBotModule {
     }
     
     func factLocales (command: IRCBotCommand) {
-        detach {
+        Task {
             let fact = try await GroupedFact.get(name: command.command)
             
             guard let fact = fact else {
@@ -444,7 +444,7 @@ class FactCommands: IRCBotModule {
     }
     
     func factInfo (command: IRCBotCommand) {
-        detach {
+        Task {
             let fact = try await Fact.get(name: command.command, forLocale: command.locale)
             
             guard let fact = fact else {
@@ -478,7 +478,7 @@ class FactCommands: IRCBotModule {
             })
         }
         
-        detach {
+        Task {
             let fact = try await Fact.get(name: command.command, forLocale: command.locale)
             
             guard let fact = fact else {

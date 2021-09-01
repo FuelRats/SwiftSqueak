@@ -33,7 +33,7 @@ class QueueCommands: IRCBotModule {
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
         
-        detach {
+        Task {
             guard let queueConfig = try? await QueueAPI.getConfig() else {
                 return
             }

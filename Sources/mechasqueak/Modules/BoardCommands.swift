@@ -40,7 +40,7 @@ class BoardCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["sync", "fbr", "refreshboard", "reindex", "resetboard", "forcerestartboard",
                    "forcerefreshboard", "frb", "boardrefresh"],
         category: .rescues,
@@ -49,7 +49,7 @@ class BoardCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSyncCommand = { command in
-        //mecha.rescueBoard.syncBoard()
+        try? await board.sync()
     }
 
     @AsyncBotCommand(
@@ -73,7 +73,7 @@ class BoardCommands: IRCBotModule {
             GamePlatform(rawValue: $0)
         })
 
-        let rescues = await mecha.rescueBoard.rescues.filter({ (caseId, rescue) in
+        let rescues = await board.rescues.filter({ (caseId, rescue) in
             if filteredPlatforms.count > 0 && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false {
                 return false
             }
@@ -123,6 +123,7 @@ class BoardCommands: IRCBotModule {
 
         let generatedList = await rescues.map({ (id: Int, rescue: Rescue) -> String in
             let output = try! stencil.renderLine(name: "list.stencil", context: [
+                "caseId": id,
                 "rescue": rescue,
                 "platform": rescue.platform.ircRepresentable
             ])
@@ -185,7 +186,7 @@ class BoardCommands: IRCBotModule {
         do {
             try await rescue.close(firstLimpet: closeFl)
             
-            await mecha.rescueBoard.remove(id: caseId)
+            await board.remove(id: caseId)
 
             command.message.reply(key: "board.close.success", fromCommand: command, map: [
                 "caseId": caseId,
@@ -289,7 +290,7 @@ class BoardCommands: IRCBotModule {
         do {
             try await rescue.trash(reason: reason)
             
-            await mecha.rescueBoard.remove(id: caseId)
+            await board.remove(id: caseId)
 
             command.message.reply(key: "board.trash.success", fromCommand: command, map: [
                 "caseId": caseId,
@@ -329,12 +330,12 @@ class BoardCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
-        guard let lastSignalDate = await mecha.rescueBoard.lastSignalReceived else {
+        guard let lastSignalDate = await board.lastSignalReceived else {
             command.message.reply(key: "board.quiet.unknown", fromCommand: command)
             return
         }
 
-        guard await mecha.rescueBoard.rescues.first(where: { (caseId, rescue) -> Bool in
+        guard await board.rescues.first(where: { (caseId, rescue) -> Bool in
             return rescue.status != .Inactive && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
@@ -342,7 +343,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard await mecha.rescueBoard.rescues.first(where: { rescue in
+        guard await board.rescues.first(where: { rescue in
             return rescue.1.status != .Inactive
         }) == nil else {
             command.message.reply(key: "board.quiet.current", fromCommand: command)
@@ -405,6 +406,7 @@ class BoardCommands: IRCBotModule {
             return
         }
         rescue.system?.merge(starSystem)
+        try? rescue.save(command)
 
         command.message.reply(key: "board.syschange", fromCommand: command, map: [
             "caseId": caseId,
@@ -414,7 +416,7 @@ class BoardCommands: IRCBotModule {
     }
 
     static func assertGetRescueId (command: IRCBotCommand) async -> (Int, Rescue)? {
-        guard let rescue = await mecha.rescueBoard.findRescue(withCaseIdentifier: command.parameters[0]) else {
+        guard let rescue = await board.findRescue(withCaseIdentifier: command.parameters[0]) else {
             command.message.error(key: "board.casenotfound", fromCommand: command, map: [
                 "caseIdentifier": command.parameters[0]
             ])
@@ -437,7 +439,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
+        await board.cancelPrepTimer(forRescue: rescue)
         command.message.reply(key: "board.sprep", fromCommand: command, map: [
             "caseId": caseId
         ])

@@ -71,15 +71,16 @@
       "other": "%{count} new rescues were uploaded to the server"
   },
   "board.synced.downstreamUpdate": {
-      "one": "%{count} altered rescue was downloaded from the server",
-      "other": "%{count} altered rescues were downloaded from the server"
+      "one": "%{count} modified rescue was downloaded from the server",
+      "other": "%{count} modified rescues were downloaded from the server"
   },
   "board.synced.upstreamUpdate": {
-      "one": "%{count} altered rescue was uploaded to the server",
-      "other": "%{count} altered rescues were uploaded to server"
-  },"board.synced.conflicts": {
-      "one": "%{count} case number were altered due to a conflict",
-      "other": "%{count} case numbers were altered due to a conflict"
+      "one": "%{count} modified rescue was uploaded to the server",
+      "other": "%{count} modified rescues were uploaded to server"
+  },
+  "board.synced.conflicts": {
+      "one": "\u000304%{count} case number were altered due to a conflict\u0003",
+      "other": "\u000304%{count} case numbers were altered due to a conflict\u0003"
   },
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
   "board.remotecreation": "ATTENTION: A new rescue (#%{caseId} (%{client})) was created remotely, performing a sync with the rescue server",

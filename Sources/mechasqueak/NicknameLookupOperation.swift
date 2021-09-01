@@ -66,7 +66,7 @@ class NicknameLookupManager {
         }
 
         self.queue.addOperation(operation)
-        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount)")
+        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount))")
     }
 
     func lookupIfNotExists (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
@@ -151,7 +151,7 @@ class NicknameLookupOperation: Operation {
             return
         }
 
-        detach {
+        Task {
             do {
                 let apiNickname = try await FuelRatsAPI.getNickname(forIRCAccount: account)
                 if apiNickname != nil {
@@ -164,6 +164,7 @@ class NicknameLookupOperation: Operation {
                 self.onCompletion?(apiNickname)
             } catch {
                 debug("Failed to lookup account data for \(account)")
+                print(String(describing: error))
                 self.isFinished = true
                 self.isExecuting = false
                 self.onError?(error)

@@ -48,10 +48,10 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
-            await mecha.rescueBoard.cancelPrepTimer(forRescue: rescue)
-            let activeCases = await mecha.rescueBoard.activeCases
+            await board.cancelPrepTimer(forRescue: rescue)
+            let activeCases = await board.activeCases
             if activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
-                detach {
+                Task {
                     try? await QueueAPI.dequeue()
                 }
             }
@@ -70,6 +70,7 @@ class BoardAttributeCommands: IRCBotModule {
                 lastAuthor: command.message.user.nickname
             ))
         }
+        try? rescue.save(command)
 
         let key = command.parameters.count > 1 ? "board.toggleactive" : "board.toggleactivemsg"
 
@@ -119,6 +120,7 @@ class BoardAttributeCommands: IRCBotModule {
                 manuallyCorrected: true
             )
         }
+        try? rescue.save(command)
         
         command.message.reply(key: key, fromCommand: command, map: [
             "caseId": caseId,
@@ -153,9 +155,11 @@ class BoardAttributeCommands: IRCBotModule {
             "oldClient": oldClient,
             "client": client
         ])
+        
+        try? rescue.save(command)
 
 
-        if let existingCase = await mecha.rescueBoard.rescues.first(where: {
+        if let existingCase = await board.rescues.first(where: {
             $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
@@ -180,6 +184,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         let nick = command.parameters[1]
         rescue.clientNick = nick
+        try? rescue.save(command)
 
         command.message.reply(key: "board.nickchange", fromCommand: command, map: [
             "caseId": caseId,
@@ -188,7 +193,7 @@ class BoardAttributeCommands: IRCBotModule {
         ])
 
 
-        if let existingCase = await mecha.rescueBoard.rescues.first(where: {
+        if let existingCase = await board.rescues.first(where: {
             $0.1.clientNick?.lowercased() == nick.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
@@ -220,6 +225,7 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         rescue.clientLanguage = newLanguage
+        try? rescue.save(command)
 
         command.message.reply(key: "board.languagechange", fromCommand: command, map: [
             "caseId": caseId,
@@ -265,6 +271,7 @@ class BoardAttributeCommands: IRCBotModule {
                 ])
             }
         }
+        try? rescue.save(command)
     }
 
     @AsyncBotCommand(
@@ -282,6 +289,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         let title = command.parameters[1]
         rescue.title = title
+        try? rescue.save(command)
 
         command.message.reply(key: "board.title.set", fromCommand: command, map: [
             "caseId": caseId,
@@ -303,6 +311,7 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         rescue.odyssey = !rescue.odyssey
+        try? rescue.save(command)
         
         if rescue.odyssey && rescue.platform != .PC {
             command.message.error(key: "board.toggleodyssey.platform", fromCommand: command)

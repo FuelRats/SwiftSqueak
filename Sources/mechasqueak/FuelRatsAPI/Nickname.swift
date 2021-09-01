@@ -51,7 +51,7 @@ typealias Nickname = JSONEntity<NicknameDescription>
 
 typealias NicknameSearchDocument = Document<
     ManyResourceBody<Nickname>,
-    Include7<User, Rat, Group, Client, Epic, Ship, Decal>
+    Include8<User, Rat, Group, Client, Epic, Ship, Decal, AvatarImage>
 >
 
 extension NicknameSearchDocument {

@@ -30,34 +30,36 @@ import NIO
 
 class Rescue {
     private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?".r!
+
+    let id: UUID
+
+    var client: String?             { didSet { property(\.client, didChangeFrom: oldValue) } }
+    var clientNick: String?         { didSet { property(\.clientNick, didChangeFrom: oldValue) } }
+    var clientLanguage: Locale?     { didSet { property(\.clientLanguage, didChangeFrom: oldValue) } }
+    var codeRed: Bool               { didSet { property(\.codeRed, didChangeFrom: oldValue) } }
+    var notes: String               { didSet { property(\.notes, didChangeFrom: oldValue) } }
+    var platform: GamePlatform?     { didSet { property(\.platform, didChangeFrom: oldValue) } }
+    var odyssey: Bool               { didSet { property(\.odyssey, didChangeFrom: oldValue) } }
+    var quotes: [RescueQuote]       { didSet { property(\.quotes, didChangeFrom: oldValue) } }
+    var status: RescueStatus        { didSet { property(\.status, didChangeFrom: oldValue) } }
+    var system: StarSystem?         { didSet { property(\.system, didChangeFrom: oldValue) } }
+    var title: String?              { didSet { property(\.title, didChangeFrom: oldValue) } }
+    var outcome: RescueOutcome?     { didSet { property(\.outcome, didChangeFrom: oldValue) } }
+    var unidentifiedRats: [String]  { didSet { property(\.unidentifiedRats, didChangeFrom: oldValue) } }
+    
+    var firstLimpet: Rat?           { didSet { property(\.firstLimpet, didChangeFrom: oldValue) } }
+    var rats: [Rat]                 { didSet { property(\.rats, didChangeFrom: oldValue) } }
+
+    let createdAt: Date
+    var updatedAt: Date
     
     var channelName: String
     var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
-    var syncStatus: SyncStatus = .pendingCreation
-
-    let id: UUID
-
-    var client: String?
-    var clientNick: String?
-    var clientLanguage: Locale?
     var banned: Bool = false
-    var codeRed: Bool
-    var notes: String
-    var platform: GamePlatform?
-    var odyssey: Bool
-    var quotes: [RescueQuote]
-    var status: RescueStatus
-    var system: StarSystem?
-    var title: String?
-    var outcome: RescueOutcome?
-    var unidentifiedRats: [String]
-
-    let createdAt: Date
-    var updatedAt: Date
-
-    var firstLimpet: Rat?
-    var rats: [Rat]
+    var synced: Bool = false
+    var uploaded: Bool
+    var uploadOperation: RescueCreateOperation? = nil
 
     init? (fromAnnouncer message: IRCPrivateMessage) {
         guard let match = Rescue.announcerExpression.findFirst(in: message.message) else {
@@ -77,6 +79,7 @@ class Rescue {
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
         self.odyssey = match.group(at: 4) != nil
+        
 
         let o2StatusString = match.group(at: 5)!
         if o2StatusString.uppercased() == "NOT OK" {
@@ -107,6 +110,7 @@ class Rescue {
 
         self.rats = []
         self.jumpCalls = []
+        self.uploaded = false
     }
 
     init? (fromRatsignal message: IRCPrivateMessage) {
@@ -149,6 +153,7 @@ class Rescue {
 
         self.createdAt = Date()
         self.updatedAt = Date()
+        self.uploaded = false
     }
 
     init? (text: String, clientName: String, fromCommand command: IRCBotCommand) {
@@ -170,7 +175,8 @@ class Rescue {
         self.channelName = command.message.destination.name
 
         if let platformString = input.platform {
-            self.platform = GamePlatform.parsedFromText(text: platformString)
+            let platform = GamePlatform.parsedFromText(text: platformString)
+            self.platform = platform
         }
         
         if self.platform == .PC {
@@ -191,6 +197,7 @@ class Rescue {
 
         self.createdAt = Date()
         self.updatedAt = Date()
+        self.uploaded = false
     }
 
     init (fromAPIRescue apiRescue: RemoteRescue, withRats rats: [Rat], firstLimpet: Rat?, onBoard board: RescueBoard) {
@@ -212,8 +219,6 @@ class Rescue {
             self.system = nil
         }
         self.odyssey = attr.odyssey.value
-        self.system?.permit = attr.data.value.permit
-        self.system?.landmark = attr.data.value.landmark
         self.quotes = attr.quotes.value
         self.status = attr.status.value
         self.title = attr.title.value
@@ -229,7 +234,11 @@ class Rescue {
         self.firstLimpet = firstLimpet
         self.jumpCalls = []
         
-        detach {
+        self.system?.permit = attr.data.value.permit
+        self.system?.landmark = attr.data.value.landmark
+        self.uploaded = true
+        
+        Task {
             if var system = self.system {
                 let newSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
                 system.merge(newSystem)
@@ -273,7 +282,7 @@ class Rescue {
         return assigns.joined(separator: ", ")
     }
 
-    var toApiRescue: RemoteRescue {
+    func toApiRescue (withIdentifier identifier: Int) -> RemoteRescue {
         let rats: ToManyRelationship<Rat> = .init(ids: self.rats.map({
             $0.id
         }))
@@ -286,7 +295,7 @@ class Rescue {
                 client: .init(value: self.client),
                 clientNick: .init(value: self.clientNick),
                 clientLanguage: .init(value: self.clientLanguage?.identifier),
-                commandIdentifier: .init(value: 0),
+                commandIdentifier: .init(value: identifier),
                 codeRed: .init(value: self.codeRed),
                 data: .init(value: RescueData(
                     permit: self.system?.permit,
@@ -312,24 +321,12 @@ class Rescue {
         return rescue
     }
     
-    func setClientNick (_ nick: String?) {
-        self.clientNick = nick
-    }
-    
-    func setSystem (_ starSystem: StarSystem?) {
-        self.system = starSystem
-    }
-    
     func setQuotes (_ quotes: [RescueQuote]) {
         self.quotes = quotes
     }
     
     func appendQuote (_ quote: RescueQuote) {
         self.quotes.append(quote)
-    }
-    
-    func setNotes (_ notes: String) {
-        self.notes = notes
     }
     
     @discardableResult
@@ -377,19 +374,16 @@ class Rescue {
         if configuration.general.drillMode {
             return
         }
-
+        let identifier = await board.getId(forRescue: self) ?? 0
         let patchDocument = SingleDocument(
             apiDescription: .none,
-            body: .init(resourceObject: self.toApiRescue),
+            body: .init(resourceObject: self.toApiRescue(withIdentifier: identifier)),
             includes: .none,
             meta: .none,
             links: .none
         )
 
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         
         request.body = try .encodable(patchDocument)
@@ -398,9 +392,9 @@ class Rescue {
         
         if configuration.queue != nil {
             _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == self.client?.lowercased() })?.delete()
-            let activeCases = await mecha.rescueBoard.activeCases
+            let activeCases = await board.activeCases
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
-                detach {
+                Task {
                     try? await QueueAPI.dequeue()
                 }
             }
@@ -460,19 +454,18 @@ class Rescue {
         if configuration.general.drillMode {
             return
         }
+        
+        let identifier = await board.getId(forRescue: self) ?? 0
 
         let patchDocument = SingleDocument(
             apiDescription: .none,
-            body: .init(resourceObject: self.toApiRescue),
+            body: .init(resourceObject: self.toApiRescue(withIdentifier: identifier)),
             includes: .none,
             meta: .none,
             links: .none
         )
 
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         request.body = try .encodable(patchDocument)
@@ -481,9 +474,9 @@ class Rescue {
         
         if configuration.queue != nil {
             _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == self.client?.lowercased() })?.delete()
-            let activeCases = await mecha.rescueBoard.activeCases
+            let activeCases = await board.activeCases
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
-                detach {
+                Task {
                     try? await QueueAPI.dequeue()
                 }
             }
@@ -491,7 +484,7 @@ class Rescue {
     }
 
     func isPrepped () async -> Bool {
-        return await mecha.rescueBoard.prepTimers[self.id] == nil
+        return await board.prepTimers[self.id] == nil
     }
     
     func validateSystem () async throws {
@@ -501,7 +494,7 @@ class Rescue {
         
         let starSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
         self.system?.merge(starSystem)
-        detach {
+        Task {
             guard starSystem.isConfirmed == false && starSystem.isIncomplete == false else {
                 return
             }
@@ -514,12 +507,12 @@ class Rescue {
             var approvedCorrections = ratedCorrections.filter({ $1 != nil })
             approvedCorrections.sort(by: { $0.1! < $1.1! })
 
-            let caseId = await mecha.rescueBoard.getId(forRescue: self)
+            let caseId = await board.getId(forRescue: self) ?? 0
             if let autoCorrectableResult = approvedCorrections.first?.0 {
                 let starSystem = try await SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult)
                 
-                // self.system?.merge(starSystem)
-                // try? await self.syncUpstream()
+                self.system?.merge(starSystem)
+                try? self.save()
                 
                 self.channel?.send(
                     key: "sysc.autocorrect",
@@ -536,7 +529,7 @@ class Rescue {
                 results.removeSubrange(9...)
             }
 
-            // self.system?.availableCorrections = results
+            self.system?.availableCorrections = results
 
             let resultString = results.enumerated().map({
                 $0.element.correctionRepresentation(index: $0.offset + 1)
@@ -549,6 +542,67 @@ class Rescue {
             ])
         }
         return
+    }
+    
+    func save (_ command: IRCBotCommand? = nil) throws {
+        Task {
+            try await saveAndWait(command)
+        }
+    }
+    
+    func saveAndWait (_ command: IRCBotCommand? = nil) async throws {
+        let identifier = await board.getId(forRescue: self) ?? 0
+        guard self.uploaded || self.uploadOperation != nil else {
+            return try await withCheckedThrowingContinuation { continuation in
+                let operation = RescueCreateOperation(rescue: self, withCaseId: identifier, representing: command?.message.user)
+                operation.onCompletion = {
+                    self.uploadOperation = nil
+                    continuation.resume(returning: ())
+                }
+                
+                operation.onError = { error in
+                    self.uploadOperation = nil
+                    continuation.resume(throwing: error)
+                }
+                
+                board.queue.addOperation(operation)
+                self.uploadOperation = operation
+            }
+        }
+        
+        if let representing = command?.message.user, let user = representing.associatedAPIData?.user {
+            if self.dispatchers.contains(user.id.rawValue) == false {
+                self.dispatchers.append(user.id.rawValue)
+            }
+        }
+        
+        let caseId = await board.getId(forRescue: self) ?? 0
+        return try await withCheckedThrowingContinuation { continuation in
+            let operation = RescueUpdateOperation(rescue: self, withCaseId: caseId, representing: command?.message.user)
+            
+            if let uploadOperation = self.uploadOperation {
+                operation.addDependency(uploadOperation)
+            }
+            
+            operation.onCompletion = {
+                continuation.resume(returning: ())
+            }
+            
+            operation.onError = { error in
+                continuation.resume(throwing: error)
+            }
+            
+            board.queue.addOperation(operation)
+        }
+    }
+    
+    private func property<T: Equatable>(_ keyPath: KeyPath<Rescue, T>, didChangeFrom oldValue: T) {
+        guard self[keyPath: keyPath] != oldValue else {
+            return
+        }
+        
+        
+        synced = false
     }
 }
 
@@ -565,11 +619,4 @@ enum AssignmentResult {
     case assigned(Rat)
     case unidentified(String)
     case duplicate(String)
-}
-
-enum SyncStatus {
-    case pendingCreation
-    case synced
-    case pendingChanges
-    case needsUpdate
 }

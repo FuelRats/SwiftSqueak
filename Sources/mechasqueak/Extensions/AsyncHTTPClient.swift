@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -25,6 +25,7 @@
 import Foundation
 import AsyncHTTPClient
 import NIO
+import NIOHTTP1
 
 extension HTTPClient {
     static var defaultJsonDecoder: JSONDecoder {
@@ -73,6 +74,24 @@ extension HTTPClient {
     }
 }
 
+extension HTTPClient.Request {
+    init (apiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+        var url = URLComponents(string: "\(configuration.api.url)")!
+        url.path = apiPath
+        
+        
+        url.queryItems = query.reduce([], { (items, current) in
+            var items = items
+            items?.append(URLQueryItem(name: current.key, value: current.value))
+            return items
+        })
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        self.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+    }
+}
 
 extension HTTPClient.Response: Error {}
 

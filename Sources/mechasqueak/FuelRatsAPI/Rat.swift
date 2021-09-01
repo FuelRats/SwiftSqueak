@@ -89,7 +89,7 @@ extension Rat {
             return []
         }
         
-        return try! await mecha.rescueBoard.filter({ (_, rescue) in
+        return try! await board.filter({ (_, rescue) in
             rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
         }).getAllResults()
     }
@@ -99,7 +99,7 @@ extension Rat {
             return []
         }
         
-        return try! await mecha.rescueBoard.filter({ (_, rescue) in
+        return try! await board.filter({ (_, rescue) in
             rescue.jumpCalls.contains(where: { $0.0.relationships.user?.id?.rawValue == userId })
         }).getAllResults()
     }
@@ -112,11 +112,7 @@ extension Rat {
             meta: .none,
             links: .none
         )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rats/\(self.id.rawValue.uuidString)")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/rats/\(self.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         
         request.body = try .encodable(patchDocument)

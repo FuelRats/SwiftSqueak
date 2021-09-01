@@ -1,7 +1,7 @@
 {{ signal|color:0,7|bold }}
   Case
 {% filter bold %}
- #{{ rescue.commandIdentifier }}
+ #{{ caseId }}
 {% endfilter %}
  {{ platform|bold }}
 {% if rescue.codeRed %}

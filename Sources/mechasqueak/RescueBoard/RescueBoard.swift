@@ -28,9 +28,9 @@ import IRCKit
 import Regex
 
 actor RescueBoard {
-    var rescues: [Int: Rescue] = [:]
+    @Published var rescues: [Int: Rescue] = [:]
     let queue = OperationQueue()
-    private var isSynced = true
+    var isSynced = true
     var syncTimer: RepeatedTask?
     var lastSignalReceived: Date?
     var prepTimers: [UUID: Scheduled<()>?] = [:]
@@ -41,11 +41,13 @@ actor RescueBoard {
     var lastPaperworkReminder: [UUID: Date] = [:]
 
     init () {
+        self.queue.maxConcurrentOperationCount = 1
+        
         if configuration.general.drillMode == false {
             loop.next().scheduleRepeatedTask(initialDelay: .minutes(15), delay: .minutes(15), self.checkElapsedPaperwork)
         }
 
-        detach {
+        Task {
             guard let rescues = try? await FuelRatsAPI.getLastRescue().body.primaryResource, rescues.values.count > 0 else {
                 return
             }
@@ -57,6 +59,86 @@ actor RescueBoard {
             }
         }
     }
+    
+    func sync () async throws {
+        self.queue.cancelAllOperations()
+        let remoteRescues = try await FuelRatsAPI.getOpenRescues().convertToLocalRescues(onBoard: self)
+        
+        var upload = 0
+        var download = 0
+        var updateRemote = 0
+        var updateLocal = 0
+        var conflicts = 0
+        
+        for remoteRescue in remoteRescues {
+            if let (localKey, localRescue) = rescues.first(where: { $0.value.id == remoteRescue.1.id }) {
+                if localRescue.updatedAt > remoteRescue.1.updatedAt {
+                    updateRemote += 1
+                    try? await localRescue.saveAndWait()
+                } else if remoteRescue.1.updatedAt > localRescue.updatedAt {
+                    updateLocal += 1
+                    self.rescues.removeValue(forKey: localKey)
+                    let caseId = await self.insert(rescue: remoteRescue.1, preferringIdentifier: remoteRescue.0)
+                    if caseId != remoteRescue.0 {
+                        conflicts += 1
+                    }
+                }
+            } else {
+                download += 1
+                let caseId = await self.insert(rescue: remoteRescue.1, preferringIdentifier: remoteRescue.0)
+                if caseId != remoteRescue.0 {
+                    conflicts += 1
+                }
+            }
+        }
+        
+        for (_, localRescue) in self.rescues {
+            if remoteRescues.contains(where: { $0.1.id == localRescue.id }) == false {
+                upload += 1
+                localRescue.uploaded = false
+                try? await localRescue.saveAndWait()
+            }
+        }
+        
+        var updates = [String]()
+        
+        if download > 0 {
+            updates.append(lingo.localize("board.synced.downstreamNew", locale: "en-GB", interpolations: [
+                "count": download
+            ]))
+        }
+        
+        if upload > 0 {
+            updates.append(lingo.localize("board.synced.upstreamNew", locale: "en-GB", interpolations: [
+                "count": upload
+            ]))
+        }
+        
+        if updateRemote > 0 {
+            updates.append(lingo.localize("board.synced.upstreamUpdate", locale: "en-GB", interpolations: [
+                "count": updateRemote
+            ]))
+        }
+        
+        if updateLocal > 0 {
+            updates.append(lingo.localize("board.synced.downstreamUpdate", locale: "en-GB", interpolations: [
+                "count": updateLocal
+            ]))
+        }
+        
+        if conflicts > 0 {
+            updates.append(lingo.localize("board.synced.conflicts", locale: "en-GB", interpolations: [
+                "count": conflicts
+            ]))
+        }
+        
+        let syncMessage = lingo.localize("board.synced", locale: "en-GB", interpolations: [
+            "api": configuration.api.url,
+            "updates": updates.englishList
+        ])
+        mecha.reportingChannel?.send(message: syncMessage)
+    }
+    
     
     func getId (forRescue rescue: Rescue) -> Int? {
         return self.rescues.first(where: { $0.value.id == rescue.id })?.key
@@ -123,8 +205,12 @@ actor RescueBoard {
         })
     }
     
-    func insert (rescue: Rescue, preferringIdentifier preferredIdentifier: Int? = nil) async -> Int {
-        var identifier = preferredIdentifier ?? getNewIdentifier()
+    func insert (
+        rescue: Rescue,
+        preferringIdentifier preferredIdentifier: Int? = nil,
+        preferringEvenness: Bool? = nil
+    ) async -> Int {
+        var identifier = preferredIdentifier ?? getNewIdentifier(even: preferringEvenness)
         if self.rescues[identifier] != nil {
             identifier = getNewIdentifier()
         }
@@ -191,12 +277,12 @@ actor RescueBoard {
                     fromAPIRescue: apiRescue,
                     withRats: rats,
                     firstLimpet: firstLimpet,
-                    onBoard: mecha.rescueBoard
+                    onBoard: board
                 )
                 rescue.outcome = nil
                 rescue.status = .Open
 
-                let caseId = await mecha.rescueBoard.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
+                let caseId = await board.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
                 message.reply(message: lingo.localize("rescue.reopen.opened", locale: "en-GB", interpolations: [
                     "id": recentRescue.id.ircRepresentation,
                     "caseId": caseId
@@ -214,7 +300,7 @@ actor RescueBoard {
             }
         }
 
-        let identifier = await self.insert(rescue: rescue)
+        let identifier = await self.insert(rescue: rescue, preferringEvenness: even)
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
         self.lastSignalReceived = Date()
@@ -233,13 +319,14 @@ actor RescueBoard {
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
 
         if configuration.general.drillMode == false {
-            detach {
+            Task {
                 try? await self.checkClientFrequentFlier(rescue: rescue)
             }
         }
         
         guard let system = rescue.system else {
             let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
+                "caseId": identifier,
                 "signal": configuration.general.signal.uppercased(),
                 "platform": rescue.platform.ircRepresentable,
                 "rescue": rescue,
@@ -254,8 +341,10 @@ actor RescueBoard {
             return
         }
 
-        rescue.setSystem(autocorrect(system: system))
-        try? await rescue.validateSystem()
+        rescue.system = autocorrect(system: system)
+        
+        try? rescue.save()
+        try! await rescue.validateSystem()
         
         let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
             "signal": configuration.general.signal.uppercased(),
@@ -375,7 +464,7 @@ actor RescueBoard {
     }
     
     nonisolated func checkElapsedPaperwork (task: RepeatedTask) {
-        detach {
+        Task {
             let results = try await FuelRatsAPI.getUnfiledRescues()
             
             let cases = results.body.data?.primary.values.filter({
@@ -417,7 +506,7 @@ actor RescueBoard {
                 var rescueLinks: [UUID: URL] = [:]
                 try await withThrowingTaskGroup(of: (UUID, URL).self) { group in
                     for rescue in rescues {
-                        group.async {
+                        group.addTask {
                             return (rescue.id.rawValue, await URLShortener.attemptShorten(url: rescue.editLink))
                         }
                     }
@@ -489,7 +578,7 @@ actor RescueBoard {
     }
     
     func announceExistingRescue (_ existingRescue: Rescue, conflictingWith rescue: Rescue, initiated: RescueInitiationType, inMessage message: IRCPrivateMessage) async throws {
-        let caseId = await mecha.rescueBoard.getId(forRescue: rescue) ?? 0
+        let caseId = await board.getId(forRescue: rescue) ?? 0
         let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         if initiated == .signal {
             message.reply(message: lingo.localize("board.signal.helpyou", locale: "en", interpolations: [
@@ -608,8 +697,8 @@ actor RescueBoard {
         }
 
         if remoteRescue.attributes.status.value == .Closed {
-            if let (caseId, rescue) = await mecha.rescueBoard.rescues.first(where: { $0.1.id == remoteRescue.id.rawValue }) {
-                await mecha.rescueBoard.remove(id: caseId)
+            if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == remoteRescue.id.rawValue }) {
+                await board.remove(id: caseId)
                 mecha.reportingChannel?.send(key: "board.remoteclose", map: [
                     "caseId": caseId,
                     "client": rescue.clientDescription
@@ -633,8 +722,8 @@ actor RescueBoard {
             return
         }
 
-        if let (caseId, rescue) = await mecha.rescueBoard.rescues.first(where: { $0.1.id == rescueId }) {
-            await mecha.rescueBoard.remove(id: caseId)
+        if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == rescueId }) {
+            await board.remove(id: caseId)
             mecha.reportingChannel?.send(key: "board.remotedeletion", map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription

@@ -25,7 +25,11 @@
 import Foundation
 import IRCKit
 
-struct StarSystem: CustomStringConvertible, Codable {
+struct StarSystem: CustomStringConvertible, Codable, Equatable {
+    static func == (lhs: StarSystem, rhs: StarSystem) -> Bool {
+        return lhs.name == rhs.name
+    }
+    
     var name: String {
         didSet {
             name = name.prefix(64).uppercased()
@@ -82,11 +86,11 @@ struct StarSystem: CustomStringConvertible, Codable {
     }
     
     func getBody (byName bodyName: String) -> SystemsAPI.Body? {
-        return self.data?.body.includes?[SystemsAPI.Body].first(where: { $0.name == "\($0.systemName) \(bodyName)" || $0.name == bodyName })
+        return self.data?.body.includes?[SystemsAPI.Body.self].first(where: { $0.name == "\($0.systemName) \(bodyName)" || $0.name == bodyName })
     }
     
     func getStar (byName starName: String) -> SystemsAPI.Star? {
-        return self.data?.body.includes?[SystemsAPI.Star].first(where: { $0.name == "\($0.systemName) \(starName)" || $0.name == starName })
+        return self.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.name == "\($0.systemName) \(starName)" || $0.name == starName })
     }
     
     func systemBodyDescription (forBody body: String) -> String {

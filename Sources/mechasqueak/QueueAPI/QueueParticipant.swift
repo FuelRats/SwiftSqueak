@@ -73,13 +73,8 @@ struct QueueParticipant: Codable, Hashable {
     
     @discardableResult
     func setInProgress () async throws -> QueueParticipant {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
-
-        print(requestUrl.absoluteString)
-        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
+        var request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+        
         var queueItem = self
         queueItem.inProgress = true
         request.body = try! .data(QueueAPI.encoder.encode(queueItem))
@@ -89,13 +84,8 @@ struct QueueParticipant: Codable, Hashable {
     
     @discardableResult
     func changeName (name: String) async throws -> QueueParticipant {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
-
-        print(requestUrl.absoluteString)
-        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
+        var request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+        
         var queueItem = self
         queueItem.client.name = name
         request.body = try! .data(QueueAPI.encoder.encode(queueItem))
@@ -105,12 +95,7 @@ struct QueueParticipant: Codable, Hashable {
     
     @discardableResult
     func delete () async throws -> HTTPClient.Response {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString)
-
-        var request = try! HTTPClient.Request(url: requestUrl, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
 
         return try await httpClient.execute(request: request, deadline: nil, expecting: 204)
     }

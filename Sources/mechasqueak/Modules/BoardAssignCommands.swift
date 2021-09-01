@@ -61,6 +61,9 @@ class BoardAssignCommands: IRCBotModule {
         }
 
         let assigns = await Array(command.parameters[1...]).map({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
+        try? rescue.save(command)
+        
+        _ = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
 
     }
 
@@ -93,16 +96,20 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
         
-        let assigns = await Array(command.parameters[1...]).map({ await ($0, rescue.assign($0, fromChannel: command.message.destination, force: force)) })
+        let assigns = await Array(command.parameters[1...]).map({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
+        try? rescue.save(command)
 
-
-        var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
-        guard let fact = try? await Fact.getWithFallback(name: factName, forLocale: command.locale) else {
-            return
-        }
+        let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
         
-        let client = rescue.clientNick ?? rescue.client ?? ""
-        message.reply(message: "\(client) \(fact.message)")
+        if didSend {
+            var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
+            guard let fact = try? await Fact.getWithFallback(name: factName, forLocale: command.locale) else {
+                return
+            }
+            
+            let client = rescue.clientNick ?? rescue.client ?? ""
+            message.reply(message: "\(client) \(fact.message)")
+        }
     }
 
     @AsyncBotCommand(
@@ -161,6 +168,9 @@ class BoardAssignCommands: IRCBotModule {
                 rescue.rats.remove(at: ratIndex)
                 continue
             }
+            
+            try? rescue.save(command)
+            
             command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                 "rats": unassign,
                 "caseId": caseId
@@ -178,7 +188,6 @@ class BoardAssignCommands: IRCBotModule {
     }
     
     static func sendAssignMessages (assigns: [Result<AssignmentResult, RescueAssignError>], forRescue rescue: Rescue, fromCommand command: IRCBotCommand) -> Bool {
-        let force = command.forceOverride
         let includeExistingAssigns = command.options.contains("a")
         
         let failedAssigns = assigns.compactMap({ assign -> RescueAssignError? in

@@ -25,10 +25,11 @@
 import Foundation
 import Stencil
 import IRCKit
+import PathKit
 
 private func generateEnvironment () -> Environment {
     let ext = Extension()
-    let environment = Environment(loader: FileSystemLoader(paths: ["templates/"]), extensions: [ext])
+    let environment = Environment(loader: FileSystemLoader(paths: [Path("\(configuration.sourcePath.path)/templates")]), extensions: [ext])
     
     ext.registerFilter("color") { (value: Any?, arguments: [Any?]) in
         if let contents = value as? String, let colorNumber = arguments.first as? Int, let color = IRCColor(rawValue: colorNumber) {
@@ -110,6 +111,20 @@ private func generateEnvironment () -> Environment {
         
       }
       return nil
+    }
+    
+    ext.registerFilter("caseColor") { (value: Any?, arguments: [Any?]) in
+        if let value = value as? String, let rescue = arguments[0] as? Rescue {
+            if rescue.status == .Inactive {
+                return IRCFormat.italic(IRCFormat.color(.Cyan, value))
+            } else if rescue.codeRed {
+                return IRCFormat.color(.LightRed, value)
+            } else {
+                return value
+            }
+        }
+        
+        return nil
     }
     
     return environment

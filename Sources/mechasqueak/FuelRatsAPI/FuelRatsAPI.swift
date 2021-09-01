@@ -32,21 +32,8 @@ class FuelRatsAPI {
         return .now() + .seconds(30)
     }
     
-    static func request (url: URL, method: HTTPMethod) throws -> HTTPClient.Request {
-        var request = try HTTPClient.Request(url: url, method: method)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-        return request
-    }
-    
     static func getNickname (forIRCAccount account: String) async throws -> NicknameSearchDocument? {
-        var url = URLComponents(string: "\(configuration.api.url)/nicknames")!
-        url.queryItems = [URLQueryItem(name: "nick", value: account)]
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        let request = try! HTTPClient.Request(apiPath: "/nicknames", method: .GET, query: ["nick": account])
         
         let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
         guard let document = try? NicknameSearchDocument.from(data: Data(buffer: response.body!)) else {
@@ -61,12 +48,8 @@ class FuelRatsAPI {
         return document
     }
     
-    static func rescueSearch (query: [URLQueryItem]) async throws -> RescueSearchDocument {
-        var url = URLComponents(string: "\(configuration.api.url)/rescues")!
-        url.queryItems = query
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+    static func rescueSearch (query: [String: String?]) async throws -> RescueSearchDocument {
+        let request = try! HTTPClient.Request(apiPath: "/rescues", method: .GET, query: query)
         
         let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
         guard
@@ -80,39 +63,29 @@ class FuelRatsAPI {
     }
     
     static func getRescue (id: UUID) async throws -> RescueGetDocument? {
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(id)")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        let request = try! HTTPClient.Request(apiPath: "/rescues/\(id)", method: .GET)
         
         let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
         return try? RescueGetDocument.from(data: Data(buffer: response.body!))
     }
     
     static func getOpenRescues () async throws -> RescueSearchDocument {
-        let query = [URLQueryItem(name: "filter", value: [
+        return try await FuelRatsAPI.rescueSearch(query: ["filter": [
             "status": ["ne": "closed"]
-        ].jsonString)]
-        
-        return try await FuelRatsAPI.rescueSearch(query: query)
+        ].jsonString])
     }
     
     static func getLastRescue () async throws -> RescueSearchDocument {
-        let query = [
-            URLQueryItem(name: "page[limit]", value: "1"),
-            URLQueryItem(name: "sort", value: "-createdAt")
-        ]
-        
-        return try await FuelRatsAPI.rescueSearch(query: query)
+        return try await FuelRatsAPI.rescueSearch(query: ["page[limit]": "1", "sort": "-createdAt"])
     }
     
     static func getRecentlyClosedRescues (count: Int) async throws -> RescueSearchDocument {
         let query = [
-            URLQueryItem(name: "filter", value: [
+            "filter": [
                 "status": ["eq": "closed"]
-            ].jsonString),
-            URLQueryItem(name: "sort", value: "-createdAt"),
-            URLQueryItem(name: "page[limit]", value: String(count))
+            ].jsonString,
+            "sort": "-createdAt",
+            "page[limit]": String(count)
         ]
         
         return try await FuelRatsAPI.rescueSearch(query: query)
@@ -120,10 +93,10 @@ class FuelRatsAPI {
     
     static func getRescues (forClient client: String) async throws -> RescueSearchDocument {
         let query = [
-            URLQueryItem(name: "filter", value: [
+            "filter": [
                 "client": ["ilike": client]
-            ].jsonString),
-            URLQueryItem(name: "sort", value: "-createdAt"),
+            ].jsonString,
+            "sort": "-createdAt"
         ]
         
         return try await FuelRatsAPI.rescueSearch(query: query)
@@ -131,10 +104,10 @@ class FuelRatsAPI {
     
     static func getRescuesInTrash () async throws -> RescueSearchDocument {
         let query = [
-            URLQueryItem(name: "filter", value: [
+            "filter": [
                 "status": ["eq": "closed"],
                 "outcome": "purge"
-            ].jsonString)
+            ].jsonString
         ]
 
         return try await FuelRatsAPI.rescueSearch(query: query)
@@ -145,24 +118,21 @@ class FuelRatsAPI {
         let twoHoursAgo = Calendar.current.date(byAdding: .hour, value: -2, to: Date())!
 
         let query = [
-            URLQueryItem(name: "filter", value: [
+            "filter": [
                 "status": ["eq": "closed"],
                 "outcome": ["is": nil],
                 "createdAt": [
                     "gte": DateFormatter.iso8601Full.string(from: thirtyDaysAgo),
                     "lt": DateFormatter.iso8601Full.string(from: twoHoursAgo)
                 ]
-            ].jsonString)
+            ].jsonString
         ]
 
         return try await FuelRatsAPI.rescueSearch(query: query)
     }
     
     static func deleteRescue (id: UUID) async throws -> Void {
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(id)")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        let request = try! HTTPClient.Request(apiPath: "/rescues/\(id)", method: .DELETE)
         
        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }

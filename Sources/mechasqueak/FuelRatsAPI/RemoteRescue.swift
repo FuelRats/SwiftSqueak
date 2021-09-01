@@ -160,15 +160,15 @@ extension RescueSearchDocument {
         })
     }
 
-    func convertToLocalRescues (onBoard board: RescueBoard) -> [Rescue] {
+    func convertToLocalRescues (onBoard board: RescueBoard) -> [(Int, Rescue)] {
         guard let rescueList = self.body.data?.primary.values else {
             return []
         }
 
-        return rescueList.map({ (apiRescue) -> Rescue in
+        return rescueList.map({ (apiRescue) -> (Int, Rescue) in
             let rats = self.assignedRatsFor(rescue: apiRescue)
             let firstLimpet = self.firstLimpetFor(rescue: apiRescue)
-            return Rescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board)
+            return (apiRescue.commandIdentifier, Rescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board))
         })
     }
 }
@@ -191,10 +191,7 @@ extension RemoteRescue {
             links: .none
         )
 
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         request.body = try .encodable(patchDocument)

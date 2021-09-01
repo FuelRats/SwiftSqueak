@@ -26,6 +26,7 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 import IRCKit
+import NIOHTTP1
 
 class QueueAPI {
     static var pendingQueueJoins: [String: EventLoopPromise<Void>] = [:]
@@ -45,10 +46,7 @@ class QueueAPI {
     }
     
     static func getConfig () async throws -> QueueAPIConfiguration {
-        let requestUrl = configuration.queue!.url.appendingPathComponent("/config/")
-        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/config/", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
     }
@@ -56,36 +54,22 @@ class QueueAPI {
     static func fetchStatistics (fromDate date: Date) async throws -> QueueAPIStatistics {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "YYYY-MM-dd"
-        
         let formattedDate = dateFormatter.string(from: date)
-        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
-        requestUrl.path.append("/queue/statistics/")
-        requestUrl.queryItems = [URLQueryItem(name: "daterequested", value: formattedDate), URLQueryItem(name: "detailed", value: "false")]
         
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/queue/statistics/", method: .POST, query: ["daterequested": formattedDate, "detailed": "false"])
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
     }
     
     static func fetchQueue () async throws -> [QueueParticipant] {
-        let requestUrl = configuration.queue!.url.appendingPathComponent("/queue/")
-        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/queue/", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: [QueueParticipant].self, withDecoder: decoder)
     }
     
     @discardableResult
     static func dequeue () async throws -> QueueParticipant {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue")
-        requestUrl.appendPathComponent("/dequeue")
-
-        var request = try! HTTPClient.Request(url: requestUrl, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/queue/dequeue", method: .GET)
         
         let participant = try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder)
         
@@ -99,13 +83,7 @@ class QueueAPI {
     
     @discardableResult
     static func setMaxActiveClients (_ maxActiveClients: Int) async throws -> QueueAPIConfiguration {
-        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
-        requestUrl.path.append("/config/max_active_clients")
-        requestUrl.queryItems = [URLQueryItem(name: "max_active_clients", value: String(maxActiveClients))]
-
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/config/max_active_clients", method: .PUT, query: ["max_active_clients": String(maxActiveClients)])
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: QueueAPI.decoder)
     }
@@ -115,8 +93,8 @@ class QueueAPI {
         let future = loop.next().makePromise(of: Void.self)
         
         // Immedately resolve if client is already being rescued
-        detach {
-            if await mecha.rescueBoard.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+        Task {
+            if await board.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
                 future.succeed(())
             }
             
@@ -137,7 +115,7 @@ class QueueAPI {
     
     static func anticipateQueueJoin (participant: QueueParticipant) async throws -> Void {
         // Immedately resolve if client is already being rescued
-        if await mecha.rescueBoard.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+        if await board.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
             return
         }
         
@@ -191,5 +169,23 @@ struct QueueAPIStatistics: Codable {
             return Double(time).timeSpan
         }
         return 0.0.timeSpan
+    }
+}
+
+extension HTTPClient.Request {
+    init (queuePath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+        var url = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
+        url.path = queuePath
+        
+        url.queryItems = query.reduce([], { (items, current) in
+            var items = items
+            items?.append(URLQueryItem(name: current.key, value: current.value))
+            return items
+        })
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        self.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
     }
 }
