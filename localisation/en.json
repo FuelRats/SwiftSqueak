@@ -62,6 +62,8 @@
   "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",
   "board.nickcorrected": "Caution: Nickname of case #%{caseId} (%{client}) has been automatically corrected to %{newNick}",
   "board.synced": "Successfully synced board with %{api}. %{updates}",
+  "board.sync.error": "\u0002Alert:\u0002I am having trouble updating case #%{caseId} on the server, the dispatch board is no longer up to date. I will keep trying and let you know when the issue has been resolved.",
+  "board.sync.errorsolved": "The problems with syncing case #%{caseId} has been resolved.",
   "board.synced.downstreamNew": {
       "one": "%{count} new rescue was downloaded from the server",
       "other": "%{count} new rescues were downloaded from the server"

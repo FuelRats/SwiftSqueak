@@ -31,6 +31,7 @@ class RescueCreateOperation: Operation {
     let caseId: Int
     let rescue: Rescue
     let representing: IRCUser?
+    var errorReported = false
     
     var onCompletion: (() -> Void)?
     var onError: ((Error) -> Void)?
@@ -116,7 +117,18 @@ class RescueCreateOperation: Operation {
         }
         do {
             try await attemptUpload()
+            if errorReported {
+                mecha.reportingChannel?.send(key: "board.sync.errorsolved", map: [
+                    "caseId": caseId
+                ])
+            }
         } catch {
+            if errorReported == false {
+                mecha.reportingChannel?.send(key: "board.sync.error", map: [
+                    "caseId": caseId
+                ])
+                errorReported = true
+            }
             await Task.sleep(30 * 1000 * 1000)
             try await performUploadUntilSuccess()
         }
