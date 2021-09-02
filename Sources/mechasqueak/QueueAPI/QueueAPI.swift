@@ -177,11 +177,7 @@ extension HTTPClient.Request {
         var url = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
         url.path = queuePath
         
-        url.queryItems = query.reduce([], { (items, current) in
-            var items = items
-            items?.append(URLQueryItem(name: current.key, value: current.value))
-            return items
-        })
+        url.queryItems = query.queryItems
         try self.init(url: url.url!, method: method)
         
         self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)

@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import AsyncHTTPClient
 
 struct StarSystem: CustomStringConvertible, Codable, Equatable {
     static func == (lhs: StarSystem, rhs: StarSystem) -> Bool {
@@ -133,18 +134,19 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
     
     var info: String {
-//        let allStations = self.refuelingStations
-//        let stations = allStations.filter({ $0.type != .FleetCarrier })
-//        let carriers = allStations.filter({ $0.type == .FleetCarrier })
-        
-        return try! stencil.renderLine(name: "systeminfo.stencil", context: [
-            "system": self,
-            "landmark": self.landmark as Any,
-            "region": self.galacticRegion as Any,
-            "invalid": self.isInvalid
-//            "stations": stations,
-//            "carriers": carriers
-        ])
+        get async {
+            var plotUrl: URL?
+            if self.landmark?.distance ?? 0 > 2500 {
+                plotUrl = try? await generateSpanshRoute(from: "Sol", to: self.name)
+            }
+            return try! stencil.renderLine(name: "systeminfo.stencil", context: [
+                "system": self,
+                "landmark": self.landmark as Any,
+                "region": self.galacticRegion as Any,
+                "invalid": self.isInvalid,
+                "plotUrl": plotUrl?.absoluteString as Any
+            ])
+        }
     }
 
     var isIncomplete: Bool {
@@ -219,6 +221,31 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         })
     }
  }
+
+func generateSpanshRoute (from: String, to: String) async throws -> URL {
+    var request = try HTTPClient.Request(url: URL(string: "https://spansh.co.uk/api/route")!, method: .POST)
+    
+    let requestBody: [String: String?] = [
+        "efficiency": "60",
+        "range": "60",
+        "from": from,
+        "to": to
+    ]
+    request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+    request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded; charset=utf-8")
+    request.body = try .formUrlEncoded(requestBody)
+    let response = try await httpClient.execute(request: request, forDecodable: SpanshResponse.self)
+    var url = URLComponents(string: "https://www.spansh.co.uk/plotter/results/\(response.job)")!
+    url.queryItems = requestBody.queryItems
+    
+    
+    return await URLShortener.attemptShorten(url: url.url!)
+}
+
+fileprivate struct SpanshResponse: Codable {
+    let job: String
+    let status: String
+}
 
 extension Optional where Wrapped == StarSystem {
     var description: String {

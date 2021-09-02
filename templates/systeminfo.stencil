@@ -16,3 +16,6 @@
 , Government: {{ stations.first.government }}
 {% endif %}
 {% endif %}
+{% if plotUrl %}
+ {{ "Spansh:"|bold }} {{ plotUrl }}
+{% endif %}

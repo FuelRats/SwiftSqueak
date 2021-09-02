@@ -507,3 +507,4 @@ struct StarSector {
     let name: String
     let hasSector: Bool
 }
+

@@ -56,7 +56,7 @@ class SystemSearch: IRCBotModule {
                 return
             }
 
-            let resultString = await results.map({
+            let resultString = results.map({
                 $0.textRepresentation
             }).joined(separator: ", ")
 
@@ -96,7 +96,7 @@ class SystemSearch: IRCBotModule {
                 ])
                 return
             }
-            command.message.reply(message: result.info)
+            command.message.reply(message: await result.info)
         } catch {
             command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
                 "system": system
@@ -127,11 +127,18 @@ class SystemSearch: IRCBotModule {
             
             let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
             
+            let spanshUrl = try? await generateSpanshRoute(from: departure.name, to: arrival.name)
+            
             var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
+            if spanshUrl != nil {
+                key += ".plotter"
+            }
+            
             command.message.reply(key: key, fromCommand: command, map: [
                 "departure": departure.name,
                 "arrival": arrival.name,
-                "distance": formatter.string(from: distance)!
+                "distance": formatter.string(from: distance)!,
+                "plotterUrl": spanshUrl?.absoluteString ?? ""
             ])
         } catch {
             print(error)

@@ -35,16 +35,16 @@ extension HTTPClient {
         return decoder
     }
     
-    func execute (
+    func execute <T: AnyRange> (
         request: Request,
         deadline: NIODeadline? = nil,
-        expecting statusCode: Int
-    ) async throws -> HTTPClient.Response {
+        expecting statusCode: T
+    ) async throws -> HTTPClient.Response where T.Bound == Int {
         try await withCheckedThrowingContinuation({ continuation in
             self.execute(request: request, deadline: deadline).whenComplete { result in
                 switch result {
                     case .success(let response):
-                        if response.status.code == statusCode {
+                        if statusCode.contains(Int(response.status.code)) {
                             continuation.resume(returning: response)
                         } else {
                             continuation.resume(throwing: response)
@@ -63,7 +63,7 @@ extension HTTPClient {
         deadline: NIODeadline? = nil,
         withDecoder decoder: JSONDecoder = defaultJsonDecoder
     ) async throws -> D where D: Decodable {
-        let response = try await self.execute(request: request, deadline: deadline, expecting: 200)
+        let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
         do {
             return try decoder.decode(D.self, from: Data(buffer: response.body!))
         } catch {
@@ -80,11 +80,7 @@ extension HTTPClient.Request {
         url.path = apiPath
         
         
-        url.queryItems = query.reduce([], { (items, current) in
-            var items = items
-            items?.append(URLQueryItem(name: current.key, value: current.value))
-            return items
-        })
+        url.queryItems = query.queryItems
         try self.init(url: url.url!, method: method)
         
         self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
@@ -100,5 +96,21 @@ extension HTTPClient.Body {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         return .data(try encoder.encode(object))
+    }
+    
+    static func formUrlEncoded(_ query: [String: String?]) throws -> HTTPClient.Body {
+        var url = URLComponents()
+        url.queryItems = query.queryItems
+        return .string(url.percentEncodedQuery ?? "")
+    }
+}
+
+extension Dictionary where Key == String, Value == String? {
+    var queryItems: [URLQueryItem] {
+        return self.reduce([], { (items, current) in
+            var items = items
+            items.append(URLQueryItem(name: current.key, value: current.value))
+            return items
+        })
     }
 }
