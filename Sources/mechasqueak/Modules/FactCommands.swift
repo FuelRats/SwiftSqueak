@@ -342,7 +342,9 @@ class FactCommands: IRCBotModule {
                     }
                 }
                 if let rescue = rescue {
-                    await board.cancelPrepTimer(forRescue: rescue)
+                    if isPrepFact {
+                        await board.cancelPrepTimer(forRescue: rescue)
+                    }
                     return (rescue.clientNick ?? target, rescue)
                 }
                 return (target, nil)

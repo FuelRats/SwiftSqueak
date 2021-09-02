@@ -388,6 +388,9 @@ class RemoteRescueCommands: IRCBotModule {
     )
     var didReceiveUncloseCommand = { command in
         guard let caseNumber = Int(command.parameters[0]), let closedRescue = await board.recentlyClosed[caseNumber] else {
+            command.message.error(key: "board.casenotfound", fromCommand: command, map: [
+                "caseIdentifier": command.parameters[0]
+            ])
             return
         }
 
