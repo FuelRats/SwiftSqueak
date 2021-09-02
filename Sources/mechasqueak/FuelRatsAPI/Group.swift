@@ -102,6 +102,10 @@ enum AccountPermission: String, Codable {
     case AnnouncementWrite = "announcements.write"
 
     case UnknownPermission = ""
+    
+    var groups: [Group] {
+        return mecha.groups.filter({ $0.permissions.contains(self) && $0.name != "owner" })
+    }
 }
 
 extension AccountPermission {
@@ -115,6 +119,27 @@ typealias Group = JSONEntity<GroupDescription>
 typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 
 extension Group {
+    var groupNameMap: [String: String] {
+        return [
+            "verified": "Verified User",
+            "developer": "Developer",
+            "rat": "Drilled Rat",
+            "dispatch": "Drilled Dispatch",
+            "trainer": "trainer",
+            "traineradmin": "Training Manager",
+            "overseer": "Overseer",
+            "techrat": "Tech rat",
+            "moderator": "Moderator",
+            "operations": "Operations team",
+            "netadmin": "Network administrator",
+            "admin": "Network moderator"
+        ]
+    }
+    
+    var groupDescription: String {
+        return groupNameMap[self.name] ?? self.name
+    }
+    
     static func getList () async throws -> GroupSearchDocument {
         let request = try! HTTPClient.Request(apiPath: "/groups", method: .GET)
 

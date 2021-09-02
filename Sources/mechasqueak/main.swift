@@ -74,6 +74,7 @@ class MechaSqueak {
     let version = "3.0.0"
     var landmarks: [SystemsAPI.LandmarkListDocument.LandmarkListEntry] = []
     var sectors: [StarSector] = []
+    var groups: [Group] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
     let ratSocket: RatSocket?
@@ -131,6 +132,7 @@ class MechaSqueak {
         Task {
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
             self.sectors = try await SystemsAPI.fetchSectorList()
+            self.groups = try await Group.getList().body.data?.primary.values ?? []
         }
     }
 

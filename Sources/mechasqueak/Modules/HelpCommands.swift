@@ -185,13 +185,24 @@ class HelpCommands: IRCBotModule {
             ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
             : ""
         ])
+        let permissionGroups = helpCommand.permission?.groups
+            .sorted(by: { $0.priority < $1.priority })
+            .map({ $0.groupDescription }) ?? []
+        
+        var secondLine = ""
         if helpCommand.commands.count > 1 {
             let aliases = helpCommand.commands.dropFirst().map({
                 "!\($0)"
             }).joined(separator: " ")
-            destination.send(key: "help.commandaliases", map: [
-                "aliases": aliases
-            ])
+            secondLine += "\(IRCFormat.bold("Aliases:")) \(aliases). "
+        }
+        
+        if permissionGroups.count > 0 {
+            secondLine += "\(IRCFormat.bold("Permission:")) \(permissionGroups.joined(separator: ", ")). "
+        }
+        
+        if secondLine.count > 0 {
+            destination.send(message: secondLine)
         }
         
         destination.send(message: helpCommand.description)

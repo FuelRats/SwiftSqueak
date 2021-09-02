@@ -105,7 +105,7 @@ class SystemSearch: IRCBotModule {
     }
     
     @AsyncBotCommand(
-        ["distance", "distanceto"],
+        ["distance", "plot", "distanceto"],
         [.param("departure system", "NLTT 48288"), .param("arrival system", "Sagittarius A*")],
         category: .utility,
         description: "Calculate the distance between two star systems",
