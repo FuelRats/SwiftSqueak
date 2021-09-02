@@ -77,6 +77,9 @@ private func generateEnvironment () -> Environment {
     ext.registerFilter("mainStarInfo") { (value: Any?) in
       if let system = value as? StarSystem {
           if let mainStar = system.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.isMainStar == true || $0.distanceToArrival == 0.0 }) {
+              if mainStar.spectralClass?.isRefuelable == true {
+                  return "\(IRCFormat.bold(mainStar.spectralClass!.rawValue)) \(mainStar.description)"
+              }
               return mainStar.description
           }
       }

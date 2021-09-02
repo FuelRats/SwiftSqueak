@@ -225,5 +225,9 @@ extension SystemsAPI.Star {
             }
             return subTypeMap[subType]
         }
+        
+        var isRefuelable: Bool {
+            return self.within([.O, .B, .A, .F, .G, .K, .M])
+        }
     }
 }
