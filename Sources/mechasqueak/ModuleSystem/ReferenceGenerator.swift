@@ -112,6 +112,22 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
             """
         }
         
+        let permissionGroups = self.permission?.groups
+            .sorted(by: { $0.priority < $1.priority })
+            .map({ $0.groupDescription }) ?? []
+        
+        if permissionGroups.count > 0 {
+            html += """
+                <p>
+                  <span style="color: rgb(0,0,0);text-decoration: none;">
+                    <span style="text-decoration: none;">
+                      <strong>Permissions</strong>: \(permissionGroups.joined(separator: ", "))
+                    </span>
+                  </span>
+                </p>
+            """
+        }
+        
         html += """
             <p style="margin-left: 30.0px;">
               <span style="color: rgb(0,0,0);text-decoration: none;">\(self.description)</span>

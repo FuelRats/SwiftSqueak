@@ -125,14 +125,14 @@ class MechaSqueak {
             commands.append(QueueCommands(moduleManager))
         }
         
-        ReferenceGenerator.generate(inPath: configuration.sourcePath)
-        
         ratSocket = RatSocket()
         
         Task {
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
             self.sectors = try await SystemsAPI.fetchSectorList()
             self.groups = try await Group.getList().body.data?.primary.values ?? []
+            
+            ReferenceGenerator.generate(inPath: configuration.sourcePath)
         }
     }
 
