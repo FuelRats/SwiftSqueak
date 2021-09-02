@@ -100,6 +100,13 @@ class BoardAttributeCommands: IRCBotModule {
             systemName.removeLast(7)
         }
         
+        if systemName == rescue.system?.name {
+            command.message.error(key: "board.syschange.nochange", fromCommand: command, map: [
+                "caseId": caseId
+            ])
+            return
+        }
+        
         var key = "board.syschange"
         if let correction = ProceduralSystem.correct(system: systemName), command.forceOverride == false {
             key += ".autocorrect"
