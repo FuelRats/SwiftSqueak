@@ -140,7 +140,7 @@ class SystemSearch: IRCBotModule {
     }
     
     @AsyncBotCommand(
-        ["station"],
+        ["station", "stations"],
         [.param("reference system", "Sagittarius A*", .continuous), .options(["s", "l"])],
         category: .utility,
         description: "Get the nearest station to a system",
