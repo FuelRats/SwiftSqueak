@@ -37,7 +37,7 @@ extension IRCUser {
         return self.associatedAPIData?.user?.attributes.data.value
     }
 
-    func getAssignedRescue() async -> Rescue? {
+    func getAssignedRescue() async -> (Int, Rescue)? {
         guard let userId = self.associatedAPIData?.user?.id.rawValue else {
             return nil
         }
@@ -45,7 +45,7 @@ extension IRCUser {
             return $0.value.rats.contains(where: {
                 return $0.relationships.user?.id?.rawValue == userId
             }) || $0.value.unidentifiedRats.contains(self.nickname)
-        })?.value
+        })
     }
     
     var platform: GamePlatform? {

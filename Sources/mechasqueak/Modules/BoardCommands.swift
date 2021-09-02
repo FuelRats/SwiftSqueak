@@ -147,6 +147,12 @@ class BoardCommands: IRCBotModule {
         let noFirstLimpet = command.options.contains("p")
         
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            if command.parameters.count > 1, let (caseId, _) = await message.destination.member(named: command.parameters[1])?.getAssignedRescue() {
+                command.message.reply(key: "board.close.suggestcase", fromCommand: command, map: [
+                    "caseId": caseId,
+                    "rat": message.destination.member(named: command.parameters[1])?.nickname ?? ""
+                ])
+            }
             return
         }
         

@@ -88,7 +88,7 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var getRescue: Rescue? = await command.message.destination.member(named: clientParam)?.getAssignedRescue()
+        var getRescue: Rescue? = await command.message.destination.member(named: clientParam)?.getAssignedRescue()?.1
         var isClient = false
         if getRescue == nil {
             isClient = true
