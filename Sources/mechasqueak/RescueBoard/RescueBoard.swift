@@ -603,7 +603,7 @@ actor RescueBoard {
             changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
         }
         
-        if rescue.odyssey != existingRescue.odyssey {
+        if rescue.odyssey != existingRescue.odyssey && initiated == .announcer {
             let currentExpansion = existingRescue.odyssey ? "Odyssey" : "Horizons"
             let newExpansion = rescue.odyssey ? "Odyssey" : "Horizons"
             changes.append("\(IRCFormat.bold("Expansion:")) \(currentExpansion) -> \(newExpansion)")
