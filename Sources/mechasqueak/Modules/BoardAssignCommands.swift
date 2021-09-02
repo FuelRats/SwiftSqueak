@@ -121,7 +121,7 @@ class BoardAssignCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,
         description: "Remove rats from the rescue",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveUnassignCommand = { command in
