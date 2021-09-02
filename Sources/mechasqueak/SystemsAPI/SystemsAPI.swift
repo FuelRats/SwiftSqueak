@@ -27,6 +27,7 @@ import AsyncHTTPClient
 import NIOHTTP1
 import IRCKit
 import NIO
+import JSONAPI
 
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
@@ -95,6 +96,16 @@ class SystemsAPI {
         ])
 
         return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
+    }
+    
+    static func getNearestSystem (forCoordinates coords: Vector3) async throws -> NearestSystemDocument? {
+        let request = try! HTTPClient.Request(systemApiPath: "/nearest_coords", method: .GET, query: [
+            "x": String(coords.x),
+            "y": String(coords.y),
+            "z": String(coords.z)
+        ])
+        
+        return try await httpClient.execute(request: request, forDecodable: NearestSystemDocument.self)
     }
     
     static func performSystemCheck (forSystem systemName: String) async throws -> StarSystem {
@@ -378,6 +389,22 @@ class SystemsAPI {
                 }
                 return nil
             }
+        }
+    }
+    
+    struct NearestSystemDocument: Codable {
+        let meta: Meta
+        let data: NearestSystem?
+        
+        struct NearestSystem: Codable {
+            let id64: Int64
+            let name: String
+            let distance: Double
+        }
+        
+        struct Meta: Codable {
+            let name: String?
+            let type: String?
         }
     }
     

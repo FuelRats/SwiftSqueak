@@ -126,8 +126,21 @@ class SystemSearch: IRCBotModule {
             let formatter = NumberFormatter.englishFormatter()
             
             let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
+            var plotDepName = departure.name
+            var plotArrName = arrival.name
+            if let proceduralCheck = departure.proceduralCheck {
+                if let nearestKnown = try? await SystemsAPI.getNearestSystem(forCoordinates: proceduralCheck.sectordata.coords)?.data {
+                    plotDepName = nearestKnown.name
+                }
+            }
             
-            let spanshUrl = try? await generateSpanshRoute(from: departure.name, to: arrival.name)
+            if let proceduralCheck = arrival.proceduralCheck {
+                if let nearestKnown = try? await SystemsAPI.getNearestSystem(forCoordinates: proceduralCheck.sectordata.coords)?.data {
+                    plotArrName = nearestKnown.name
+                }
+            }
+            
+            let spanshUrl = try? await generateSpanshRoute(from: plotDepName, to: plotArrName)
             
             var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
             if spanshUrl != nil {

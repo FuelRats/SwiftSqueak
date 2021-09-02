@@ -138,6 +138,10 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             var plotUrl: URL?
             if self.landmark?.distance ?? 0 > 2500 {
                 plotUrl = try? await generateSpanshRoute(from: "Sol", to: self.name)
+            } else if let procedural = self.proceduralCheck, procedural.estimatedSolDistance.2 > 2500 {
+                if let nearestTarget = try? await SystemsAPI.getNearestSystem(forCoordinates: procedural.sectordata.coords)?.data {
+                    plotUrl = try? await generateSpanshRoute(from: "Sol", to: nearestTarget.name)
+                }
             }
             return try! stencil.renderLine(name: "systeminfo.stencil", context: [
                 "system": self,

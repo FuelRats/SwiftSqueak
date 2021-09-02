@@ -45,7 +45,8 @@
   "distance.notfound": "Unable to calculate distance as one of the systems could not be found",
   "distance.result": "The distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY",
   "distance.result.plotter": "The distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY. \u0002Spansh:\u0002 %{plotterUrl}",
-  "distance.resultapprox": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY (Caution: At least one system has an approximated position and could be off by as much as 1000LY)",
+  "distance.resultapprox": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY (Caution: At least one system has an approximated position)",
+  "distance.resultapprox.plotter": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY \u0002Spansh:\u0002 %{plotterUrl} (Caution: At least one system has an approximated position)",
   "gametime": "The current in-game time is %{time} on %{date} ",
 
   "sctime.error": "Unable to understand the distance given in this command.",
