@@ -231,7 +231,7 @@ func generateSpanshRoute (from: String, to: String) async throws -> URL {
     
     let requestBody: [String: String?] = [
         "efficiency": "60",
-        "range": "60",
+        "range": "65",
         "from": from,
         "to": to
     ]
