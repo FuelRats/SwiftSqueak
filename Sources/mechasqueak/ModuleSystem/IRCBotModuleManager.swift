@@ -75,7 +75,7 @@ class IRCBotModuleManager {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
 
-        guard let command = await MechaSqueak.commands.first(where: {
+        guard let command = MechaSqueak.commands.first(where: {
             $0.commands.contains(ircBotCommand.command)
         }) else {
             return

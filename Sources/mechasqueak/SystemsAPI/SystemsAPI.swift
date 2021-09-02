@@ -118,7 +118,7 @@ class SystemsAPI {
         }
         
         let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
-        let searchResult = await searchResults?.data?.first(where: {
+        let searchResult = searchResults?.data?.first(where: {
             $0.similarity == 1
         })
         let properName = searchResult?.name ?? systemName

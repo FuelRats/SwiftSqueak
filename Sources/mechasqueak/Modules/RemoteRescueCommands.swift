@@ -245,7 +245,7 @@ class RemoteRescueCommands: IRCBotModule {
             ])
 
             for rescue in rescues {
-                let firstLimpet = await results.body.includes![Rat.self].first(where: {
+                let firstLimpet = results.body.includes![Rat.self].first(where: {
                     $0.id.rawValue == rescue.relationships.firstLimpet?.id?.rawValue
                 })
 

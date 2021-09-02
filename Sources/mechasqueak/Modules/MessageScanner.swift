@@ -42,6 +42,7 @@ class MessageScanner: IRCBotModule {
         "solo", "ready", "pos+", "rdy", "stand down", "stnd", "stdn", "log off", "mmconf", "sys", "system", "tm-", "tm+",
         "horizons", "odyssey"
     ]
+    private static let standDownPhrases = ["stand down", "stnd", "stdn"]
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -132,7 +133,7 @@ class MessageScanner: IRCBotModule {
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)
-                if await rats.first(where: { (rat: Rat) -> Bool in
+                if rats.first(where: { (rat: Rat) -> Bool in
                     return rat.attributes.platform.value == rescue.platform
                 }) == nil {
                     if configuration.general.drillMode == false {
@@ -211,6 +212,7 @@ class MessageScanner: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: channelMessage.client.currentNick
                 ))
+                try? rescue.save()
                 casesUpdatedForMessage.append(rescue)
 
             }
@@ -249,10 +251,18 @@ class MessageScanner: IRCBotModule {
             if channelMessage.message.contains("<") && channelMessage.message.contains(">") {
                 continue
             }
-            guard await MessageScanner.caseRelevantPhrases.first(where: {
+            guard MessageScanner.caseRelevantPhrases.first(where: {
                 channelMessage.message.lowercased().contains($0)
             }) != nil else {
                 continue
+            }
+            
+            if standDownPhrases.contains(where: { channelMessage.message.lowercased().contains($0) }) {
+                if let callQuoteIndex = rescue.quotes.firstIndex(where: {
+                    $0.message.starts(with: "<\(channelMessage.user.nickname)>") && MessageScanner.jumpCallExpression.findFirst(in: $0.message) != nil
+                }) {
+                    rescue.quotes[callQuoteIndex].message = rescue.quotes[callQuoteIndex].message + " (Rat has called stand down)"
+                }
             }
 
             rescue.appendQuote(RescueQuote(
@@ -262,6 +272,7 @@ class MessageScanner: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: channelMessage.client.currentNick
             ))
+            try? rescue.save()
             casesUpdatedForMessage.append(rescue)
         }
     }

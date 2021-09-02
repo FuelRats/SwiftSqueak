@@ -114,7 +114,7 @@ class HelpCommands: IRCBotModule {
         }
 
         let commandText = String(command.parameters[0].dropFirst()).lowercased()
-        guard let helpCommand = await MechaSqueak.commands.first(where: {
+        guard let helpCommand = MechaSqueak.commands.first(where: {
             $0.commands.contains(commandText)
         }) else {
             message.error(key: "help.commanderror", fromCommand: command, map: [

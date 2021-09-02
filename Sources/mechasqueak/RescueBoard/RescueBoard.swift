@@ -258,7 +258,7 @@ actor RescueBoard {
         
         let recentlyClosed = Array(self.recentlyClosed)
         
-        if let (_, recentRescue) = await recentlyClosed.first(where: {
+        if let (_, recentRescue) = recentlyClosed.first(where: {
             let currentClient = $0.value.client
             let updatedAt =  $0.value.updatedAt
             

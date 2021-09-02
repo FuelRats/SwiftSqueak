@@ -427,8 +427,8 @@ class Rescue {
         }
         
         let currentJumpCalls = await rat.getCurrentJumpCalls()
-        let existingCallsForCase = await currentJumpCalls.first(where: { $0.1.id == self.id })
-        let existingCallsForOtherCase = await currentJumpCalls.first(where: { $0.1.id != self.id })
+        let existingCallsForCase = currentJumpCalls.first(where: { $0.1.id == self.id })
+        let existingCallsForOtherCase = currentJumpCalls.first(where: { $0.1.id != self.id })
         
         if existingCallsForCase == nil && existingCallsForOtherCase != nil && force == false {
             return Result.failure(RescueAssignError.jumpCallConflict(rat))

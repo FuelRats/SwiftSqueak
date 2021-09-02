@@ -59,7 +59,7 @@ extension Array {
         return mappedElements
     }
     
-    func first (where predicate: @escaping (Element) async throws -> Bool) async rethrows -> Element? {
+    func asyncFirst (where predicate: @escaping (Element) async throws -> Bool) async rethrows -> Element? {
         for element in self {
             let result = try await predicate(element)
             if result {
