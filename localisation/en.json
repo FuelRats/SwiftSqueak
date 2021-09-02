@@ -98,7 +98,7 @@
   "board.signal.ignore": "Ignoring signal from case where client failed to join channel",
   "board.signal.helpyou": "%{client} You already sent a Signal! Please stand by, someone will help you soon!",
   "board.signal.oxygen": "%{client} Are you on emergency oxygen? (\"oxygen depleted in xx.xx\" timer counting down in the top right of your cockpit)",
-  "board.signal.changes": "\u000304CAUTION:\u0003 The new signal for case #%{caseId} has changes: %{changes}",
+  "board.signal.changes": "\u000304CAUTION:\u0003 The latest signal for case #%{caseId} has new information: %{changes}",
   "board.signal.unhelpfulsysmeme": "\"%{system}\" https://i.kym-cdn.com/entries/icons/facebook/000/032/874/cover4.jpg ಠ_ಠ",
   "board.systembody": "NOTE: Client indicated their location near system body %{bodyDescription}",
   "board.stationfound": "\u0002Station Found\u0002 for case #%{caseId} (%{client}) %{name} (%{type}) %{distance} (%{services})",
