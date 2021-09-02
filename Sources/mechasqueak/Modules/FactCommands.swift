@@ -505,7 +505,7 @@ class FactCommands: IRCBotModule {
     func messageFact (command: IRCBotCommand, fact: Fact) {
         if command.parameters.count > 0 {
             if command.parameters.count > 0 && command.parameters[0].lowercased() == command.message.client.currentNick.lowercased() {
-                command.message.reply(message: "\(command.message.user.nickname) what are you playing at?")
+                command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "bonks \(command.message.user.nickname)")
                 return
             }
 
