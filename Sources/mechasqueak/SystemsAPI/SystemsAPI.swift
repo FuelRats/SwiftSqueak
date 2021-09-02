@@ -24,6 +24,7 @@
 
 import Foundation
 import AsyncHTTPClient
+import NIOHTTP1
 import IRCKit
 import NIO
 
@@ -36,28 +37,23 @@ class SystemsAPI {
     ]
     
     static func performSearch (forSystem systemName: String, quickSearch: Bool = false) async throws -> SearchDocument {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
+        var queryItems = [
+            "name": systemName
+        ]
         if quickSearch {
-            url.queryItems?.append(URLQueryItem(name: "fast", value: "true"))
+            queryItems["fast"] = "true"
         }
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+
+        let request = try! HTTPClient.Request(systemApiPath: "/mecha", method: .GET, query: queryItems)
+
         let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(60))
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
         return try await httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
     
     static func performLandmarkCheck (forSystem systemName: String) async throws -> LandmarkDocument {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
+        let request = try! HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
+            "name": systemName
+        ])
         return try await httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
     }
     
@@ -77,33 +73,26 @@ class SystemsAPI {
     }
 
     static func performProceduralCheck (forSystem systemName: String) async throws -> ProceduralCheckDocument {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        let request = try! HTTPClient.Request(systemApiPath: "/procname", method: .GET, query: [
+            "name": systemName
+        ])
 
         return try await httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
     }
     
     
     static func getSystemData (forId id: Int64) async throws -> SystemGetDocument {
-        var url = URLComponents(string: "https://systems.api.fuelrats.com/api/systems/\(id)")!
-        url.queryItems = [URLQueryItem(name: "include", value: "stars,planets,stations")]
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
+        let request = try! HTTPClient.Request(systemApiPath: "/api/systems/\(id)", method: .GET, query: [
+            "include": "stars,planets,stations"
+        ])
+        
         return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)
     }
     
     static func getNearestStations (forSystem systemName: String) async throws -> NearestPopulatedDocument {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/nearest_populated")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        let request = try! HTTPClient.Request(systemApiPath: "/nearest_populated", method: .GET, query: [
+            "name": systemName
+        ])
 
         return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
     }
@@ -144,9 +133,7 @@ class SystemsAPI {
     }
     
     static func getStatistics () async throws -> StatisticsDocument {
-        let url = URLComponents(string: "https://system.api.fuelrats.com/api/stats")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        let request = try! HTTPClient.Request(systemApiPath: "/api/stats", method: .GET)
 
         let response = try await httpClient.execute(request: request, expecting: 200)
         
@@ -159,17 +146,15 @@ class SystemsAPI {
     }
     
     static func fetchLandmarkList () async throws -> [LandmarkListDocument.LandmarkListEntry] {
-        let url = URLComponents(string: "https://systems.api.fuelrats.com/landmark?list")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        let request = try! HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
+            "list": "true"
+        ])
 
         return try await httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).landmarks
     }
     
     static func fetchSectorList () async throws -> [StarSector] {
-        let url = URLComponents(string: "https://systems.api.fuelrats.com/get_ha_regions")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        let request = try! HTTPClient.Request(systemApiPath: "/get_ha_regions", method: .GET)
 
         let sectors = try await httpClient.execute(request: request, forDecodable: [String].self)
         return sectors.map({ sector -> StarSector in
@@ -508,3 +493,15 @@ struct StarSector {
     let hasSector: Bool
 }
 
+fileprivate extension HTTPClient.Request {
+    init (systemApiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+        var url = URLComponents(string: "https://systems.api.fuelrats.com")!
+        url.path = systemApiPath
+        
+        url.queryItems = query.queryItems
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+    }
+}
