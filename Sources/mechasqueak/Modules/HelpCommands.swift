@@ -112,11 +112,23 @@ class HelpCommands: IRCBotModule {
             }
             return
         }
+        
 
         let commandText = String(command.parameters[0].dropFirst()).lowercased()
         guard let helpCommand = MechaSqueak.commands.first(where: {
             $0.commands.contains(commandText)
         }) else {
+            if let fact = try? await Fact.get(name: commandText, forLocale: Locale(identifier: "en")) {
+                command.message.replyPrivate(key: "anyfact.info", fromCommand: command, map: [
+                    "fact": fact.id,
+                    "language": Locale(identifier: fact.language).englishDescription,
+                    "created": fact.createdAt.eliteFormattedString,
+                    "updated": fact.updatedAt.eliteFormattedString,
+                    "author": fact.author
+                ])
+                command.message.replyPrivate(message: fact.message)
+                return
+            }
             message.error(key: "help.commanderror", fromCommand: command, map: [
                 "command": commandText
             ])
