@@ -122,42 +122,85 @@ class HelpCommands: IRCBotModule {
             ])
             return
         }
-
-
-        message.replyPrivate(key: "help.commandtitle", fromCommand: command, map: [
+        
+        if configuration.general.drillMode {
+            let destination = command.message.destination
+            sendCommandHelp(helpCommand: helpCommand, destination: destination)
+        } else {
+            let destination = IRCChannel(privateMessage: command.message.user, onClient: command.message.client)
+            sendCommandHelp(helpCommand: helpCommand, destination: destination)
+        }
+    }
+    
+    @AsyncBotCommand(
+        ["sendhelp"],
+        [.param("nick", "SpaceDawg"), .param("command", "!assign", .continuous)],
+        category: nil,
+        description: "Send help information about a MechaSqueak command to another user",
+        permission: .AnnouncementWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSendHelpCommand = { command in
+        guard let user = command.message.destination.member(named: command.parameters[0]) else {
+            command.message.error(key: "sendhelp.nouser", fromCommand: command, map: [
+                "nick": command.parameters[0]
+            ])
+            return
+        }
+        
+        var commandText = String(command.parameters[1]).lowercased()
+        if commandText.starts(with: "!") {
+            commandText.removeFirst()
+        }
+        
+        guard let helpCommand = MechaSqueak.commands.first(where: {
+            $0.commands.contains(commandText)
+        }) else {
+            command.message.error(key: "help.commanderror", fromCommand: command, map: [
+                "command": commandText
+            ])
+            return
+        }
+        
+        let destination = IRCChannel(privateMessage: user, onClient: command.message.client)
+        sendCommandHelp(helpCommand: helpCommand, destination: destination)
+    }
+    
+    static func sendCommandHelp (helpCommand: IRCBotCommandDeclaration, destination: IRCChannel) {
+        destination.send(key: "help.commandtitle", map: [
             "command": helpCommand.usageDescription(command: nil),
             "example": helpCommand.example.count > 0
-                ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
-                : ""
+            ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
+            : ""
         ])
         if helpCommand.commands.count > 1 {
             let aliases = helpCommand.commands.dropFirst().map({
                 "!\($0)"
             }).joined(separator: " ")
-            message.replyPrivate(key: "help.commandaliases", fromCommand: command, map: [
+            destination.send(key: "help.commandaliases", map: [
                 "aliases": aliases
             ])
         }
-
-        message.replyPrivate(message: helpCommand.description)
-
+        
+        destination.send(message: helpCommand.description)
+        
         let commandIdentifier = "help.command.\(helpCommand.commands[0])"
         let fullDescription = lingo.localize(commandIdentifier, locale: "en-GB")
         if fullDescription != commandIdentifier {
-            message.replyPrivate(message: fullDescription)
+            destination.send(message: fullDescription)
         }
-
+        
         if helpCommand.options.count > 0 || helpCommand.namedOptions.count > 0 {
-            message.replyPrivate(message: "Options:")
+            destination.send(message: "Options:")
         }
         for option in helpCommand.namedOptions {
             let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
-            message.replyPrivate(message: " --\(option): \(optionDescription)")
+            destination.send(message: " --\(option): \(optionDescription)")
         }
-
+        
         for option in helpCommand.options {
             let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
-            message.replyPrivate(message: " -\(option): \(optionDescription)")
+            destination.send(message: " -\(option): \(optionDescription)")
         }
     }
 }

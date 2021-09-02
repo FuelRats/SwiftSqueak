@@ -418,6 +418,7 @@
   "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
   "help.command.station.s": "Shows all services available at this station, not just vital ones",
   "help.command.station.l": "Require the station to have a size L (large) landing pad",
+  "sendhelp.nouser": "Could not find %{nick} in the channel",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announcement.odyssey": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} (Odyssey) - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
