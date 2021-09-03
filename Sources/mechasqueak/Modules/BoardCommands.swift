@@ -357,6 +357,7 @@ class BoardCommands: IRCBotModule {
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
                 command.message.reply(key: "board.quiet.currentjoin", fromCommand: command)
+                return
             }
             command.message.reply(key: "board.quiet.current", fromCommand: command)
             return
