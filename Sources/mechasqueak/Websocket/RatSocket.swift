@@ -46,6 +46,9 @@ class RatSocket {
     }
     
     func connect () {
+        guard configuration.api.websocket != nil else {
+            return
+        }
         WebSocket.connect(to: URL(string: "\(configuration.api.websocket!)")!, headers: HTTPHeaders([
             ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
             ("x-bearer", configuration.api.token)
