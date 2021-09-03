@@ -143,12 +143,51 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                     plotUrl = try? await generateSpanshRoute(from: "Sol", to: nearestTarget.name)
                 }
             }
+            
+            let stars = self.data?.body.includes?[SystemsAPI.Star.self] ?? []
+            let bodies = self.data?.body.includes?[SystemsAPI.Body.self] ?? []
+            let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
+            
+            let allegiance = stations.first?.allegiance
+            let government = stations.reduce([:], { (acc: [SystemsAPI.Government: Int], current) in
+                var acc = acc
+                if let value = acc[current.government] {
+                    acc[current.government] = value + 1
+                } else {
+                    acc[current.government] = 1
+                }
+                return acc
+            }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key.ircFormatted
+            
+            let economy = stations.reduce([:], { (acc: [String: Int], current) in
+                var acc = acc
+                if let value = acc[current.economy] {
+                    acc[current.economy] = value + 1
+                } else {
+                    acc[current.economy] = 1
+                }
+                return acc
+            }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
+            
+            let largeStations = stations.filter({ $0.type.isLargeSpaceStation })
+            let outposts = stations.filter({ $0.type == .Outpost })
+            let planetary = stations.filter({ $0.type.isPlanetary })
+            
             return try! stencil.renderLine(name: "systeminfo.stencil", context: [
                 "system": self,
                 "landmark": self.landmark as Any,
                 "region": self.galacticRegion as Any,
                 "invalid": self.isInvalid,
-                "plotUrl": plotUrl?.absoluteString as Any
+                "plotUrl": plotUrl?.absoluteString as Any,
+                "stations": stations,
+                "largeStations": largeStations,
+                "planetary": planetary,
+                "outposts": outposts,
+                "stars": stars,
+                "bodies": bodies,
+                "allegiance": allegiance as Any,
+                "government": government as Any,
+                "economy": economy as Any
             ])
         }
     }

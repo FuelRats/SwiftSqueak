@@ -24,6 +24,7 @@
 
 import Foundation
 import JSONAPI
+import IRCKit
 
 enum StationDescription: ResourceObjectDescription {
     public static var jsonType: String { return "stations" }
@@ -34,7 +35,7 @@ enum StationDescription: ResourceObjectDescription {
         public var name: Attribute<String>
         public var distanceToArrival: Attribute<Double>
         public var allegiance: Attribute<String>
-        public var government: Attribute<String>
+        public var government: Attribute<SystemsAPI.Government>
         public var economy: Attribute<String>
         public var haveMarket: Attribute<Bool>
         public var haveShipyard: Attribute<Bool>
@@ -49,4 +50,36 @@ enum StationDescription: ResourceObjectDescription {
 
 extension SystemsAPI {
     typealias Station = SystemsAPIJSONEntity<StationDescription>
+    
+    enum Government: String, Codable {
+        case Anarchy
+        case Communism
+        case Confederacy
+        case Cooperative
+        case Corporate
+        case Democracy
+        case Dictatorship
+        case Feudal
+        case Patronage
+        case PrisonColony = "Prison Colony"
+        case Theocracy
+        case Engineer
+        case Prison
+        
+        var ircFormatted: String {
+            switch self {
+            case .Anarchy:
+                return IRCFormat.color(.LightRed, self.rawValue)
+                
+            case .Communism, .Dictatorship, .Feudal, .Prison, .Theocracy, .PrisonColony:
+                return IRCFormat.color(.Yellow, self.rawValue)
+                
+            case .Confederacy, .Cooperative, .Democracy, .Patronage:
+                return IRCFormat.color(.LightGreen, self.rawValue)
+                
+            default:
+                return IRCFormat.color(.LightGrey, self.rawValue)
+            }
+        }
+    }
 }

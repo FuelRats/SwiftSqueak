@@ -2,20 +2,41 @@
 {% if system.bodies and system.bodies.count > 1 %}
  {{system.bodies.count}} stellar bodies
 {% endif %}
-{% if stations.count > 0 %}
-, {{stations.count}} stations
+
+{% if economy %}
+ {{ "Economy:"|bold }} {{ economy }}.
 {% endif %}
-{% if carriers.count > 0 %}
-, {{carriers.count}} carriers
+
+{% if stars.count > 1 %}
+ {{stars.count}} stars
+{% elif stars.count > 0 %}
+ {{stars.count}} star
 {% endif %}
-{% if stations.first.type != "Fleet Carrier" %}
-{% if stations.first.economy %}
-, Economy: {{ stations.first.economy }}
+
+{% if bodies.count > 1 %}
+, {{bodies.count}} bodies
+{% elif bodies.count > 0 %}
+, {{bodies.count}} body
 {% endif %}
-{% if stations.first.government %}
-, Government: {{ stations.first.government }}
+
+{% if largeStations.count > 1 %}
+, {{largeStations.count}} stations
+{% elif largeStations.count > 0 %}
+, {{largeStations.count}} station
 {% endif %}
+
+{% if outposts.count > 1 %}
+, {{outposts.count}} outposts
+{% elif outposts.count > 0 %}
+, {{outposts.count}} outpost
 {% endif %}
+
+{% if planetary.count > 1 %}
+, {{planetary.count}} planetary bases
+{% elif planetary.count > 0 %}
+, {{planetary.count}} planetary base
+{% endif %}
+
 {% if plotUrl %}
  {{ "Spansh:"|bold }} {{ plotUrl }}
 {% endif %}

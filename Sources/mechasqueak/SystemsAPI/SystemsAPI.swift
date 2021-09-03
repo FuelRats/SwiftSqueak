@@ -479,6 +479,23 @@ class SystemsAPI {
                     var rating: UInt {
                         return StationType.ratings[self]!
                     }
+                    
+                    var isLargeSpaceStation: Bool {
+                        return [
+                            StationType.CoriolisStarport,
+                            StationType.OcellusStarport,
+                            StationType.OrbisStarport,
+                            StationType.AsteroidBase,
+                            StationType.MegaShip
+                        ].contains(self)
+                    }
+                    
+                    var isPlanetary: Bool {
+                        return [
+                            StationType.PlanetaryPort,
+                            StationType.PlanetaryOutpost
+                        ].contains(self)
+                    }
                 }
                 
                 var hasLargePad: Bool {
