@@ -47,7 +47,7 @@ enum UserDescription: ResourceObjectDescription {
         public let epics: ToManyRelationship<Epic>?
         public let decals: ToManyRelationship<Decal>?
         public let nicknames: ToManyRelationship<Nickname>?
-        public let avatar: ToOneRelationship<AvatarImage>?
+        public let avatar: ToOneRelationship<AvatarImage?>?
     }
 }
 typealias User = JSONEntity<UserDescription>
