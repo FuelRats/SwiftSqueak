@@ -133,6 +133,15 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
               <span style="color: rgb(0,0,0);text-decoration: none;">\(self.description)</span>
             </p>
         """
+        let commandIdentifier = "help.command.\(self.commands[0])"
+        let fullDescription = lingo.localize(commandIdentifier, locale: "en-GB")
+        if fullDescription != commandIdentifier {
+            html += """
+            <p style="margin-left: 30.0px;">
+              <span style="color: rgb(0,0,0);text-decoration: none;">\(fullDescription)</span>
+            </p>
+            """
+        }
         
         if self.options.count > 0 || self.namedOptions.count > 0 {
             html += """
