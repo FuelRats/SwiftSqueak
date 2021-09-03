@@ -269,7 +269,7 @@ class SystemsAPI {
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
             
-            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, landmarkDistances[0].1)
+            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, ceil(landmarkDistances[0].1))
         }
         
         var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
