@@ -82,6 +82,9 @@ class BoardAssignCommands: IRCBotModule {
     )
     var didReceiveAssignWithInstructionsCommand = { command in
         let message = command.message
+        if command.command == "f" {
+          command.message.replyPrivate(message: "Warning: !f was added by accident and will be removed in a future update. It is recommended that you start using !gofr.")
+        }
         
         let force = command.forceOverride
         let carrier = command.namedOptions.contains("carrier")
