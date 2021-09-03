@@ -28,7 +28,7 @@ import IRCKit
 import Regex
 
 actor RescueBoard {
-    @Published var rescues: [Int: Rescue] = [:]
+    var rescues: [Int: Rescue] = [:]
     let queue = OperationQueue()
     var isSynced = true
     var syncTimer: RepeatedTask?
