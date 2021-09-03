@@ -45,7 +45,6 @@ enum BodyDescription: ResourceObjectDescription {
         public var atmosphereType: Attribute<String?>
         public var atmosphereComposition: Attribute<[String: Double]>
         public var solidComposition: Attribute<[String: Double]>
-        public var terraformingState: Attribute<String>
         public var orbitalPeriod: Attribute<Double?>
         public var semiMajorAxis: Attribute<Double?>
         public var orbitalEccentricity: Attribute<Double?>
