@@ -161,7 +161,7 @@ class SystemSearch: IRCBotModule {
     
     @AsyncBotCommand(
         ["station", "stations"],
-        [.param("reference system", "Sagittarius A*", .continuous), .options(["s", "l"])],
+        [.param("reference system", "Sagittarius A*", .continuous), .argument("space"), .options(["s", "l"])],
         category: .utility,
         description: "Get the nearest station to a system",
         cooldown: .seconds(30)
@@ -171,10 +171,11 @@ class SystemSearch: IRCBotModule {
             let response = try await SystemsAPI.getNearestStations(forSystem: command.param1!)
             
             let requireLargePad = command.options.contains("l")
+            let requireSpace = command.namedOptions.contains("space")
             
             guard
-                let system = requireLargePad ? response.largePadSystem : response.preferableSystem,
-                let station = requireLargePad ? system.largePadStation : system.preferableStation
+                let system = response.preferableSystems(requireLargePad: requireLargePad, requireSpace: requireSpace).first,
+                let station = system.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first
             else {
                 command.message.error(key: "station.notfound", fromCommand: command)
                 return

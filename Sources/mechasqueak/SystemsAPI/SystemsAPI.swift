@@ -412,14 +412,12 @@ class SystemsAPI {
         let meta: Meta
         let data: [PopulatedSystem]
         
-        var preferableSystem: PopulatedSystem? {
+        func preferableSystems (requireLargePad: Bool = false, requireSpace: Bool = false) -> [PopulatedSystem] {
             return self.data.sorted(by: {
-                ($0.preferableStation?.hasLargePad == true && $1.preferableStation?.hasLargePad != true) && $1.distance / $0.distance < 10
-            }).first
-        }
-        
-        var largePadSystem: PopulatedSystem? {
-            return self.data.filter({ $0.hasStationWithLargePad }).first
+                ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad == true
+                 && $1.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad != true)
+                && $1.distance / $0.distance < 10
+            })
         }
         
         struct PopulatedSystem: Codable {
@@ -432,14 +430,12 @@ class SystemsAPI {
                 return self.stations.contains(where: { $0.hasLargePad })
             }
             
-            var preferableStation: Station? {
-                return self.stations.sorted(by: {
+            func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
+                return self.stations.filter({
+                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type.isLargeSpaceStation)
+                }).sorted(by: {
                     ($0.type.rating < $1.type.rating && ($0.distance - $1.distance) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && ($0.distance - $1.distance) < 300000)
-                }).first
-            }
-            
-            var largePadStation: Station? {
-                return self.stations.filter({ $0.hasLargePad }).first
+                })
             }
             
             struct Station: Codable {
