@@ -19,7 +19,6 @@ let package = Package(
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(5, 0, 1)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 4, 0)),
-        .package(url: "https://github.com/vapor/websocket-kit", from: Version(2, 1, 3)),
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 7, 2)),
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 0)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
@@ -42,7 +41,6 @@ let package = Package(
                 .product(name: "Regex", package: "Regex"),
                 .product(name: "JSONAPI", package: "JSONAPI"),
                 .product(name: "IRCKit", package: "IRCKit"),
-                .product(name: "WebSocketKit", package: "websocket-kit"),
                 .product(name: "SQLKit", package: "sql-kit"),
                 .product(name: "PostgresKit", package: "postgres-kit")
             ]

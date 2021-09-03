@@ -189,15 +189,6 @@
           "revision": "bb56586c4cab9a79dce6ec4738baddb5802c5de7",
           "version": "1.9.0"
         }
-      },
-      {
-        "package": "websocket-kit",
-        "repositoryURL": "https://github.com/vapor/websocket-kit",
-        "state": {
-          "branch": null,
-          "revision": "a2d26b3de8b3be292f3208d1c74024f76ac503da",
-          "version": "2.1.3"
-        }
       }
     ]
   },
