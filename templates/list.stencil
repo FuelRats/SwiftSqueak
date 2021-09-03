@@ -1,5 +1,5 @@
 {% filter bold %}
-{% if options.includeCaseIds %}
+{% if includeCaseIds %}
 [{{ rescue.id }}]:
 {% elif rescue.title %}
  Operation {{ rescue.title }}

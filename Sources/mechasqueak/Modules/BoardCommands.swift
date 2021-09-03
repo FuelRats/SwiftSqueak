@@ -125,7 +125,8 @@ class BoardCommands: IRCBotModule {
             let output = try! stencil.renderLine(name: "list.stencil", context: [
                 "caseId": id,
                 "rescue": rescue,
-                "platform": rescue.platform.ircRepresentable
+                "platform": rescue.platform.ircRepresentable,
+                "includeCaseIds": arguments.contains(.includeCaseIds)
             ])
             return output
         })
