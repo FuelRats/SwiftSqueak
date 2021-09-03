@@ -1,14 +1,14 @@
 {% filter bold %}
 {% if includeCaseIds %}
 [{{ rescue.id }}]:
-{% elif rescue.title %}
- Operation {{ rescue.title }}
 {% else %}
 #{{ caseId }}:
 {% endif %}
 {% endfilter %}
 {% filter caseColor:rescue %}
-{% if rescue.client %}
+{% if rescue.title %}
+ Operation {{ rescue.title }}
+{% elif rescue.client %}
  {{ rescue.client }}
 {% else %}
  unknown client
