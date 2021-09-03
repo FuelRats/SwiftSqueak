@@ -68,6 +68,7 @@ class MechaSqueak {
     static let accounts = NicknameLookupManager()
     var commands: [IRCBotModule]
     let connections: [IRCClient]
+    var rescueChannel: IRCChannel?
     var reportingChannel: IRCChannel?
     let helpModule: HelpCommands
     let startupTime: Date
@@ -154,6 +155,10 @@ class MechaSqueak {
     @AsyncEventListener<IRCUserJoinedChannelNotification>
     var onUserJoin = { userJoin in
         let client = userJoin.raw.client
+        if userJoin.raw.sender!.isCurrentUser(client: client)
+            && userJoin.channel.name.lowercased() == configuration.general.rescueChannel.lowercased() {
+            mecha.rescueChannel = userJoin.channel
+        }
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel

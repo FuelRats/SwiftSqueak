@@ -355,6 +355,9 @@ class BoardCommands: IRCBotModule {
         guard await board.rescues.first(where: { rescue in
             return rescue.1.status != .Inactive
         }) == nil else {
+            if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
+                command.message.reply(key: "board.quiet.currentjoin", fromCommand: command)
+            }
             command.message.reply(key: "board.quiet.current", fromCommand: command)
             return
         }
