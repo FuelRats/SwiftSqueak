@@ -208,6 +208,14 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         } else {
             description += "~\(ceil(landmark.distance / 1000))kLY from \(landmark.name)"
         }
+        
+        if let permit = self.permit {
+            if let permitName = permit.name {
+                description += " (REQUIRES \(permitName.uppercased()) PERMIT"
+            } else {
+                description += " (REQUIRES PERMIT)"
+            }
+        }
         return description
     }
     
