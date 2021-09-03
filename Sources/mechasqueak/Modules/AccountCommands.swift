@@ -136,10 +136,14 @@ class AccountCommands: IRCBotModule {
         }
 
         let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
-            if rat.odyssey {
-                return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable)) (\(IRCFormat.color(.Orange, "Odyssey")))"
+            var description = "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
+            if rat.data.permits?.contains("Pilots' Federation District") == true {
+                description += " (\(IRCFormat.color(.Grey, "Starter Zone")))"
             }
-            return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
+            if rat.odyssey {
+                description += " (\(IRCFormat.color(.Orange, "Odyssey")))"
+            }
+            return description
         }).joined(separator: ", ")
 
         let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
