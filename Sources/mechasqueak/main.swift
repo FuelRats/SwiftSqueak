@@ -27,6 +27,9 @@ import Lingo
 import IRCKit
 import AsyncHTTPClient
 import NIO
+import Backtrace
+
+Backtrace.install()
 
 let processId = ProcessInfo.processInfo.processIdentifier
 try "\(processId)".write(toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true, encoding: .utf8)

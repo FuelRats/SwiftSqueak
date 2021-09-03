@@ -22,6 +22,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 7, 2)),
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 0)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
+        .package(url: "https://github.com/swift-server/swift-backtrace.git", from: Version(1, 3, 1)),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 14, 2))
     ],
@@ -42,7 +43,8 @@ let package = Package(
                 .product(name: "JSONAPI", package: "JSONAPI"),
                 .product(name: "IRCKit", package: "IRCKit"),
                 .product(name: "SQLKit", package: "sql-kit"),
-                .product(name: "PostgresKit", package: "postgres-kit")
+                .product(name: "PostgresKit", package: "postgres-kit"),
+                .product(name: "Backtrace", package: "swift-backtrace")
             ]
         ),
         .testTarget(
