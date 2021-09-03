@@ -36,16 +36,19 @@ class FuelRatsAPI {
         let request = try! HTTPClient.Request(apiPath: "/nicknames", method: .GET, query: ["nick": account])
         
         let response = try await httpClient.execute(request: request, deadline: .now() + .seconds(5), expecting: 200)
-        guard let document = try? NicknameSearchDocument.from(data: Data(buffer: response.body!)) else {
-            throw response
+        do {
+            let document = try NicknameSearchDocument.from(data: Data(buffer: response.body!))
+            
+            guard (document.body.data?.primary.values.count)! > 0 else {
+                debug("No results found in fetch for \(account)")
+                return nil
+            }
+            
+            return document
+        } catch {
+            debug(String(describing: error))
+            throw error
         }
-        
-        guard (document.body.data?.primary.values.count)! > 0 else {
-            debug("No results found in fetch for \(account)")
-            return nil
-        }
-        
-        return document
     }
     
     static func rescueSearch (query: [String: String?]) async throws -> RescueSearchDocument {
