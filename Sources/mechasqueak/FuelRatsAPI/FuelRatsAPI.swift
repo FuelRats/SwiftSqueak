@@ -35,7 +35,7 @@ class FuelRatsAPI {
     static func getNickname (forIRCAccount account: String) async throws -> NicknameSearchDocument? {
         let request = try! HTTPClient.Request(apiPath: "/nicknames", method: .GET, query: ["nick": account])
         
-        let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
+        let response = try await httpClient.execute(request: request, deadline: .now() + .seconds(5), expecting: 200)
         guard let document = try? NicknameSearchDocument.from(data: Data(buffer: response.body!)) else {
             throw response
         }
