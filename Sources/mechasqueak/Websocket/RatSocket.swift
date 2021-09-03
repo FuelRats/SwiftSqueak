@@ -25,7 +25,6 @@
 import Foundation
 import NIOHTTP1
 import IRCKit
-import WebSocketKit
 import NIO
 
 enum RatSocketEventType: String {
@@ -37,9 +36,11 @@ enum RatSocketEventType: String {
     case channelMessage = "mechasqueak.channelmessage"
 }
 
+struct WebSocket {}
+
 class RatSocket {
     var connectedAndAuthenticated = false
-    var socket: WebSocket?
+    //var socket: WebSocket?
 
     init () {
         self.connect()
@@ -49,22 +50,22 @@ class RatSocket {
         guard configuration.api.websocket != nil else {
             return
         }
-        WebSocket.connect(to: URL(string: "\(configuration.api.websocket!)")!, headers: HTTPHeaders([
-            ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
-            ("x-bearer", configuration.api.token)
-        ]), on: loop) { ws in
-            self.socket = ws
-            
-            ws.onText(self.websocketDidReceiveMessage)
-        }.whenComplete({ result in
-            switch result {
-            case .failure(let error):
-                self.websocketDidDisconnect(error: error)
-            
-            case .success(_):
-                self.websocketDidConnect()
-            }
-        })
+//        WebSocket.connect(to: URL(string: "\(configuration.api.websocket!)")!, headers: HTTPHeaders([
+//            ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
+//            ("x-bearer", configuration.api.token)
+//        ]), on: loop) { ws in
+//            self.socket = ws
+//
+//            ws.onText(self.websocketDidReceiveMessage)
+//        }.whenComplete({ result in
+//            switch result {
+//            case .failure(let error):
+//                self.websocketDidDisconnect(error: error)
+//
+//            case .success(_):
+//                self.websocketDidConnect()
+//            }
+//        })
     }
 
     func broadcast<Payload: Encodable> (event: RatSocketEventType, payload: Payload) {
@@ -83,7 +84,7 @@ class RatSocket {
             return
         }
 
-        socket?.send(requestJson)
+        //socket?.send(requestJson)
     }
 
     func websocketDidConnect () {
@@ -91,7 +92,7 @@ class RatSocket {
     }
 
     func websocketDidDisconnect (error: Error?) {
-        self.socket = nil
+        //self.socket = nil
         debug("Disconnected from Websocket connection")
         connectedAndAuthenticated = false
         self.connect()
