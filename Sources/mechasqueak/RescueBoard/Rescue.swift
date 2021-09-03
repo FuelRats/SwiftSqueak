@@ -400,7 +400,12 @@ class Rescue {
         }
     }
     
-    func assign (_ param: String, fromChannel channel: IRCChannel, force: Bool = false) async -> Result<AssignmentResult, RescueAssignError> {
+    func assign (
+        _ param: String,
+        fromChannel channel: IRCChannel,
+        force: Bool = false,
+        carrier: Bool = false
+    ) async -> Result<AssignmentResult, RescueAssignError> {
         let param = param.lowercased()
         guard configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param }) == false else {
             return Result.failure(RescueAssignError.blacklisted(param))
@@ -417,14 +422,28 @@ class Rescue {
             return Result.failure(RescueAssignError.notFound(param))
         }
         
-        guard let rat = nick.getRatRepresenting(platform: self.platform), rat.attributes.odyssey.value == self.odyssey else {
+        var rat: Rat? = nil
+        if carrier {
+            rat = nick.currentRat
+        } else {
+            let assignRat = nick.getRatRepresenting(platform: self.platform)
+            if assignRat?.attributes.odyssey.value == self.odyssey {
+                rat = assignRat
+            }
+        }
+        
+        guard let rat = rat else {
+            guard force else {
+                return Result.failure(.unidentified(param))
+            }
             guard self.unidentifiedRats.contains(param) == false else {
                 return Result.success(.duplicate(param))
             }
-
+            
             self.unidentifiedRats.append(param)
             return Result.success(.unidentified(param))
         }
+        
         
         let currentJumpCalls = await rat.getCurrentJumpCalls()
         let existingCallsForCase = currentJumpCalls.first(where: { $0.1.id == self.id })

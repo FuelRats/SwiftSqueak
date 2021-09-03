@@ -34,7 +34,7 @@ class BoardAssignCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["go", "assign", "add"],
-        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
+        [.options(["a", "f"]), .argument("carrier"), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
         permission: .DispatchWrite,
@@ -44,6 +44,7 @@ class BoardAssignCommands: IRCBotModule {
         let message = command.message
         
         let force = command.forceOverride
+        let carrier = command.namedOptions.contains("carrier")
 
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -62,7 +63,9 @@ class BoardAssignCommands: IRCBotModule {
         
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
 
-        let assigns = await params.asyncMap({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
+        let assigns = await params.asyncMap({
+            await rescue.assign($0, fromChannel: command.message.destination, force: force, carrier: carrier)
+        })
         try? rescue.save(command)
         
         _ = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
@@ -71,7 +74,7 @@ class BoardAssignCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["gofr", "assignfr", "frgo"],
-        [.options(["a", "f"]), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
+        [.options(["a", "f"]),  .argument("carrier"), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
         permission: .DispatchWrite,
@@ -81,6 +84,7 @@ class BoardAssignCommands: IRCBotModule {
         let message = command.message
         
         let force = command.forceOverride
+        let carrier = command.namedOptions.contains("carrier")
 
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -100,7 +104,9 @@ class BoardAssignCommands: IRCBotModule {
         
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
         
-        let assigns = await params.asyncMap({ await rescue.assign($0, fromChannel: command.message.destination, force: force) })
+        let assigns = await params.asyncMap({
+            await rescue.assign($0, fromChannel: command.message.destination, force: force, carrier: carrier)
+        })
         try? rescue.save(command)
 
         let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
@@ -242,7 +248,6 @@ class BoardAssignCommands: IRCBotModule {
             if jumpCallConflicts.count > 0 {
                 errorMessage += "\(jumpCallConflicts.joined(separator: ", ")) called for a different case and not this one. "
             }
-            errorMessage += "To override send the same command again within the next 30 seconds."
             command.message.reply(message: errorMessage)
             
             let blacklisted = failedAssigns.compactMap({ assign -> String? in
