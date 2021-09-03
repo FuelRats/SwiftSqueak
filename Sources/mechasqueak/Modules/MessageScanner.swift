@@ -43,6 +43,7 @@ class MessageScanner: IRCBotModule {
         "horizons", "odyssey"
     ]
     private static let standDownPhrases = ["stand down", "stnd", "stdn"]
+    private static let carrierPhrases = ["fc", "carrier"]
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -130,13 +131,15 @@ class MessageScanner: IRCBotModule {
                     ]
                 )
             }
+            
+            let containsCarrierPhrase = carrierPhrases.contains(where: { channelMessage.message.lowercased().contains($0) })
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)
                 if rats.first(where: { (rat: Rat) -> Bool in
                     return rat.attributes.platform.value == rescue.platform
                 }) == nil {
-                    if configuration.general.drillMode == false {
+                    if configuration.general.drillMode == false && containsCarrierPhrase == false {
                         channelMessage.client.sendMessage(
                             toChannelName: channelMessage.destination.name,
                             withKey: "jumpcall.wrongplatform",
@@ -175,7 +178,7 @@ class MessageScanner: IRCBotModule {
             
             let platform = rescue.platform
             if configuration.general.drillMode == false && platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: platform!) {
-                if rescue.odyssey && rat.attributes.odyssey.value == false {
+                if rescue.odyssey && rat.attributes.odyssey.value == false && containsCarrierPhrase == false {
                     channelMessage.client.sendMessage(
                         toChannelName: channelMessage.destination.name,
                         withKey: "jumpcall.clientodyssey",
