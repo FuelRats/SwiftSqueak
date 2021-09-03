@@ -253,6 +253,7 @@ class BoardCommands: IRCBotModule {
                 ]
             )
         } catch {
+            rescue.status = .Inactive
             command.message.reply(key: "board.close.error", fromCommand: command, map: [
                 "caseId": caseId
             ])
