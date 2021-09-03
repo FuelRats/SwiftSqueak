@@ -312,9 +312,9 @@ class RemoteRescueCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["reopen"],
-        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
+        [.param("rescue uuid/client name", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
-        description: "Add a previously closed case back onto the board.",
+        description: "Add a previously closed case back onto the board",
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
@@ -329,54 +329,72 @@ class RemoteRescueCommands: IRCBotModule {
             command.message.error(key: "rescue.reopen.drillmode", fromCommand: command)
             return
         }
-        guard let id = UUID(uuidString: command.parameters[0]) else {
+        
+        var rescue: Rescue? = nil
+        var caseId = 0
+        if let id = UUID(uuidString: command.parameters[0]) {
+            if let (existingId, existingRescue) = await board.rescues.first(where: {
+                $0.value.id == id
+            }) {
+                command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
+                    "id": id,
+                    "caseId": existingId
+                ])
+                return
+            }
+            
+            guard let result = try? await FuelRatsAPI.getRescue(id: id) else {
+                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
+                    "id": id.ircRepresentation
+                ])
+                return
+            }
+            let apiRescue = result.body.data!.primary.value
+            
+            caseId = apiRescue.commandIdentifier
+            let rats = result.assignedRats()
+            let firstLimpet = result.firstLimpet()
+            
+            rescue = Rescue(
+                fromAPIRescue: apiRescue,
+                withRats: rats,
+                firstLimpet: firstLimpet,
+                onBoard: board
+            )
+        } else {
+            let clientRescues = try? await FuelRatsAPI.getRescues(forClient: command.parameters[0])
+            guard let apiRescue = clientRescues?.body.data?.primary.values.first else {
+                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
+                    "id": command.parameters[0]
+                ])
+                return
+            }
+            
+            caseId = apiRescue.commandIdentifier
+            let rats = clientRescues?.assignedRatsFor(rescue: apiRescue) ?? []
+            let firstLimpet = clientRescues?.firstLimpetFor(rescue: apiRescue)
+            rescue = Rescue(
+                fromAPIRescue: apiRescue,
+                withRats: rats,
+                firstLimpet: firstLimpet,
+                onBoard: board
+            )
+        }
+        guard let rescue = rescue else {
             command.message.error(key: "rescue.reopen.invalid", fromCommand: command, map: [
                 "id": command.parameters[0]
             ])
             return
         }
 
-        if let (existingId, existingRescue) = await board.rescues.first(where: {
-            $0.value.id == id
-        }) {
-            command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
-                "id": id,
-                "caseId": existingId
-            ])
-            return
-        }
+        rescue.outcome = nil
+        rescue.status = .Open
+        let newCaseId = await board.insert(rescue: rescue, preferringIdentifier: caseId)
         
-        do {
-            guard let result = try await FuelRatsAPI.getRescue(id: id) else {
-                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
-                return
-            }
-            
-            let apiRescue = result.body.data!.primary.value
-            let rats = result.assignedRats()
-            let firstLimpet = result.firstLimpet()
-
-            let rescue = Rescue(
-                fromAPIRescue: apiRescue,
-                withRats: rats,
-                firstLimpet: firstLimpet,
-                onBoard: board
-            )
-            rescue.outcome = nil
-            rescue.status = .Open
-            let caseId = await board.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
-            
-            command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
-                "id": id.ircRepresentation,
-                "caseId": caseId
-            ])
-        } catch {
-            command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
-        }
+        command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
+            "id": rescue.id.ircRepresentation,
+            "caseId": newCaseId
+        ])
     }
 
     @AsyncBotCommand(
