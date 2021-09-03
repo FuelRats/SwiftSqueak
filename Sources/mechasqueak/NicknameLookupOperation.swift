@@ -60,9 +60,6 @@ class NicknameLookupManager {
         }
 
         operation.onError = { error in
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .seconds(1), execute: {
-                self.lookupIfNotExists(user: user)
-            })
         }
 
         self.queue.addOperation(operation)
