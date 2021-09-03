@@ -45,6 +45,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
         let output = try! stencil.renderLine(name: "quote.stencil", context: [
+            "caseId": caseId,
             "rescue": rescue,
             "platform": rescue.platform.ircRepresentable,
             "system": rescue.system as Any,

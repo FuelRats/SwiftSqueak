@@ -4,7 +4,7 @@ Inactive
 {{ platform|bold }}
  Case
 {% filter bold %}
- #{{ index }}:
+ #{{ caseId }}:
 {% endfilter %}
 {% filter caseColor:rescue %}
 {% if rescue.client %}
