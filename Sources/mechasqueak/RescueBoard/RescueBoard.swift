@@ -239,7 +239,7 @@ actor RescueBoard {
         }
         
         do {
-            try await anticipateClientJoin(name: clientNick ?? clientName ?? "", forRescue: rescue)
+            try await anticipateClientJoin(name: clientNick ?? clientName ?? "", forRescue: rescue, initiated: initiated)
         } catch {
             message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
             return
@@ -540,7 +540,7 @@ actor RescueBoard {
         }
     }
     
-    func awaitClientJoin (name clientName: String, forRescue rescue: Rescue) -> EventLoopFuture<Void> {
+    func awaitClientJoin (name clientName: String, forRescue rescue: Rescue, initiated: RescueInitiationType) -> EventLoopFuture<Void> {
         let future = loop.next().makePromise(of: Void.self)
         guard rescue.channel != nil else {
             future.fail(ClientJoinError.joinFailed)
@@ -548,7 +548,7 @@ actor RescueBoard {
         }
         
         // Immedately resolve if client is already in the channel
-        if rescue.channel?.member(named: clientName) != nil || configuration.general.drillMode {
+        if rescue.channel?.member(named: clientName) != nil || configuration.general.drillMode || initiated == .insertion {
             future.succeed(())
         }
         
@@ -566,9 +566,9 @@ actor RescueBoard {
         return future.futureResult
     }
     
-    func anticipateClientJoin (name clientName: String, forRescue rescue: Rescue) async throws -> Void {
+    func anticipateClientJoin (name clientName: String, forRescue rescue: Rescue, initiated: RescueInitiationType) async throws -> Void {
         return try await withCheckedThrowingContinuation({ continuation in
-            awaitClientJoin(name: clientName, forRescue: rescue).whenComplete({ result in
+            awaitClientJoin(name: clientName, forRescue: rescue, initiated: initiated).whenComplete({ result in
                 switch result {
                 case .failure(let error):
                     continuation.resume(throwing: error)
