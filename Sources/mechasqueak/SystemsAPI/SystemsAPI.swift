@@ -24,237 +24,159 @@
 
 import Foundation
 import AsyncHTTPClient
+import NIOHTTP1
 import IRCKit
 import NIO
+import JSONAPI
 
 class SystemsAPI {
-    static func performSearch (forSystem systemName: String, quickSearch: Bool = false) -> EventLoopFuture<SearchDocument> {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/mecha")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
+    private static var shortNamesCapitalisation = [
+        "IX": "Ix",
+        "H": "h",
+        "AO": "Ao",
+        "EL": "El"
+    ]
+    
+    static func performSearch (forSystem systemName: String, quickSearch: Bool = false) async throws -> SearchDocument {
+        var queryItems = [
+            "name": systemName
+        ]
         if quickSearch {
-            url.queryItems?.append(URLQueryItem(name: "fast", value: "true"))
+            queryItems["fast"] = "true"
         }
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+
+        let request = try! HTTPClient.Request(systemApiPath: "/mecha", method: .GET, query: queryItems)
+
         let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(60))
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        return httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
-    }
-
-    static func performLandmarkCheck (forSystem systemName: String) -> EventLoopFuture<LandmarkDocument> {
-        var url = URLComponents(string: "https://system.api.fuelrats.com/landmark")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        return httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
+        return try await httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
     
-    static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) -> EventLoopFuture<StarSystem> {
-        let promise = loop.next().makePromise(of: StarSystem.self)
-        self.performLandmarkCheck(forSystem: system.name).whenComplete({ result in
-            switch result {
-            case .failure(let error):
-                promise.fail(error)
-                
-            case .success(let landmarkDocument):
-                var starSystem = StarSystem(
-                    name: system.name,
-                    searchResult: system,
-                    availableCorrections: nil,
-                    landmark: landmarkDocument.first,
-                    landmarks: landmarkDocument.landmarks ?? [],
-                    proceduralCheck: nil,
-                    lookupAttempted: true
-                )
-                EDSM.getBodies(forSystem: system.name).whenComplete({ result in
-                    switch result {
-                    case .failure(_):
-                        promise.succeed(starSystem)
-                    case .success(let bodies):
-                        starSystem.bodies = bodies.bodies
-                        promise.succeed(starSystem)
-                    }
-                })
-            }
-        })
-        return promise.futureResult
-    }
-
-    static func performProceduralCheck (forSystem systemName: String) -> EventLoopFuture<ProceduralCheckDocument?> {
-        let promise = loop.next().makePromise(of: ProceduralCheckDocument?.self)
-        var url = URLComponents(string: "https://system.api.fuelrats.com/procname")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self).whenComplete({ result in
-            switch result {
-            case .failure(_):
-                promise.succeed(nil)
-                
-            case .success(let document):
-                promise.succeed(document)
-            }
-        })
-        return promise.futureResult
+    static func performLandmarkCheck (forSystem systemName: String) async throws -> LandmarkDocument {
+        let request = try! HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
+            "name": systemName
+        ])
+        return try await httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
     }
     
-    static func getNearestStations (forSystem systemName: String) -> EventLoopFuture<NearestPopulatedDocument?> {
-        let promise = loop.next().makePromise(of: NearestPopulatedDocument?.self)
-        var url = URLComponents(string: "https://system.api.fuelrats.com/nearest_populated")!
-        url.queryItems = [URLQueryItem(name: "name", value: systemName)]
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self).whenComplete({ result in
-            switch result {
-            case .failure(_):
-                promise.succeed(nil)
-                
-            case .success(let document):
-                promise.succeed(document)
-            }
-        })
-        return promise.futureResult
+    static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) async throws -> StarSystem {
+        let (landmarkDocument, systemData) = try await (performLandmarkCheck(forSystem: system.name), getSystemData(forId: system.id64))
+        var starSystem = StarSystem(
+            name: system.name,
+            searchResult: system,
+            availableCorrections: nil,
+            landmark: landmarkDocument.first,
+            landmarks: landmarkDocument.landmarks ?? [],
+            proceduralCheck: nil,
+            lookupAttempted: true
+        )
+        starSystem.data = systemData
+        return starSystem
     }
 
-    static func performSystemCheck (forSystem systemName: String, includeEdsm: Bool = true) -> EventLoopFuture<StarSystem> {
-        let promise = loop.next().makePromise(of: StarSystem.self)
+    static func performProceduralCheck (forSystem systemName: String) async throws -> ProceduralCheckDocument {
+        let request = try! HTTPClient.Request(systemApiPath: "/procname", method: .GET, query: [
+            "name": systemName
+        ])
+
+        return try await httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
+    }
+    
+    
+    static func getSystemData (forId id: Int64) async throws -> SystemGetDocument {
+        let request = try! HTTPClient.Request(systemApiPath: "/api/systems/\(id)", method: .GET, query: [
+            "include": "stars,planets,stations"
+        ])
+        
+        return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)
+    }
+    
+    static func getNearestStations (forSystem systemName: String) async throws -> NearestPopulatedDocument {
+        let request = try! HTTPClient.Request(systemApiPath: "/nearest_populated", method: .GET, query: [
+            "name": systemName
+        ])
+
+        return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
+    }
+    
+    static func getNearestSystem (forCoordinates coords: Vector3) async throws -> NearestSystemDocument? {
+        let request = try! HTTPClient.Request(systemApiPath: "/nearest_coords", method: .GET, query: [
+            "x": String(coords.x),
+            "y": String(coords.y),
+            "z": String(coords.z)
+        ])
+        
+        return try await httpClient.execute(request: request, forDecodable: NearestSystemDocument.self)
+    }
+    
+    static func performSystemCheck (forSystem systemName: String) async throws -> StarSystem {
         var systemName = systemName
         if systemName.uppercased() == "SABIYHAN" {
             systemName = "CRUCIS SECTOR ZP-P A5-2"
         }
-
-        performSearch(forSystem: systemName, quickSearch: true)
-            .and(performProceduralCheck(forSystem: systemName))
-            .whenComplete({ result in
-                switch result {
-                    case .success(let (searchResults, proceduralResult)):
-                        let searchResult = searchResults.data?.first(where: {
-                            $0.similarity == 1
-                        })
-                        let properName = searchResult?.name ?? systemName
-                        performLandmarkCheck(forSystem: properName).whenSuccess({ landmarkResults in
-                            var starSystem = StarSystem(
-                                name: searchResult?.name ?? systemName,
-                                searchResult: searchResult,
-                                availableCorrections: searchResults.data,
-                                landmark: landmarkResults.first,
-                                landmarks: landmarkResults.landmarks ?? [],
-                                proceduralCheck: proceduralResult,
-                                lookupAttempted: true
-                            )
-                            
-                            if starSystem.landmark != nil && includeEdsm {
-                                EDSM.getBodies(forSystem: properName).whenComplete({ result in
-                                    switch result {
-                                    case .failure(let error):
-                                        debug(String(describing: error))
-                                        promise.succeed(starSystem)
-                                    case .success(let bodies):
-                                        starSystem.bodies = bodies.bodies
-                                        promise.succeed(starSystem)
-                                    }
-                                })
-                            } else {
-                                promise.succeed(starSystem)
-                            }
-                        })
-
-                    case .failure(let error):
-                        promise.fail(error)
-                }
-
-            })
-
-        return promise.futureResult
-    }
-
-
-    static func performStatisticsQuery (
-        onComplete: @escaping (StatisticsDocument) -> Void,
-        onError: @escaping (Error?) -> Void
-    ) {
-        let url = URLComponents(string: "https://system.api.fuelrats.com/api/stats")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-                    do {
-                        let result = try decoder.decode(
-                            StatisticsDocument.self,
-                            from: Data(buffer: response.body!)
-                        )
-                        onComplete(result)
-                    } catch let error {
-                        debug(String(describing: error))
-                        onError(error)
-                    }
-                case .failure(let restError):
-                    onError(restError)
-            }
+        if let shortNameCorrection = shortNamesCapitalisation[systemName.uppercased()] {
+            systemName = shortNameCorrection
         }
+        
+        let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
+        let searchResult = searchResults?.data?.first(where: {
+            $0.similarity == 1
+        })
+        let properName = searchResult?.name ?? systemName
+        
+        var starSystem = StarSystem(
+            name: properName,
+            searchResult: searchResult,
+            availableCorrections: searchResults?.data,
+            landmark: nil,
+            landmarks: [],
+            proceduralCheck: proceduralResult,
+            lookupAttempted: true
+        )
+        
+        guard let searchResult = searchResult else {
+            return starSystem
+        }
+        
+        let (landmarkResults, systemData) = try await (performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64))
+        starSystem.landmarks = landmarkResults.landmarks ?? []
+        starSystem.data = systemData
+        return starSystem
     }
     
-    static func fetchLandmarkList () -> EventLoopFuture<[LandmarkListDocument.LandmarkListEntry]> {
-        let promise = loop.next().makePromise(of: [LandmarkListDocument.LandmarkListEntry].self)
-        
-        let url = URLComponents(string: "https://systems.api.fuelrats.com/landmark?list")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+    static func getStatistics () async throws -> StatisticsDocument {
+        let request = try! HTTPClient.Request(systemApiPath: "/api/stats", method: .GET)
 
-        httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    let fallbackLandmark = LandmarkListDocument.LandmarkListEntry(name: "Sol", coordinates: Vector3(0, 0, 0))
-                    promise.succeed([fallbackLandmark])
-                    
-                case .success(let document):
-                    promise.succeed(document.landmarks)
-            }
-        })
-        return promise.futureResult
+        let response = try await httpClient.execute(request: request, expecting: 200)
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(
+            StatisticsDocument.self,
+            from: Data(buffer: response.body!)
+        )
     }
     
-    static func fetchSectorList () -> EventLoopFuture<[StarSector]> {
-        let promise = loop.next().makePromise(of: [StarSector].self)
-        
-        let url = URLComponents(string: "https://systems.api.fuelrats.com/get_ha_regions")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+    static func fetchLandmarkList () async throws -> [LandmarkListDocument.LandmarkListEntry] {
+        let request = try! HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
+            "list": "true"
+        ])
 
-        httpClient.execute(request: request, forDecodable: [String].self).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    promise.succeed([])
-                    
-                case .success(let sectors):
-                    promise.succeed(sectors.map({ sector -> StarSector in
-                        var name = sector.uppercased()
-                        var hasSector = false
-                        if name.hasSuffix(" SECTOR") {
-                            name.removeLast(7)
-                            hasSector = true
-                        }
-                        return StarSector(name: name, hasSector: hasSector)
-                    }))
+        return try await httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).landmarks
+    }
+    
+    static func fetchSectorList () async throws -> [StarSector] {
+        let request = try! HTTPClient.Request(systemApiPath: "/get_ha_regions", method: .GET)
+
+        let sectors = try await httpClient.execute(request: request, forDecodable: [String].self)
+        return sectors.map({ sector -> StarSector in
+            var name = sector.uppercased()
+            var hasSector = false
+            if name.hasSuffix(" SECTOR") {
+                name.removeLast(7)
+                hasSector = true
             }
+            return StarSector(name: name, hasSector: hasSector)
         })
-        return promise.futureResult
     }
 
 
@@ -347,7 +269,7 @@ class SystemsAPI {
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
             
-            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, landmarkDistances[0].1)
+            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, ceil(landmarkDistances[0].1))
         }
         
         var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
@@ -470,18 +392,32 @@ class SystemsAPI {
         }
     }
     
+    struct NearestSystemDocument: Codable {
+        let meta: Meta
+        let data: NearestSystem?
+        
+        struct NearestSystem: Codable {
+            let id64: Int64
+            let name: String
+            let distance: Double
+        }
+        
+        struct Meta: Codable {
+            let name: String?
+            let type: String?
+        }
+    }
+    
     struct NearestPopulatedDocument: Codable {
         let meta: Meta
         let data: [PopulatedSystem]
         
-        var preferableSystem: PopulatedSystem? {
+        func preferableSystems (requireLargePad: Bool = false, requireSpace: Bool = false) -> [PopulatedSystem] {
             return self.data.sorted(by: {
-                ($0.preferableStation?.hasLargePad == true && $1.preferableStation?.hasLargePad != true) && $1.distance / $0.distance < 10
-            }).first
-        }
-        
-        var largePadSystem: PopulatedSystem? {
-            return self.data.filter({ $0.hasStationWithLargePad }).first
+                ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad == true
+                 && $1.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad != true)
+                && $1.distance / $0.distance < 10
+            })
         }
         
         struct PopulatedSystem: Codable {
@@ -494,14 +430,12 @@ class SystemsAPI {
                 return self.stations.contains(where: { $0.hasLargePad })
             }
             
-            var preferableStation: Station? {
-                return self.stations.sorted(by: {
+            func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
+                return self.stations.filter({
+                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type.isLargeSpaceStation)
+                }).sorted(by: {
                     ($0.type.rating < $1.type.rating && ($0.distance - $1.distance) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && ($0.distance - $1.distance) < 300000)
-                }).first
-            }
-            
-            var largePadStation: Station? {
-                return self.stations.filter({ $0.hasLargePad }).first
+                })
             }
             
             struct Station: Codable {
@@ -540,6 +474,23 @@ class SystemsAPI {
                     
                     var rating: UInt {
                         return StationType.ratings[self]!
+                    }
+                    
+                    var isLargeSpaceStation: Bool {
+                        return [
+                            StationType.CoriolisStarport,
+                            StationType.OcellusStarport,
+                            StationType.OrbisStarport,
+                            StationType.AsteroidBase,
+                            StationType.MegaShip
+                        ].contains(self)
+                    }
+                    
+                    var isPlanetary: Bool {
+                        return [
+                            StationType.PlanetaryPort,
+                            StationType.PlanetaryOutpost
+                        ].contains(self)
                     }
                 }
                 
@@ -580,4 +531,17 @@ class SystemsAPI {
 struct StarSector {
     let name: String
     let hasSector: Bool
+}
+
+fileprivate extension HTTPClient.Request {
+    init (systemApiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+        var url = URLComponents(string: "https://systems.api.fuelrats.com")!
+        url.path = systemApiPath
+        
+        url.queryItems = query.queryItems
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+    }
 }

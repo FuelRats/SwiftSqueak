@@ -1,18 +1,18 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
-
+ Copyright 2021 The Fuel Rats Mischief
+ 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
-
+ 
  1. Redistributions of source code must retain the above copyright notice,
  this list of conditions and the following disclaimer.
-
+ 
  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
  disclaimer in the documentation and/or other materials provided with the distribution.
-
+ 
  3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
  products derived from this software without specific prior written permission.
-
+ 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -28,18 +28,20 @@ import JSONAPI
 import AsyncHTTPClient
 
 class RescueUpdateOperation: Operation {
-    let rescue: LocalRescue
+    let caseId: Int
+    let rescue: Rescue
     let representing: IRCUser?
-
+    var errorReported = false
+    
     var onCompletion: (() -> Void)?
     var onError: ((Error) -> Void)?
     private var _executing: Bool = false
     private var _finished: Bool = false
-
+    
     override var isAsynchronous: Bool {
         return true
     }
-
+    
     override var isExecuting: Bool {
         get {
             return _executing
@@ -50,7 +52,7 @@ class RescueUpdateOperation: Operation {
             didChangeValue(forKey: "isExecuting")
         }
     }
-
+    
     override var isFinished: Bool {
         get {
             return _finished
@@ -61,13 +63,85 @@ class RescueUpdateOperation: Operation {
             didChangeValue(forKey: "isFinished")
         }
     }
-
-    init (rescue: LocalRescue, representing: IRCUser? = nil) {
+    
+    init (rescue: Rescue, withCaseId caseId: Int, representing: IRCUser? = nil) {
+        self.caseId = caseId
         self.rescue = rescue
         self.representing = representing
         super.init()
     }
-
+    
+    func attemptUpload () async throws -> RemoteRescue {
+        return try await withCheckedThrowingContinuation { continuation in
+            let patchDocument = SingleDocument(
+                apiDescription: .none,
+                body: .init(resourceObject: rescue.toApiRescue(withIdentifier: caseId)),
+                includes: .none,
+                meta: .none,
+                links: .none
+            )
+            
+            let url = URLComponents(string: "\(configuration.api.url)/rescues/\(rescue.id.uuidString.lowercased())")!
+            var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
+            request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+            request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+            request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+            if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
+                //request.headers.add(name: "x-representing", value: userId.uuidString)
+            }
+            
+            request.body = try? .encodable(patchDocument)
+            
+            httpClient.execute(request: request).whenComplete { result in
+                switch result {
+                case .success(let response):
+                    if response.status == .ok {
+                        self.rescue.synced = true
+                        
+                        let rescue = try! RescueGetDocument.from(data: Data(buffer: response.body!))
+                        continuation.resume(returning: rescue.body.data!.primary.value)
+                    } else {
+                        self.rescue.synced = false
+                        
+                        continuation.resume(throwing: response)
+                        debug(String(response.status.code))
+                        debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
+                    }
+                    
+                case .failure(let error):
+                    debug(String(describing: error))
+                    self.rescue.synced = false
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    private func performUploadUntilSuccess () async throws -> RemoteRescue {
+        guard isCancelled == false else {
+            self.isFinished = true
+            throw CancellationError()
+        }
+        do {
+            let rescue = try await attemptUpload()
+            if errorReported {
+                mecha.reportingChannel?.send(key: "board.sync.errorsolved", map: [
+                    "caseId": caseId
+                ])
+            }
+            return rescue
+        } catch {
+            if errorReported == false {
+                mecha.reportingChannel?.send(key: "board.sync.error", map: [
+                    "caseId": caseId
+                ])
+                errorReported = true
+            }
+            await Task.sleep(30 * 1_000_000_000)
+            return try await performUploadUntilSuccess()
+        }
+    }
+    
     override func start () {
         debug("Starting update operation for \(rescue.id)")
         guard isCancelled == false else {
@@ -75,58 +149,24 @@ class RescueUpdateOperation: Operation {
             self.isFinished = true
             return
         }
-
+        
         if configuration.general.drillMode {
             self.isFinished = true
             self.onCompletion?()
             return
         }
-
+        
         self.isExecuting = true
-
-        let patchDocument = SingleDocument(
-            apiDescription: .none,
-            body: .init(resourceObject: rescue.toApiRescue),
-            includes: .none,
-            meta: .none,
-            links: .none
-        )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(rescue.id.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-        if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
-            request.headers.add(name: "x-representing", value: userId.uuidString)
-        }
-
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenComplete { result in
-            switch result {
-                case .success(let response):
-                    if response.status == .ok {
-                        self.rescue.synced = true
-                        mecha.rescueBoard.checkSynced()
-
-                        self.onCompletion?()
-                    } else {
-                        self.rescue.synced = false
-                        mecha.rescueBoard.synced = false
-                        
-                        self.onError?(response)
-                        debug(String(response.status.code))
-                    }
-                    self.isFinished = true
-                    self.isExecuting = false
-                case .failure(let error):
-                    debug(String(describing: error))
-                    self.rescue.synced = false
-                    mecha.rescueBoard.synced = false
-                    self.onError?(error)
-                    self.isFinished = true
-                    self.isExecuting = false
+        
+        Task {
+            do {
+                let updatedRescue = try await performUploadUntilSuccess()
+                
+                rescue.updatedAt = updatedRescue.updatedAt
+                self.rescue.synced = true
+                self.onCompletion?()
+            } catch {
+                self.onError?(error)
             }
         }
     }

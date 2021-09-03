@@ -26,6 +26,7 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 import IRCKit
+import NIOHTTP1
 
 class QueueAPI {
     static var pendingQueueJoins: [String: EventLoopPromise<Void>] = [:]
@@ -44,102 +45,91 @@ class QueueAPI {
         return encoder
     }
     
-    static func getConfig () -> EventLoopFuture<QueueAPIConfiguration> {
-        let requestUrl = configuration.queue!.url.appendingPathComponent("/config/")
-        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+    static func getConfig () async throws -> QueueAPIConfiguration {
+        let request = try! HTTPClient.Request(queuePath: "/config/", method: .GET)
 
-        return httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
+        return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
     }
     
-    static func fetchStatistics (fromDate date: Date) -> EventLoopFuture<QueueAPIStatistics> {
+    static func fetchStatistics (fromDate date: Date) async throws -> QueueAPIStatistics {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "YYYY-MM-dd"
-        
         let formattedDate = dateFormatter.string(from: date)
-        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
-        requestUrl.path.append("/queue/statistics/")
-        requestUrl.queryItems = [URLQueryItem(name: "daterequested", value: formattedDate), URLQueryItem(name: "detailed", value: "false")]
         
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        let request = try! HTTPClient.Request(queuePath: "/queue/statistics/", method: .POST, query: ["daterequested": formattedDate, "detailed": "false"])
 
-        return httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
+        return try await httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
     }
+    
+    static func fetchQueue () async throws -> [QueueParticipant] {
+        let request = try! HTTPClient.Request(queuePath: "/queue/", method: .GET)
 
-    static func fetchQueue () -> EventLoopFuture<[QueueParticipant]> {
-        let requestUrl = configuration.queue!.url.appendingPathComponent("/queue/")
-        var request = try! HTTPClient.Request(url: requestUrl, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request, forDecodable: [QueueParticipant].self, withDecoder: decoder)
+        return try await httpClient.execute(request: request, forDecodable: [QueueParticipant].self, withDecoder: decoder)
     }
     
     @discardableResult
-    static func dequeue (existingPromise: EventLoopPromise<QueueParticipant>? = nil) -> EventLoopFuture<QueueParticipant> {
-        let promise = existingPromise ?? loop.next().makePromise(of: QueueParticipant.self)
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue")
-        requestUrl.appendPathComponent("/dequeue")
-
-        var request = try! HTTPClient.Request(url: requestUrl, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder).whenComplete({ result in
-            switch result {
-            case .failure(let error):
-                promise.fail(error)
-                
-            case .success(let participant):
-                awaitQueueJoin(participant: participant).whenComplete({ result in
-                    switch result {
-                    case .failure(_):
-                        dequeue(existingPromise: promise)
-                    case .success(_):
-                        promise.succeed(participant)
-                    }
-                })
-            }
-        })
-        return promise.futureResult
+    static func dequeue () async throws -> QueueParticipant {
+        let request = try! HTTPClient.Request(queuePath: "/queue/dequeue", method: .GET)
+        
+        let participant = try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder)
+        
+        do {
+            try await anticipateQueueJoin(participant: participant)
+            return participant
+        } catch {
+            return try await dequeue()
+        }
     }
     
     @discardableResult
-    static func setMaxActiveClients (_ maxActiveClients: Int) -> EventLoopFuture<QueueAPIConfiguration> {
-        var requestUrl = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
-        requestUrl.path.append("/config/max_active_clients")
-        requestUrl.queryItems = [URLQueryItem(name: "max_active_clients", value: String(maxActiveClients))]
+    static func setMaxActiveClients (_ maxActiveClients: Int) async throws -> QueueAPIConfiguration {
+        let request = try! HTTPClient.Request(queuePath: "/config/max_active_clients", method: .PUT, query: ["max_active_clients": String(maxActiveClients)])
 
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: QueueAPI.decoder)
+        return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: QueueAPI.decoder)
     }
+    
     
     static func awaitQueueJoin (participant: QueueParticipant) -> EventLoopFuture<Void> {
         let future = loop.next().makePromise(of: Void.self)
         
         // Immedately resolve if client is already being rescued
-        if mecha.rescueBoard.rescues.first(where: { $0.client?.lowercased() == participant.client.name.lowercased() }) != nil {
-            future.succeed(())
+        Task {
+            if await board.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+                future.succeed(())
+            }
+            
+            // Add a reference of pending client joins
+            QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] = future
+            
+            // Make a 15 second timeout where mecha will give up on the client joining
+            loop.next().scheduleTask(in: .seconds(15), {
+                if let promise = QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] {
+                    promise.fail(ClientJoinError.joinFailed)
+                    RescueBoard.pendingClientJoins.removeValue(forKey: participant.client.name.lowercased())
+                }
+            })
         }
         
-        // Add a reference of pending client joins
-        QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] = future
-        
-        // Make a 15 second timeout where mecha will give up on the client joining
-        loop.next().scheduleTask(in: .seconds(15), {
-            if let promise = QueueAPI.pendingQueueJoins[participant.client.name.lowercased()] {
-                promise.fail(ClientJoinError.joinFailed)
-                RescueBoard.pendingClientJoins.removeValue(forKey: participant.client.name.lowercased())
-            }
-        })
-        
         return future.futureResult
+    }
+    
+    static func anticipateQueueJoin (participant: QueueParticipant) async throws -> Void {
+        // Immedately resolve if client is already being rescued
+        if await board.first(where: { $0.value.client?.lowercased() == participant.client.name.lowercased() }) != nil {
+            return
+        }
+        
+        return try await withCheckedThrowingContinuation({ continuation in
+            awaitQueueJoin(participant: participant).whenComplete({ result in
+                switch result {
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                case .success(_):
+                    continuation.resume(returning: ())
+                }
+                
+            })
+        })
     }
 }
 
@@ -179,5 +169,19 @@ struct QueueAPIStatistics: Codable {
             return Double(time).timeSpan
         }
         return 0.0.timeSpan
+    }
+}
+
+extension HTTPClient.Request {
+    init (queuePath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+        var url = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
+        url.path = queuePath
+        
+        url.queryItems = query.queryItems
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        self.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
+        self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
     }
 }

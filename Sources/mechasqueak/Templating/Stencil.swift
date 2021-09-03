@@ -25,10 +25,11 @@
 import Foundation
 import Stencil
 import IRCKit
+import PathKit
 
 private func generateEnvironment () -> Environment {
     let ext = Extension()
-    let environment = Environment(loader: FileSystemLoader(paths: ["templates/"]), extensions: [ext])
+    let environment = Environment(loader: FileSystemLoader(paths: [Path("\(configuration.sourcePath.path)/templates")]), extensions: [ext])
     
     ext.registerFilter("color") { (value: Any?, arguments: [Any?]) in
         if let contents = value as? String, let colorNumber = arguments.first as? Int, let color = IRCColor(rawValue: colorNumber) {
@@ -75,26 +76,23 @@ private func generateEnvironment () -> Environment {
     
     ext.registerFilter("mainStarInfo") { (value: Any?) in
       if let system = value as? StarSystem {
-        if let bodyInfo = system.bodies, let mainStar = bodyInfo.first(where: { $0.isMainStar == true }), let description = mainStar.bodyDescription {
-            return description
-        }
+          if let mainStar = system.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.isMainStar == true || $0.distanceToArrival == 0.0 }) {
+              if mainStar.spectralClass?.isRefuelable == true {
+                  return "\(IRCFormat.bold(mainStar.spectralClass!.rawValue)) \(mainStar.description)"
+              }
+              return mainStar.description
+          }
       }
 
       return nil
     }
     
-    ext.registerFilter("caseColor") { (value: Any?, arguments: [Any?]) in
-      if let value = value as? String, let rescue = arguments[0] as? LocalRescue {
-        if rescue.status == .Inactive {
-            return IRCFormat.italic(IRCFormat.color(.Cyan, value))
-        } else if rescue.codeRed {
-            return IRCFormat.color(.LightRed, value)
-        } else {
-            return value
+    ext.registerFilter("landmark") { (value: Any?) in
+        if let system = value as? StarSystem {
+            return system.landmark
         }
-      }
-
-      return nil
+        
+        return nil
     }
     
     ext.registerFilter("cardinal") { (value: Any?) in
@@ -124,6 +122,20 @@ private func generateEnvironment () -> Environment {
         
       }
       return nil
+    }
+    
+    ext.registerFilter("caseColor") { (value: Any?, arguments: [Any?]) in
+        if let value = value as? String, let rescue = arguments[0] as? Rescue {
+            if rescue.status == .Inactive {
+                return IRCFormat.italic(IRCFormat.color(.Cyan, value))
+            } else if rescue.codeRed {
+                return IRCFormat.color(.LightRed, value)
+            } else {
+                return value
+            }
+        }
+        
+        return nil
     }
     
     return environment

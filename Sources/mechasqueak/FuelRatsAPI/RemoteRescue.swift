@@ -56,7 +56,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var firstLimpet: ToOneRelationship<Rat?>?
     }
 }
-typealias Rescue = JSONEntity<RescueDescription>
+typealias RemoteRescue = JSONEntity<RescueDescription>
 
 struct RescueData: Codable, Equatable {
     static func == (lhs: RescueData, rhs: RescueData) -> Bool {
@@ -122,9 +122,9 @@ struct AssignMeta: Codable {
     let beaconDistance: UInt?
 }
 
-typealias RescueSearchDocument = Document<ManyResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
-typealias RescueGetDocument = Document<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
-typealias RescueEventDocument = EventDocument<SingleResourceBody<Rescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueSearchDocument = Document<ManyResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueGetDocument = Document<SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueEventDocument = EventDocument<SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,
     NoMetadata,
@@ -142,7 +142,7 @@ extension RescueSearchDocument {
         return try decoder.decode(RescueSearchDocument.self, from: documentData)
     }
 
-    func assignedRatsFor (rescue: Rescue) -> [Rat] {
+    func assignedRatsFor (rescue: RemoteRescue) -> [Rat] {
         return rescue.relationships.rats.ids.compactMap({ ratId in
             return self.body.includes![Rat.self].first(where: {
                 $0.id.rawValue == ratId.rawValue
@@ -150,7 +150,7 @@ extension RescueSearchDocument {
         })
     }
 
-    func firstLimpetFor (rescue: Rescue) -> Rat? {
+    func firstLimpetFor (rescue: RemoteRescue) -> Rat? {
         guard let firstLimpetId = rescue.relationships.firstLimpet?.id.rawValue else {
             return nil
         }
@@ -160,20 +160,20 @@ extension RescueSearchDocument {
         })
     }
 
-    func convertToLocalRescues (onBoard board: RescueBoard) -> [LocalRescue] {
+    func convertToLocalRescues (onBoard board: RescueBoard) -> [(Int, Rescue)] {
         guard let rescueList = self.body.data?.primary.values else {
             return []
         }
 
-        return rescueList.map({ (apiRescue) -> LocalRescue in
+        return rescueList.map({ (apiRescue) -> (Int, Rescue) in
             let rats = self.assignedRatsFor(rescue: apiRescue)
             let firstLimpet = self.firstLimpetFor(rescue: apiRescue)
-            return LocalRescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board)
+            return (apiRescue.commandIdentifier, Rescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board))
         })
     }
 }
 
-extension Rescue {
+extension RemoteRescue {
     var viewLink: URL {
         return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())")!
     }
@@ -182,8 +182,7 @@ extension Rescue {
         return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
     }
     
-    func update () -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
+    func update () async throws {
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self),
@@ -192,23 +191,12 @@ extension Rescue {
             links: .none
         )
 
-        let url = URLComponents(string: "\(configuration.api.url)/rescues/\(self.id.rawValue.uuidString.lowercased())")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    promise.succeed(())
-                case .failure(let restError):
-                    promise.fail(restError)
-            }
-        }
-        return promise.futureResult
+        request.body = try .encodable(patchDocument)
+        
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
     }
 }
 

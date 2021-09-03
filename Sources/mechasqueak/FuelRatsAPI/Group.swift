@@ -102,6 +102,10 @@ enum AccountPermission: String, Codable {
     case AnnouncementWrite = "announcements.write"
 
     case UnknownPermission = ""
+    
+    var groups: [Group] {
+        return mecha.groups.filter({ $0.permissions.contains(self) && $0.name != "owner" })
+    }
 }
 
 extension AccountPermission {
@@ -115,75 +119,56 @@ typealias Group = JSONEntity<GroupDescription>
 typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 
 extension Group {
-    static func list () -> EventLoopFuture<GroupSearchDocument> {
-        var url = configuration.api.url
-        url.appendPathComponent("/groups")
-        var request = try! HTTPClient.Request(url: url, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-
-        return httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
-    }
-
-    func addUser (id: UUID) -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
-
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
-
-        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
-            type: "groups",
-            id: self.id.rawValue
-        )])
-
-        var request = try! HTTPClient.Request(url: url, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try! .encodable(relationship)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
-            switch result {
-                case .success(_):
-                    promise.succeed(())
-
-                case .failure(let error):
-                    promise.fail(error)
-            }
-        })
-        return promise.futureResult
+    var groupNameMap: [String: String] {
+        return [
+            "verified": "Verified User",
+            "developer": "Developer",
+            "rat": "Drilled Rat",
+            "dispatch": "Drilled Dispatch",
+            "trainer": "trainer",
+            "traineradmin": "Training Manager",
+            "overseer": "Overseer",
+            "techrat": "Tech rat",
+            "moderator": "Moderator",
+            "operations": "Operations team",
+            "netadmin": "Network administrator",
+            "admin": "Network moderator"
+        ]
     }
     
-    func delUser (id: UUID) -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
+    var groupDescription: String {
+        return groupNameMap[self.name] ?? self.name
+    }
+    
+    static func getList () async throws -> GroupSearchDocument {
+        let request = try! HTTPClient.Request(apiPath: "/groups", method: .GET)
 
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
+        return try await httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
+    }
 
+    func addUser (id: UUID) async throws {
         let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
             type: "groups",
             id: self.id.rawValue
         )])
 
-        var request = try! HTTPClient.Request(url: url, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = try! .encodable(relationship)
+        
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
+    }
+    
+    func removeUser (id: UUID) async throws {
+        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
+            type: "groups",
+            id: self.id.rawValue
+        )])
+
+        var request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try! .encodable(relationship)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
-            switch result {
-                case .success(_):
-                    promise.succeed(())
-
-                case .failure(let error):
-                    promise.fail(error)
-            }
-        })
-        return promise.futureResult
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }
 }

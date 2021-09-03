@@ -27,11 +27,7 @@ import AsyncHTTPClient
 import NIO
 
 class URLShortener {
-    static func shorten (
-        url: URL, keyword: String?,
-        complete: @escaping (ShortURLResponse) -> Void,
-        error: @escaping (Error?) -> Void
-    ) {
+    static func shorten (url: URL, keyword: String? = nil) async throws -> ShortURLResponse {
         var requestUrl = URLComponents(url: configuration.shortener.url, resolvingAgainstBaseURL: false)!
         requestUrl.queryItems = [
             URLQueryItem(name: "action", value: "shorturl"),
@@ -47,38 +43,15 @@ class URLShortener {
         var request = try! HTTPClient.Request(url: requestUrl.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    let decoder = JSONDecoder()
-
-                    guard let shortenResult = try? decoder.decode(ShortURLResponse.self, from: Data(buffer: response.body!)) else {
-                        error(nil)
-                        return
-                    }
-                    complete(shortenResult)
-                case .failure(let restError):
-                    error(restError)
-            }
-        }
-    }
-
-    static func attemptShorten (url: URL, complete: @escaping (URL) -> Void) {
-        URLShortener.shorten(url: url, keyword: nil, complete: { response in
-            complete(response.shorturl)
-        }, error: { _ in
-            complete(url)
-        })
+        return try await httpClient.execute(request: request, forDecodable: ShortURLResponse.self)
     }
     
-    static func attemptShorten (url: URL) -> EventLoopFuture<URL> {
-        let future = loop.next().makePromise(of: URL.self)
-        URLShortener.shorten(url: url, keyword: nil, complete: { response in
-            future.succeed(response.shorturl)
-        }, error: { _ in
-            future.succeed(url)
-        })
-        return future.futureResult
+    static func attemptShorten (url: URL) async -> URL {
+        do {
+            return try await shorten(url: url).shorturl
+        } catch {
+            return url
+        }
     }
 }
 

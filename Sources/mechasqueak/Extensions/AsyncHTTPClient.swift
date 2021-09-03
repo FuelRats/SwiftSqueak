@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -25,6 +25,7 @@
 import Foundation
 import AsyncHTTPClient
 import NIO
+import NIOHTTP1
 
 extension HTTPClient {
     static var defaultJsonDecoder: JSONDecoder {
@@ -33,51 +34,58 @@ extension HTTPClient {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }
+    
+    func execute <T: AnyRange> (
+        request: Request,
+        deadline: NIODeadline? = nil,
+        expecting statusCode: T
+    ) async throws -> HTTPClient.Response where T.Bound == Int {
+        try await withCheckedThrowingContinuation({ continuation in
+            self.execute(request: request, deadline: deadline).whenComplete { result in
+                switch result {
+                    case .success(let response):
+                        if statusCode.contains(Int(response.status.code)) {
+                            continuation.resume(returning: response)
+                        } else {
+                            continuation.resume(throwing: response)
+                        }
 
+                    case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        })
+    }
+    
     func execute<D> (
         request: Request,
         forDecodable decodable: D.Type,
         deadline: NIODeadline? = nil,
         withDecoder decoder: JSONDecoder = defaultJsonDecoder
-    ) -> EventLoopFuture<D> where D: Decodable {
-        let promise = loop.next().makePromise(of: D.self)
-
-        httpClient.execute(request: request, deadline: deadline).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    do {
-                        let result = try decoder.decode(D.self, from: Data(buffer: response.body!))
-                        promise.succeed(result)
-                    } catch {
-                        debug(String(data: Data(buffer: response.body!), encoding: .utf8) ?? "")
-                        debug(String(describing: error))
-                        promise.fail(error)
-                    }
-                case .failure(let restError):
-                    debug(String(describing: restError))
-                    promise.fail(restError)
-            }
+    ) async throws -> D where D: Decodable {
+        let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
+        do {
+            return try decoder.decode(D.self, from: Data(buffer: response.body!))
+        } catch {
+            debug(String(data: Data(buffer: response.body!), encoding: .utf8) ?? "")
+            debug(String(describing: error))
+            throw error
         }
-
-        return promise.futureResult
     }
 }
 
-extension EventLoopFuture where Value == HTTPClient.Response {
-    func whenCompleteExpecting(status: Int, complete: @escaping (Result<HTTPClient.Response, Error>) -> Void) {
-        self.whenComplete { result in
-            switch result {
-                case .success(let response):
-                    if response.status.code == status {
-                        complete(result)
-                    } else {
-                        complete(Result.failure(response))
-                    }
-
-                case .failure:
-                    complete(result)
-            }
-        }
+extension HTTPClient.Request {
+    init (apiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+        var url = URLComponents(string: "\(configuration.api.url)")!
+        url.path = apiPath
+        
+        
+        url.queryItems = query.queryItems
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        self.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
     }
 }
 
@@ -88,5 +96,21 @@ extension HTTPClient.Body {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         return .data(try encoder.encode(object))
+    }
+    
+    static func formUrlEncoded(_ query: [String: String?]) throws -> HTTPClient.Body {
+        var url = URLComponents()
+        url.queryItems = query.queryItems
+        return .string(url.percentEncodedQuery ?? "")
+    }
+}
+
+extension Dictionary where Key == String, Value == String? {
+    var queryItems: [URLQueryItem] {
+        return self.reduce([], { (items, current) in
+            var items = items
+            items.append(URLQueryItem(name: current.key, value: current.value))
+            return items
+        })
     }
 }

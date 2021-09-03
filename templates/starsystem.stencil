@@ -3,9 +3,12 @@
 {% else %}
 "{{ system.name }}"
 {% endif %}
+{% if government %}
+ {{ government }}
+{% endif %}
 {% filter italic %}
  (
-{% if system.landmark %}
+{% if landmark %}
 {% if system|mainStarInfo %}
 {{ system|mainStarInfo }}
  {% endif %}

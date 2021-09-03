@@ -27,7 +27,7 @@ import CryptoSwift
 import AsyncHTTPClient
 
 class Twitter {
-    static func tweet (message: String, complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
+    static func tweet (message: String) async throws {
         let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
         var request = try! HTTPClient.Request(url: url.url!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
@@ -37,15 +37,8 @@ class Twitter {
         request.body = .data(try! JSONSerialization.data(withJSONObject: [
             "message": message
         ], options: []))
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    complete()
-                case .failure(let restError):
-                    error(restError)
-            }
-        }
+        
+        _ = try await httpClient.execute(request: request, deadline: nil, expecting: 200)
     }
 }
 

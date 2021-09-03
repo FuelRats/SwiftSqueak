@@ -72,46 +72,31 @@ struct QueueParticipant: Codable, Hashable {
     }
     
     @discardableResult
-    func setInProgress () -> EventLoopFuture<QueueParticipant> {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
-
-        print(requestUrl.absoluteString)
-        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
+    func setInProgress () async throws -> QueueParticipant {
+        var request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+        
         var queueItem = self
         queueItem.inProgress = true
         request.body = try! .data(QueueAPI.encoder.encode(queueItem))
 
-        return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+        return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
     
     @discardableResult
-    func changeName (name: String) -> EventLoopFuture<QueueParticipant> {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString.lowercased())
-
-        print(requestUrl.absoluteString)
-        var request = try! HTTPClient.Request(url: requestUrl, method: .PUT)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
+    func changeName (name: String) async throws -> QueueParticipant {
+        var request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+        
         var queueItem = self
         queueItem.client.name = name
         request.body = try! .data(QueueAPI.encoder.encode(queueItem))
 
-        return httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+        return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
     
     @discardableResult
-    func delete () -> EventLoopFuture<HTTPClient.Response> {
-        var requestUrl = configuration.queue!.url.appendingPathComponent("/queue/uuid/")
-        requestUrl.appendPathComponent(self.uuid.uuidString)
+    func delete () async throws -> HTTPClient.Response {
+        let request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
 
-        var request = try! HTTPClient.Request(url: requestUrl, method: .DELETE)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "bearer \(configuration.queue!.token)")
-
-        return httpClient.execute(request: request)
+        return try await httpClient.execute(request: request, deadline: nil, expecting: 204)
     }
 }

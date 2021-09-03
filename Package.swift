@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "mechasqueak",
     platforms: [
-        .macOS(.v10_15)
+        .macOS("12.0")
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -23,13 +23,13 @@ let package = Package(
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 7, 2)),
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 0)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
-        //.package(path: "../IRCKit")
-        .package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 14, 2))
+        .package(path: "../IRCKit")
+        //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 14, 2))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
-        .target(
+        .executableTarget(
             name: "mechasqueak",
             dependencies: [
                 .product(name: "Lingo", package: "Lingo"),

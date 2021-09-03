@@ -58,7 +58,7 @@ struct IRCBotCommand {
             self.message = privateMessage
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
-
+            print(tokens)
 
             self.namedOptions = OrderedSet(tokens.compactMap({
                 guard case let .NamedOption(option) = $0 else {
@@ -148,6 +148,11 @@ struct IRCBotCommand {
     var param5: (String?, String?, String?, String?, String?) {
         return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2], self.parameters[safe: 3], self.parameters[safe: 4])
     }
+    
+    func error (_ error: Error) {
+        debug(String(describing: error))
+        self.message.error(key: "genericerror", fromCommand: self)
+    }
 }
 
 enum Token {
@@ -186,6 +191,7 @@ struct Lexer {
 
     private mutating func nextToken () throws -> Token? {
         guard let current = self.peek() else { return nil }
+        
         let next = self.peek(aheadBy: 1)
         let isIdentifier = current.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
         let nextIsIdentifier = next?.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })

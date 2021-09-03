@@ -32,7 +32,7 @@ class HelpCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["help"],
         [.param("category/command", "!assign", .continuous, .optional)],
         category: nil,
@@ -88,74 +88,142 @@ class HelpCommands: IRCBotModule {
             }
             
             if category == .facts {
-                Fact.all.whenSuccess({ facts in
-                    var facts = Array(facts.grouped.values).sorted(by: { $0.cannonicalName < $1.cannonicalName })
-                    
-                    var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
-                    facts = facts.filter({ $0.isPlatformFact == false })
-                    
-                    command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
-                        "language": command.locale.englishDescription,
-                        "count": facts.count,
-                        "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
+                guard let facts = try? await Fact.getAllFacts() else {
+                    return
+                }
+                
+                var groupedFacts = Array(facts.grouped.values).sorted(by: { $0.cannonicalName < $1.cannonicalName })
+                
+                var platformFacts = groupedFacts.filter({ $0.isPlatformFact }).platformGrouped
+                groupedFacts = groupedFacts.filter({ $0.isPlatformFact == false })
+                
+                command.message.replyPrivate(key: "facts.list", fromCommand: command, map: [
+                    "language": command.locale.englishDescription,
+                    "count": groupedFacts.count,
+                    "facts": groupedFacts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
+                ])
+                
+                if platformFacts.count > 0 {
+                    command.message.replyPrivate(key: "facts.list.platform", fromCommand: command, map: [
+                        "count": platformFacts.count,
+                        "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(separator: ", ")
                     ])
-                    
-                    if platformFacts.count > 0 {
-                        command.message.replyPrivate(key: "facts.list.platform", fromCommand: command, map: [
-                            "count": platformFacts.count,
-                            "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(separator: ", ")
-                        ])
-                    }
-                })
+                }
             }
             return
         }
+        
 
         let commandText = String(command.parameters[0].dropFirst()).lowercased()
         guard let helpCommand = MechaSqueak.commands.first(where: {
             $0.commands.contains(commandText)
         }) else {
+            if let fact = try? await Fact.get(name: commandText, forLocale: Locale(identifier: "en")) {
+                command.message.replyPrivate(key: "anyfact.info", fromCommand: command, map: [
+                    "fact": fact.id,
+                    "language": Locale(identifier: fact.language).englishDescription,
+                    "created": fact.createdAt.eliteFormattedString,
+                    "updated": fact.updatedAt.eliteFormattedString,
+                    "author": fact.author
+                ])
+                command.message.replyPrivate(message: fact.message)
+                return
+            }
             message.error(key: "help.commanderror", fromCommand: command, map: [
                 "command": commandText
             ])
             return
         }
-
-
-        message.replyPrivate(key: "help.commandtitle", fromCommand: command, map: [
+        
+        if configuration.general.drillMode {
+            let destination = command.message.destination
+            sendCommandHelp(helpCommand: helpCommand, destination: destination)
+        } else {
+            let destination = IRCChannel(privateMessage: command.message.user, onClient: command.message.client)
+            sendCommandHelp(helpCommand: helpCommand, destination: destination)
+        }
+    }
+    
+    @AsyncBotCommand(
+        ["sendhelp"],
+        [.param("nick", "SpaceDawg"), .param("command", "!assign", .continuous)],
+        category: nil,
+        description: "Send help information about a MechaSqueak command to another user",
+        permission: .AnnouncementWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSendHelpCommand = { command in
+        guard let user = command.message.destination.member(named: command.parameters[0]) else {
+            command.message.error(key: "sendhelp.nouser", fromCommand: command, map: [
+                "nick": command.parameters[0]
+            ])
+            return
+        }
+        
+        var commandText = String(command.parameters[1]).lowercased()
+        if commandText.starts(with: "!") {
+            commandText.removeFirst()
+        }
+        
+        guard let helpCommand = MechaSqueak.commands.first(where: {
+            $0.commands.contains(commandText)
+        }) else {
+            command.message.error(key: "help.commanderror", fromCommand: command, map: [
+                "command": commandText
+            ])
+            return
+        }
+        
+        let destination = IRCChannel(privateMessage: user, onClient: command.message.client)
+        sendCommandHelp(helpCommand: helpCommand, destination: destination)
+    }
+    
+    static func sendCommandHelp (helpCommand: IRCBotCommandDeclaration, destination: IRCChannel) {
+        destination.send(key: "help.commandtitle", map: [
             "command": helpCommand.usageDescription(command: nil),
             "example": helpCommand.example.count > 0
-                ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
-                : ""
+            ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
+            : ""
         ])
+        let permissionGroups = helpCommand.permission?.groups
+            .sorted(by: { $0.priority < $1.priority })
+            .map({ $0.groupDescription }) ?? []
+        
+        var secondLine = ""
         if helpCommand.commands.count > 1 {
             let aliases = helpCommand.commands.dropFirst().map({
                 "!\($0)"
             }).joined(separator: " ")
-            message.replyPrivate(key: "help.commandaliases", fromCommand: command, map: [
-                "aliases": aliases
-            ])
+            secondLine += "\(IRCFormat.bold("Aliases:")) \(aliases). "
         }
-
-        message.replyPrivate(message: helpCommand.description)
-
+        
+        if permissionGroups.count > 0 {
+            secondLine += "\(IRCFormat.bold("Permission:")) \(permissionGroups.joined(separator: ", ")). "
+        }
+        
+        if secondLine.count > 0 {
+            destination.send(message: secondLine)
+        }
+        
+        destination.send(message: helpCommand.description)
+        
         let commandIdentifier = "help.command.\(helpCommand.commands[0])"
         let fullDescription = lingo.localize(commandIdentifier, locale: "en-GB")
         if fullDescription != commandIdentifier {
-            message.replyPrivate(message: fullDescription)
+            destination.send(message: fullDescription)
         }
-
+        
         if helpCommand.options.count > 0 || helpCommand.namedOptions.count > 0 {
-            message.replyPrivate(message: "Options:")
+            destination.send(message: "Options:")
         }
         for option in helpCommand.namedOptions {
             let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
-            message.replyPrivate(message: " --\(option): \(optionDescription)")
+            destination.send(message: " --\(option): \(optionDescription)")
         }
-
+        
         for option in helpCommand.options {
             let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
-            message.replyPrivate(message: " -\(option): \(optionDescription)")
+            destination.send(message: " -\(option): \(optionDescription)")
         }
     }
 }

@@ -50,7 +50,7 @@ class SessionLogger: IRCBotModule {
         command.message.reply(key: "savelogs.started", fromCommand: command)
     }
     
-    @BotCommand(
+    @AsyncBotCommand(
         ["savelogs"],
         category: .utility,
         description: "Save logs from a drill or training session, use after the session has completed",
@@ -63,12 +63,16 @@ class SessionLogger: IRCBotModule {
             return
         }
         
-        Rodentbin.upload(contents: session.logs).whenSuccess({ result in
+        do {
+            let result = try await Rodentbin.upload(contents: session.logs)
+            
             sessions.removeValue(forKey: command.message.destination.name)
             command.message.reply(key: "savelogs.saved", fromCommand: command, map: [
                 "url": "https://paste.fuelrats.com/\(result.key).md"
             ])
-        })
+        } catch {
+            command.error(error)
+        }
     }
 
     @EventListener<IRCChannelMessageNotification>

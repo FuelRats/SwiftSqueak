@@ -32,7 +32,7 @@ class TweetCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
@@ -46,31 +46,30 @@ class TweetCommands: IRCBotModule {
             command.message.error(key: "tweet.minlength", fromCommand: command)
             return
         }
-        if mecha.rescueBoard.rescues.first(where: { rescue in
+        if await board.first(where: { (caseId, rescue) in
             if let system = rescue.system {
                 if contents.lowercased().contains(system.name.lowercased()) {
                     return true
                 }
             }
-            if let client = rescue.client {
-                if contents.lowercased().contains(client.lowercased()) {
-                    return true
-                }
+            if let clientName = rescue.client, contents.lowercased().contains(clientName.lowercased()) {
+                return true
             }
             return false
         }) != nil {
             command.message.error(key: "tweet.confidential", fromCommand: command)
             return
         }
-
-        Twitter.tweet(message: contents, complete: {
+        
+        do {
+            try await Twitter.tweet(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
-        }, error: { _ in
+        } catch {
             command.message.error(key: "tweet.error", fromCommand: command)
-        })
+        }
     }
 
-    @BotCommand(
+    @AsyncBotCommand(
         ["tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,
@@ -79,20 +78,20 @@ class TweetCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveTweetCaseCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         guard let platform = rescue.platform else {
             command.message.error(key: "tweetcase.noplatform", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
             return
         }
 
         guard let system = rescue.system else {
             command.message.reply(key: "tweetcase.missingsystem", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
             return
         }
@@ -109,27 +108,28 @@ class TweetCommands: IRCBotModule {
         let tweet = lingo.localize(format, locale: "en-GB", interpolations: [
             "platform": platform,
             "systemDescription": description ?? "",
-            "caseId": rescue.commandIdentifier,
+            "caseId": caseId,
             "id": shortId.lowercased(),
             "link": url.absoluteString
         ])
-
-        Twitter.tweet(message: tweet, complete: {
+        
+        do {
+            try await Twitter.tweet(message: tweet)
+            
             command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
                 "tweet": tweet
             ])
-            rescue.quotes.append(RescueQuote(
+            rescue.appendQuote(RescueQuote(
                 author: command.message.user.nickname,
                 message: "Tweet to @FuelRatAlerts has been posted",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: command.message.user.nickname
             ))
-            rescue.syncUpstream(representing: command.message.user)
-        }, error: { _ in
+        } catch {
             command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+                "caseId": caseId
             ])
-        })
+        }
     }
 }

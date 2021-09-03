@@ -23,6 +23,20 @@ extension EventLoopFuture {
 
         return combinedFuture.futureResult
     }
+    
+    func asContinuation() async throws -> Value {
+        return try await withCheckedThrowingContinuation({ continuation in
+            self.whenComplete({ result in
+                switch result {
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                    
+                case .success(let value):
+                    continuation.resume(returning: value)
+                }
+            })
+        })
+    }
 }
 
 extension TimeInterval {

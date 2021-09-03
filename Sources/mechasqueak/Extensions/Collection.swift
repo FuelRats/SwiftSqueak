@@ -24,8 +24,48 @@
 
 import Foundation
 
-enum SystemName {
-    case clasicallyNamed
-    case catalogued(String, String)
-    case procedural(String, String)
+extension Array {
+    func asyncMap<T> (_ transform: @escaping (Element) async throws -> T) async rethrows -> [T] {
+        var mappedElements: [T] = []
+        try await withThrowingTaskGroup(of: T.self) { group in
+            for element in self {
+                group.addTask {
+                    return try await transform(element)
+                }
+            }
+            
+            for try await element in group {
+                mappedElements.append(element)
+            }
+        }
+        return mappedElements
+    }
+    
+    func compactMap<T> (_ transform: @escaping (Element) async throws -> T?) async rethrows -> [T] {
+        var mappedElements: [T] = []
+        try await withThrowingTaskGroup(of: T?.self) { group in
+            for element in self {
+                group.addTask {
+                    return try await transform(element)
+                }
+            }
+            
+            for try await element in group {
+                if let element = element {
+                    mappedElements.append(element)
+                }
+            }
+        }
+        return mappedElements
+    }
+    
+    func asyncFirst (where predicate: @escaping (Element) async throws -> Bool) async rethrows -> Element? {
+        for element in self {
+            let result = try await predicate(element)
+            if result {
+                return element
+            }
+        }
+        return nil
+    }
 }

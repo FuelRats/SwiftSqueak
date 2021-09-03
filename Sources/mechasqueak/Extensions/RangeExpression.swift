@@ -25,9 +25,21 @@
 import Foundation
 
 protocol AnyRange {
-    associatedtype Bound
+    associatedtype Bound where Bound: Comparable
     var lower: Bound? { get }
     var upper: Bound? { get }
+}
+
+extension AnyRange {
+    func contains (_ value: Bound) -> Bool {
+        if let lower = self.lower, value >= lower {
+            return true
+        }
+        if let upper = self.upper, value <= upper {
+            return true
+        }
+        return false
+    }
 }
 
 extension ClosedRange: AnyRange {
@@ -68,4 +80,28 @@ extension PartialRangeThrough: AnyRange {
     var upper: Bound? {
         return self.upperBound
     }
+}
+
+extension UInt: AnyRange {
+    var lower: UInt? {
+        return self
+    }
+    
+    var upper: UInt? {
+        return self
+    }
+    
+    typealias Bound = UInt
+}
+
+extension Int: AnyRange {
+    var lower: Int? {
+        return self
+    }
+    
+    var upper: Int? {
+        return self
+    }
+    
+    typealias Bound = Int
 }

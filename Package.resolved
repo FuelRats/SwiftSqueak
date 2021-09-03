@@ -38,15 +38,6 @@
         }
       },
       {
-        "package": "IRCKit",
-        "repositoryURL": "https://github.com/FuelRats/IRCKit.git",
-        "state": {
-          "branch": null,
-          "revision": "1a89895c1913f44c662d1c402e6e72685d8fefd8",
-          "version": "0.14.2"
-        }
-      },
-      {
         "package": "JSONAPI",
         "repositoryURL": "https://github.com/mattpolzin/JSONAPI.git",
         "state": {

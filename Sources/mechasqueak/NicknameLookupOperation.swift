@@ -60,14 +60,13 @@ class NicknameLookupManager {
         }
 
         operation.onError = { error in
-            mecha.rescueBoard.synced = false
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .seconds(1), execute: {
                 self.lookupIfNotExists(user: user)
             })
         }
 
         self.queue.addOperation(operation)
-        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount)")
+        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount))")
     }
 
     func lookupIfNotExists (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
@@ -152,20 +151,24 @@ class NicknameLookupOperation: Operation {
             return
         }
 
-        try? FuelRatsAPI.getNicknameFor(ircAccount: account, complete: { apiNickname in
-            if apiNickname != nil {
-                debug("Synced account data for \(account)")
-            } else {
-                debug("Did not find account data for \(account)")
+        Task {
+            do {
+                let apiNickname = try await FuelRatsAPI.getNickname(forIRCAccount: account)
+                if apiNickname != nil {
+                    debug("Synced account data for \(account)")
+                } else {
+                    debug("Did not find account data for \(account)")
+                }
+                self.isFinished = true
+                self.isExecuting = false
+                self.onCompletion?(apiNickname)
+            } catch {
+                debug("Failed to lookup account data for \(account)")
+                print(String(describing: error))
+                self.isFinished = true
+                self.isExecuting = false
+                self.onError?(error)
             }
-            self.isFinished = true
-            self.isExecuting = false
-            self.onCompletion?(apiNickname)
-        }, error: { error in
-            debug("Failed to lookup account data for \(account)")
-            self.isFinished = true
-            self.isExecuting = false
-            self.onError?(error)
-        })
+        }
     }
 }

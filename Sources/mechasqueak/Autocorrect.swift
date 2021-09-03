@@ -25,6 +25,34 @@
 import Foundation
 import Regex
 
+func autocorrect (system: StarSystem) -> StarSystem {
+    var system = system
+    
+    let systemName = system.name
+    if let systemForNamedBody = namedBodies[systemName.lowercased()] {
+        system.name = systemForNamedBody
+        system.clientProvidedBody = systemName
+        system.automaticallyCorrected = true
+    } else if let procedural = ProceduralSystem(string: systemName), let correction = ProceduralSystem.correct(system: systemName) {
+        system.name = correction
+        if let body = procedural.systemBody {
+            system.clientProvidedBody = body
+        }
+        system.automaticallyCorrected = true
+    } else if let systemBodiesMatches = ProceduralSystem.systemBodyPattern.findFirst(in: system.name) {
+        system.name.removeLast(systemBodiesMatches.matched.count)
+        let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
+        system.clientProvidedBody = body
+        system.automaticallyCorrected = true
+    }
+    
+    if let handauthoredCorrection = HandauthoredCorrection.correct(systemName: system.name), handauthoredCorrection != systemName {
+        system.name = handauthoredCorrection
+        system.automaticallyCorrected = true
+    }
+    return system
+}
+
 struct ProceduralSystem: CustomStringConvertible {
     static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
@@ -163,6 +191,9 @@ struct ProceduralSystem: CustomStringConvertible {
                 break
             } else {
                 proceduralComponents.removeFirst()
+                if systemId.last == "0" {
+                    break
+                }
             }
             
         }
@@ -284,5 +315,23 @@ struct ProceduralSystem: CustomStringConvertible {
             return nil
         }
         return system
+    }
+}
+
+struct HandauthoredCorrection {
+    let numberedSectors = ["LTT", "NLTT", "HIP", "LHS", "LFT", "HR", "LAWD"]
+    
+    static func correct (systemName: String) -> String? {
+        if let numberedSectorMatch = "(LTT|NLTT|HIP|LHS|LFT|HR|LAWD)(?:\\D)?(\\d+)".r!.findFirst(in: systemName) {
+            return "\(numberedSectorMatch.group(at:1)!.uppercased()) \(numberedSectorMatch.group(at: 2)!)"
+        } else if let wiseMatch = "WISE(?:\\D)?([0-9]+)\\D([0-9]+)".r!.findFirst(in: systemName) {
+            return "WISE \(wiseMatch.group(at: 1)!)+\(wiseMatch.group(at: 2)!)"
+        } else if let lpMatch = "LP(?:\\D)?(\\d+)\\D(\\d+)".r?.findFirst(in: systemName) {
+            return "LP \(lpMatch.group(at: 1)!)-\(lpMatch.group(at: 2)!)"
+        } else if let cpdMatch = "CPD(?:\\D)?(\\d+)\\D(\\d+)".r?.findFirst(in: systemName) {
+            return "CPD-\(cpdMatch.group(at: 1)!) \(cpdMatch.group(at: 2)!)"
+        }
+        
+        return nil
     }
 }

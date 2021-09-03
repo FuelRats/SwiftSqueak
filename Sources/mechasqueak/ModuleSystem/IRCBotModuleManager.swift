@@ -44,7 +44,7 @@ class IRCBotModuleManager {
         MechaSqueak.commands.append(command)
     }
 
-    @EventListener<IRCChannelMessageNotification>
+    @AsyncEventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
@@ -54,11 +54,11 @@ class IRCBotModuleManager {
             return
         }
 
-        handleIncomingCommand(ircBotCommand: ircBotCommand)
+        await handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
 
-    @EventListener<IRCPrivateMessageNotification>
+    @AsyncEventListener<IRCPrivateMessageNotification>
     var onPrivateMessage = { privateMessage in
         guard privateMessage.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
@@ -68,10 +68,10 @@ class IRCBotModuleManager {
             return
         }
 
-        handleIncomingCommand(ircBotCommand: ircBotCommand)
+        await handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
-    static func handleIncomingCommand (ircBotCommand: IRCBotCommand) {
+    static func handleIncomingCommand (ircBotCommand: IRCBotCommand) async {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
 
@@ -85,7 +85,7 @@ class IRCBotModuleManager {
             var helpCommand = ircBotCommand
             helpCommand.command = "!help"
             helpCommand.parameters = ["!\(ircBotCommand.command)"]
-            mecha.helpModule.didReceiveHelpCommand(helpCommand)
+            await mecha.helpModule.didReceiveHelpCommand(helpCommand)
             return
         }
 
@@ -146,7 +146,7 @@ class IRCBotModuleManager {
                 if paramIndex == maxParameters - 1 {
                     var remainderComponents = Array(ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex])
                     remainderComponents = remainderComponents.map({
-                        if $0.contains(" ") {
+                        if $0.contains(" ") && $0.count < remainderComponents.count {
                             return "\"\($0)\""
                         }
                         return $0
@@ -203,5 +203,6 @@ class IRCBotModuleManager {
         }
 
         command.onCommand?(ircBotCommand)
+        await command.asyncOnCommand?(ircBotCommand)
     }
 }

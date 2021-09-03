@@ -44,7 +44,9 @@
   "distance.error": "Unable to calculate distance as an error occured when retrieving system information",
   "distance.notfound": "Unable to calculate distance as one of the systems could not be found",
   "distance.result": "The distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY",
-  "distance.resultapprox": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY (Caution: At least one system has an approximated position and could be off by as much as 1000LY)",
+  "distance.result.plotter": "The distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY. \u0002Spansh:\u0002 %{plotterUrl}",
+  "distance.resultapprox": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY (Caution: At least one system has an approximated position)",
+  "distance.resultapprox.plotter": "The estimated distance from \"%{departure}\" to \"%{arrival}\" is %{distance} LY \u0002Spansh:\u0002 %{plotterUrl} (Caution: At least one system has an approximated position)",
   "gametime": "The current in-game time is %{time} on %{date} ",
 
   "sctime.error": "Unable to understand the distance given in this command.",
@@ -62,6 +64,8 @@
   "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",
   "board.nickcorrected": "Caution: Nickname of case #%{caseId} (%{client}) has been automatically corrected to %{newNick}",
   "board.synced": "Successfully synced board with %{api}. %{updates}",
+  "board.sync.error": "\u0002Alert:\u0002 I am having trouble updating case #%{caseId} on the server, the dispatch board is no longer up to date. I will keep trying and let you know when the issue has been resolved.",
+  "board.sync.errorsolved": "The problems with syncing case #%{caseId} has been resolved.",
   "board.synced.downstreamNew": {
       "one": "%{count} new rescue was downloaded from the server",
       "other": "%{count} new rescues were downloaded from the server"
@@ -71,15 +75,16 @@
       "other": "%{count} new rescues were uploaded to the server"
   },
   "board.synced.downstreamUpdate": {
-      "one": "%{count} altered rescue was downloaded from the server",
-      "other": "%{count} altered rescues were downloaded from the server"
+      "one": "%{count} modified rescue was downloaded from the server",
+      "other": "%{count} modified rescues were downloaded from the server"
   },
   "board.synced.upstreamUpdate": {
-      "one": "%{count} altered rescue was uploaded to the server",
-      "other": "%{count} altered rescues were uploaded to server"
-  },"board.synced.conflicts": {
-      "one": "%{count} case number were altered due to a conflict",
-      "other": "%{count} case numbers were altered due to a conflict"
+      "one": "%{count} modified rescue was uploaded to the server",
+      "other": "%{count} modified rescues were uploaded to server"
+  },
+  "board.synced.conflicts": {
+      "one": "\u000304%{count} case number were altered due to a conflict\u0003",
+      "other": "\u000304%{count} case numbers were altered due to a conflict\u0003"
   },
   "board.syncfailed": "Unable to connect to rescue server, running in offline mode and attempting periodic re-sync.",
   "board.remotecreation": "ATTENTION: A new rescue (#%{caseId} (%{client})) was created remotely, performing a sync with the rescue server",
@@ -94,9 +99,9 @@
   "board.signal.ignore": "Ignoring signal from case where client failed to join channel",
   "board.signal.helpyou": "%{client} You already sent a Signal! Please stand by, someone will help you soon!",
   "board.signal.oxygen": "%{client} Are you on emergency oxygen? (\"oxygen depleted in xx.xx\" timer counting down in the top right of your cockpit)",
-  "board.signal.changes": "\u000304CAUTION:\u0003 The new signal for case #%{caseId} has changes: %{changes}",
+  "board.signal.changes": "\u000304CAUTION:\u0003 The latest signal for case #%{caseId} has new information: %{changes}",
   "board.signal.unhelpfulsysmeme": "\"%{system}\" https://i.kym-cdn.com/entries/icons/facebook/000/032/874/cover4.jpg ಠ_ಠ",
-  "board.systembody": "NOTE: Client indicated their location near system body \"%{body}\" %{bodyDescription}",
+  "board.systembody": "NOTE: Client indicated their location near system body %{bodyDescription}",
   "board.stationfound": "\u0002Station Found\u0002 for case #%{caseId} (%{client}) %{name} (%{type}) %{distance} (%{services})",
   
   "board.casenotfound": "Could not find a case ID or client name matching \"%{caseIdentifier}\".",
@@ -109,6 +114,7 @@
   "board.toggleodyssey.platform": "Only PC cases can be marked as Odyssey cases",
   
   "board.syschange": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo}",
+  "board.syschange.nochange": "Case #%{caseId} is already set to this system.",
   "board.syschange.autocorrect": "System for case #%{caseId} (%{client}) has been changed to %{systemInfo} \u000304(Automatically corrected)\u0003",
 
   "board.languagechange": "Language for case #%{caseId} (%{client}) has now been changed to %{language}",
@@ -134,9 +140,6 @@
 
   "board.assign.noplatform": "Cannot assign rats to a case without a platform set (!pc | !xb | !ps).",
   "board.assign.banned": "%{rats} cannot be assigned to cases right now, contact the ops team for more information.",
-  "board.assign.none": "Found nobody to assign to case #%{caseId}",
-  "board.assign.norat": "The following rats could not be assigned as they do not have a valid CMDR for this case: %{rats}. To override send the same command again within the next 30 seconds.",
-  "board.assign.jumpconflict": "Refused to assign the following rats as they called jumps for a different case but not this one. To override send the same command again within the next 30 seconds.",
   "board.assign.go": {
       "one": "%{client} Please add the following rat to your friends list: %{rats}",
       "other": "%{client} Please add the following %{count} rats to your friends list: %{rats}"
@@ -145,9 +148,6 @@
       "one": "%{client} Please REMAIN at the main menu and add the following rat to your friends list: %{rats}",
       "other": "%{client} Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}"
   },
-  "board.assign.unidentified": "WARNING: Could not find a %{platform} account associated with these rats: %{rats}.",
-  "board.assign.notexist": "Could not add %{rats} to the case as they are not in the channel.",
-  "board.assign.invalid": "Could not add %{rats} to the case as it is not a valid assign.",
   "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
   "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",
   
@@ -174,6 +174,7 @@
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
   "board.close.drill": "This is a recent drill/training and can only be closed from the channel in which it was created (%{channel})",
+  "board.close.suggestcase": "%{rat} is assigned to case #%{caseId} did you mean to close that one?",
   
   "board.trash.success": "Successfully added case #%{caseId} (%{client}) to the deletion list.",
   "board.trash.error": "Failed to add case #%{caseId} to the deletion list due to an error in the rescue server.",
@@ -189,6 +190,7 @@
   "board.quiet.notrecent": "The last case was %{timespan} ago. Time to summon a case?",
   "board.quiet.quiet": "Wow, the last signal was so long ago... %{timespan} ago to be exact! Orangey approves!",
   "board.quiet.current": "A case is on going right now! What are you playing at?",
+  "board.quiet.currentjoin": "A case is on going right now! Maybe you should join #fuelrats instead of bothering me ಥ_ಥ",
   "board.quiet.currentcalljumps": "A case is on going right now! Maybe you should be calling jumps instead of using !quiet 🤔",
 
   "board.queue.already": "Case #%{caseId} is already queued.",
@@ -374,7 +376,7 @@
   "help.commandlist": "\u0002%{command}\u0002 %{params} - %{description}",
   "help.commandtitle": "\u0002%{command}\u0002 %{example}",
   "help.commandaliases": "Aliases: %{aliases}",
-  "help.commanderror": "!%{command} is not a known command, it may be a fact (simple commands that tell you a piece of information) to see a list of those, use !facts.",
+  "help.commanderror": "!%{command} is not a known command",
 
   "help.category.board": "View, edit and manage cases on the board.",
   "help.category.rescues": "View, edit and manage rescues that have already been completed.",
@@ -399,8 +401,10 @@
   "help.command.sctime.g": "Calculate going from one gravitational body to another, rather than towards deep space",
   "help.command.go.a": "Include already assigned rats in the message telling clients who to add",
   "help.command.go.f": "Force mecha to assign someone even if it can't find a valid rat for them",
+  "help.command.go.carrier": "Allows you to assign a rat from a different platform using a fleet carrier",
   "help.command.gofr.a": "Include already assigned rats in the message telling clients who to add",
   "help.command.gofr.f": "Force mecha to assign someone even if it can't find a valid rat for them",
+  "help.command.gofr.carrier": "Allows you to assign a rat from a different platform using a fleet carrier",
   "help.command.trash": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be deleted.",
   "help.command.trash.f": "Forces a case to be trashed even if it has rats assigned",
   "help.command.clear": "Consult https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182 to see when cases should be closed and when they should be deleted.",
@@ -408,6 +412,7 @@
   "help.command.anyfact.info": "Get information about this fact such as who created it and when",
   "help.command.anyfact.locales": "Get all the locales available for this fact",
   "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option.",
+  "help.command.reopen": "Use a rescue UUID, or the name of the client (will fetch the latest created one in this case)",
   "help.command.announce.cr": "Announces the rescue as a code red",
   "help.command.announce.odyssey": "announces the rescue as an odyssey client",
   "help.command.clientpw.all": "Lists ALL previous cases for this client",
@@ -418,6 +423,8 @@
   "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
   "help.command.station.s": "Shows all services available at this station, not just vital ones",
   "help.command.station.l": "Require the station to have a size L (large) landing pad",
+  "help.command.station.space": "Require the station to be in space with no need for a planetary landing",
+  "sendhelp.nouser": "Could not find %{nick} in the channel",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announcement.odyssey": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} (Odyssey) - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
@@ -448,4 +455,6 @@
       "one": "%{time} week",
       "other": "%{time} weeks",
   },
+  
+  "genericerror": "Command failed to due an unknown error"
 }

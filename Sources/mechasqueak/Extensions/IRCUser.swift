@@ -37,15 +37,14 @@ extension IRCUser {
         return self.associatedAPIData?.user?.attributes.data.value
     }
 
-    var assignedRescue: LocalRescue? {
+    func getAssignedRescue() async -> (Int, Rescue)? {
         guard let userId = self.associatedAPIData?.user?.id.rawValue else {
             return nil
         }
-        return mecha.rescueBoard.rescues.first(where: {
-            $0.rats.contains(where: {
+        return await board.first(where: {
+            return $0.value.rats.contains(where: {
                 return $0.relationships.user?.id?.rawValue == userId
-            }) ||
-            $0.unidentifiedRats.contains(self.nickname)
+            }) || $0.value.unidentifiedRats.contains(self.nickname)
         })
     }
     
@@ -127,17 +126,19 @@ extension IRCUser {
         return rats.first
     }
 
-    func isAssignedTo(rescue: LocalRescue) -> Bool {
+    func isAssignedTo(rescue: Rescue) async -> Bool {
         guard let user = self.associatedAPIData?.user, let rats = self.associatedAPIData?.ratsBelongingTo(user: user) else {
             return false
         }
-        return rescue.rats.contains(where: { assigned in
+        let rescueRats = rescue.rats
+        return rescueRats.contains(where: { assigned in
             return rats.contains(where: { $0.id.rawValue == assigned.id.rawValue })
         })
     }
 
-    func isAssociatedWith (rescue: LocalRescue) -> Bool {
-        return isAssignedTo(rescue: rescue) || rescue.clientNick == self.nickname
+    func isAssociatedWith (rescue: Rescue) async -> Bool {
+        let clientNick = rescue.clientNick
+        return await isAssignedTo(rescue: rescue) || clientNick == self.nickname
     }
 
     func hostPermissions () -> [AccountPermission] {

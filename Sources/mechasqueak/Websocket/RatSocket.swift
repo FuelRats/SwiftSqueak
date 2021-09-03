@@ -25,7 +25,7 @@
 import Foundation
 import NIOHTTP1
 import IRCKit
-//import WebSocketKit
+import WebSocketKit
 import NIO
 
 enum RatSocketEventType: String {
@@ -37,113 +37,113 @@ enum RatSocketEventType: String {
     case channelMessage = "mechasqueak.channelmessage"
 }
 
-//class RatSocket {
-//    var connectedAndAuthenticated = false
-//    var socket: WebSocket?
-//
-//    init () {
-//        self.connect()
-//    }
-//    
-//    func connect () {
-//        WebSocket.connect(to: URL(string: "\(configuration.api.websocket!)")!, headers: HTTPHeaders([
-//            ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
-//            ("x-bearer", configuration.api.token)
-//        ]), on: loop) { ws in
-//            self.socket = ws
-//            
-//            ws.onText(self.websocketDidReceiveMessage)
-//        }.whenComplete({ result in
-//            switch result {
-//            case .failure(let error):
-//                self.websocketDidDisconnect(error: error)
-//            
-//            case .success(_):
-//                self.websocketDidConnect()
-//            }
-//        })
-//    }
-//
-//    func broadcast<Payload: Encodable> (event: RatSocketEventType, payload: Payload) {
-//        let request = RatSocketRequest(
-//            endpoint: ["events", "broadcast"],
-//            query: BroadcastQuery(event: event.rawValue),
-//            body: payload
-//        )
-//        let encoder = JSONEncoder()
-//        encoder.dateEncodingStrategy = .formatted(.iso8601Full)
-//
-//        guard
-//            let requestData = try? encoder.encode(request),
-//            let requestJson = String(data: requestData, encoding: .utf8)
-//        else {
-//            return
-//        }
-//
-//        socket?.send(requestJson)
-//    }
-//
-//    func websocketDidConnect () {
-//        debug("Connected to Websocket connection")
-//    }
-//
-//    func websocketDidDisconnect (error: Error?) {
-//        self.socket = nil
-//        debug("Disconnected from Websocket connection")
-//        connectedAndAuthenticated = false
-//        self.connect()
-//    }
-//
-//    func websocketDidReceiveMessage (socket: WebSocket, text: String) {
-//        debug(text)
-//        guard let data = text.data(using: .utf8), let initialField = RatSocket.getInitialField(from: data) else {
-//            return
-//        }
-//
-//        if let ratSocketEvent = RatSocketEventType(rawValue: initialField) {
-//            switch ratSocketEvent {
-//                case .connection:
-//                    connectedAndAuthenticated = true
-//                    debug("Received welcome from Websocket connection")
-//
-//                case .rescueCreated:
-//                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
-//
-//                case .rescueUpdated:
-//                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
-//
-//                case .rescueDeleted:
-//                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
-//                    
-//                case .userUpdated:
-//                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
-//
-//                default:
-//                    break
-//            }
-//        }
-//    }
-//
-//    @discardableResult
-//    static func getEventAndPost<Notification: NotificationDescriptor, Event: Decodable>
-//    (notification: Notification.Type, from data: Data) -> RatSocketEvent<Event>?
-//    where Notification.Payload == RatSocketEvent<Event> {
-//        guard let event = try? RatSocketEvent<Event>.from(data) else {
-//            return nil
-//        }
-//
-//        Notification().encode(payload: event).post()
-//        return event
-//    }
-//
-//    static func getInitialField (from data: Data) -> String? {
-//        let decoder = JSONDecoder()
-//        guard let genericResponse = try? decoder.decode(GenericSocketData.self, from: data) else {
-//            return nil
-//        }
-//        return genericResponse.originField
-//    }
-//}
+class RatSocket {
+    var connectedAndAuthenticated = false
+    var socket: WebSocket?
+
+    init () {
+        self.connect()
+    }
+    
+    func connect () {
+        WebSocket.connect(to: URL(string: "\(configuration.api.websocket!)")!, headers: HTTPHeaders([
+            ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
+            ("x-bearer", configuration.api.token)
+        ]), on: loop) { ws in
+            self.socket = ws
+            
+            ws.onText(self.websocketDidReceiveMessage)
+        }.whenComplete({ result in
+            switch result {
+            case .failure(let error):
+                self.websocketDidDisconnect(error: error)
+            
+            case .success(_):
+                self.websocketDidConnect()
+            }
+        })
+    }
+
+    func broadcast<Payload: Encodable> (event: RatSocketEventType, payload: Payload) {
+        let request = RatSocketRequest(
+            endpoint: ["events", "broadcast"],
+            query: BroadcastQuery(event: event.rawValue),
+            body: payload
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .formatted(.iso8601Full)
+
+        guard
+            let requestData = try? encoder.encode(request),
+            let requestJson = String(data: requestData, encoding: .utf8)
+        else {
+            return
+        }
+
+        socket?.send(requestJson)
+    }
+
+    func websocketDidConnect () {
+        debug("Connected to Websocket connection")
+    }
+
+    func websocketDidDisconnect (error: Error?) {
+        self.socket = nil
+        debug("Disconnected from Websocket connection")
+        connectedAndAuthenticated = false
+        self.connect()
+    }
+
+    func websocketDidReceiveMessage (socket: WebSocket, text: String) {
+        debug(text)
+        guard let data = text.data(using: .utf8), let initialField = RatSocket.getInitialField(from: data) else {
+            return
+        }
+
+        if let ratSocketEvent = RatSocketEventType(rawValue: initialField) {
+            switch ratSocketEvent {
+                case .connection:
+                    connectedAndAuthenticated = true
+                    debug("Received welcome from Websocket connection")
+
+                case .rescueCreated:
+                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
+
+                case .rescueUpdated:
+                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
+
+                case .rescueDeleted:
+                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
+                    
+                case .userUpdated:
+                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
+
+                default:
+                    break
+            }
+        }
+    }
+
+    @discardableResult
+    static func getEventAndPost<Notification: NotificationDescriptor, Event: Decodable>
+    (notification: Notification.Type, from data: Data) -> RatSocketEvent<Event>?
+    where Notification.Payload == RatSocketEvent<Event> {
+        guard let event = try? RatSocketEvent<Event>.from(data) else {
+            return nil
+        }
+
+        Notification().encode(payload: event).post()
+        return event
+    }
+
+    static func getInitialField (from data: Data) -> String? {
+        let decoder = JSONDecoder()
+        guard let genericResponse = try? decoder.decode(GenericSocketData.self, from: data) else {
+            return nil
+        }
+        return genericResponse.originField
+    }
+}
 
 struct BroadcastQuery: Encodable {
     let event: String

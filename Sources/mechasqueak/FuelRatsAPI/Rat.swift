@@ -84,28 +84,27 @@ extension Rat {
         return permits.contains(where: { $0.lowercased() == permitName })
     }
     
-    var currentRescues: [LocalRescue] {
+    func getCurrentRescues () async -> [(key: Int, value: Rescue)] {
         guard let userId = self.relationships.user?.id?.rawValue else {
             return []
         }
         
-        return mecha.rescueBoard.rescues.filter({ rescue in
+        return try! await board.filter({ (_, rescue) in
             rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
-        })
+        }).getAllResults()
     }
     
-    var currentJumpCalls: [LocalRescue] {
+    func getCurrentJumpCalls () async -> [(key: Int, value: Rescue)] {
         guard let userId = self.relationships.user?.id?.rawValue else {
             return []
         }
         
-        return mecha.rescueBoard.rescues.filter({ rescue in
+        return try! await board.filter({ (_, rescue) in
             rescue.jumpCalls.contains(where: { $0.0.relationships.user?.id?.rawValue == userId })
-        })
+        }).getAllResults()
     }
     
-    func update () -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
+    func update() async throws {
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self),
@@ -113,29 +112,17 @@ extension Rat {
             meta: .none,
             links: .none
         )
-
-        let url = URLComponents(string: "\(configuration.api.url)/rats/\(self.id.rawValue.uuidString)")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try! HTTPClient.Request(apiPath: "/rats/\(self.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         
-        request.body = try? .encodable(patchDocument)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    promise.succeed(())
-                case .failure(let error):
-                    promise.fail(error)
-            }
-        }
-        return promise.futureResult
+        request.body = try .encodable(patchDocument)
+        
+        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
     }
     
-    func setIsUsingOdyssey (_ isUsingOdyssey: Bool) -> EventLoopFuture<Void> {
+    func setIsUsingOdyssey (_ isUsingOdyssey: Bool) async throws {
         let updatedRat = self.tappingAttributes({ $0.odyssey = .init(value: isUsingOdyssey) })
-        return updatedRat.update()
+        return try await updatedRat.update()
     }
 }
 

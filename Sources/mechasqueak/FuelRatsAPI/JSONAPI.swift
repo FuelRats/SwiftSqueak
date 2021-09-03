@@ -35,9 +35,9 @@ struct JSONAPIMeta: Meta {
 
     let apiVersion: String
 
-    let rateLimitTotal: Int
-    let rateLimitRemaining: Int
-    let rateLimitReset: Date
+    let rateLimitTotal: Int?
+    let rateLimitRemaining: Int?
+    let rateLimitReset: Date?
 }
 
 struct JSONAPILinks: Links {
