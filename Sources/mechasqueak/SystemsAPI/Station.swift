@@ -63,7 +63,7 @@ extension SystemsAPI {
         case Patronage
         case PrisonColony = "Prison Colony"
         case Theocracy
-        case Engineer
+        case Engineer = "Workshop (Engineer)"
         case Prison
         
         var ircFormatted: String {
