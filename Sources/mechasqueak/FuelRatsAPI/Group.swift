@@ -125,7 +125,7 @@ extension Group {
             "developer": "Developer",
             "rat": "Drilled Rat",
             "dispatch": "Drilled Dispatch",
-            "trainer": "trainer",
+            "trainer": "Trainer",
             "traineradmin": "Training Manager",
             "overseer": "Overseer",
             "techrat": "Tech rat",

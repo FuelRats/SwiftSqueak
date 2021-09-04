@@ -38,5 +38,5 @@
 {% endif %}
 
 {% if plotUrl %}
- {{ "Spansh:"|bold }} {{ plotUrl }}
+. {{ "Spansh:"|bold }} {{ plotUrl }}
 {% endif %}
