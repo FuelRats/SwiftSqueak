@@ -104,7 +104,7 @@ class MessageScanner: IRCBotModule {
                             locale: "en-GB",
                             interpolations: [
                                 "nick": channelMessage.user.nickname,
-                                "case": caseId,
+                                "caseId": caseId,
                                 "permit": permit.name ?? system.name
                             ])
                         )
