@@ -62,7 +62,7 @@ actor RescueBoard {
     
     func sync () async throws {
         self.queue.cancelAllOperations()
-        let remoteRescues = try await FuelRatsAPI.getOpenRescues().convertToLocalRescues(onBoard: self)
+        let remoteRescues = try await FuelRatsAPI.getOpenRescues().convertToLocalRescues()
         
         var upload = 0
         var download = 0

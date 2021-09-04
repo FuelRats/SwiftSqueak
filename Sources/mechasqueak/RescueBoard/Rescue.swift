@@ -581,6 +581,7 @@ class Rescue {
                 
                 operation.onError = { error in
                     self.uploadOperation = nil
+                    print(String(describing: error))
                     continuation.resume(throwing: error)
                 }
                 
@@ -608,6 +609,7 @@ class Rescue {
             }
             
             operation.onError = { error in
+                print(String(describing: error))
                 continuation.resume(throwing: error)
             }
             

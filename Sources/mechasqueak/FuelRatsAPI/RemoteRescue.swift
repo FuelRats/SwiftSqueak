@@ -160,7 +160,7 @@ extension RescueSearchDocument {
         })
     }
 
-    func convertToLocalRescues (onBoard board: RescueBoard) -> [(Int, Rescue)] {
+    func convertToLocalRescues () -> [(Int, Rescue)] {
         guard let rescueList = self.body.data?.primary.values else {
             return []
         }
