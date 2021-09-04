@@ -133,6 +133,7 @@ class Rescue {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
         self.odyssey = signal.odyssey
+        self.clientLanguage = Locale("en")
 
         self.codeRed = signal.isCodeRed
 
@@ -165,6 +166,7 @@ class Rescue {
 
         self.client = clientName
         self.clientNick = clientName
+        self.clientLanguage = Locale("en")
 
         if let systemName = input.system {
             self.system = StarSystem(name: systemName)
