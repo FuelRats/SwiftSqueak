@@ -34,7 +34,7 @@ enum StarDescription: ResourceObjectDescription {
         public let bodyId: Attribute<Int64>
         public var name: Attribute<String>
         public var type: Attribute<String>
-        public var subType: Attribute<String>
+        public var subType: Attribute<String?>
         public var parents: Attribute<[[String: Int64]]?>
         public var distanceToArrival: Attribute<Double?>
         public var isMainStar: Attribute<Bool?>
@@ -67,8 +67,8 @@ extension SystemsAPI {
 
 extension SystemsAPI.Star {
     var spectralClass: SystemsAPI.Star.SpectralClass? {
-        if self.type == "Star" {
-            return SpectralClass.from(subType: self.subType)
+        if self.type == "Star", let subType = self.subType {
+            return SpectralClass.from(subType: subType)
         }
         return SpectralClass.from(subType: self.type)
     }
@@ -160,7 +160,7 @@ extension SystemsAPI.Star {
             return "Neutron star"
             
         default:
-            return self.subType
+            return self.subType ?? self.type
         }
     }
     
