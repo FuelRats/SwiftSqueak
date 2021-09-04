@@ -631,7 +631,11 @@ class Rescue {
             return
         }
         
-        
+        if keyPath == \.platform {
+            if platform != .PC && odyssey {
+                odyssey = false
+            }
+        }
         synced = false
     }
 }
