@@ -513,6 +513,13 @@ class Rescue {
         
         let starSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
         self.system?.merge(starSystem)
+        if starSystem.isConfirmed == false {
+            let autoCorrectedSystem = autocorrect(system: starSystem)
+            if autoCorrectedSystem.name != starSystem.name {
+                let verifiedAutocorrectSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
+                self.system?.merge(verifiedAutocorrectSystem)
+            }
+        }
         Task {
             guard starSystem.isConfirmed == false && starSystem.isIncomplete == false else {
                 return

@@ -323,7 +323,7 @@ actor RescueBoard {
             }
         }
         
-        guard let system = rescue.system else {
+        guard rescue.system != nil else {
             let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
                 "caseId": identifier,
                 "signal": configuration.general.signal.uppercased(),
@@ -340,11 +340,9 @@ actor RescueBoard {
             await rescue.prep(message: message, initiated: initiated)
             return
         }
-
-        rescue.system = autocorrect(system: system)
         
         try? rescue.save()
-        try! await rescue.validateSystem()
+        try? await rescue.validateSystem()
         
         let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
             "caseId": identifier,
