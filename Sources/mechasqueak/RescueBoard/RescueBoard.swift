@@ -41,7 +41,6 @@ actor RescueBoard {
     var lastPaperworkReminder: [UUID: Date] = [:]
 
     init () {
-        self.queue.maxConcurrentOperationCount = 1
         
         if configuration.general.drillMode == false {
             loop.next().scheduleRepeatedTask(initialDelay: .minutes(15), delay: .minutes(15), self.checkElapsedPaperwork)
