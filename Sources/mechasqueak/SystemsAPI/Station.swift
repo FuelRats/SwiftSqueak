@@ -61,7 +61,7 @@ extension SystemsAPI {
         case Dictatorship
         case Feudal
         case Patronage
-        case PrisonColony = "Prison Colony"
+        case PrisonColony = "Prison colony"
         case Theocracy
         case Engineer = "Workshop (Engineer)"
         case Prison
