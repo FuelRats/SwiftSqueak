@@ -20,9 +20,9 @@
 {% endif %}
 
 {% if largeStations.count > 1 %}
-, {{largeStations.count}} stations
+, {{largeStations.count}} starports
 {% elif largeStations.count > 0 %}
-, {{largeStations.count}} station
+, {{largeStations.count}} starport
 {% endif %}
 
 {% if outposts.count > 1 %}
