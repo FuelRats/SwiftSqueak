@@ -61,6 +61,9 @@ actor RescueBoard {
     
     func sync () async throws {
         self.queue.cancelAllOperations()
+        guard configuration.general.drillMode == false else {
+            return
+        }
         let remoteRescues = try await FuelRatsAPI.getOpenRescues().convertToLocalRescues()
         
         var upload = 0

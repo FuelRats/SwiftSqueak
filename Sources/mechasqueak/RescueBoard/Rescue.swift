@@ -579,6 +579,9 @@ class Rescue {
     }
     
     func saveAndWait (_ command: IRCBotCommand? = nil) async throws {
+        guard configuration.general.drillMode == false else {
+            return
+        }
         let identifier = await board.getId(forRescue: self) ?? 0
         guard self.uploaded || self.uploadOperation != nil else {
             return try await withCheckedThrowingContinuation { continuation in
