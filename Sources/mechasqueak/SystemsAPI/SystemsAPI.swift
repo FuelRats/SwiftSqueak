@@ -105,7 +105,7 @@ class SystemsAPI {
         largePad: Bool,
         requireSpace: Bool
     ) async throws -> (SystemsAPI.NearestPopulatedDocument.PopulatedSystem, SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station)? {
-        let response = try await SystemsAPI.getNearestStations(forSystem: systemName)
+        let response = try await SystemsAPI.getNearestStations(forSystem: systemName, limit: limit)
         
         guard
             let system = response.preferableSystems(requireLargePad: largePad, requireSpace: requireSpace).first
