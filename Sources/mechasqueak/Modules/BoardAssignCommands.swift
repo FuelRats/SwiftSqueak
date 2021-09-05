@@ -239,7 +239,15 @@ class BoardAssignCommands: IRCBotModule {
                 return nil
             })
             if unidentified.count > 0 {
-                errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
+                if rescue.platform == .PC {
+                    if rescue.odyssey {
+                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.Orange, "Odyssey"))"
+                    } else {
+                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.LightGrey, "Horizons"))"
+                    }
+                } else {
+                    errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
+                }
             }
             
             let jumpCallConflicts = failedAssigns.compactMap({ assign -> String? in
