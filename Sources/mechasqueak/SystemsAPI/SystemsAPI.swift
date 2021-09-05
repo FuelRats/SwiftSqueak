@@ -90,12 +90,33 @@ class SystemsAPI {
         return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)
     }
     
-    static func getNearestStations (forSystem systemName: String) async throws -> NearestPopulatedDocument {
+    static func getNearestStations (forSystem systemName: String, limit: Int = 10) async throws -> NearestPopulatedDocument {
         let request = try! HTTPClient.Request(systemApiPath: "/nearest_populated", method: .GET, query: [
-            "name": systemName
+            "name": systemName,
+            "limit": String(limit)
         ])
 
         return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
+    }
+    
+    static func getNearestPreferableStation (
+        forSystem systemName: String,
+        limit: Int = 10,
+        largePad: Bool,
+        requireSpace: Bool
+    ) async throws -> (SystemsAPI.NearestPopulatedDocument.PopulatedSystem, SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station)? {
+        let response = try await SystemsAPI.getNearestStations(forSystem: systemName)
+        
+        guard
+            let system = response.preferableSystems(requireLargePad: largePad, requireSpace: requireSpace).first
+        else {
+            return nil
+        }
+        
+        guard let station = system.preferableStations(requireLargePad: largePad, requireSpace: requireSpace).first else {
+            return nil
+        }
+        return (system, station)
     }
     
     static func getNearestSystem (forCoordinates coords: Vector3) async throws -> NearestSystemDocument? {

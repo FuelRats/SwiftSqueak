@@ -167,16 +167,37 @@ class SystemSearch: IRCBotModule {
         cooldown: .seconds(30)
     )
     var didReceiveStationCommand = { command in
+        let systemName = command.param1!
+        let requireLargePad = command.options.contains("l")
+        let requireSpace = command.namedOptions.contains("space")
+        
         do {
-            let response = try await SystemsAPI.getNearestStations(forSystem: command.param1!)
+            var stationResult = try await SystemsAPI.getNearestPreferableStation(
+                forSystem: systemName,
+                limit: 10,
+                largePad: requireLargePad,
+                requireSpace: requireSpace
+            )
             
-            let requireLargePad = command.options.contains("l")
-            let requireSpace = command.namedOptions.contains("space")
+            if stationResult == nil {
+                stationResult = try await SystemsAPI.getNearestPreferableStation(
+                    forSystem: systemName,
+                    limit: 30,
+                    largePad: requireLargePad,
+                    requireSpace: requireSpace
+                )
+            }
             
-            guard
-                let system = response.preferableSystems(requireLargePad: requireLargePad, requireSpace: requireSpace).first,
-                let station = system.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first
-            else {
+            if stationResult == nil {
+                stationResult = try await SystemsAPI.getNearestPreferableStation(
+                    forSystem: systemName,
+                    limit: 100,
+                    largePad: requireLargePad,
+                    requireSpace: requireSpace
+                )
+            }
+            
+            guard let (system, station) = stationResult else {
                 command.message.error(key: "station.notfound", fromCommand: command)
                 return
             }
@@ -192,6 +213,7 @@ class SystemSearch: IRCBotModule {
                 "additionalServices": station.services.count - station.notableServices.count
             ]))
         } catch {
+            print(String(describing: error))
             command.error(error)
         }
     }
