@@ -390,7 +390,7 @@ class RemoteRescueCommands: IRCBotModule {
         rescue.outcome = nil
         rescue.status = .Open
         let newCaseId = await board.insert(rescue: rescue, preferringIdentifier: caseId)
-        rescue.save(command)
+        try? rescue.save(command)
         
         command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
             "id": rescue.id.ircRepresentation,
@@ -442,7 +442,33 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
+        guard let result = try? await FuelRatsAPI.getRescue(id: closedRescue.id) else {
+            command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
+                "id": closedRescue.id
+            ])
+            return
+        }
         
+        let apiRescue = result.body.data!.primary.value
+        let rats = result.assignedRats()
+        let firstLimpet = result.firstLimpet()
+        
+        let rescue = Rescue(
+            fromAPIRescue: apiRescue,
+            withRats: rats,
+            firstLimpet: firstLimpet,
+            onBoard: board
+        )
+        rescue.outcome = nil
+        rescue.status = .Open
+        rescue.uploaded = true
+        
+        let caseID = await board.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
+        try? rescue.save(command)
+        command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
+            "id": closedRescue.id.ircRepresentation,
+            "caseId": caseID
+        ])
     }
 
     @AsyncBotCommand(
