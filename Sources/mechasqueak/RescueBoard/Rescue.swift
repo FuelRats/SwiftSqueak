@@ -461,7 +461,6 @@ class Rescue {
 
         self.unidentifiedRats.removeAll(where: { $0.lowercased() == param.lowercased() })
         self.rats.append(rat)
-        try? self.save()
 
         return Result.success(.assigned(rat))
     }
