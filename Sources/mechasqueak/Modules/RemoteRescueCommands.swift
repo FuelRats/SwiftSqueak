@@ -390,6 +390,7 @@ class RemoteRescueCommands: IRCBotModule {
         rescue.outcome = nil
         rescue.status = .Open
         let newCaseId = await board.insert(rescue: rescue, preferringIdentifier: caseId)
+        rescue.save(command)
         
         command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
             "id": rescue.id.ircRepresentation,
