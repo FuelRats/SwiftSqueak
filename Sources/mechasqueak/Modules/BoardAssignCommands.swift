@@ -63,9 +63,10 @@ class BoardAssignCommands: IRCBotModule {
         
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
 
-        let assigns = await params.asyncMap({
-            await rescue.assign($0, fromChannel: command.message.destination, force: force, carrier: carrier)
-        })
+        var assigns: [Result<AssignmentResult, RescueAssignError>] = []
+        for param in params {
+            assigns.append(await rescue.assign(param, fromChannel: command.message.destination, force: force, carrier: carrier))
+        }
         try? rescue.save(command)
         
         _ = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
@@ -107,9 +108,10 @@ class BoardAssignCommands: IRCBotModule {
         
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
         
-        let assigns = await params.asyncMap({
-            await rescue.assign($0, fromChannel: command.message.destination, force: force, carrier: carrier)
-        })
+        var assigns: [Result<AssignmentResult, RescueAssignError>] = []
+        for param in params {
+            assigns.append(await rescue.assign(param, fromChannel: command.message.destination, force: force, carrier: carrier))
+        }
         try? rescue.save(command)
 
         let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)

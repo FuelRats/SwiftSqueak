@@ -391,7 +391,7 @@ class FactCommands: IRCBotModule {
                 if command.command == "quit" {
                     command.command = "prepcr"
                 }
-                let unknownTargets = await targets.compactMap({ target -> String? in
+                let unknownTargets = targets.compactMap({ target -> String? in
                     if target.1 != nil && target.1?.platform != nil {
                         return nil
                     }
