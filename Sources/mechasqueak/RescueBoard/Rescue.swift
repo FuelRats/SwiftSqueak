@@ -435,7 +435,7 @@ class Rescue {
         }
         
         guard let rat = rat else {
-            guard force else {
+            guard force || configuration.general.drillMode else {
                 return Result.failure(.unidentified(param))
             }
             guard self.unidentifiedRats.contains(param) == false else {
