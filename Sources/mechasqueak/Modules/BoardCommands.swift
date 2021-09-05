@@ -166,7 +166,13 @@ class BoardCommands: IRCBotModule {
         let target = command.parameters[safe: 1] ?? ""
         if command.parameters.count > 1 && configuration.general.drillMode == false {
             guard
-                let rat = message.destination.member(named: command.parameters[1])?.getRatRepresenting(platform: rescue.platform)
+                let nick = message.destination.member(named: command.parameters[1]),
+                let rat = rescue.rats.first(where: { rat in
+                    if let userId = rat.relationships.user?.id?.rawValue, let nickUserId = nick.associatedAPIData?.user?.id.rawValue {
+                        return userId == nickUserId
+                    }
+                    return false
+                }) ?? nick.getRatRepresenting(platform: rescue.platform)
             else {
                 command.message.error(key: "board.close.notfound", fromCommand: command, map: [
                     "caseId": caseId,
