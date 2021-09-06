@@ -126,6 +126,7 @@ class TweetCommands: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: command.message.user.nickname
             ))
+            try? rescue.save(command)
         } catch {
             command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
                 "caseId": caseId
