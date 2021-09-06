@@ -188,6 +188,7 @@ class MechaSqueak {
                     )
                 
                 rescue.setQuotes(quotes)
+                try? rescue.save()
 
                 var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
                 userJoin.channel.send(key: key, map: [
@@ -220,6 +221,7 @@ class MechaSqueak {
                 lastAuthor: userPart.raw.client.currentNick)
             )
             rescue.setQuotes(quotes)
+            try? rescue.save()
 
             userPart.channel.send(key: "board.clientquit", map: [
                 "caseId": caseId,
@@ -281,6 +283,8 @@ class MechaSqueak {
                 updatedAt: Date(),
                 lastAuthor: userQuit.raw.client.currentNick)
             )
+            
+            try? rescue.save()
 
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
