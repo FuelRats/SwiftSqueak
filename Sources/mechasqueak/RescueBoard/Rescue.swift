@@ -517,7 +517,7 @@ class Rescue {
         if starSystem.isConfirmed == false {
             let autoCorrectedSystem = autocorrect(system: starSystem)
             if autoCorrectedSystem.name != starSystem.name {
-                let verifiedAutocorrectSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
+                let verifiedAutocorrectSystem = try await SystemsAPI.performSystemCheck(forSystem: autoCorrectedSystem.name)
                 self.system?.merge(verifiedAutocorrectSystem)
             }
         }
