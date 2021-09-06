@@ -1,5 +1,5 @@
 {% if system.distance > 0 %}
-Station found {{ system.distance|formatNumber }} LY away in "{{ system.name }}".
+Station found {{ system.distance|round|formatNumber }} LY away in "{{ system.name }}".
 {% else %}
 Station found in "{{ system.name }}".
 {% endif %}
@@ -7,7 +7,7 @@ Station found in "{{ system.name }}".
  {% filter italic %}
 ({{ stationType }}),
 {% endfilter %}
- {{ station.distance|eliteDistance }}
+ {{ station.distance|round|eliteDistance }}
 {% if station.distance > 1000 %}
  (~{{ travelTime }})
 {% endif %}

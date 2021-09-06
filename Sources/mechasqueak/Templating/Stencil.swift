@@ -66,6 +66,14 @@ private func generateEnvironment () -> Environment {
       return value
     }
     
+    ext.registerFilter("round") { (value: Any?) in
+        if let value = value as? Double {
+            return round(value)
+        }
+        
+        return value
+    }
+    
     ext.registerFilter("eliteDistance") { (value: Any?) in
       if let value = value as? Double {
         return value.eliteDistance
