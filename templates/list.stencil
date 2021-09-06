@@ -19,5 +19,8 @@
 {% if rescue.odyssey %}
  {{ "O"|color:7|bold }}
 {% endif %}
+{% if rescue.codeRed %}
+ {{ "CR"|color:4|bold }}
+{% endif %}
 )
 
