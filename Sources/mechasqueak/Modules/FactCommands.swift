@@ -335,8 +335,9 @@ class FactCommands: IRCBotModule {
                     rescue = await board.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
                 }
                 if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
+                    let targetLowercased = target.lowercased()
                     if let fuzzyTarget = command.message.destination.members.first(where: {
-                        $0.nickname.levenshtein(target) < 3
+                        $0.nickname.lowercased().levenshtein(targetLowercased) < 3
                     }) {
                         target = fuzzyTarget.nickname
                     }
