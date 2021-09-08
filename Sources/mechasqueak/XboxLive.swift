@@ -59,7 +59,7 @@ struct XboxLive {
     }
     
     static func refreshAuthenticationToken () async throws {
-        let refreshedToken = try await Authentication.refreshToken()
+        let refreshedToken = try await Authentication.refreshToken()!
         configuration.xbox?.refreshToken = refreshedToken.refreshToken
         let liveToken = try await Authentication.exchangeForLiveToken(token: refreshedToken.accessToken)
         let xstsToken = try await Authentication.xstsAuthorize(token: liveToken.Token)
@@ -130,9 +130,9 @@ struct XboxLive {
     }
     
     struct Authentication {
-        static func refreshToken () async throws -> RefreshTokenResponse {
+        static func refreshToken () async throws -> RefreshTokenResponse? {
             guard let xlConfig = configuration.xbox else {
-                throw NSError()
+                return nil
             }
             let url = URLComponents(string: "https://login.live.com/oauth20_token.srf")!
             
