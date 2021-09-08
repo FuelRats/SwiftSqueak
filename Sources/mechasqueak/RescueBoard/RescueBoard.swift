@@ -326,6 +326,14 @@ actor RescueBoard {
             }
         }
         
+        var systemChangedByXboxLive = false
+        if rescue.platform == .Xbox {
+            rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
+            if let systemName = rescue.xboxProfile?.systemName, systemName.lowercased() != rescue.system.name.lowercased() {
+                rescue.system = StarSystem(name: systemName)
+                systemChangedByXboxLive = true
+            }
+        }
         guard rescue.system != nil else {
             let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
                 "caseId": identifier,
@@ -361,7 +369,9 @@ actor RescueBoard {
             "invalid": rescue.system?.isInvalid ?? false
         ])
         message.reply(message: signal)
-
+        
+        await rescue.prep(message: message, initiated: initiated)
+        
         if let system = rescue.system, let systemBody = rescue.system?.clientProvidedBody {
             let bodyDescription = system.systemBodyDescription(forBody: systemBody)
             message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
@@ -374,9 +384,41 @@ actor RescueBoard {
                 updatedAt: Date(),
                 lastAuthor: message.client.currentNick)
             )
+            try? rescue.save()
         }
         
-        await rescue.prep(message: message, initiated: initiated)
+        if systemChangedByXboxLive {
+            message.reply(message: lingo.localize("board.xboxsyschange", locale: "en", interpolations: [
+                "caseId": identifier,
+                "client": rescue.clientDescription
+            ]))
+            
+            rescue.appendQuote(RescueQuote(
+                author: message.client.currentNick,
+                message: "The star system of this case was automatically corrected based on information retrieved from Xbox Live",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: message.client.currentNick)
+            )
+        }
+        
+        if case let .found(xboxProfile) = rescue.xboxProfile {
+            if xboxProfile.privacy.isAllowed == false {
+                message.reply(message: lingo.localize("board.xboxprivacy", locale: "en", interpolations: [
+                    "caseId": identifier,
+                    "client": rescue.clientDescription
+                ]))
+                
+                rescue.appendQuote(RescueQuote(
+                    author: message.client.currentNick,
+                    message: "WARNING: This client's Xbox Live privacy settings may prevent them from joining a team",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: message.client.currentNick)
+                )
+                try? rescue.save()
+            }
+        }
     }
     
     @discardableResult

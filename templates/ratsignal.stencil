@@ -11,6 +11,7 @@
  ({{ "Odyssey"|color:7 }})
 {% endif %}
  – {{ "CMDR"|bold }} {{ rescue.client|default:"unknown client" }}
+{{ rescue|inGameStatus }}
  – {{ "System:"|bold }} {% include "starsystem.stencil" %}
  – {{ "Language:"|bold }} {{ language }} ({{ langCode }})
 {% if rescue.clientNick and rescue.clientNick != rescue.client %}

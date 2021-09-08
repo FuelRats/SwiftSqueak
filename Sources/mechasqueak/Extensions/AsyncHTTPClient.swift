@@ -65,9 +65,14 @@ extension HTTPClient {
     ) async throws -> D where D: Decodable {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
         do {
-            return try decoder.decode(D.self, from: Data(buffer: response.body!))
+            guard let body = response.body else {
+                throw response
+            }
+            return try decoder.decode(D.self, from: Data(buffer: body))
         } catch {
-            debug(String(data: Data(buffer: response.body!), encoding: .utf8) ?? "")
+            if let body = response.body {
+                debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+            }
             debug(String(describing: error))
             throw error
         }

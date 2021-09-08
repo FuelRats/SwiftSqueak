@@ -39,14 +39,14 @@ let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .
     timeout: .init(connect: .seconds(5), read: .seconds(60))
 ))
 
-func loadConfiguration () -> MechaConfiguration {
-    var configPath = URL(
-        fileURLWithPath: FileManager.default.currentDirectoryPath
-    ).appendingPathComponent("config.json")
-    if CommandLine.arguments.count > 1 {
-        configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-    }
+var configPath = URL(
+    fileURLWithPath: FileManager.default.currentDirectoryPath
+).appendingPathComponent("config.json")
+if CommandLine.arguments.count > 1 {
+    configPath = URL(fileURLWithPath: CommandLine.arguments[1])
+}
 
+func loadConfiguration () -> MechaConfiguration {
     guard let configData = try? Data(contentsOf: configPath) else {
         fatalError("Could not locate configuration file in \(configPath.absoluteString)")
     }
@@ -61,7 +61,7 @@ func debug (_ output: String) {
     }
 }
 
-let configuration = loadConfiguration()
+var configuration = loadConfiguration()
 let lingo = try! Lingo(rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 class MechaSqueak {

@@ -148,24 +148,10 @@ class BoardAttributeCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-
+        
         let oldClient = rescue.client!
         let client = command.parameters[1]
-
-        rescue.client = client
-        if configuration.queue != nil {
-            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == oldClient })?.changeName(name: client)
-        }
-
-        command.message.reply(key: "board.clientchange", fromCommand: command, map: [
-            "caseId": caseId,
-            "oldClient": oldClient,
-            "client": client
-        ])
         
-        try? rescue.save(command)
-
-
         if let existingCase = await board.rescues.first(where: {
             $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
@@ -173,7 +159,37 @@ class BoardAttributeCommands: IRCBotModule {
                 "caseId": existingCase.key,
                 "client": client
             ])
+            return
         }
+
+
+        rescue.client = client
+        if configuration.queue != nil {
+            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == oldClient })?.changeName(name: client)
+        }
+        
+        if rescue.platform == .Xbox {
+            rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
+            
+            if case let .found(xboxProfile) = rescue.xboxProfile, xboxProfile.privacy.isAllowed == false {
+                command.message.reply(message: lingo.localize("board.xboxprivacy", locale: "en", interpolations: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ]))
+            }
+        }
+        
+        var clientName = rescue.clientDescription
+        if let onlineStatus = rescue.onlineStatus {
+            clientName += " \(onlineStatus)"
+        }
+        command.message.reply(key: "board.clientchange", fromCommand: command, map: [
+            "caseId": caseId,
+            "oldClient": oldClient,
+            "client": clientName
+        ])
+        
+        try? rescue.save(command)
     }
 
     @AsyncBotCommand(

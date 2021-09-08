@@ -55,6 +55,8 @@
   "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (Assuming constant travel away from any gravity well).",
   "sctime.response.g": "The estimated super cruise travel time for %{distance} is %{time} (Assuming travel from one gravity well to another).",
 
+  "board.xboxprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's Xbox Live privacy settings may prevent them from joining a team https://t.fuelr.at/xbtrouble (#%{caseId}, %{client})",
+  "board.xboxsyschange": "The star system of case #%{caseId} (%{client}) was automatically corrected based on information retrieved from Xbox Live",
   "board.clientjoin": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) has rejoined!",
   "board.clientjoin.needsrats": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) in %{system} has rejoined!",
   "board.clientjoinhost": "Caution: Case #%{caseId} client (%{client}) has rejoined with a different name! (%{nick})",

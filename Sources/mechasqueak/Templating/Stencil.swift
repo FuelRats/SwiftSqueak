@@ -82,6 +82,14 @@ private func generateEnvironment () -> Environment {
       return value
     }
     
+    ext.registerFilter("inGameStatus") { (value: Any?) in
+        if let rescue = value as? Rescue {
+            return rescue.onlineStatus
+        }
+        
+        return value
+    }
+    
     ext.registerFilter("mainStarInfo") { (value: Any?) in
       if let system = value as? StarSystem {
           if let mainStar = system.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.isMainStar == true || $0.distanceToArrival == 0.0 }) {

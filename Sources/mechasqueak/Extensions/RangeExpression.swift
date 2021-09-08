@@ -32,10 +32,12 @@ protocol AnyRange {
 
 extension AnyRange {
     func contains (_ value: Bound) -> Bool {
-        if let lower = self.lower, value >= lower {
+        if let lower = self.lower, let upper = self.upper, value >= lower, value <= upper {
+            return true
+        } else if let lower = self.lower, self.upper == nil, value >= lower {
             return true
         }
-        if let upper = self.upper, value <= upper {
+        if let upper = self.upper, self.lower == nil, value <= upper {
             return true
         }
         return false

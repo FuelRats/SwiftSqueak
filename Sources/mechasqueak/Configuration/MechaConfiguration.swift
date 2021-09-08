@@ -34,6 +34,13 @@ struct MechaConfiguration: Codable {
     let database: DatabaseConfiguration
     let shortener: URLShortenerConfiguration
     let sourcePath: URL
+    var xbox: XboxLiveConfiguration?
+    
+    func save () throws {
+        let configEncoder = JSONEncoder()
+        let json = try configEncoder.encode(self)
+        try json.write(to: configPath)
+    }
 }
 
 struct GeneralConfiguration: Codable {
@@ -76,4 +83,13 @@ struct DatabaseConfiguration: Codable {
 struct URLShortenerConfiguration: Codable {
     let url: URL
     let signature: String
+}
+
+struct XboxLiveConfiguration: Codable {
+    var xuid: String
+    var uhs: String
+    var token: String
+    var refreshToken: String
+    let clientId: String
+    let clientSecret: String
 }

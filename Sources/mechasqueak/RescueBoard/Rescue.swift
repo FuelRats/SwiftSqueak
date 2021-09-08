@@ -56,6 +56,7 @@ class Rescue {
     var channelName: String
     var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
+    var xboxProfile: XboxLive.ProfileLookup? = nil
     var banned: Bool = false
     var synced: Bool = false
     var uploaded: Bool
@@ -257,6 +258,29 @@ class Rescue {
 
     var clientDescription: String {
         return self.client ?? "u\u{200B}nknown client"
+    }
+    
+    var onlineStatus: String? {
+        guard case let .found(profile) = self.xboxProfile else {
+            if case .notFound = self.xboxProfile {
+                return IRCFormat.color(.LightRed, " (Not found)")
+            }
+            return nil
+        }
+        guard profile.presence.state == .Online else {
+            if let lastSeen = profile.presence.lastSeen {
+                let lastSeenAgo = lastSeen.timestamp.timeAgo
+                return IRCFormat.color(.Grey, " (Last seen \(lastSeenAgo) ago)")
+            }
+            return IRCFormat.color(.Grey, " (Offline)")
+        }
+        if let presence = self.xboxProfile?.elitePresence {
+            if let system = self.xboxProfile?.systemName, system.uppercased() == self.system?.name.uppercased() {
+                return IRCFormat.color(.LightGreen, " (In system)")
+            }
+            return IRCFormat.color(.LightGreen, " (\(presence))")
+        }
+        return IRCFormat.color(.Yellow, " (Online, not in-game)")
     }
     
     var isRecentDrill: Bool {
