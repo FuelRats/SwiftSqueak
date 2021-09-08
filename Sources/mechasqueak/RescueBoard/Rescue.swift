@@ -270,7 +270,7 @@ class Rescue {
         guard profile.presence.state == .Online else {
             if let lastSeen = profile.presence.lastSeen {
                 let lastSeenAgo = lastSeen.timestamp.timeAgo
-                return IRCFormat.color(.Grey, " (Last seen \(lastSeenAgo) ago)")
+                return IRCFormat.color(.Grey, " (Last online \(lastSeenAgo) ago)")
             }
             return IRCFormat.color(.Grey, " (Offline)")
         }
