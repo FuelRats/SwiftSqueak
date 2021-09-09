@@ -38,6 +38,7 @@ struct MechaConfiguration: Codable {
     
     func save () throws {
         let configEncoder = JSONEncoder()
+        configEncoder.outputFormatting = .prettyPrinted
         let json = try configEncoder.encode(self)
         try json.write(to: configPath)
     }
