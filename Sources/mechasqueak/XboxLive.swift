@@ -49,7 +49,7 @@ struct XboxLive {
             if error.status == .notFound {
                 return .notFound
             } else if error.status == .unauthorized && retried == false {
-                try? await refreshAuthenticationToken()
+                try! await refreshAuthenticationToken()
                 return await performXuidLookup(gamertag: gamertag, retried: true)
             }
             return .failure
@@ -139,6 +139,7 @@ struct XboxLive {
             var request = try HTTPClient.Request(url: url.url!, method: .POST)
             
             request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+            request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded; charset=utf-8")
             request.body = try .formUrlEncoded([
                 "refresh_token": xlConfig.refreshToken,
                 "client_id": xlConfig.clientId,
@@ -160,17 +161,19 @@ struct XboxLive {
             
             request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
             request.headers.add(name: "Accept", value: "application/json")
-            request.headers.add(name: "x-xbl-contract-version", value: "2")
+            request.headers.add(name: "Content-Type", value: "application/json; charset=utf-8")
+            request.headers.add(name: "X-Xbl-Contract-Version", value: "2")
             
-            request.body = try .encodable(LiveTokenRequest(
-                RelayingParty: "http://auth.xboxlive.com",
-                TokenType: "JWT",
-                Properties: LiveTokenRequest.Properties(
-                    AuthMethod: "RPS",
-                    SiteName: "user.auth.xboxlive.com",
-                    RpsTicket: "d=\(token)"
-                )
-            ))
+            let bodyObject: [String : Any] = [
+                "TokenType": "JWT",
+                "RelyingParty": "http://auth.xboxlive.com",
+                "Properties": [
+                    "SiteName": "user.auth.xboxlive.com",
+                    "AuthMethod": "RPS",
+                    "RpsTicket": "d=\(token)"
+                ]
+            ]
+            request.body = .data(try JSONSerialization.data(withJSONObject: bodyObject, options: []))
             
             return try await httpClient.execute(request: request, forDecodable: LiveTokenResponse.self)
         }
@@ -184,14 +187,15 @@ struct XboxLive {
             request.headers.add(name: "Accept", value: "application/json")
             request.headers.add(name: "x-xbl-contract-version", value: "2")
             
-            request.body = try .encodable(XSTSRequest(
-                RelayingParty: "http://xboxlive.com",
-                TokenType: "JWT",
-                Properties: XSTSRequest.Properties(
-                    UserTokens: [token],
-                    SandboxId: "RETAIL"
-                )
-            ))
+            let bodyObject: [String : Any] = [
+                "TokenType": "JWT",
+                "RelyingParty": "http://xboxlive.com",
+                "Properties": [
+                    "UserTokens": [token],
+                    "SandboxId": "RETAIL"
+                ]
+            ]
+            request.body = .data(try JSONSerialization.data(withJSONObject: bodyObject, options: []))
             
             return try await httpClient.execute(request: request, forDecodable: XSTSResponse.self)
         }
@@ -203,18 +207,6 @@ struct XboxLive {
             let accessToken: String
             let refreshToken: String
             let userId: String
-        }
-        
-        struct LiveTokenRequest: Codable {
-            let RelayingParty: String
-            let TokenType: String
-            let Properties: Properties
-            
-            struct Properties: Codable {
-                let AuthMethod: String
-                let SiteName: String
-                let RpsTicket: String
-            }
         }
         
         struct LiveTokenResponse: Codable {
@@ -229,17 +221,6 @@ struct XboxLive {
                 struct Xui: Codable {
                     let uhs: String
                 }
-            }
-        }
-        
-        struct XSTSRequest: Codable {
-            let RelayingParty: String
-            let TokenType: String
-            let Properties: Properties
-            
-            struct Properties: Codable {
-                let UserTokens: [String]
-                let SandboxId: String
             }
         }
         

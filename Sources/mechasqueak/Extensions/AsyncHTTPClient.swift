@@ -100,6 +100,24 @@ extension HTTPClient.Request {
 
 extension HTTPClient.Response: Error {}
 
+private let sAllowedCharacters: CharacterSet = {
+    var allowed = CharacterSet.urlQueryAllowed
+    allowed.insert(" ")
+    allowed.remove("+")
+    allowed.remove("/")
+    allowed.remove("?")
+    allowed.remove("*")
+    allowed.remove("!")
+    allowed.remove("$")
+    return allowed
+}()
+
+private func urlEscape (_ str: String) -> String {
+    return str.replacingOccurrences(of: "\n", with: "\r\n")
+        .addingPercentEncoding(withAllowedCharacters: sAllowedCharacters)!
+        .replacingOccurrences(of: " ", with: "+")
+}
+
 extension HTTPClient.Body {
     static func encodable<T: Encodable> (_ object: T) throws -> HTTPClient.Body {
         let encoder = JSONEncoder()
@@ -108,9 +126,13 @@ extension HTTPClient.Body {
     }
     
     static func formUrlEncoded(_ query: [String: String?]) throws -> HTTPClient.Body {
-        var url = URLComponents()
-        url.queryItems = query.queryItems
-        return .string(url.percentEncodedQuery ?? "")
+        let str = query.map({ (key, value) -> String in
+            if let value = value {
+                return "\(urlEscape(key))=\(urlEscape(value))"
+            }
+            return urlEscape(key)
+        }).joined(separator: "&")
+        return .string(str)
     }
 }
 
