@@ -277,7 +277,7 @@ class Rescue {
         if let presence = self.xboxProfile?.elitePresence {
             if let system = self.xboxProfile?.systemName, system.uppercased() == self.system?.name.uppercased() {
                 return IRCFormat.color(.LightGreen, " (In system)")
-            } else if presence = "Is blazing their own trail" {
+            } else if presence == "Is blazing their own trail" {
                 return IRCFormat.color(.LightGreen, " (In game, location hidden)")
             }
             return IRCFormat.color(.LightGreen, " (\(presence))")
