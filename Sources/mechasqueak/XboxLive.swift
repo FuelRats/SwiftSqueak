@@ -49,7 +49,7 @@ struct XboxLive {
             if error.status == .notFound {
                 return .notFound
             } else if error.status == .unauthorized && retried == false {
-                try! await refreshAuthenticationToken()
+                try? await refreshAuthenticationToken()
                 return await performXuidLookup(gamertag: gamertag, retried: true)
             }
             return .failure
