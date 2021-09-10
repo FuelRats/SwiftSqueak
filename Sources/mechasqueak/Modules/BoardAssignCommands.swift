@@ -184,8 +184,6 @@ class BoardAssignCommands: IRCBotModule {
                 continue
             }
             
-            try? rescue.save(command)
-            
             command.message.reply(key: "board.unassign.notassigned", fromCommand: command, map: [
                 "rats": unassign,
                 "caseId": caseId
@@ -195,6 +193,8 @@ class BoardAssignCommands: IRCBotModule {
         guard removed.count > 0 else {
             return
         }
+        
+        try? rescue.save(command)
         let unassignedRats = removed.joined(separator: ", ")
         command.message.reply(key: "board.unassign.removed", fromCommand: command, map: [
             "caseId": caseId,
