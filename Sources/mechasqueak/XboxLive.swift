@@ -112,7 +112,12 @@ struct XboxLive {
         guard let clientName = rescue.client else {
             return .notFound
         }
-        let userLookup = await performXuidLookup(gamertag: clientName)
+        
+        return await performLookup(gamertag: clientName)
+    }
+    
+    static func performLookup (gamertag: String) async -> ProfileLookup {
+        let userLookup = await performXuidLookup(gamertag: gamertag)
         guard case let .found(user) = userLookup else {
             if case .notFound = userLookup {
                 return .notFound
@@ -275,7 +280,7 @@ struct XboxLive {
         }
         
         var systemName: String? {
-            guard let richPresence = elitePresence, richPresence.starts(with: "Is in ") else {
+            guard let richPresence = elitePresence, richPresence.starts(with: "Is in ") && richPresence.contains("menu") == false else {
                 return nil
             }
             
