@@ -243,9 +243,9 @@ class BoardAssignCommands: IRCBotModule {
             if unidentified.count > 0 {
                 if rescue.platform == .PC {
                     if rescue.odyssey {
-                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.Orange, "Odyssey"))"
+                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.Orange, "Odyssey")))"
                     } else {
-                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.LightGrey, "Horizons"))"
+                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.LightGrey, "Horizons")))"
                     }
                 } else {
                     errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
