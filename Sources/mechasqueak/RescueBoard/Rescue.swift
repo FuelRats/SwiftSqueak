@@ -556,6 +556,9 @@ class Rescue {
                 return
             }
             
+            guard self.system?.isConfirmed != true else {
+                return
+            }
             let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
             var approvedCorrections = ratedCorrections.filter({ $1 != nil })
             approvedCorrections.sort(by: { $0.1! < $1.1! })
