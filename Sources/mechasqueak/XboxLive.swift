@@ -49,8 +49,13 @@ struct XboxLive {
             if error.status == .notFound {
                 return .notFound
             } else if error.status == .unauthorized && retried == false {
-                try? await refreshAuthenticationToken()
-                return await performXuidLookup(gamertag: gamertag, retried: true)
+                do {
+                    try await refreshAuthenticationToken()
+                    return await performXuidLookup(gamertag: gamertag, retried: true)
+                } catch {
+                    mecha.connections.first?.sendMessage(toTarget: "xlexious", contents: String(describing: error))
+                    return .failure
+                }
             }
             return .failure
         } catch {
