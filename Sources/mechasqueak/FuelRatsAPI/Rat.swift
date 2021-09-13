@@ -208,6 +208,6 @@ enum GamePlatform: String, Codable, CaseIterable {
 
 extension Optional where Wrapped == GamePlatform {
     var ircRepresentable: String {
-        return self?.ircRepresentable ?? "u\u{200B}nknown platform"
+        return self?.ircRepresentable ?? "unknown platform"
     }
 }

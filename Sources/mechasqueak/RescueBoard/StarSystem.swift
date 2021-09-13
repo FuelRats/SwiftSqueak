@@ -303,14 +303,14 @@ extension Optional where Wrapped == StarSystem {
         if let system = self {
             return system.description
         }
-        return "u\u{200B}nknown system"
+        return "unknown system"
     }
 
     var name: String {
         if let system = self {
             return system.name
         }
-        return "u\u{200B}nknown system"
+        return "unknown system"
     }
 }
 

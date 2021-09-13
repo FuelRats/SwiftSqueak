@@ -84,7 +84,7 @@ class AccountCommands: IRCBotModule {
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats,
-            "joined": joinedDate?.eliteFormattedString ?? "u\u{200B}nknown",
+            "joined": joinedDate?.eliteFormattedString ?? "unknown",
             "verified": verifiedStatus
         ])
     }
@@ -162,7 +162,7 @@ class AccountCommands: IRCBotModule {
             "account": account,
             "userId": apiUser.id.rawValue.ircRepresentation,
             "rats": rats,
-            "joined": joinedDate?.eliteFormattedString ?? "u\u{200B}nknown",
+            "joined": joinedDate?.eliteFormattedString ?? "unknown",
             "verified": verifiedStatus
         ])
     }

@@ -257,7 +257,7 @@ class Rescue {
     }
 
     var clientDescription: String {
-        return self.client ?? "u\u{200B}nknown client"
+        return self.client ?? "unknown client"
     }
     
     var onlineStatus: String? {

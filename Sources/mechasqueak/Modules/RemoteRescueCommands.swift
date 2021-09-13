@@ -64,9 +64,9 @@ class RemoteRescueCommands: IRCBotModule {
             let rescueList = results.body.data!.primary.values.enumerated().map({ (index, rescue) in
                 return lingo.localize("rescue.closed.entry", locale: command.locale.short, interpolations: [
                     "index": index,
-                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "client": rescue.client ?? "unknown client",
                     "platform": rescue.platform.ircRepresentable,
-                    "system": rescue.system ?? "u\u{200B}nknown system",
+                    "system": rescue.system ?? "unknown system",
                     "id": rescue.id.rawValue.ircRepresentation
                 ])
             })
@@ -171,7 +171,7 @@ class RemoteRescueCommands: IRCBotModule {
 
                 command.message.replyPrivate(key: format, fromCommand: command, map: [
                     "id": rescue.id.rawValue.ircRepresentation,
-                    "client": rescue.client ?? "u\u{200B}nknown client",
+                    "client": rescue.client ?? "unknown client",
                     "platform": rescue.platform.ircRepresentable,
                     "reason": rescue.notes
                 ])
@@ -250,8 +250,8 @@ class RemoteRescueCommands: IRCBotModule {
                 })
 
                 command.message.replyPrivate(key: "rescue.unfiled.entry", fromCommand: command, map: [
-                    "client": rescue.client ?? "u\u{200B}nknown client",
-                    "system": rescue.system ?? "u\u{200B}nknown system",
+                    "client": rescue.client ?? "unknown client",
+                    "system": rescue.system ?? "unknown system",
                     "platform": rescue.platform.ircRepresentable,
                     "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
                     "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit",
@@ -287,8 +287,8 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             command.message.replyPrivate(key: "rescue.quoteid.title", fromCommand: command, map: [
-                "client": rescue.client ?? "u\u{200B}nknown client",
-                "system": rescue.system ?? "u\u{200B}nknown system",
+                "client": rescue.client ?? "unknown client",
+                "system": rescue.system ?? "unknown system",
                 "platform": rescue.platform.ircRepresentable,
                 "created": rescue.createdAt.ircRepresentable,
                 "updated": rescue.updatedAt.ircRepresentable,
@@ -516,7 +516,7 @@ class RemoteRescueCommands: IRCBotModule {
 
             let shortUrl = await URLShortener.attemptShorten(url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit")!)
             command.message.reply(key: "rescue.clientpw.response", fromCommand: command, map: [
-                "client": rescue.attributes.client.value ?? "u\u{200B}nknown client",
+                "client": rescue.attributes.client.value ?? "unknown client",
                 "created": rescue.attributes.createdAt.value.ircRepresentable,
                 "link": shortUrl
             ])
