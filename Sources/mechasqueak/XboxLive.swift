@@ -30,7 +30,7 @@ struct XboxLive {
     private static var tlsConfiguration: TLSConfiguration {
         var tlsConfiguration = TLSConfiguration.clientDefault
         tlsConfiguration.certificateVerification = .none
-        tlsConfiguration.renegotiationSupport = .once
+        tlsConfiguration.minimumTLSVersion = .tlsv13
         return tlsConfiguration
     }
     
