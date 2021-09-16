@@ -93,22 +93,22 @@ extension SystemsAPI.Star {
         case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.Iab, .Ib, .I]) == true:
             return "Red supergiant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.II, .III]) == true:
+        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.II, .III, .IIIab]) == true:
             return "Blue giant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.II, .III]) == true:
+        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.II, .III, .IIIab]) == true:
             return "Yellow giant"
         
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.II, .III]) == true:
+        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.II, .III, .IIIab]) == true:
             return "Red giant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.IV]) == true:
+        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.IV, .IVab]) == true:
             return "Blue sub-giant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.IV]) == true:
+        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.IV, .IVab]) == true:
             return "Yellow sub-giant"
             
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.IV]) == true:
+        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.IV, .IVab]) == true:
             return "Red sub-giant"
             
         case (.O, _):
@@ -171,7 +171,9 @@ extension SystemsAPI.Star {
         case I
         case II
         case III
+        case IIIab
         case IV
+        case IVab
         case V
         case Va
         case Vab
