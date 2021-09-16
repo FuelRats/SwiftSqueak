@@ -175,10 +175,9 @@ struct QueueAPIStatistics: Codable {
 extension HTTPClient.Request {
     init (queuePath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
         var url = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: false)!
-        url.path = queuePath
         
         url.queryItems = query.queryItems
-        try self.init(url: url.url!, method: method)
+        try self.init(url: url.url!.appendingPathComponent(queuePath), method: method)
         
         self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         self.headers.add(name: "Authorization", value: "Bearer \(configuration.queue!.token)")
