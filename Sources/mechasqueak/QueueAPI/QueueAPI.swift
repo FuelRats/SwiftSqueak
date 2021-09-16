@@ -174,7 +174,7 @@ struct QueueAPIStatistics: Codable {
 
 extension HTTPClient.Request {
     init (queuePath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
-        var url = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: true)!
+        var url = URLComponents(url: configuration.queue!.url, resolvingAgainstBaseURL: false)!
         url.path = queuePath
         
         url.queryItems = query.queryItems
