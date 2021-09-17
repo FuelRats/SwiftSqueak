@@ -144,4 +144,14 @@ extension Dictionary where Key == String, Value == String? {
             return items
         })
     }
+    
+    var formUrlEncoded: Data? {
+        let str = self.map({ (key, value) -> String in
+            if let value = value {
+                return "\(urlEscape(key))=\(urlEscape(value))"
+            }
+            return urlEscape(key)
+        }).joined(separator: "&")
+        return str.data(using: .utf8)
+    }
 }

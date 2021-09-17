@@ -38,6 +38,7 @@ struct XboxLive {
         guard let xlConfig = configuration.xbox else {
             return .failure
         }
+        
         let urlEncodedGamerTag = gamertag.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!
         let url = URLComponents(string: "https://profile.xboxlive.com/users/gt(\(urlEncodedGamerTag))/profile/settings")!
         do {
@@ -152,35 +153,39 @@ struct XboxLive {
             guard let xlConfig = configuration.xbox else {
                 return nil
             }
+            
             let url = URLComponents(string: "https://login.live.com/oauth20_token.srf")!
             
-            var request = try HTTPClient.Request(url: url.url!, method: .POST)
-            
-            request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-            request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded; charset=utf-8")
-            request.body = try .formUrlEncoded([
+            var request = URLRequest(url: url.url!)
+            request.httpMethod = "POST"
+            request.addValue(MechaSqueak.userAgent, forHTTPHeaderField: "User-Agent")
+            request.addValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
+            request.httpBody = [
                 "refresh_token": xlConfig.refreshToken,
                 "client_id": xlConfig.clientId,
                 "client_secret": xlConfig.clientSecret,
                 "grant_type": "refresh_token",
                 "scope": "XboxLive.signin XboxLive.offline_access"
-            ])
+            ].formUrlEncoded
+            
+            let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
             
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             decoder.keyDecodingStrategy = .convertFromSnakeCase
-            return try await httpClient.execute(request: request, forDecodable: RefreshTokenResponse.self, withDecoder: decoder)
+            
+            return try! decoder.decode(RefreshTokenResponse.self, from: result)
         }
         
         static func exchangeForLiveToken (token: String) async throws -> LiveTokenResponse {
             let url = URLComponents(string: "https://user.auth.xboxlive.com/user/authenticate")!
             
-            var request = try HTTPClient.Request(url: url.url!, method: .POST)
-            
-            request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-            request.headers.add(name: "Accept", value: "application/json")
-            request.headers.add(name: "Content-Type", value: "application/json; charset=utf-8")
-            request.headers.add(name: "X-Xbl-Contract-Version", value: "2")
+            var request = URLRequest(url: url.url!)
+            request.httpMethod = "POST"
+            request.addValue(MechaSqueak.userAgent, forHTTPHeaderField: "User-Agent")
+            request.addValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+            request.addValue("application/json", forHTTPHeaderField: "Accept")
+            request.addValue("X-Xbl-Contract-Version", forHTTPHeaderField: "X-Xbl-Contract-Version")
             
             let bodyObject: [String : Any] = [
                 "TokenType": "JWT",
@@ -191,19 +196,24 @@ struct XboxLive {
                     "RpsTicket": "d=\(token)"
                 ]
             ]
-            request.body = .data(try JSONSerialization.data(withJSONObject: bodyObject, options: []))
             
-            return try await httpClient.execute(request: request, forDecodable: LiveTokenResponse.self)
+            request.httpBody = try JSONSerialization.data(withJSONObject: bodyObject, options: [])
+            let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
+            
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .formatted(.iso8601Full)
+            
+            return try! decoder.decode(LiveTokenResponse.self, from: result)
         }
         
         static func xstsAuthorize (token: String) async throws -> XSTSResponse {
             let url = URLComponents(string: "https://xsts.auth.xboxlive.com/xsts/authorize")!
             
-            var request = try HTTPClient.Request(url: url.url!, method: .POST)
-            
-            request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-            request.headers.add(name: "Accept", value: "application/json")
-            request.headers.add(name: "x-xbl-contract-version", value: "2")
+            var request = URLRequest(url: url.url!)
+            request.httpMethod = "POST"
+            request.addValue(MechaSqueak.userAgent, forHTTPHeaderField: "User-Agent")
+            request.addValue("application/json", forHTTPHeaderField: "Accept")
+            request.addValue("2", forHTTPHeaderField: "x-xbl-contract-version")
             
             let bodyObject: [String : Any] = [
                 "TokenType": "JWT",
@@ -213,9 +223,14 @@ struct XboxLive {
                     "SandboxId": "RETAIL"
                 ]
             ]
-            request.body = .data(try JSONSerialization.data(withJSONObject: bodyObject, options: []))
             
-            return try await httpClient.execute(request: request, forDecodable: XSTSResponse.self)
+            request.httpBody = try JSONSerialization.data(withJSONObject: bodyObject, options: [])
+            let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
+            
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .formatted(.iso8601Full)
+            
+            return try! decoder.decode(XSTSResponse.self, from: result)
         }
         
         struct RefreshTokenResponse: Codable {
