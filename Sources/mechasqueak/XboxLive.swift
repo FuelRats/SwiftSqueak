@@ -405,3 +405,18 @@ struct XboxLive {
         }
     }
 }
+
+extension URLSession {
+    func data (for request: URLRequest, delegate: URLSessionTaskDelegate?) async throws -> (Data, URLResponse) {
+        return try await withCheckedThrowingContinuation { continuation in
+            self.dataTask(with: request, completionHandler: { data, response, error in
+                guard let response = response, let data = data else {
+                    continuation.resume(throwing: error!)
+                    return
+                }
+                
+                continuation.resume(returning: (data, response))
+            })
+        }
+    }
+}
