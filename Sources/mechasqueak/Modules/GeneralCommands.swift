@@ -338,7 +338,7 @@ class GeneralCommands: IRCBotModule {
         ["xbl", "gamertag"],
         [.param("case id/gamertag", "SpaceDawg")],
         category: .utility,
-        description: "Tweet information about a case from @FuelRatAlerts",
+        description: "See information about an xbox gamertag",
         permission: nil,
         cooldown: .seconds(30)
     )
