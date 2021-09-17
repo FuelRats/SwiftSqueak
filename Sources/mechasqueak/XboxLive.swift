@@ -299,10 +299,10 @@ struct XboxLive {
             }
             
             for device in profile.presence.devices ?? [] {
-                guard device.titles.contains(where: { $0.name == "Home" }) else {
-                    continue
-                }
                 for title in device.titles {
+                    guard title.placement != "Background" else {
+                        continue
+                    }
                     if let activity = title.activity?.richPresence {
                         return "\(title.name) (\(activity))"
                     }

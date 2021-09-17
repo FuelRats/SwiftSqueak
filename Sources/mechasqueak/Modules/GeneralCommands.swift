@@ -336,7 +336,7 @@ class GeneralCommands: IRCBotModule {
     
     @AsyncBotCommand(
         ["xbl", "gamertag"],
-        [.param("case id/gamertag", "SpaceDawg")],
+        [.param("case id/gamertag", "SpaceDawg", .continuous)],
         category: .utility,
         description: "See information about an xbox gamertag",
         permission: nil,
@@ -362,12 +362,12 @@ class GeneralCommands: IRCBotModule {
         
         guard let currentActivity = profileLookup.currentActivity else {
             if profile.presence.state == .Online {
-                command.message.reply(message: "\(gamertag): \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(privacy)")
+                command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(privacy)")
             } else {
-                command.message.reply(message: "\(gamertag): \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(privacy)")
+                command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(privacy)")
             }
             return
         }
-        command.message.reply(message: "\(gamertag): \(currentActivity). Privacy Settings: \(privacy)")
+        command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(privacy)")
     }
 }
