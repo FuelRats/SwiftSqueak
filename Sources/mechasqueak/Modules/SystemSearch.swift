@@ -161,9 +161,9 @@ class SystemSearch: IRCBotModule {
     
     @AsyncBotCommand(
         ["station", "stations"],
-        [.param("reference system", "Sagittarius A*", .continuous), .argument("space"), .options(["s", "l"])],
+        [.param("reference system / case id / client name", "Sagittarius A*", .continuous), .argument("space"), .options(["s", "l"])],
         category: .utility,
-        description: "Get the nearest station to a system",
+        description: "Get the nearest station to a system, use a system name, case ID, or client name",
         cooldown: .seconds(30)
     )
     var didReceiveStationCommand = { command in
