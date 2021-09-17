@@ -333,4 +333,41 @@ class GeneralCommands: IRCBotModule {
 
         command.message.client.sendMessage(toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
     }
+    
+    @AsyncBotCommand(
+        ["xbl", "gamertag"],
+        [.param("case id/gamertag", "SpaceDawg")],
+        category: .utility,
+        description: "Tweet information about a case from @FuelRatAlerts",
+        permission: nil,
+        cooldown: .seconds(30)
+    )
+    var didReceiveXboxLiveCommand = { command in
+        var gamertag = command.parameters[0]
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: gamertag), rescue.platform == .Xbox {
+            gamertag = rescue.client ?? gamertag
+        }
+        
+        let profileLookup = await XboxLive.performLookup(gamertag: gamertag)
+        guard case let .found(profile) = profileLookup else {
+            if case .notFound = profileLookup {
+                command.message.error(key: "xbl.notfound", fromCommand: command)
+                return
+            }
+            command.message.error(key: "xbl.error", fromCommand: command)
+            return
+        }
+        
+        let privacy = profile.privacy.isAllowed ? IRCFormat.color(.LightGreen, "OK") : IRCFormat.color(.LightRed, "Communication Blocked")
+        
+        guard let currentActivity = profileLookup.currentActivity else {
+            if profile.presence.state == .Online {
+                command.message.reply(message: "\(gamertag): \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(privacy)")
+            } else {
+                command.message.reply(message: "\(gamertag): \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(privacy)")
+            }
+            return
+        }
+        command.message.reply(message: "\(gamertag): \(currentActivity). Privacy Settings: \(privacy)")
+    }
 }

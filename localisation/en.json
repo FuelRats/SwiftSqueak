@@ -323,6 +323,9 @@
   "suspend.nouser": "Unable to suspend user as the user ID could not be found",
   "suspend.error": "Unable to suspend user due to an unknown error",
   "suspend.success": "User %{userId} has been suspended until %{date}",
+  
+  "xbl.notfound": "No Xbox Live profile was found by that name",
+  "xbl.error": "An error occured when attempting to retrieve an Xbox Live profile",
 
   "flushall.response": "Cleared local cache and fetching user data for all logged in users..",
   "flush.notfound": "%{name} was not found in the account data cache.",
