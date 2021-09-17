@@ -167,9 +167,13 @@ class SystemSearch: IRCBotModule {
         cooldown: .seconds(30)
     )
     var didReceiveStationCommand = { command in
-        let systemName = command.param1!
+        var systemName = command.param1!
         let requireLargePad = command.options.contains("l")
         let requireSpace = command.namedOptions.contains("space")
+        
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: systemName) {
+            systemName = rescue.system?.name ?? ""
+        }
         
         do {
             var stationResult = try await SystemsAPI.getNearestPreferableStation(
