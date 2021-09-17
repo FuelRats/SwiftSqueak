@@ -25,6 +25,9 @@
 import Foundation
 import AsyncHTTPClient
 import NIOSSL
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 struct XboxLive {
     private static var tlsConfiguration: TLSConfiguration {
