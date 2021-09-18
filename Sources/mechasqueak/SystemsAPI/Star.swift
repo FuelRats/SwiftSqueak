@@ -93,22 +93,22 @@ extension SystemsAPI.Star {
         case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.Iab, .Ib, .I]) == true:
             return "Red supergiant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.II, .III, .IIIab]) == true:
+        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
             return "Blue giant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.II, .III, .IIIab]) == true:
+        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
             return "Yellow giant"
         
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.II, .III, .IIIab]) == true:
+        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
             return "Red giant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.IV, .IVab]) == true:
+        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.IV, .IVa, .IVb, .IVab]) == true:
             return "Blue sub-giant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.IV, .IVab]) == true:
+        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.IV, .IVa, .IVb,  .IVab]) == true:
             return "Yellow sub-giant"
             
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.IV, .IVab]) == true:
+        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.IV, .IVa, .IVb,  .IVab]) == true:
             return "Red sub-giant"
             
         case (.O, _):
@@ -170,9 +170,16 @@ extension SystemsAPI.Star {
         case Ib
         case I
         case II
+        case IIa
+        case IIb
+        case IIab
         case III
+        case IIIa
+        case IIIb
         case IIIab
         case IV
+        case IVa
+        case IVb
         case IVab
         case V
         case Va
