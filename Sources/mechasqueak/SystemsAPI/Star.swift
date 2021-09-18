@@ -74,89 +74,92 @@ extension SystemsAPI.Star {
     }
     
     var description: String {
-        switch (self.spectralClass, self.luminosity) {
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.Ia]) == true:
+        let mag = self.absoluteMagnitude ?? 0
+        let radius = self.solarRadius ?? 0
+        
+        switch (self.spectralClass, self.luminosity, mag) {
+        case (let spectral, let lum, let mag) where spectral?.within([.O, .B, .A]) == true && lum.within([.Iab, .Ia, .Ib, .I]) == true && (mag < -8 || radius > 500):
             return "Blue hypergiant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G, .K]) == true && lum.within([.Ia]) == true:
+        case (let spectral, let lum, let mag) where spectral?.within([.F, .G, .K]) == true && lum.within([.Iab, .Ia, .Ib, .I]) == true && (mag < -8 || radius > 500):
             return "Yellow hypergiant"
             
-        case (let spectral, let lum) where spectral?.within([.M]) == true && lum.within([.Ia]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.M]) == true && lum.within([.Ia]) == true && (mag < -8 || radius > 500):
             return "Red hypergiant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.Iab, .Ib, .I]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.O, .B, .A]) == true && lum.within([.Iab, .Ia, .Ib, .I]) == true:
             return "Blue supergiant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.Iab, .Ib, .I]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.F, .G]) == true && lum.within([.Iab, .Ia, .Ib, .I]) == true:
             return "Yellow supergiant"
             
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.Iab, .Ib, .I]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.K, .M]) == true && lum.within([.Iab, .Ia, .Ib, .I]) == true:
             return "Red supergiant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.O, .B, .A]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
             return "Blue giant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.F, .G]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
             return "Yellow giant"
         
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.K, .M]) == true && lum.within([.II, .IIa, .IIb, .IIab, .III, .IIIa, .IIIb, .IIIab]) == true:
             return "Red giant"
             
-        case (let spectral, let lum) where spectral?.within([.O, .B, .A]) == true && lum.within([.IV, .IVa, .IVb, .IVab]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.O, .B, .A]) == true && lum.within([.IV, .IVa, .IVb, .IVab]) == true:
             return "Blue sub-giant"
             
-        case (let spectral, let lum) where spectral?.within([.F, .G]) == true && lum.within([.IV, .IVa, .IVb,  .IVab]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.F, .G]) == true && lum.within([.IV, .IVa, .IVb,  .IVab]) == true:
             return "Yellow sub-giant"
             
-        case (let spectral, let lum) where spectral?.within([.K, .M]) == true && lum.within([.IV, .IVa, .IVb,  .IVab]) == true:
+        case (let spectral, let lum, _) where spectral?.within([.K, .M]) == true && lum.within([.IV, .IVa, .IVb,  .IVab]) == true:
             return "Red sub-giant"
             
-        case (.O, _):
+        case (.O, _, _):
             return "Blue-white star"
             
-        case (.B, _):
+        case (.B, _, _):
             return "Blue star"
             
-        case (.A, _):
+        case (.A, _, _):
             return "White star"
             
-        case (.F, _):
+        case (.F, _, _):
             return "Yellow-white star"
             
-        case (.G, _):
+        case (.G, _, _):
             return "Yellow dwarf"
             
-        case (.K, _):
+        case (.K, _, _):
             return "Orange dwarf"
             
-        case (.M, _):
+        case (.M, _, _):
             return "Red dwarf"
             
-        case (let spectral, _) where spectral?.within([.L, .T, .Y]) == true:
+        case (let spectral, _, _) where spectral?.within([.L, .T, .Y]) == true:
             return "Brown dwarf"
             
-        case (.TTS, _):
+        case (.TTS, _, _):
             return "T Tauri star"
             
-        case (.W, _):
+        case (.W, _, _):
             return "Wolf-Rayet star"
             
-        case (.C, _):
+        case (.C, _, _):
             return "Carbon star"
             
-        case (.S, _):
+        case (.S, _, _):
             return "Cool giant"
             
-        case (.MS, _):
+        case (.MS, _, _):
             return "Barium star"
             
-        case (.DA, _):
+        case (.DA, _, _):
             return "White dwarf"
             
-        case (.HAeBe, _):
+        case (.HAeBe, _, _):
             return "Herbig Ae/Be star"
             
-        case (.N, _):
+        case (.N, _, _):
             return "Neutron star"
             
         default:
