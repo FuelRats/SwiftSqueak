@@ -505,7 +505,8 @@ class FactCommands: IRCBotModule {
 
     func messageFact (command: IRCBotCommand, fact: Fact) {
         if command.parameters.count > 0 {
-            if command.parameters.count > 0 && command.parameters[0].lowercased() == command.message.client.currentNick.lowercased() {
+            let firstTarget = command.param1
+            if firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "xlexious" {
                 command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "bonks \(command.message.user.nickname)")
                 return
             }
