@@ -263,7 +263,7 @@ class Rescue {
     var onlineStatus: String? {
         guard case let .found(profile) = self.xboxProfile else {
             if case .notFound = self.xboxProfile {
-                return IRCFormat.color(.LightRed, " (XBL Profile not found)")
+                return IRCFormat.color(.Orange, " (XBL Profile not found)")
             }
             return nil
         }
