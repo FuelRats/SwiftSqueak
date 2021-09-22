@@ -204,6 +204,7 @@ class BoardAssignCommands: IRCBotModule {
     
     static func sendAssignMessages (assigns: [Result<AssignmentResult, RescueAssignError>], forRescue rescue: Rescue, fromCommand command: IRCBotCommand) -> Bool {
         let includeExistingAssigns = command.options.contains("a")
+        let carrier = command.namedOptions.contains("carrier")
         
         let failedAssigns = assigns.compactMap({ assign -> RescueAssignError? in
             if case let .failure(result) = assign {
@@ -304,7 +305,10 @@ class BoardAssignCommands: IRCBotModule {
                 return false
             }
             
-            let format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
+            var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
+            if carrier {
+                format = "board.assign.carrier"
+            }
             command.message.reply(key: format, fromCommand: command, map: [
                             "client": rescue.clientNick!,
                             "rats": names.map({
