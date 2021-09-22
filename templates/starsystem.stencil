@@ -1,8 +1,4 @@
-{% if system.name == "CRUCIS SECTOR ZP-P A5-2" %}
-"CRUCIS SECTOR ZP-P A5-2" / "SABIYHAN"
-{% else %}
 "{{ system.name }}"
-{% endif %}
 {% if government %}
  {{ government }}
 {% endif %}

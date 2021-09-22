@@ -161,6 +161,9 @@ class SystemsAPI {
         let (landmarkResults, systemData) = try await (performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64))
         starSystem.landmarks = landmarkResults.landmarks ?? []
         starSystem.data = systemData
+        if starSystem.name == "CRUCIS SECTOR ZP-P A5-2" {
+            starSystem.name = "SABIYHAN"
+        }
         return starSystem
     }
     
