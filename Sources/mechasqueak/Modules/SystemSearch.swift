@@ -83,12 +83,11 @@ class SystemSearch: IRCBotModule {
             system.removeFirst(5)
         }
         
-        if let autocorrect = ProceduralSystem.correct(system: system) {
-            system = autocorrect
-        }
+        var starSystem = StarSystem(name: system)
+        starSystem = autocorrect(system: starSystem)
         
         do {
-            let result = try await SystemsAPI.performSystemCheck(forSystem: system)
+            let result = try await SystemsAPI.performSystemCheck(forSystem: starSystem.name)
             
             guard let landmarkDescription = result.landmarkDescription else {
                 command.message.reply(key: "landmark.noresults", fromCommand: command, map: [

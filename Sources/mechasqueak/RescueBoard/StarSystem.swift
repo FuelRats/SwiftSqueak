@@ -316,7 +316,7 @@ extension Optional where Wrapped == StarSystem {
 
 func loadRegions () -> [GalacticRegion] {
     let regionPath = URL(
-        fileURLWithPath: FileManager.default.currentDirectoryPath
+        fileURLWithPath: configuration.sourcePath.path
     ).appendingPathComponent("regions.json")
 
     guard let regionData = try? Data(contentsOf: regionPath) else {
@@ -331,7 +331,7 @@ let regions = loadRegions()
 
 func loadNamedBodies () -> [String: String] {
     let namedBodyPath = URL(
-        fileURLWithPath: FileManager.default.currentDirectoryPath
+        fileURLWithPath: configuration.sourcePath.path
     ).appendingPathComponent("namedbodies.json")
 
     guard let bodyData = try? Data(contentsOf: namedBodyPath) else {
