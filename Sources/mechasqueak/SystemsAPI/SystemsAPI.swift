@@ -131,9 +131,6 @@ class SystemsAPI {
     
     static func performSystemCheck (forSystem systemName: String) async throws -> StarSystem {
         var systemName = systemName
-        if systemName.uppercased() == "SABIYHAN" {
-            systemName = "CRUCIS SECTOR ZP-P A5-2"
-        }
         if let shortNameCorrection = shortNamesCapitalisation[systemName.uppercased()] {
             systemName = shortNameCorrection
         }
@@ -161,9 +158,6 @@ class SystemsAPI {
         let (landmarkResults, systemData) = try await (performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64))
         starSystem.landmarks = landmarkResults.landmarks ?? []
         starSystem.data = systemData
-        if starSystem.name == "CRUCIS SECTOR ZP-P A5-2" {
-            starSystem.name = "SABIYHAN"
-        }
         return starSystem
     }
     
