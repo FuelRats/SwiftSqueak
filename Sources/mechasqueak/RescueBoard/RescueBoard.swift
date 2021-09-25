@@ -623,7 +623,7 @@ actor RescueBoard {
     }
     
     func announceExistingRescue (_ existingRescue: Rescue, conflictingWith rescue: Rescue, initiated: RescueInitiationType, inMessage message: IRCPrivateMessage) async throws {
-        let caseId = await board.getId(forRescue: rescue) ?? 0
+        let caseId = await board.getId(forRescue: existingRescue) ?? 0
         let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         if initiated == .signal {
             message.reply(message: lingo.localize("board.signal.helpyou", locale: "en", interpolations: [
