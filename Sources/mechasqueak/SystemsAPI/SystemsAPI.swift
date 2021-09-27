@@ -477,7 +477,7 @@ class SystemsAPI {
                     case AsteroidBase = "Asteroid base"
                     case MegaShip = "Mega ship"
                     case FleetCarrier = "Fleet Carrier"
-                    
+                    case Settlement = "Odyssey Settlement"
                     
                     static let ratings: [StationType: UInt] = [
                         .CoriolisStarport: 0,
@@ -488,7 +488,8 @@ class SystemsAPI {
                         .PlanetaryPort: 2,
                         .PlanetaryOutpost: 3,
                         .Outpost: 3,
-                        .FleetCarrier: 4
+                        .Settlement: 4,
+                        .FleetCarrier: 5
                     ]
                     
                     var rating: UInt {
@@ -508,7 +509,8 @@ class SystemsAPI {
                     var isPlanetary: Bool {
                         return [
                             StationType.PlanetaryPort,
-                            StationType.PlanetaryOutpost
+                            StationType.PlanetaryOutpost,
+                            StationType.Settlement
                         ].contains(self)
                     }
                 }
