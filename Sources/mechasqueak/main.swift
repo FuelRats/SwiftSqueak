@@ -359,6 +359,25 @@ class MechaSqueak {
     }
 }
 
+signal(SIGINT, SIG_IGN) // // Make sure the signal does not terminate the application.
+signal(SIGTERM, SIG_IGN)
+
+let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
+sigintSrc.setEventHandler {
+    print("Got SIGINT")
+    // ...
+    exit(0)
+}
+sigintSrc.resume()
+
+let sigtermSrc = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+sigtermSrc.setEventHandler {
+    print("Got SIGTERM")
+    // ...
+    exit(0)
+}
+sigtermSrc.resume()
+
 let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount * 2)
 
 func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
