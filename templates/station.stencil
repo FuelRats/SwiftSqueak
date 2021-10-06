@@ -1,4 +1,6 @@
-{% if system.distance > 0 %}
+{% if approximatedDistance %}
+Station found approximately ~{{ approximatedDistance }} LY away in "{{ system.name }}".
+{% elif system.distance > 0 %}
 Station found {{ system.distance|round|formatNumber }} LY away in "{{ system.name }}".
 {% else %}
 Station found in "{{ system.name }}".

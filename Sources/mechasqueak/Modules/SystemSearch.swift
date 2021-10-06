@@ -174,10 +174,14 @@ class SystemSearch: IRCBotModule {
             systemName = rescue.system?.name ?? ""
         }
         
+        var proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
+        var nearestSystem: SystemsAPI.NearestSystemDocument.NearestSystem? = nil
         let systemCheck = try? await SystemsAPI.performSystemCheck(forSystem: systemName)
         if systemCheck?.landmark == nil, let cords = systemCheck?.proceduralCheck?.sectordata.coords {
-            if let nearestName = try? await SystemsAPI.getNearestSystem(forCoordinates: cords)?.data?.name {
-                systemName = nearestName
+            if let nearestSystemSearch = try? await SystemsAPI.getNearestSystem(forCoordinates: cords)?.data {
+                systemName = nearestSystemSearch.name
+                proceduralCheck = systemCheck?.proceduralCheck
+                nearestSystem = nearestSystemSearch
             }
         }
         
@@ -212,8 +216,20 @@ class SystemSearch: IRCBotModule {
                 return
             }
             
+            var approximatedDistance: String? = nil
+            if let proc = proceduralCheck, let nearest = nearestSystem {
+                let formatter = NumberFormatter.englishFormatter()
+                formatter.usesSignificantDigits = true
+                // Round of output distance based on uncertainty provided by SystemsAPI
+                formatter.maximumSignificantDigits = proc.sectordata.uncertainty.significandWidth
+                // Pythagoras strikes again, he won't ever leave me alone
+                let calculatedDistance = (pow(nearest.distance, 2) + pow(system.distance, 2)).squareRoot()
+                approximatedDistance = formatter.string(from: calculatedDistance)
+            }
+            
             command.message.reply(message: try! stencil.renderLine(name: "station.stencil", context: [
                 "system": system,
+                "approximatedDistance": approximatedDistance as Any,
                 "station": station,
                 "travelTime": station.distance.distanceToSeconds(destinationGravity: true).timeSpan,
                 "services": station.allServices,
