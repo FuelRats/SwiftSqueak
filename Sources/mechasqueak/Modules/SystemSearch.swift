@@ -174,6 +174,13 @@ class SystemSearch: IRCBotModule {
             systemName = rescue.system?.name ?? ""
         }
         
+        let systemCheck = try? await SystemsAPI.performSystemCheck(forSystem: systemName)
+        if systemCheck?.landmark == nil, let cords = systemCheck?.proceduralCheck?.sectordata.coords {
+            if let nearestName = try? await SystemsAPI.getNearestSystem(forCoordinates: cords)?.data?.name {
+                systemName = nearestName
+            }
+        }
+        
         do {
             var stationResult = try await SystemsAPI.getNearestPreferableStation(
                 forSystem: systemName,
