@@ -670,6 +670,7 @@ actor RescueBoard {
         }
         if rescue.codeRed != existingRescue.codeRed && rescue.codeRed == true {
             changes.append("\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)")
+            await rescue.prep(message: message, initiated: initiated)
         }
         if changes.count > 0 {
             message.reply(message: lingo.localize("board.signal.changes", locale: "en-GB", interpolations: [
