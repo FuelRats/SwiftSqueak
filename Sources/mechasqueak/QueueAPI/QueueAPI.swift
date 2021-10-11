@@ -69,7 +69,7 @@ class QueueAPI {
     
     @discardableResult
     static func dequeue () async throws -> QueueParticipant {
-        let request = try! HTTPClient.Request(queuePath: "/queue/dequeue", method: .GET)
+        let request = try! HTTPClient.Request(queuePath: "/queue/dequeue", method: .POST)
         
         let participant = try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder)
         
