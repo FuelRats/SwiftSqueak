@@ -43,7 +43,7 @@ class MessageScanner: IRCBotModule {
         "horizons", "odyssey"
     ]
     private static let standDownPhrases = ["stand down", "stnd", "stdn"]
-    private static let carrierPhrases = ["fc", "carrier"]
+    private static let carrierPhrases = ["fc", "carrier", "horizons", "odyssey"]
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -190,7 +190,7 @@ class MessageScanner: IRCBotModule {
                     
                     message += " (Missing Odyssey)"
                 }
-                if rescue.odyssey == false && rat.attributes.odyssey.value {
+                if rescue.odyssey == false && rat.attributes.odyssey.value && containsCarrierPhrase == false {
                     channelMessage.client.sendMessage(
                         toChannelName: channelMessage.destination.name,
                         withKey: "jumpcall.ratodyssey",
