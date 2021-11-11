@@ -1,0 +1,11 @@
+{
+	"%@ Please add the following %lld rats to your friends list: %@" = {
+		"NSStringLocalizedFormatKey" = "%@ Please add the following %#@ratCount@ to your friends list: %@";
+		ratCount = {
+			"NSStringFormatSpecTypeKey" = "NSStringPluralRuleType";
+			"NSStringFormatValueTypeKey" = lld;
+			one = rat;
+			other = "%2$lld rats";
+		};
+	};
+}
