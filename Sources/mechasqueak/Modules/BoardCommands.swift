@@ -351,17 +351,19 @@ class BoardCommands: IRCBotModule {
             return
         }
         var lastSignalDate: Date? = nil
-        var ircPlatform = ""
+        var platform: GamePlatform? = nil
         if let filteredPlatform = command.namedOptions.first {
-            guard let platform = GamePlatform(rawValue: filteredPlatform) else {
+            guard let commandPlatform = GamePlatform(rawValue: filteredPlatform) else {
                 return
             }
             
-            lastSignalDate = await board.lastSignalsReceived[platform]
-            ircPlatform = platform.ircRepresentable + " "
+            lastSignalDate = await board.lastSignalsReceived[commandPlatform]
+            platform = commandPlatform
         } else {
             lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
+        var ircPlatform = platform != nil ? platform.ircRepresentable + " " : ""
+        
         guard let lastSignalDate = lastSignalDate else {
             command.message.reply(key: "board.quiet.unknown", fromCommand: command, map: [
                 "platform": ircPlatform
@@ -370,7 +372,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { (caseId, rescue) -> Bool in
-            return rescue.status != .Inactive && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
+            return rescue.status != .Inactive && (platform == nil || rescue.platform == platform) && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
             command.message.reply(key: "board.quiet.currentcalljumps", fromCommand: command, map: [
@@ -380,7 +382,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { rescue in
-            return rescue.1.status != .Inactive
+            return rescue.1.status != .Inactive && (platform == nil || rescue.1.platform == platform)
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
                 command.message.reply(key: "board.quiet.currentjoin", fromCommand: command, map: [
