@@ -346,11 +346,11 @@ class BoardCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
-        var lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         guard command.namedOptions.count < 2 else {
             command.message.reply(message: "Yeah no you're gonna have to make up your mind and pick one")
             return
         }
+        var lastSignalDate: Date? = nil
         var ircPlatform = ""
         if let filteredPlatform = command.namedOptions.first {
             guard let platform = GamePlatform(rawValue: filteredPlatform) else {
@@ -359,6 +359,8 @@ class BoardCommands: IRCBotModule {
             
             lastSignalDate = await board.lastSignalsReceived[platform]
             ircPlatform = platform.ircRepresentable + " "
+        } else {
+            lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
         guard let lastSignalDate = lastSignalDate else {
             command.message.reply(key: "board.quiet.unknown", fromCommand: command, map: [
