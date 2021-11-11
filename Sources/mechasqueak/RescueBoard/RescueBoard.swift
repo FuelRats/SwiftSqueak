@@ -32,7 +32,7 @@ actor RescueBoard {
     let queue = OperationQueue()
     var isSynced = true
     var syncTimer: RepeatedTask?
-    var lastSignalReceived: Date?
+    var lastSignalsReceived: [GamePlatform: Date] = [:]
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
     var recentlyClosed = [Int: Rescue]()
@@ -47,15 +47,20 @@ actor RescueBoard {
         }
 
         Task {
-            guard let rescues = try? await FuelRatsAPI.getLastRescue().body.primaryResource, rescues.values.count > 0 else {
+            guard let rescues = try? await FuelRatsAPI.getLastRescues().body.primaryResource, rescues.values.count > 0 else {
                 return
             }
             
-            let createdAt = rescues.values[0].attributes.createdAt.value
-            let lastSignalReceived = await self.lastSignalReceived
-            if lastSignalReceived == nil || createdAt > lastSignalReceived! {
-                await self.setLastSignalReceived(createdAt)
+            for platform in GamePlatform.allCases {
+                guard let createdAt = rescues.values.first(where: { $0.platform == platform })?.createdAt else {
+                    continue
+                }
+                let lastSignalReceived = await self.lastSignalsReceived[platform]
+                if lastSignalReceived == nil || createdAt > lastSignalReceived! {
+                    await self.setLastSignalReceived(platform: platform, createdAt)
+                }
             }
+            
         }
     }
     
@@ -305,8 +310,9 @@ actor RescueBoard {
         let identifier = await self.insert(rescue: rescue, preferringEvenness: even)
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
-        self.lastSignalReceived = Date()
-        
+        if let platform = rescue.platform {
+            self.lastSignalsReceived[platform] = Date()
+        }
 
         if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
             self.prepTimers[rescue.id] = loop.next().scheduleTask(in: .seconds(180), {
@@ -500,8 +506,8 @@ actor RescueBoard {
         return identifier
     }
     
-    func setLastSignalReceived (_ lastReceived: Date) async {
-        self.lastSignalReceived = lastReceived
+    func setLastSignalReceived (platform: GamePlatform, _ lastReceived: Date) async {
+        self.lastSignalsReceived[platform] = lastReceived
     }
     
     func setLastPaperworkReminder (forUser userId: UUID, toDate date: Date) async {

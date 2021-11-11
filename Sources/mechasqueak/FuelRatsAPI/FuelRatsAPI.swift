@@ -78,8 +78,8 @@ class FuelRatsAPI {
         ].jsonString])
     }
     
-    static func getLastRescue () async throws -> RescueSearchDocument {
-        return try await FuelRatsAPI.rescueSearch(query: ["page[limit]": "1", "sort": "-createdAt"])
+    static func getLastRescues () async throws -> RescueSearchDocument {
+        return try await FuelRatsAPI.rescueSearch(query: ["page[limit]": "200", "sort": "-createdAt"])
     }
     
     static func getRecentlyClosedRescues (count: Int) async throws -> RescueSearchDocument {

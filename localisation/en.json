@@ -188,13 +188,13 @@
   
   "board.pwl.generated": "Paperwork link for case #%{caseId} is: %{link}",
   
-  "board.quiet.unknown": "Unfortunately I do not know when the last case was.",
-  "board.quiet.recent": "The last case was %{timespan} ago.",
-  "board.quiet.notrecent": "The last case was %{timespan} ago. Time to summon a case?",
-  "board.quiet.quiet": "Wow, the last signal was so long ago... %{timespan} ago to be exact! Orangey approves!",
-  "board.quiet.current": "A case is on going right now! What are you playing at?",
-  "board.quiet.currentjoin": "A case is on going right now! Maybe you should join #fuelrats instead of bothering me ಥ_ಥ",
-  "board.quiet.currentcalljumps": "A case is on going right now! Maybe you should be calling jumps instead of using !quiet 🤔",
+  "board.quiet.unknown": "Unfortunately I do not know when the last %{platform}case was.",
+  "board.quiet.recent": "The last %{platform}case was %{timespan} ago.",
+  "board.quiet.notrecent": "The last %{platform}case was %{timespan} ago. Time to summon a case?",
+  "board.quiet.quiet": "Wow, the last %{platform}signal was so long ago... %{timespan} ago to be exact! Orangey approves!",
+  "board.quiet.current": "A %{platform}case is on going right now! What are you playing at?",
+  "board.quiet.currentjoin": "A %{platform}case is on going right now! Maybe you should join #fuelrats instead of bothering me ಥ_ಥ",
+  "board.quiet.currentcalljumps": "A %{platform}case is on going right now! Maybe you should be calling jumps instead of using !quiet 🤔",
 
   "board.queue.already": "Case #%{caseId} is already queued.",
   "board.dequeue.already": "Case #%{caseId} is not queued.",

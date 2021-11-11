@@ -339,14 +339,31 @@ class BoardCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["quiet", "last"],
+        [.argument("pc"), .argument("xb"), .argument("ps")],
         category: .other,
         description: "Displays the amount of time since the last rescue",
         permission: .DispatchRead,
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
-        guard let lastSignalDate = await board.lastSignalReceived else {
-            command.message.reply(key: "board.quiet.unknown", fromCommand: command)
+        var lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
+        guard command.namedOptions.count < 2 else {
+            command.message.reply(message: "Yeah no you're gonna have to make up your mind and pick one")
+            return
+        }
+        var ircPlatform = ""
+        if let filteredPlatform = command.namedOptions.first {
+            guard let platform = GamePlatform(rawValue: filteredPlatform) else {
+                return
+            }
+            
+            lastSignalDate = await board.lastSignalsReceived[platform]
+            ircPlatform = platform.ircRepresentable + " "
+        }
+        guard let lastSignalDate = lastSignalDate else {
+            command.message.reply(key: "board.quiet.unknown", fromCommand: command, map: [
+                "platform": ircPlatform
+            ])
             return
         }
 
@@ -354,7 +371,9 @@ class BoardCommands: IRCBotModule {
             return rescue.status != .Inactive && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
-            command.message.reply(key: "board.quiet.currentcalljumps", fromCommand: command)
+            command.message.reply(key: "board.quiet.currentcalljumps", fromCommand: command, map: [
+                "platform": ircPlatform
+            ])
             return
         }
 
@@ -362,10 +381,14 @@ class BoardCommands: IRCBotModule {
             return rescue.1.status != .Inactive
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
-                command.message.reply(key: "board.quiet.currentjoin", fromCommand: command)
+                command.message.reply(key: "board.quiet.currentjoin", fromCommand: command, map: [
+                    "platform": ircPlatform
+                ])
                 return
             }
-            command.message.reply(key: "board.quiet.current", fromCommand: command)
+            command.message.reply(key: "board.quiet.current", fromCommand: command, map: [
+                "platform": ircPlatform
+            ])
             return
         }
 
@@ -375,20 +398,23 @@ class BoardCommands: IRCBotModule {
 
         if timespan >= 12 * 60 * 60 {
             command.message.reply(key: "board.quiet.quiet", fromCommand: command, map: [
-                "timespan": timespanString
+                "timespan": timespanString,
+                "platform": ircPlatform
             ])
             return
         }
 
         if timespan >= 15 * 60 {
             command.message.reply(key: "board.quiet.notrecent", fromCommand: command, map: [
-                "timespan": timespanString
+                "timespan": timespanString,
+                "platform": ircPlatform
             ])
             return
         }
 
         command.message.reply(key: "board.quiet.recent", fromCommand: command, map: [
-            "timespan": timespanString
+            "timespan": timespanString,
+            "platform": ircPlatform
         ])
     }
 
