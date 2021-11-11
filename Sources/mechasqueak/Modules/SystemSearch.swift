@@ -160,7 +160,7 @@ class SystemSearch: IRCBotModule {
     
     @AsyncBotCommand(
         ["station", "stations"],
-        [.param("reference system / case id / client name", "Sagittarius A*", .continuous), .argument("space"), .options(["s", "l"])],
+        [.param("reference system / case id / client name", "Sagittarius A*", .continuous), .argument("planet"), .options(["p", "l"])],
         category: .utility,
         description: "Get the nearest station to a system, use a system name, case ID, or client name",
         cooldown: .seconds(30)
@@ -168,7 +168,7 @@ class SystemSearch: IRCBotModule {
     var didReceiveStationCommand = { command in
         var systemName = command.param1!
         let requireLargePad = command.options.contains("l")
-        let requireSpace = command.namedOptions.contains("space")
+        let requireSpace = !(command.options.contains("p"))
         
         if let (_, rescue) = await board.findRescue(withCaseIdentifier: systemName) {
             systemName = rescue.system?.name ?? ""
