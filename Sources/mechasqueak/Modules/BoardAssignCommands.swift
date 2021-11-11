@@ -284,15 +284,28 @@ class BoardAssignCommands: IRCBotModule {
             }
             return nil
         })
+        
         if successfulAssigns.count > 0 || includeExistingAssigns || assigns.count == 0 {
+            let duplicates = successfulAssigns.compactMap({ assign -> AssignmentResult? in
+                switch assign {
+                case .duplicate(_), .unidentifiedDuplicate(_):
+                    return assign
+                    
+                default:
+                    return nil
+                }
+            })
+            
             var names = successfulAssigns.compactMap({ assign -> String? in
                 switch assign {
                 case .assigned(let rat):
                     return rat.name
                 case .unidentified(let unidentifiedRat):
                     return unidentifiedRat
-                case .duplicate(_):
-                    return nil
+                case .duplicate(let rat):
+                    return rat.name
+                case .unidentifiedDuplicate(let unidentifiedRat):
+                    return unidentifiedRat
                 }
             })
             
@@ -308,6 +321,10 @@ class BoardAssignCommands: IRCBotModule {
             var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
             if carrier {
                 format = "board.assign.carrier"
+            }
+            
+            if duplicates.count > 0 {
+                command.message.reply(key: "board.assign.duplicates", fromCommand: command)
             }
             command.message.reply(key: format, fromCommand: command, map: [
                             "client": rescue.clientNick!,

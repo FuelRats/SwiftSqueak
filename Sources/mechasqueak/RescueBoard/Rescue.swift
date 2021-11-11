@@ -465,7 +465,7 @@ class Rescue {
                 return Result.failure(.unidentified(param))
             }
             guard self.unidentifiedRats.contains(param) == false else {
-                return Result.success(.duplicate(param))
+                return Result.success(.unidentifiedDuplicate(param))
             }
             
             self.unidentifiedRats.append(param)
@@ -482,7 +482,7 @@ class Rescue {
         }
 
         guard self.rats.contains(where: { $0.id.rawValue == rat.id.rawValue }) == false else {
-            return Result.success(.duplicate(rat.name))
+            return Result.success(.duplicate(rat))
         }
 
         self.unidentifiedRats.removeAll(where: { $0.lowercased() == param.lowercased() })
@@ -683,5 +683,6 @@ enum RescueAssignError: Error {
 enum AssignmentResult {
     case assigned(Rat)
     case unidentified(String)
-    case duplicate(String)
+    case unidentifiedDuplicate(String)
+    case duplicate(Rat)
 }
