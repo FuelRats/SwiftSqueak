@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "mechasqueak",
-    defaultLocalization: "fr",
+    defaultLocalization: "en",
     platforms: [
         .macOS("12.0")
     ],
