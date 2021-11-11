@@ -323,16 +323,23 @@ class BoardAssignCommands: IRCBotModule {
                 format = "board.assign.carrier"
             }
             
+            let ratNames = names.map({
+                "\"\($0)\""
+            }).joined(separator: ", ")
+            
+            
             if duplicates.count > 0 {
                 command.message.reply(key: "board.assign.duplicates", fromCommand: command)
             }
-            command.message.reply(key: format, fromCommand: command, map: [
-                            "client": rescue.clientNick!,
-                            "rats": names.map({
-                                "\"\($0)\""
-                            }).joined(separator: ", "),
-                            "count": names.count
-                        ])
+            print(Bundle.module.localizations)
+            command.message.reply(message: String(localized: "\(rescue.clientNick!) Please add the following \(names.count) rats to your friends list: \(ratNames)", command: command))
+//            command.message.reply(key: format, fromCommand: command, map: [
+//                            "client": rescue.clientNick!,
+//                            "rats": names.map({
+//                                "\"\($0)\""
+//                            }).joined(separator: ", "),
+//                            "count": names.count
+//                        ])
             return true
         }
         return false

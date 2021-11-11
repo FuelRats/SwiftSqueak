@@ -40,6 +40,16 @@ extension String {
     subscript (index: Int) -> Character {
         return self[self.index(self.startIndex, offsetBy: index)]
     }
+    
+    init(localized keyAndValue: String.LocalizationValue, table: String? = nil, command: IRCBotCommand, comment: StaticString? = nil) {
+        let locale = command.locale
+        print(locale.description)
+        let path = Bundle.module.path(forResource: locale.languageCode,
+                                      ofType: "lproj")
+        let bundle = Bundle(path: path ?? "") ?? Bundle.module
+        self.init(localized: keyAndValue, table: table, bundle: bundle, locale: locale, comment: comment)
+        
+    }
 }
 
 extension String {
