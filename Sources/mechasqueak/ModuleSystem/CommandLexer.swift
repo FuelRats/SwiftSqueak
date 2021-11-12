@@ -154,24 +154,23 @@ struct IRCBotCommand {
     }
     
     func reply (localized: String.LocalizationValue) {
-        let attrString = AttributedString(localized: localized, command: self)
-        self.message.reply(message: String(localized: localized, command: self))
+        self.message.reply(message: AttributedString(localized: localized, command: self).ircFormattedString)
     }
 
     func error (localized: String.LocalizationValue) {
-        self.message.reply(message: "\(self.message.user.nickname): \(String(localized: localized, command: self))")
+        self.message.reply(message: "\(self.message.user.nickname): \(AttributedString(localized: localized, command: self).ircFormattedString)")
     }
 
     func replyPrivate (localized: String.LocalizationValue) {
-        let message = String(localized: localized, command: self)
+        let message = AttributedString(localized: localized, command: self).ircFormattedString
         self.message.replyPrivate(message: message)
     }
 
     public func reply (list: [String.LocalizationValue], separator: String, heading: String.LocalizationValue? = nil) {
-        let messageStrings = list.map({ String(localized: $0, command: self) })
+        let messageStrings = list.map({ AttributedString(localized: $0, command: self).ircFormattedString })
         var headingString: String? = nil
         if let heading = heading {
-            headingString = String(localized: heading, command: self)
+            headingString = AttributedString(localized: heading, command: self).ircFormattedString
         }
         let messages = messageStrings.ircList(separator: separator, heading: headingString ?? "")
 
@@ -181,10 +180,10 @@ struct IRCBotCommand {
     }
 
     public func replyPrivate (list: [String.LocalizationValue], separator: String, heading: String.LocalizationValue? = nil) {
-        let messageStrings = list.map({ String(localized: $0, command: self) })
+        let messageStrings = list.map({ AttributedString(localized: $0, command: self).ircFormattedString })
         var headingString: String? = nil
         if let heading = heading {
-            headingString = String(localized: heading, command: self)
+            headingString = AttributedString(localized: heading, command: self).ircFormattedString
         }
         let messages = messageStrings.ircList(separator: separator, heading: headingString ?? "")
 

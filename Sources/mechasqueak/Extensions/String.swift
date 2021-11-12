@@ -23,6 +23,7 @@
  */
 
 import Foundation
+import IRCKit
 
 extension Character {
     var value: Int32 {
@@ -55,22 +56,90 @@ extension String {
     }
 }
 
+extension AttributeScopes {
+    struct IRCAttributes: AttributeScope {
+        let color: ColorAttribute
+        let background: BackgroundColorAttribute
+    }
+    
+    var irc: IRCAttributes.Type { IRCAttributes.self }
+}
+
 extension AttributedString {
     init (localized keyAndValue: String.LocalizationValue, command: IRCBotCommand, comment: StaticString? = nil) {
-        let locale = command.locale
-        let path = Bundle.module.path(forResource: locale.languageCode, ofType: "lproj")
-        let bundle = Bundle(path: path ?? "") ?? Bundle.module
-        self.init(localized: keyAndValue, bundle: bundle, locale: locale, comment: comment)
+        let string = String(localized: keyAndValue, command: command)
+        
+            let options = AttributedString.MarkdownParsingOptions(allowsExtendedAttributes: true, failurePolicy: .throwError)
+        try! self.init(markdown: string, including: \.irc, options: options)
     }
     
     var ircFormattedString: String {
         var output = ""
         for run in self.runs {
+            
             var text = String(self.characters[run.range])
-            print(run.attributes)
+                
+            let presentation = run.attributes.inlinePresentationIntent
+            if presentation?.contains(.stronglyEmphasized) == true {
+                text = IRCFormat.bold(text)
+            }
+            if presentation?.contains(.strikethrough) == true {
+                text = IRCFormat.strikethrough(text)
+            }
+            if presentation?.contains(.emphasized) == true {
+                text = IRCFormat.italic(text)
+            }
+            if presentation?.contains(.blockHTML) == true {
+                text = IRCFormat.monospace(text)
+            }
+            
+            if let color = run.color, let background = run.background {
+                text = IRCFormat.color(color, background: background, text)
+            } else if let color = run.color {
+                text = IRCFormat.color(color, text)
+            }
+            output += text
         }
-        return ""
+        print(output)
+        return output
     }
+}
+
+extension AttributeDynamicLookup {
+    subscript<T: AttributedStringKey>(dynamicMember keyPath: KeyPath<AttributeScopes.IRCAttributes, T>) -> T {
+        self[T.self]
+    }
+}
+
+extension IRCColor: Codable {}
+
+enum ColorAttribute: AttributedStringKey, MarkdownDecodableAttributedStringKey {
+    typealias Value = IRCColor
+    
+    static func decodeMarkdown(from decoder: Decoder) throws -> IRCColor {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(Int.self)
+        if let color = IRCColor(rawValue: value) {
+            return color
+        }
+        throw DecodingError.typeMismatch(Int.self, .init(codingPath: decoder.codingPath, debugDescription: "", underlyingError: nil))
+    }
+    
+    public static var name = "color"
+}
+enum BackgroundColorAttribute: AttributedStringKey, MarkdownDecodableAttributedStringKey {
+    typealias Value = IRCColor
+    
+    static func decodeMarkdown(from decoder: Decoder) throws -> IRCColor {
+        var container = try decoder.unkeyedContainer()
+        let value = try container.decodeIfPresent(Int.self)
+        if let value = value, let color = IRCColor(rawValue: value) {
+            return color
+        }
+        throw DecodingError.typeMismatch(Int.self, .init(codingPath: decoder.codingPath, debugDescription: "", underlyingError: nil))
+    }
+    
+    public static var name = "background"
 }
 
 extension String {
