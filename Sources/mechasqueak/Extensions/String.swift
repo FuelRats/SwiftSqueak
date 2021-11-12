@@ -41,14 +41,35 @@ extension String {
         return self[self.index(self.startIndex, offsetBy: index)]
     }
     
-    init(localized keyAndValue: String.LocalizationValue, table: String? = nil, command: IRCBotCommand, comment: StaticString? = nil) {
+    init (localized keyAndValue: String.LocalizationValue, table: String? = nil, command: IRCBotCommand, comment: StaticString? = nil) {
         let locale = command.locale
-        print(locale.description)
-        let path = Bundle.module.path(forResource: locale.languageCode,
-                                      ofType: "lproj")
+        let path = Bundle.module.path(forResource: locale.languageCode, ofType: "lproj")
         let bundle = Bundle(path: path ?? "") ?? Bundle.module
         self.init(localized: keyAndValue, table: table, bundle: bundle, locale: locale, comment: comment)
-        
+    }
+    
+    init (localized keyAndValue: String.LocalizationValue, locale: Locale = Locale.current, comment: StaticString? = nil) {
+        let path = Bundle.module.path(forResource: locale.languageCode, ofType: "lproj")
+        let bundle = Bundle(path: path ?? "") ?? Bundle.module
+        self.init(localized: keyAndValue, bundle: bundle, locale: locale, comment: comment)
+    }
+}
+
+extension AttributedString {
+    init (localized keyAndValue: String.LocalizationValue, command: IRCBotCommand, comment: StaticString? = nil) {
+        let locale = command.locale
+        let path = Bundle.module.path(forResource: locale.languageCode, ofType: "lproj")
+        let bundle = Bundle(path: path ?? "") ?? Bundle.module
+        self.init(localized: keyAndValue, bundle: bundle, locale: locale, comment: comment)
+    }
+    
+    var ircFormattedString: String {
+        var output = ""
+        for run in self.runs {
+            var text = String(self.characters[run.range])
+            print(run.attributes)
+        }
+        return ""
     }
 }
 

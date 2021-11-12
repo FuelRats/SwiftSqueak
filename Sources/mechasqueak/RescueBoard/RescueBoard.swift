@@ -110,27 +110,19 @@ actor RescueBoard {
         var updates = [String]()
         
         if download > 0 {
-            updates.append(lingo.localize("board.synced.downstreamNew", locale: "en-GB", interpolations: [
-                "count": download
-            ]))
+            updates.append(String(localized: "\(download) new rescues were downloaded from the server"))
         }
         
         if upload > 0 {
-            updates.append(lingo.localize("board.synced.upstreamNew", locale: "en-GB", interpolations: [
-                "count": upload
-            ]))
+            updates.append(String(localized: "\(upload) new rescues were uploaded to the server"))
         }
         
         if updateRemote > 0 {
-            updates.append(lingo.localize("board.synced.upstreamUpdate", locale: "en-GB", interpolations: [
-                "count": updateRemote
-            ]))
+            updates.append(String(localized: "\(updateRemote) updated rescues were uploaded to the server"))
         }
         
         if updateLocal > 0 {
-            updates.append(lingo.localize("board.synced.downstreamUpdate", locale: "en-GB", interpolations: [
-                "count": updateLocal
-            ]))
+            updates.append(String(localized: "\(updateLocal) updated rescues were downloaded from the server"))
         }
         
         if conflicts > 0 {

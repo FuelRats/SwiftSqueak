@@ -152,6 +152,46 @@ struct IRCBotCommand {
         debug(String(describing: error))
         self.message.error(key: "genericerror", fromCommand: self)
     }
+    
+    func reply (localized: String.LocalizationValue) {
+        let attrString = AttributedString(localized: localized, command: self)
+        self.message.reply(message: String(localized: localized, command: self))
+    }
+
+    func error (localized: String.LocalizationValue) {
+        self.message.reply(message: "\(self.message.user.nickname): \(String(localized: localized, command: self))")
+    }
+
+    func replyPrivate (localized: String.LocalizationValue) {
+        let message = String(localized: localized, command: self)
+        self.message.replyPrivate(message: message)
+    }
+
+    public func reply (list: [String.LocalizationValue], separator: String, heading: String.LocalizationValue? = nil) {
+        let messageStrings = list.map({ String(localized: $0, command: self) })
+        var headingString: String? = nil
+        if let heading = heading {
+            headingString = String(localized: heading, command: self)
+        }
+        let messages = messageStrings.ircList(separator: separator, heading: headingString ?? "")
+
+        for message in messages {
+            self.message.reply(message: message)
+        }
+    }
+
+    public func replyPrivate (list: [String.LocalizationValue], separator: String, heading: String.LocalizationValue? = nil) {
+        let messageStrings = list.map({ String(localized: $0, command: self) })
+        var headingString: String? = nil
+        if let heading = heading {
+            headingString = String(localized: heading, command: self)
+        }
+        let messages = messageStrings.ircList(separator: separator, heading: headingString ?? "")
+
+        for message in messages {
+            self.message.replyPrivate(message: message)
+        }
+    }
 }
 
 enum Token {
