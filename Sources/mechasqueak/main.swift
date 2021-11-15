@@ -131,12 +131,52 @@ class MechaSqueak {
         
         ratSocket = RatSocket()
         
+        if configuration.general.drillMode == false {
+            loop.next().scheduleRepeatedTask(initialDelay: .seconds(15), delay: .minutes(1), self.checkEliteStatus)
+        }
+        
         Task {
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
             self.sectors = try await SystemsAPI.fetchSectorList()
             self.groups = try await Group.getList().body.data?.primary.values ?? []
             
             ReferenceGenerator.generate(inPath: configuration.sourcePath)
+        }
+    }
+    
+    func checkEliteStatus (task: RepeatedTask) {
+        Task {
+            let serverStatus = try? await EliteServerStatus.fetch()
+            var statusString = serverStatus?.text ?? "Unreachable"
+            if statusString == "OK" {
+                statusString = IRCFormat.color(.Green, statusString)
+            } else if statusString == "Unreachable" {
+                statusString = IRCFormat.color(.LightRed, statusString)
+            } else {
+                statusString = IRCFormat.color(.Orange, statusString)
+            }
+            if let topic = reportingChannel?.topic {
+                var topicSections = topic.contents.components(separatedBy: " | ")
+                if topicSections.last?.starts(with: "ED Server Status: ") == true {
+                    let serverStatusSection = topicSections.last!.components(separatedBy: " ").dropFirst(2).joined(separator: " ")
+                    print(serverStatusSection, statusString)
+                    guard serverStatusSection.strippingIRCFormatting != statusString.strippingIRCFormatting else {
+                        return
+                    }
+                    topicSections.removeLast()
+                }
+                
+                topicSections.append("ED Server Status: \(statusString)")
+                
+                while topicSections.joined(separator: " | ").bytes.count > 360 {
+                    topicSections.remove(at: topicSections.endIndex - 2)
+                }
+                print(topicSections.joined(separator: " | ").bytes.count)
+                reportingChannel?.client.send(command: .TOPIC, parameters: [
+                    reportingChannel!.name,
+                    topicSections.joined(separator: " | ")
+                ])
+            }
         }
     }
 
