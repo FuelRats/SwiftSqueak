@@ -177,7 +177,7 @@ class IRCBotModuleManager {
                    Date().timeIntervalSince(previousCommand.message.raw.time) < cooldown {
                     message.replyPrivate(key: "command.cooldown", fromCommand: ircBotCommand, map: [
                         "command": ircBotCommand.command,
-                        "cooldown": (cooldown - Date().timeIntervalSince(previousCommand.message.raw.time)).timeSpan
+                        "cooldown": (cooldown - Date().timeIntervalSince(previousCommand.message.raw.time)).timeSpan(maximumUnits: 1)
                     ])
                     return
                 }
