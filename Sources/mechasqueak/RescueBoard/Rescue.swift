@@ -269,7 +269,7 @@ class Rescue {
         }
         guard profile.presence.state == .Online else {
             if let lastSeen = profile.presence.lastSeen {
-                let lastSeenAgo = lastSeen.timestamp.timeAgo
+                let lastSeenAgo = lastSeen.timestamp.timeAgo(maximumUnits: 1)
                 return IRCFormat.color(.Grey, " (Last online \(lastSeenAgo) ago)")
             }
             return IRCFormat.color(.Grey, " (Offline)")
@@ -570,14 +570,7 @@ class Rescue {
                 self.system?.merge(starSystem)
                 try? self.save()
                 
-                self.channel?.send(
-                    key: "sysc.autocorrect",
-                    map: [
-                        "caseId": caseId,
-                        "client": self.clientDescription,
-                        "system": self.system.description
-                    ]
-                )
+                self.channel?.send(localized: "**ATTENTION:** System for case \(caseId) (\(self.clientDescription)) has been automatically corrected to \(self.system.description)")
                 return
             }
             
@@ -590,12 +583,7 @@ class Rescue {
             let resultString = results.enumerated().map({
                 $0.element.correctionRepresentation(index: $0.offset + 1)
             }).joined(separator: ", ")
-
-            self.channel?.send(key: "sysc.nearestmatches", map: [
-                "caseId": caseId,
-                "client": self.clientDescription,
-                "systems": resultString
-            ])
+            self.channel?.send(localized: "Nearest matches found for case #\(caseId) (\(self.clientDescription)): \(resultString)")
         }
         return
     }
