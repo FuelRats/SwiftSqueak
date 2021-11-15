@@ -423,6 +423,9 @@ class Rescue {
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
                 Task {
                     try? await QueueAPI.dequeue()
+                    if let platform = self.platform, await board.lastSignalsReceived[platform] ?? Date(timeIntervalSince1970: 0) < self.createdAt {
+                        await board.setLastSignalReceived(platform: platform, date: self.createdAt)
+                    }
                 }
             }
         }

@@ -302,9 +302,6 @@ actor RescueBoard {
         let identifier = await self.insert(rescue: rescue, preferringEvenness: even)
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
-        if let platform = rescue.platform {
-            self.lastSignalsReceived[platform] = Date()
-        }
 
         if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
             self.prepTimers[rescue.id] = loop.next().scheduleTask(in: .seconds(180), {
@@ -427,6 +424,10 @@ actor RescueBoard {
             return true
         }
         return false
+    }
+    
+    func setLastSignalReceived(platform: GamePlatform, date: Date) {
+        self.lastSignalsReceived[platform] = date
     }
     
     func getNewIdentifier (even: Bool? = nil) -> Int {
