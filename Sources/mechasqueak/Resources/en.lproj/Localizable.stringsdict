@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>%lld rats for %@ to remain in the menu and add to your friends list: %@</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%@ Please REMAIN at the main menu and add the following %#@ratCount@ to your friends list: %@</string>
+		<key>ratCount</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>rat</string>
+			<key>other</key>
+			<string>%lld rats</string>
+		</dict>
+	</dict>
+	<key>Assigned rats %lld %@ to case %@ as a carrier rescue</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@rats@</string>
+		<key>rats</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>Assigned rat %2$@ to case %3$@ as a carrier rescue</string>
+			<key>other</key>
+			<string>Assigned rats %2$@ to case %3$@ as a carrier rescue</string>
+		</dict>
+	</dict>
+	<key>%lld rats for %@ to add to your friends list: %@</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@ratCount@</string>
+		<key>ratCount</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%2$@ Please add the following rat to your friends list: %3$@</string>
+			<key>other</key>
+			<string>%2$@ Please add the following %1$lld rats to your friends list: %3$@</string>
+		</dict>
+	</dict>
+	<key>%lld new rescues were downloaded from the server</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld new rescue was downloaded from the server</string>
+			<key>other</key>
+			<string>%lld new rescues were downloaded from the server</string>
+		</dict>
+	</dict>
+	<key>%lld modified rescues were downloaded from the server</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld modified rescue was downloaded from the server</string>
+			<key>other</key>
+			<string>%lld modified rescues were downloaded from the server</string>
+		</dict>
+	</dict>
+	<key>%lld new rescues were uploaded to the server</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld new rescue was uploaded to the server</string>
+			<key>other</key>
+			<string>%lld new rescues were uploaded to the server</string>
+		</dict>
+	</dict>
+	<key>%lld modified rescues were uploaded to the server</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>%lld modified rescue was uploaded to the server</string>
+			<key>other</key>
+			<string>%lld modified rescues were uploaded to the server</string>
+		</dict>
+	</dict>
+	<key>%lld case numbers were altered due to a conflict</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>^[%lld case number was modified due to a conflict](color: 4)</string>
+			<key>other</key>
+			<string>^[%lld case numbers were modified due to a conflict](color: 4)</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

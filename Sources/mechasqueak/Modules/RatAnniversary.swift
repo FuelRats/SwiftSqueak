@@ -56,10 +56,8 @@ class RatAnniversary: IRCBotModule {
             let years = todayComponents.year! - joinComponents.year!
 
             if joinComponents.day! == todayComponents.day! && joinComponents.month! == todayComponents.month!, years > 0 {
-                mecha.reportingChannel?.send(key: "birthday", map: [
-                    "name": channelMessage.user.nickname,
-                    "years": years
-                ])
+                let name = channelMessage.user.nickname
+                mecha.reportingChannel?.send(localized: "**Alert: Today is \(name)'s \(years) year rat anniversary! 🎂🎉🎈**")
                 birthdayAnnounced.insert(apiUser.id.rawValue)
             }
         }
