@@ -318,21 +318,21 @@ class BoardAssignCommands: IRCBotModule {
                 return false
             }
             
-            let ratNames = names.map({
-                "\"\($0)\""
-            }).joined(separator: ", ")
-            
+            var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
+            if carrier {
+                format = "board.assign.carrier"
+            }
             
             if duplicates.count > 0 {
                 command.message.reply(key: "board.assign.duplicates", fromCommand: command)
             }
-            if carrier {
-                command.reply(localized: "Assigned rats \(names.count) \(ratNames) to case \(rescue.clientNick!) as a carrier rescue")
-            } else if rescue.codeRed {
-                command.reply(localized: "\(names.count) rats for \(rescue.clientNick!) to remain in the menu and add to your friends list: \(ratNames)")
-            } else {
-                command.reply(localized: "\(names.count) rats for \(rescue.clientNick!) to add to your friends list: \(ratNames)")
-            }
+            command.message.reply(key: format, fromCommand: command, map: [
+                            "client": rescue.clientNick!,
+                            "rats": names.map({
+                                "\"\($0)\""
+                            }).joined(separator: ", "),
+                            "count": names.count
+                        ])
             return true
         }
         return false

@@ -110,19 +110,27 @@ actor RescueBoard {
         var updates = [String]()
         
         if download > 0 {
-            updates.append(String(localized: "\(download) new rescues were downloaded from the server"))
+            updates.append(lingo.localize("board.synced.downstreamNew", locale: "en-GB", interpolations: [
+                "count": download
+            ]))
         }
         
         if upload > 0 {
-            updates.append(String(localized: "\(upload) new rescues were uploaded to the server"))
+            updates.append(lingo.localize("board.synced.upstreamNew", locale: "en-GB", interpolations: [
+                "count": upload
+            ]))
         }
         
         if updateRemote > 0 {
-            updates.append(String(localized: "\(updateRemote) updated rescues were uploaded to the server"))
+            updates.append(lingo.localize("board.synced.upstreamUpdate", locale: "en-GB", interpolations: [
+                "count": updateRemote
+            ]))
         }
         
         if updateLocal > 0 {
-            updates.append(String(localized: "\(updateLocal) updated rescues were downloaded from the server"))
+            updates.append(lingo.localize("board.synced.downstreamUpdate", locale: "en-GB", interpolations: [
+                "count": updateLocal
+            ]))
         }
         
         if conflicts > 0 {
@@ -302,6 +310,9 @@ actor RescueBoard {
         let identifier = await self.insert(rescue: rescue, preferringEvenness: even)
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
+        if let platform = rescue.platform {
+            self.lastSignalsReceived[platform] = Date()
+        }
 
         if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
             self.prepTimers[rescue.id] = loop.next().scheduleTask(in: .seconds(180), {
@@ -424,10 +435,6 @@ actor RescueBoard {
             return true
         }
         return false
-    }
-    
-    func setLastSignalReceived(platform: GamePlatform, date: Date) {
-        self.lastSignalsReceived[platform] = date
     }
     
     func getNewIdentifier (even: Bool? = nil) -> Int {
@@ -563,7 +570,7 @@ actor RescueBoard {
                 let rescueStrings = rescues.map({ rescue -> String in
                     return lingo.localize("rescue.pwreminder.rescue", locale: "en-GB", interpolations: [
                         "client": rescue.attributes.client.value ?? "unknown client",
-                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo,
                         "link": rescueLinks[rescue.id.rawValue] ?? "Link Unavailable"
                     ])
                 })
@@ -726,9 +733,10 @@ actor RescueBoard {
         else {
             return
         }
-        let caseId = remoteRescue.attributes.commandIdentifier.value
-        let clientName = remoteRescue.attributes.client.value ?? "?"
-        mecha.reportingChannel?.send(localized: "ATTENTION: A new rescue (#\(caseId) (\(clientName))) was created remotely, performing a sync with the rescue server.")
+        mecha.reportingChannel?.send(key: "board.remotecreation", map: [
+            "caseId": remoteRescue.attributes.commandIdentifier.value,
+            "client": remoteRescue.attributes.client.value ?? "?"
+        ])
     }
 
     @AsyncEventListener<RatSocketRescueUpdatedNotification>
@@ -743,13 +751,17 @@ actor RescueBoard {
         if remoteRescue.attributes.status.value == .Closed {
             if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == remoteRescue.id.rawValue }) {
                 await board.remove(id: caseId)
-                mecha.reportingChannel?.send(localized: "ATTENTION: Rescue (#\(caseId) (\(rescue.clientDescription))) was closed remotely and is removed from the board.")
+                mecha.reportingChannel?.send(key: "board.remoteclose", map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ])
             }
             return
         }
-        let caseId = remoteRescue.attributes.commandIdentifier.value
-        let clientName = remoteRescue.attributes.client.value ?? "?"
-        mecha.reportingChannel?.send(localized: "ATTENTION: Rescue #\(caseId) (\(clientName)) was updated remotely, performing a sync with the rescue server.")
+        mecha.reportingChannel?.send(key: "board.remoteupdate", map: [
+            "caseId": remoteRescue.attributes.commandIdentifier.value,
+            "client": remoteRescue.attributes.client.value ?? "?"
+        ])
     }
 
     @AsyncEventListener<RatSocketRescueDeletedNotification>
@@ -764,7 +776,10 @@ actor RescueBoard {
 
         if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == rescueId }) {
             await board.remove(id: caseId)
-            mecha.reportingChannel?.send(localized: "ATTENTION: Rescue #\(caseId) (\(rescue.clientDescription)) was deleted remotely and is removed from the board.")
+            mecha.reportingChannel?.send(key: "board.remotedeletion", map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription
+            ])
         }
     }
 }

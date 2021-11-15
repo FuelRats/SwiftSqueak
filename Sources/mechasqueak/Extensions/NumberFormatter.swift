@@ -81,39 +81,30 @@ extension Double {
         return formattedDistance
     }
     
-    func timeSpan (components: [TimeUnit] = [.year, .day, .hour, .minute, .second], maximumUnits: UInt? = nil) -> String {
-        var value = self
-        let components = components.sorted(by: { $0.rawValue > $1.rawValue })
-        var values: [TimeUnit: Double] = [:]
-        for component in components {
-            let compResult = floor(value / component.rawValue)
-            if compResult > 0 {
-                values[component] = compResult
-                value = value.truncatingRemainder(dividingBy: component.rawValue)
-            }
+    var timeSpan: String {
+        let seconds = self
+        var time = ""
+        let yearFormatter = NumberFormatter.englishFormatter()
+        yearFormatter.maximumFractionDigits = 0
+        if seconds > 31536000 {
+            let years = seconds / 31536000
+            let days = seconds.truncatingRemainder(dividingBy: 31536000) / 86400
+            time = "\(yearFormatter.string(from: years) ?? "\(years)") years, and \(days.clean) days"
+        } else if seconds > 86400 {
+            let days = seconds / 86400
+            let hours = seconds.truncatingRemainder(dividingBy: 86400) / 3600
+            time = "\(days.clean) days, and \(hours.clean) hours"
+        } else if seconds > 3600 {
+            let hours = seconds / 3600
+            let minutes = seconds.truncatingRemainder(dividingBy: 3600) / 60
+            time = "\(hours.clean) hours, and \(minutes.clean) minutes"
+        } else if seconds > 60 {
+            let minutes = seconds / 60
+            time = "\(minutes.clean) minutes"
+        } else {
+            time = "\(seconds.clean) seconds"
         }
-        
-        let formatter = NumberFormatter.englishFormatter()
-        formatter.maximumFractionDigits = 0
-        
-        var result = ""
-        var index = 0
-        for (_, item) in values.enumerated().sorted(by: { $0.element.key.rawValue > $1.element.key.rawValue }) {
-            let (unit, value) = item
-            if let maximumUnits = maximumUnits, index >= maximumUnits {
-                break
-            }
-            
-            let description = value == 1 ? String(describing: unit) : "\(String(describing: unit))s"
-            if index != 0 && (index + 1 == values.count || index + 1 >= (maximumUnits ?? .max)) {
-                result += ", and "
-            } else if index != 0 {
-                result += ", "
-            }
-            result += "\(formatter.string(from: value)!) \(description)"
-            index += 1
-        }
-        return result
+        return time
     }
     
     func distanceToSeconds (destinationGravity: Bool = false) -> Double {
@@ -121,40 +112,11 @@ extension Double {
         if destinationGravity {
             distance = distance / 2
         }
-        
-        var seconds = 0.0
-        if distance < 100000 {
-            seconds = 8.9034 * pow(distance, 0.3292)
-        } else if distance < 1907087 {
-            // -8*(10 ** -23) * (x ** 4) + 4*(10 ** -16) * (x ** 3) - 8*(10 ** -10) * (x ** 2) + 0.0014 * x + 264.79
-            let part1 = -8 * pow(10, -23) * pow(distance, 4)
-            let part2 = 4 * pow(10, -16) * pow(distance, 3) - 8 * pow(10, -10) * pow(distance, 2)
-            let part3 = 0.0014 * distance + 264.79
-            seconds = part1 + part2 + part3
-        } else {
-            seconds = (distance - 5265389.609) / 2001 + 3412
-        }
-        
-        if seconds < 0 {
-            return 0
-        }
-
-        if destinationGravity {
-            seconds = seconds * 2
-        }
-        return seconds
-    }
-    
-    func distanceToSecondsOld (destinationGravity: Bool = false) -> Double {
-        var distance = self
-        if destinationGravity {
-            distance = distance / 2
-        }
 
         var seconds = 0.0
-        if distance < 448865 {
+        if distance < 308639 {
             seconds = 4.4708*pow(distance, 0.3899)
-        } else if distance > 4300000 {
+        } else if distance > 579427 {
             seconds = (distance - 5100000.0) / 2001 + 3420
         }
         else {
@@ -177,13 +139,4 @@ extension Double {
         }
         return seconds
     }
-}
-
-enum TimeUnit: Double {
-    case year = 31557600.0
-    case month = 2592000.0
-    case day = 86400.0
-    case hour = 3600.0
-    case minute = 60.0
-    case second = 1.0
 }

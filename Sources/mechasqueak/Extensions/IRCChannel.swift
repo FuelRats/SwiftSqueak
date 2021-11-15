@@ -26,12 +26,7 @@ import Foundation
 import IRCKit
 
 extension IRCChannel {
-    @available(*, deprecated, message: "Use String(localized:)")
     func send (key: String, map: [String: Any] = [:]) {
         self.send(message: lingo.localize(key, locale: "en-GB", interpolations: map))
-    }
-    
-    func send(localized: String.LocalizationValue) {
-        self.send(message: AttributedString(localized: localized, locale: Locale.current, comment: nil).ircFormattedString)
     }
 }

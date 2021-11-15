@@ -139,10 +139,7 @@ class SystemSearch: IRCBotModule {
                 }
             }
             
-            var spanshUrl: URL? = nil
-            if distance > 1000 {
-                spanshUrl = try? await generateSpanshRoute(from: plotDepName, to: plotArrName)
-            }
+            let spanshUrl = try? await generateSpanshRoute(from: plotDepName, to: plotArrName)
             
             var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
             if spanshUrl != nil {

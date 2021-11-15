@@ -26,12 +26,10 @@ import Foundation
 import IRCKit
 
 extension IRCPrivateMessage {
-    @available(*, deprecated, message: "Use command.reply(localized:)")
     func reply (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
         self.reply(message: lingo.localize(key, locale: command.locale.short, interpolations: map))
     }
 
-    @available(*, deprecated, message: "Use command.error(localized:)")
     func error (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
         self.reply(message: "\(command.message.user.nickname): \(lingo.localize(key, locale: command.locale.short, interpolations: map))")
     }
@@ -47,14 +45,11 @@ extension IRCPrivateMessage {
         self.client.sendMessage(toTarget: self.user.nickname, contents: message)
     }
 
-    
-    @available(*, deprecated, message: "Use command.replyPrivate(localized:)")
     func replyPrivate (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
         let message = lingo.localize(key, locale: command.locale.short, interpolations: map)
         self.replyPrivate(message: message)
     }
 
-    @available(*, deprecated, message: "Use command.reply(list:)")
     public func reply (list: [String], separator: String, heading: String = "") {
         let messages = list.ircList(separator: separator, heading: heading)
 
@@ -63,7 +58,6 @@ extension IRCPrivateMessage {
         }
     }
 
-    @available(*, deprecated, message: "Use command.replyPrivate(list:)")
     public func replyPrivate (list: [String], separator: String, heading: String = "") {
         let messages = list.ircList(separator: separator, heading: heading)
 

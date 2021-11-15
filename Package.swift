@@ -5,7 +5,6 @@ import PackageDescription
 
 let package = Package(
     name: "mechasqueak",
-    defaultLocalization: "en",
     platforms: [
         .macOS("12.0")
     ],
@@ -47,6 +46,9 @@ let package = Package(
                 .product(name: "PostgresKit", package: "postgres-kit"),
                 .product(name: "Backtrace", package: "swift-backtrace")
             ]
-        )
+        ),
+        .testTarget(
+            name: "mechasqueakTests",
+            dependencies: ["mechasqueak"]),
     ]
 )

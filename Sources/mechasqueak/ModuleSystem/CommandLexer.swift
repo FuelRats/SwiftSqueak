@@ -150,55 +150,7 @@ struct IRCBotCommand {
     
     func error (_ error: Error) {
         debug(String(describing: error))
-        let error = String(localized: "Command failed to due an unknown error")
-        self.message.reply(message: "\(self.message.user.nickname): \(error)")
-    }
-    
-    func reply (localized: String.LocalizationValue) {
-        self.message.reply(message: AttributedString(localized: localized, command: self).ircFormattedString)
-    }
-
-    func error (localized: String.LocalizationValue) {
-        self.message.reply(message: "\(self.message.user.nickname): \(AttributedString(localized: localized, command: self).ircFormattedString)")
-    }
-    
-    func replyPrivate (message: String) {
-        self.message.replyPrivate(message: message)
-    }
-    
-    func replyPrivate (message: AttributedString) {
-        self.message.replyPrivate(message: message.ircFormattedString)
-    }
-
-    func replyPrivate (localized: String.LocalizationValue) {
-        let message = AttributedString(localized: localized, command: self).ircFormattedString
-        self.message.replyPrivate(message: message)
-    }
-
-    public func reply (list: [String.LocalizationValue], separator: String, heading: String.LocalizationValue? = nil) {
-        let messageStrings = list.map({ AttributedString(localized: $0, command: self).ircFormattedString })
-        var headingString: String? = nil
-        if let heading = heading {
-            headingString = AttributedString(localized: heading, command: self).ircFormattedString
-        }
-        let messages = messageStrings.ircList(separator: separator, heading: headingString ?? "")
-
-        for message in messages {
-            self.message.reply(message: message)
-        }
-    }
-
-    public func replyPrivate (list: [String.LocalizationValue], separator: String, heading: String.LocalizationValue? = nil) {
-        let messageStrings = list.map({ AttributedString(localized: $0, command: self).ircFormattedString })
-        var headingString: String? = nil
-        if let heading = heading {
-            headingString = AttributedString(localized: heading, command: self).ircFormattedString
-        }
-        let messages = messageStrings.ircList(separator: separator, heading: headingString ?? "")
-
-        for message in messages {
-            self.message.replyPrivate(message: message)
-        }
+        self.message.error(key: "genericerror", fromCommand: self)
     }
 }
 

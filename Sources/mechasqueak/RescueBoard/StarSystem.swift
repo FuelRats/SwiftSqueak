@@ -227,7 +227,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
 
     var twitterDescription: String? {
         var description = ""
-        if let galacticRegion = self.galacticRegion, galacticRegion.name != "The Inner Orion Spur" {
+        if let galacticRegion = self.galacticRegion {
             description = "In \(galacticRegion.name) "
         }
         guard let landmark = self.landmark else {

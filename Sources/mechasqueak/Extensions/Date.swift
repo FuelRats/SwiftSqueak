@@ -25,9 +25,28 @@
 import Foundation
 
 extension Date {
-    func timeAgo (components: [TimeUnit] = [.year, .month, .day, .hour, .minute, .second], maximumUnits: UInt? = nil) -> String {
-        let seconds = Double(Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0)
-        return seconds.timeSpan(components: components, maximumUnits: maximumUnits)
+    var timeAgo: String {
+        let calendar = Calendar.current
+        let minuteAgo = calendar.date(byAdding: .minute, value: -1, to: Date())!
+        let hourAgo = calendar.date(byAdding: .hour, value: -1, to: Date())!
+        let dayAgo = calendar.date(byAdding: .day, value: -1, to: Date())!
+        let weekAgo = calendar.date(byAdding: .day, value: -7, to: Date())!
+
+        if minuteAgo < self {
+        let diff = Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0
+            return lingo.localize("timeago.second", locale: "en-GB", interpolations: ["time": diff])
+        } else if hourAgo < self {
+            let diff = Calendar.current.dateComponents([.minute], from: self, to: Date()).minute ?? 0
+            return lingo.localize("timeago.minute", locale: "en-GB", interpolations: ["time": diff])
+        } else if dayAgo < self {
+            let diff = Calendar.current.dateComponents([.hour], from: self, to: Date()).hour ?? 0
+            return lingo.localize("timeago.hour", locale: "en-GB", interpolations: ["time": diff])
+        } else if weekAgo < self {
+            let diff = Calendar.current.dateComponents([.day], from: self, to: Date()).day ?? 0
+            return lingo.localize("timeago.day", locale: "en-GB", interpolations: ["time": diff])
+        }
+        let diff = Calendar.current.dateComponents([.weekOfYear], from: self, to: Date()).weekOfYear ?? 0
+        return lingo.localize("timeago.week", locale: "en-GB", interpolations: ["time": diff])
     }
 
     var ircRepresentable: String {

@@ -84,7 +84,7 @@ class GeneralCommands: IRCBotModule {
         })
 
         guard needsRats.count > 0 else {
-            command.reply(localized: "There does not appear to be any cases that require rats to call jumps right now.")
+            command.message.reply(key: "needsrats.none", fromCommand: command)
             return
         }
 
@@ -92,7 +92,6 @@ class GeneralCommands: IRCBotModule {
             var format = "needsrats.case"
 
             if rescue.codeRed {
-                
                 format += "cr"
             }
 
@@ -128,7 +127,7 @@ class GeneralCommands: IRCBotModule {
             let numberFormatter = NumberFormatter.englishFormatter()
 
             command.message.reply(key: "sysstats.message", fromCommand: command, map: [
-                "date": Date(timeIntervalSince1970: date).timeAgo(maximumUnits: 2),
+                "date": Date(timeIntervalSince1970: date).timeAgo,
                 "systems": numberFormatter.string(from: result.attributes.syscount)!,
                 "stars": numberFormatter.string(from: result.attributes.starcount)!,
                 "bodies": numberFormatter.string(from: result.attributes.bodycount)!
@@ -204,7 +203,7 @@ class GeneralCommands: IRCBotModule {
         let responseKey = destinationGravity ? "sctime.response.g" : "sctime.response"
         command.message.reply(key: responseKey, fromCommand: command, map: [
             "distance": displayDistance.eliteDistance,
-            "time": seconds.timeSpan(maximumUnits: 2)
+            "time": seconds.timeSpan
         ])
     }
 
@@ -220,7 +219,7 @@ class GeneralCommands: IRCBotModule {
 
         command.message.reply(key: replyKey, fromCommand: command, map: [
             "version": mecha.version,
-            "uptime": mecha.startupTime.timeAgo(maximumUnits: 2),
+            "uptime": mecha.startupTime.timeAgo,
             "startup": mecha.startupTime.description
         ])
     }

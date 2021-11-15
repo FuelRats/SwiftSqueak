@@ -190,11 +190,13 @@ class MechaSqueak {
                 rescue.setQuotes(quotes)
                 try? rescue.save()
 
-                if rescue.rats.count > 0 {
-                    userJoin.channel.send(localized: "\(rescue.platform.ircRepresentable) case **\(caseId)** (\(rescue.clientDescription)) has rejoined!")
-                } else {
-                    userJoin.channel.send(localized: "\(rescue.platform.ircRepresentable) case **\(caseId)** (\(rescue.clientDescription)) in \(rescue.system.description) has rejoined!")
-                }
+                var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
+                userJoin.channel.send(key: key, map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "platform": rescue.platform.ircRepresentable,
+                    "system": rescue.system.description
+                ])
             }
         }
     }
@@ -221,7 +223,10 @@ class MechaSqueak {
             rescue.setQuotes(quotes)
             try? rescue.save()
 
-            userPart.channel.send(localized: "Caution: Client of case #\(caseId) (\(rescue.clientDescription) has left!")
+            userPart.channel.send(key: "board.clientquit", map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription
+            ])
         }
 
     }
@@ -246,7 +251,11 @@ class MechaSqueak {
                     do {
                         try await rescue.close()
                         
-                        mecha.reportingChannel?.send(localized: "**Client of case #\(caseId) (\(rescue.clientDescription)) has been banned by the moderator team. Do the paperwork: \(url)**")
+                        mecha.reportingChannel?.send(key: "board.bannedclose", map: [
+                            "caseId": caseId,
+                            "link": url,
+                            "client": rescue.clientDescription
+                        ])
                         await board.remove(id: caseId)
                     } catch {
                         
@@ -254,7 +263,11 @@ class MechaSqueak {
                 } else {
                     do {
                         try await rescue.trash(reason: "Client was banned")
-                        mecha.reportingChannel?.send(localized: "**Client of case #\(caseId) (\(rescue.clientDescription)) has been banned by the moderator team and the case has been trashed.**")
+                        
+                        mecha.reportingChannel?.send(key: "board.bannedmd", map: [
+                            "caseId": caseId,
+                            "client": rescue.clientDescription
+                        ])
                         await board.remove(id: caseId)
                     } catch {
                         
@@ -275,7 +288,10 @@ class MechaSqueak {
 
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
-                channel.send(localized: "Caution: Client of case #\(caseId) (\(rescue.clientDescription)) has left!")
+                channel.send(key: "board.clientquit", map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ])
             }
         }
     }
@@ -321,7 +337,11 @@ class MechaSqueak {
         if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
             rescue.clientNick = nickChange.newNick
 
-            rescue.channel?.send(localized: "Caution: Client of case #\(caseId) (\(rescue.clientDescription)) has changed IRC nick to \(nickChange.newNick)")
+            rescue.channel?.send(key: "board.clientnick", map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "newNick": nickChange.newNick
+            ])
         }
     }
 

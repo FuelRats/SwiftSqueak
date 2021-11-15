@@ -71,7 +71,7 @@ class BoardQuoteCommands: IRCBotModule {
             command.message.replyPrivate(key: "board.quote.quote", fromCommand: command, map: [
                 "index": index,
                 "author": quote.lastAuthor,
-                "time": "\(quote.updatedAt.timeAgo(maximumUnits: 1)) ago",
+                "time": "\(quote.updatedAt.timeAgo) ago",
                 "message": quote.message
             ])
         }
