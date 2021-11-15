@@ -403,7 +403,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("recently closed case number", "5")],
         category: .rescues,
         description: "Add a previously closed case back onto the board by its previous case number.",
-        permission: .RescueWriteOwn
+        permission: .DispatchWrite
     )
     var didReceiveUncloseCommand = { command in
         guard let caseNumber = Int(command.parameters[0]), let closedRescue = await board.recentlyClosed[caseNumber] else {
