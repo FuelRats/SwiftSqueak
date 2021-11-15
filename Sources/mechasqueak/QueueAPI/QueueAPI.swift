@@ -152,23 +152,23 @@ struct QueueAPIStatistics: Codable {
     
     var averageQueuetimeSpan: String {
         if let time = self.averageQueuetime {
-            return Double(time).timeSpan
+            return Double(time).timeSpan(maximumUnits: 2)
         }
-        return 0.0.timeSpan
+        return 0.0.timeSpan(maximumUnits: 2)
     }
     
     var averageRescuetimeSpan: String {
         if let time = self.averageRescuetime {
-            return Double(time).timeSpan
+            return Double(time).timeSpan(maximumUnits: 2)
         }
-        return 0.0.timeSpan
+        return 0.0.timeSpan(maximumUnits: 2)
     }
     
     var longestQueuetimeSpan: String {
         if let time = self.longestQueuetime {
-            return Double(time).timeSpan
+            return Double(time).timeSpan(maximumUnits: 2)
         }
-        return 0.0.timeSpan
+        return 0.0.timeSpan(maximumUnits: 2)
     }
 }
 

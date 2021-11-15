@@ -125,16 +125,12 @@ class RescueUpdateOperation: Operation {
         do {
             let rescue = try await attemptUpload()
             if errorReported {
-                mecha.reportingChannel?.send(key: "board.sync.errorsolved", map: [
-                    "caseId": caseId
-                ])
+                mecha.reportingChannel?.send(localized: "The problems with syncing case #\(caseId) has been resolved.")
             }
             return rescue
         } catch {
             if errorReported == false {
-                mecha.reportingChannel?.send(key: "board.sync.error", map: [
-                    "caseId": caseId
-                ])
+                mecha.reportingChannel?.send(localized: "**Alert:** I am having trouble updating case #\(caseId) on the server, the dispatch board is no longer up to date. I will keep trying and let you know when the issue has been resolved.")
                 errorReported = true
             }
             await Task.sleep(30 * 1_000_000_000)

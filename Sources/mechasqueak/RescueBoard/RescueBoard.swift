@@ -570,7 +570,7 @@ actor RescueBoard {
                 let rescueStrings = rescues.map({ rescue -> String in
                     return lingo.localize("rescue.pwreminder.rescue", locale: "en-GB", interpolations: [
                         "client": rescue.attributes.client.value ?? "unknown client",
-                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo,
+                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
                         "link": rescueLinks[rescue.id.rawValue] ?? "Link Unavailable"
                     ])
                 })
@@ -733,10 +733,9 @@ actor RescueBoard {
         else {
             return
         }
-        mecha.reportingChannel?.send(key: "board.remotecreation", map: [
-            "caseId": remoteRescue.attributes.commandIdentifier.value,
-            "client": remoteRescue.attributes.client.value ?? "?"
-        ])
+        let caseId = remoteRescue.attributes.commandIdentifier.value
+        let clientName = remoteRescue.attributes.client.value ?? "?"
+        mecha.reportingChannel?.send(localized: "ATTENTION: A new rescue (#\(caseId) (\(clientName))) was created remotely, performing a sync with the rescue server.")
     }
 
     @AsyncEventListener<RatSocketRescueUpdatedNotification>
@@ -751,17 +750,13 @@ actor RescueBoard {
         if remoteRescue.attributes.status.value == .Closed {
             if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == remoteRescue.id.rawValue }) {
                 await board.remove(id: caseId)
-                mecha.reportingChannel?.send(key: "board.remoteclose", map: [
-                    "caseId": caseId,
-                    "client": rescue.clientDescription
-                ])
+                mecha.reportingChannel?.send(localized: "ATTENTION: Rescue (#\(caseId) (\(rescue.clientDescription))) was closed remotely and is removed from the board.")
             }
             return
         }
-        mecha.reportingChannel?.send(key: "board.remoteupdate", map: [
-            "caseId": remoteRescue.attributes.commandIdentifier.value,
-            "client": remoteRescue.attributes.client.value ?? "?"
-        ])
+        let caseId = remoteRescue.attributes.commandIdentifier.value
+        let clientName = remoteRescue.attributes.client.value ?? "?"
+        mecha.reportingChannel?.send(localized: "ATTENTION: Rescue #\(caseId) (\(clientName)) was updated remotely, performing a sync with the rescue server.")
     }
 
     @AsyncEventListener<RatSocketRescueDeletedNotification>
@@ -776,10 +771,7 @@ actor RescueBoard {
 
         if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == rescueId }) {
             await board.remove(id: caseId)
-            mecha.reportingChannel?.send(key: "board.remotedeletion", map: [
-                "caseId": caseId,
-                "client": rescue.clientDescription
-            ])
+            mecha.reportingChannel?.send(localized: "ATTENTION: Rescue #\(caseId) (\(rescue.clientDescription)) was deleted remotely and is removed from the board.")
         }
     }
 }
