@@ -37,6 +37,14 @@ extension Character {
     }
 }
 
+#if !SWIFT_PACKAGE
+extension Bundle {
+    static var module: Bundle {
+        return self.main
+    }
+}
+#endif
+
 extension String {
     subscript (index: Int) -> Character {
         return self[self.index(self.startIndex, offsetBy: index)]
@@ -69,14 +77,19 @@ extension AttributedString {
     init (localized keyAndValue: String.LocalizationValue, command: IRCBotCommand, comment: StaticString? = nil) {
         let string = String(localized: keyAndValue, command: command)
         
+        let options = AttributedString.MarkdownParsingOptions(allowsExtendedAttributes: true, failurePolicy: .throwError)
+        try! self.init(markdown: string, including: \.irc, options: options)
+    }
+    
+    init (localized keyAndValue: String.LocalizationValue, locale: Locale = Locale.current, comment: StaticString? = nil) {
+        let string = String(localized: keyAndValue, locale: locale, comment: nil)
+        
             let options = AttributedString.MarkdownParsingOptions(allowsExtendedAttributes: true, failurePolicy: .throwError)
         try! self.init(markdown: string, including: \.irc, options: options)
     }
     
     var ircFormattedString: String {
-        var output = ""
-        for run in self.runs {
-            
+        return self.runs.map({ run in
             var text = String(self.characters[run.range])
                 
             let presentation = run.attributes.inlinePresentationIntent
@@ -98,10 +111,8 @@ extension AttributedString {
             } else if let color = run.color {
                 text = IRCFormat.color(color, text)
             }
-            output += text
-        }
-        print(output)
-        return output
+            return text
+        }).joined()
     }
 }
 

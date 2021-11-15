@@ -114,5 +114,21 @@
 			<string>%lld modified rescues were uploaded to the server</string>
 		</dict>
 	</dict>
+	<key>%lld case numbers were altered due to a conflict</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>^[%lld case number was modified due to a conflict](color: 4)</string>
+			<key>other</key>
+			<string>^[%lld case numbers were modified due to a conflict](color: 4)</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

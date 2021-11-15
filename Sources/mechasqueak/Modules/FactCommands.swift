@@ -320,9 +320,8 @@ class FactCommands: IRCBotModule {
         
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
-            mecha.reportingChannel?.send(key: "facts.cncorrection", map: [
-                "nick": command.message.user.nickname
-            ])
+            let nick = command.message.user.nickname
+            mecha.reportingChannel?.send(localized: "\(nick): WARNING! \"CN\" is not a real language code, I have automatically corrected it to \"ZH\" (Chinese) for you.")
         }
         
         let isPrepFact = prepFacts.contains(where: { $0 == command.command })
@@ -357,10 +356,9 @@ class FactCommands: IRCBotModule {
             
             if command.command == "prep" && targets.contains(where: { $0.1?.codeRed == true }) && configuration.general.drillMode == false {
                 command.command = "quit"
+                let nick = command.message.user.nickname
                 
-                mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
-                    "nick": command.message.user.nickname
-                ])
+                mecha.reportingChannel?.send(localized: "\(nick): WARNING! You just attempted to !prep a code-red case. I have automatically corrected it for you but you should pay attention in the future.")
             }
             
             

@@ -39,11 +39,7 @@ class BoardPlatformCommands: IRCBotModule {
         rescue.platform = platform
         try? rescue.save(command)
         
-        command.message.reply(key: "board.platformset", fromCommand: command, map: [
-            "platform": rescue.platform!.ircRepresentable,
-            "caseId": caseId,
-            "client": rescue.client!
-        ])
+        command.reply(localized: "Platform for case #\(caseId) (\(rescue.clientDescription)) set to: \(rescue.platform.ircRepresentable)")
     }
 
     @AsyncBotCommand(

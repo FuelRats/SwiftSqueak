@@ -150,7 +150,8 @@ struct IRCBotCommand {
     
     func error (_ error: Error) {
         debug(String(describing: error))
-        self.message.error(key: "genericerror", fromCommand: self)
+        let error = String(localized: "Command failed to due an unknown error")
+        self.message.reply(message: "\(self.message.user.nickname): \(error)")
     }
     
     func reply (localized: String.LocalizationValue) {
@@ -159,6 +160,14 @@ struct IRCBotCommand {
 
     func error (localized: String.LocalizationValue) {
         self.message.reply(message: "\(self.message.user.nickname): \(AttributedString(localized: localized, command: self).ircFormattedString)")
+    }
+    
+    func replyPrivate (message: String) {
+        self.message.replyPrivate(message: message)
+    }
+    
+    func replyPrivate (message: AttributedString) {
+        self.message.replyPrivate(message: message.ircFormattedString)
     }
 
     func replyPrivate (localized: String.LocalizationValue) {
