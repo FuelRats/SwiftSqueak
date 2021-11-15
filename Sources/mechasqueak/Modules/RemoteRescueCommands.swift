@@ -255,7 +255,7 @@ class RemoteRescueCommands: IRCBotModule {
                     "platform": rescue.platform.ircRepresentable,
                     "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
                     "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit",
-                    "timeAgo": rescue.attributes.updatedAt.value.timeAgo
+                    "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1)
                 ])
             }
         } catch {
