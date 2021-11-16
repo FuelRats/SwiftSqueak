@@ -132,7 +132,7 @@ class MechaSqueak {
         ratSocket = RatSocket()
         
         if configuration.general.drillMode == false {
-            loop.next().scheduleRepeatedTask(initialDelay: .seconds(15), delay: .minutes(1), self.checkEliteStatus)
+            loop.next().scheduleRepeatedTask(initialDelay: .seconds(15), delay: .minutes(5), self.checkEliteStatus)
         }
         
         Task {

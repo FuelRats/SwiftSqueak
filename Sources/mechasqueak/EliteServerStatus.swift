@@ -17,6 +17,10 @@ struct EliteServerStatus: Codable {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Content-Type", value: "application/json")
 
-        return try await httpClient.execute(request: request, forDecodable: EliteServerStatus.self)
+        do {
+            return try await httpClient.execute(request: request, forDecodable: EliteServerStatus.self)
+        } catch {
+            return try await httpClient.execute(request: request, forDecodable: EliteServerStatus.self)
+        }
     }
 }
