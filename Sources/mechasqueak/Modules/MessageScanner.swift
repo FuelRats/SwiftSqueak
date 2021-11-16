@@ -67,8 +67,7 @@ class MessageScanner: IRCBotModule {
         
         var casesUpdatedForMessage: [Rescue] = []
 
-        if let jumpCallMatch = MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
-            ?? MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) {
+        if let jumpCallMatch = MessageScanner.jumpCallExpressionCaseAfter.findFirst(in: channelMessage.message) ?? MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message) {
             let caseId = jumpCallMatch.group(named: "case")!
             let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
             
