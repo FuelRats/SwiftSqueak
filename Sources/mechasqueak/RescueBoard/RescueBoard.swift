@@ -665,7 +665,7 @@ actor RescueBoard {
                     return
                 }
 
-                existingRescue.system = system
+                existingRescue.system = result
 
                 message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
                     "caseId": caseId,
