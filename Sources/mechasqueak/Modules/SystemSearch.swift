@@ -79,6 +79,9 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: system) {
+            system = rescue.system?.name ?? system
+        }
         if system.lowercased().starts(with: "near ") {
             system.removeFirst(5)
         }
@@ -105,13 +108,21 @@ class SystemSearch: IRCBotModule {
     
     @AsyncBotCommand(
         ["distance", "plot", "distanceto"],
-        [.param("departure system", "NLTT 48288"), .param("arrival system", "Sagittarius A*")],
+        [.param("departure system / case id / client name", "NLTT 48288"), .param("arrival system / case id / client name", "Sagittarius A*")],
         category: .utility,
         description: "Calculate the distance between two star systems",
         cooldown: .seconds(30)
     )
     var didReceiveDistanceCommand = { command in
-        let (depSystem, arrSystem) = command.param2 as! (String, String)
+        var (depSystem, arrSystem) = command.param2 as! (String, String)
+        
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: depSystem) {
+            depSystem = rescue.system?.name ?? depSystem
+        }
+        
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: arrSystem) {
+            arrSystem = rescue.system?.name ?? arrSystem
+        }
         
         do {
             let (departure, arrival) = try await (SystemsAPI.performSystemCheck(forSystem: depSystem), SystemsAPI.performSystemCheck(forSystem: arrSystem))
