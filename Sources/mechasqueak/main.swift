@@ -147,26 +147,26 @@ class MechaSqueak {
     func checkEliteStatus (task: RepeatedTask) {
         Task {
             let serverStatus = try? await EliteServerStatus.fetch()
-            var statusString = serverStatus?.text ?? "Unreachable"
-            if statusString == "OK" {
-                statusString = IRCFormat.color(.Green, statusString)
+            let statusString = serverStatus?.text ?? "Unreachable"
+            var statusStringFormatted = statusString
+            if statusStringFormatted == "OK" {
+                statusStringFormatted = IRCFormat.color(.Green, statusString)
             } else if statusString == "Unreachable" {
-                statusString = IRCFormat.color(.LightRed, statusString)
+                statusStringFormatted = IRCFormat.color(.LightRed, statusString)
             } else {
-                statusString = IRCFormat.color(.Orange, statusString)
+                statusStringFormatted = IRCFormat.color(.Orange, statusString)
             }
             if let topic = reportingChannel?.topic {
                 var topicSections = topic.contents.components(separatedBy: " | ")
                 if topicSections.last?.starts(with: "ED Server Status: ") == true {
                     let serverStatusSection = topicSections.last!.components(separatedBy: " ").dropFirst(2).joined(separator: " ")
-                    print(serverStatusSection, statusString)
-                    guard serverStatusSection.strippingIRCFormatting != statusString.strippingIRCFormatting else {
+                    guard serverStatusSection.contains(statusString) == false else {
                         return
                     }
                     topicSections.removeLast()
                 }
                 
-                topicSections.append("ED Server Status: \(statusString)")
+                topicSections.append("ED Server Status: \(statusStringFormatted)")
                 
                 while topicSections.joined(separator: " | ").bytes.count > 360 {
                     topicSections.remove(at: topicSections.endIndex - 2)
