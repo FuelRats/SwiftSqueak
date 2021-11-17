@@ -36,7 +36,8 @@ class AccountCommands: IRCBotModule {
         ["whoami"],
         category: .account,
         description: "Check the Fuel Rats account information the bot is currently associating with your nick",
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -95,7 +96,7 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
         permission: .RatReadOwn,
-        cooldown: .seconds(300)
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveWhoIsCommand = { command in
         let message = command.message
