@@ -200,8 +200,7 @@ class GeneralCommands: IRCBotModule {
 
         var seconds = distance.distanceToSeconds(destinationGravity: destinationGravity)
 
-        let responseKey = destinationGravity ? "sctime.response.g" : "sctime.response"
-        command.message.reply(key: responseKey, fromCommand: command, map: [
+        command.message.reply(key: "sctime.response", fromCommand: command, map: [
             "distance": displayDistance.eliteDistance,
             "time": seconds.timeSpan(maximumUnits: 2)
         ])

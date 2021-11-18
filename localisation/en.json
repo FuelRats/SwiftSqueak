@@ -52,8 +52,7 @@
   "sctime.error": "Unable to understand the distance given in this command.",
   "sctime.unknownunit": "Unable to understand the distance because I have no idea what a \"%{unit}\" is.",
   "sctime.uniterror": "Unable to understand the distance unit provided to the command.",
-  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (Assuming constant travel away from any gravity well).",
-  "sctime.response.g": "The estimated super cruise travel time for %{distance} is %{time} (Assuming travel from one gravity well to another).",
+  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (Stipulations: https://t.fuelr.at/sctimes)",
 
   "board.xboxprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's Xbox Live privacy settings may prevent them from joining a team https://t.fuelr.at/xbtrouble (#%{caseId}, %{client})",
   "board.xboxsyschange": "The star system of case #%{caseId} (%{client}) was automatically corrected based on information retrieved from Xbox Live",
