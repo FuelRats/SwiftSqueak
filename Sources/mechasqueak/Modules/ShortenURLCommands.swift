@@ -48,14 +48,11 @@ class ShortenURLCommands: IRCBotModule {
         if command.message.destination.isPrivateMessage {
             ongoingShortenUrls[command.message.user.nickname] = longUrl
             
-            print("starting wait")
             await Task.sleep(1_000_000_000)
-            print("ending wait")
             longUrl = ongoingShortenUrls[command.message.user.nickname] ?? longUrl
             ongoingShortenUrls.removeValue(forKey: command.message.user.nickname)
         }
         
-        print(longUrl)
         guard let url = URL(string: longUrl.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)!) else {
             command.message.error(key: "shorten.invalidurl", fromCommand: command)
             return
