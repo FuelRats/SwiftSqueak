@@ -168,6 +168,7 @@ extension SystemsAPI.Star {
     }
     
     enum YerkesLuminosity: String, Codable {
+        case O
         case Ia
         case Iab
         case Ib
