@@ -27,6 +27,7 @@ import IRCKit
 
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
+    static var ongoingShortenUrls: [String: String] = [:]
 
     @AsyncBotCommand(
         ["shorten", "short", "shortener"],
@@ -41,8 +42,21 @@ class ShortenURLCommands: IRCBotModule {
         if command.parameters.count > 1 {
             keyword = command.parameters[1].lowercased()
         }
-
-        guard let url = URL(string: command.parameters[0]) else {
+        
+        var longUrl = command.parameters[0]
+        
+        if command.message.destination.isPrivateMessage {
+            ongoingShortenUrls[command.message.user.nickname] = longUrl
+            
+            print("starting wait")
+            await Task.sleep(1_000_000_000)
+            print("ending wait")
+            longUrl = ongoingShortenUrls[command.message.user.nickname] ?? longUrl
+            ongoingShortenUrls.removeValue(forKey: command.message.user.nickname)
+        }
+        
+        print(longUrl)
+        guard let url = URL(string: longUrl.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)!) else {
             command.message.error(key: "shorten.invalidurl", fromCommand: command)
             return
         }
@@ -52,10 +66,19 @@ class ShortenURLCommands: IRCBotModule {
             
             command.message.reply(key: "shorten.shortened", fromCommand: command, map: [
                 "url": response.shorturl,
-                "title": response.title
+                "title": response.title.prefix(160)
             ])
         } catch {
             command.message.error(key: "shorten.error", fromCommand: command)
+        }
+    }
+    
+    @EventListener<IRCPrivateMessageNotification>
+    var onPrivateMessage = { privateMessage in
+        if var url = ongoingShortenUrls[privateMessage.user.nickname] {
+            print("appending url")
+            url += privateMessage.message
+            ongoingShortenUrls[privateMessage.user.nickname] = url
         }
     }
 
