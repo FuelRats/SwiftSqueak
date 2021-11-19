@@ -52,7 +52,7 @@ actor RescueBoard {
             }
             
             for platform in GamePlatform.allCases {
-                guard let createdAt = rescues.values.first(where: { $0.platform == platform })?.createdAt else {
+                guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.outcome != .Purge })?.createdAt else {
                     continue
                 }
                 let lastSignalReceived = await self.lastSignalsReceived[platform]
