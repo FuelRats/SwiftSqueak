@@ -82,7 +82,7 @@ class TweetCommands: IRCBotModule {
             return
         }
 
-        guard let platform = rescue.platform else {
+        guard var platform = rescue.platform else {
             command.message.error(key: "tweetcase.noplatform", fromCommand: command, map: [
                 "caseId": caseId
             ])
@@ -103,10 +103,15 @@ class TweetCommands: IRCBotModule {
         if rescue.codeRed {
             format += "cr"
         }
+        
+        var platformDescription = String(describing: platform)
+        if rescue.odyssey {
+            platformDescription += " (Odyssey)"
+        }
 
         let url = URL(string: "https://fuelrats.com/paperwork/\(rescue.id)")!
         let tweet = lingo.localize(format, locale: "en-GB", interpolations: [
-            "platform": platform,
+            "platform": platformDescription,
             "systemDescription": description ?? "",
             "caseId": caseId,
             "id": shortId.lowercased(),
