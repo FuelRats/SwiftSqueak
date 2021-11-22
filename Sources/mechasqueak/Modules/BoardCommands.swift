@@ -339,30 +339,44 @@ class BoardCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["quiet", "last"],
-        [.argument("pc"), .argument("xb"), .argument("ps")],
+        [.argument("pc"), .argument("xb"), .argument("ps"), .options(["o"])],
         category: .other,
         description: "Displays the amount of time since the last rescue",
         permission: .DispatchRead,
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
-        guard command.namedOptions.count < 2 else {
+        var namedOptions = command.namedOptions
+        guard namedOptions.count < 2 else {
             command.message.reply(message: "Yeah no you're gonna have to make up your mind and pick one")
             return
         }
+        let odyssey = command.options.contains("o")
+        if odyssey && namedOptions.count == 0 {
+            namedOptions.append("pc")
+        }
         var lastSignalDate: Date? = nil
         var platform: GamePlatform? = nil
-        if let filteredPlatform = command.namedOptions.first {
+        
+        if let filteredPlatform = namedOptions.first {
             guard let commandPlatform = GamePlatform(rawValue: filteredPlatform) else {
                 return
             }
             
-            lastSignalDate = await board.lastSignalsReceived[commandPlatform]
+            if odyssey && commandPlatform != .PC {
+                command.message.reply(message: "What are you even trying to do there?")
+                return
+            }
+            
+            lastSignalDate = await board.lastSignalsReceived[PlatformExpansion(platform: commandPlatform, odyssey: odyssey)]
             platform = commandPlatform
         } else {
             lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
         var ircPlatform = platform != nil ? platform.ircRepresentable + " " : ""
+        if platform == .PC {
+            ircPlatform += odyssey ? "(Odyssey) " : "(Horizons) "
+        }
         
         guard let lastSignalDate = lastSignalDate else {
             command.message.reply(key: "board.quiet.unknown", fromCommand: command, map: [

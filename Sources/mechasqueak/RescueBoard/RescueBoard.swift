@@ -27,12 +27,17 @@ import NIO
 import IRCKit
 import Regex
 
+struct PlatformExpansion: Codable, Hashable {
+    let platform: GamePlatform
+    let odyssey: Bool
+}
+
 actor RescueBoard {
     var rescues: [Int: Rescue] = [:]
     let queue = OperationQueue()
     var isSynced = true
     var syncTimer: RepeatedTask?
-    var lastSignalsReceived: [GamePlatform: Date] = [:]
+    var lastSignalsReceived: [PlatformExpansion: Date] = [:]
     var prepTimers: [UUID: Scheduled<()>?] = [:]
     var recentIdentifiers: [Int] = []
     var recentlyClosed = [Int: Rescue]()
@@ -55,9 +60,18 @@ actor RescueBoard {
                 guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.outcome != .Purge })?.createdAt else {
                     continue
                 }
-                let lastSignalReceived = await self.lastSignalsReceived[platform]
+                let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: false)]
                 if lastSignalReceived == nil || createdAt > lastSignalReceived! {
-                    await self.setLastSignalReceived(platform: platform, createdAt)
+                    await self.setLastSignalReceived(platform: platform, odyssey: false, createdAt)
+                }
+                if platform == .PC {
+                    guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.odyssey == true && $0.outcome != .Purge })?.createdAt else {
+                        continue
+                    }
+                    let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: true)]
+                    if lastSignalReceived == nil || createdAt > lastSignalReceived! {
+                        await self.setLastSignalReceived(platform: platform, odyssey: true, createdAt)
+                    }
                 }
             }
             
@@ -434,8 +448,8 @@ actor RescueBoard {
         return false
     }
     
-    func setLastSignalReceived(platform: GamePlatform, date: Date) {
-        self.lastSignalsReceived[platform] = date
+    func setLastSignalReceived(platform: GamePlatform, odyssey: Bool, date: Date) {
+        self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: odyssey)] = date
     }
     
     func getNewIdentifier (even: Bool? = nil) -> Int {
@@ -507,8 +521,8 @@ actor RescueBoard {
         return identifier
     }
     
-    func setLastSignalReceived (platform: GamePlatform, _ lastReceived: Date) async {
-        self.lastSignalsReceived[platform] = lastReceived
+    func setLastSignalReceived (platform: GamePlatform, odyssey: Bool, _ lastReceived: Date) async {
+        self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: odyssey)] = lastReceived
     }
     
     func setLastPaperworkReminder (forUser userId: UUID, toDate date: Date) async {
