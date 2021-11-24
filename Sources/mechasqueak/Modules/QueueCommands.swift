@@ -130,7 +130,7 @@ class QueueCommands: IRCBotModule {
     )
     var didReceiveMaxClientsCommand = { command in
         if let queueSizeString = command.param1 {
-            guard let queueSize = Int(queueSizeString), (5...20).contains(queueSize) else {
+            guard let queueSize = Int(queueSizeString), ((5...20).contains(queueSize) || command.message.user.hasPermission(permission: .UserWrite)) else {
                 command.message.error(key: "maxclients.invalid", fromCommand: command)
                 return
             }
