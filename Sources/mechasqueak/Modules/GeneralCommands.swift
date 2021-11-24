@@ -244,6 +244,53 @@ class GeneralCommands: IRCBotModule {
         ])
     }
     
+    @AsyncBotCommand(
+        ["timezone", "tz"],
+        [.param("time in timezone", "3pm EST in CET", .continuous)],
+        category: .utility,
+        description: "See the current time in game time / UTC",
+        permission: nil,
+        cooldown: .seconds(300)
+    )
+    var didReceiveTimeZoneCommand = { command in
+        guard let chrono = configuration.chrono else {
+            return
+        }
+        var components = command.param1?.components(separatedBy: " ") ?? []
+        guard components.count > 2, let index = components.firstIndex(of: "in") else {
+            command.message.reply(message: "Error: Could not understand the request, usage: !timezone <time> in <timezone>. e.g !timezone 3pm EST in CET")
+            return
+        }
+        let timeZoneIdentifier = components[components.index(after: index)..<components.endIndex].joined(separator: " ")
+        components = Array(components[components.startIndex..<index])
+        let timeInput = components.joined(separator: " ")
+        var offsetTimeZone: TimeZone?
+        if var tzOffset = Double(timeZoneIdentifier) {
+            offsetTimeZone = TimeZone(secondsFromGMT: Int(tzOffset * 60 * 60))
+        }
+        guard let timeZone = offsetTimeZone ?? TimeZone(abbreviation: timeZoneIdentifier) ?? TimeZone(identifier: timeZoneIdentifier) else {
+            command.message.reply(message: "Error: Could not interpret time zone")
+            return
+        }
+        
+        let output = shell(chrono.nodePath, [
+            chrono.file,
+            timeInput
+        ])
+        guard let interpretedDate = DateFormatter.iso8601Full.date(from: output?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "") else {
+            command.message.reply(message: "Error: Could not interpret date/time value")
+            return
+        }
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.timeZone = timeZone
+        outputFormatter.dateStyle = .full
+        outputFormatter.timeStyle = .medium
+        
+        let tzName = timeZone.localizedName(for: .standard, locale: Locale.current) ?? timeZone.description
+        command.message.reply(message: "\(outputFormatter.string(from: interpretedDate)) in \(tzName)")
+    }
+    
     @BotCommand(
         ["roll"],
         [.param("dices", "2d8")],
@@ -379,4 +426,18 @@ class GeneralCommands: IRCBotModule {
         }
         command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(privacy)")
     }
+}
+
+func shell (_ command: String, arguments: [String] = []) -> String? {
+    let task = Process()
+    let pipe = Pipe()
+    
+    task.standardOutput = pipe
+    task.standardError = pipe
+    task.arguments = arguments
+    task.launchPath = command
+    task.launch()
+    
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    return String(data: data, encoding: .utf8)
 }

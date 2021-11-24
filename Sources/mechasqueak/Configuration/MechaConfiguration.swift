@@ -35,6 +35,7 @@ struct MechaConfiguration: Codable {
     let shortener: URLShortenerConfiguration
     let sourcePath: URL
     var xbox: XboxLiveConfiguration?
+    let chrono: ChronoConfiguration?
     
     func save () throws {
         let configEncoder = JSONEncoder()
@@ -93,4 +94,9 @@ struct XboxLiveConfiguration: Codable {
     var refreshToken: String
     let clientId: String
     let clientSecret: String
+}
+
+struct ChronoConfiguration: Codable {
+    let nodePath: String
+    let file: String
 }
