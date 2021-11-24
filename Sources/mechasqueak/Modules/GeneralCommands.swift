@@ -248,7 +248,7 @@ class GeneralCommands: IRCBotModule {
         ["timezone", "tz"],
         [.param("time in timezone", "3pm EST in CET", .continuous)],
         category: .utility,
-        description: "See the current time in game time / UTC",
+        description: "Convert a time to another timezone",
         permission: nil,
         cooldown: .seconds(300)
     )
