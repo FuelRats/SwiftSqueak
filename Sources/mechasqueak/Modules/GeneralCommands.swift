@@ -265,14 +265,24 @@ class GeneralCommands: IRCBotModule {
             return
         }
         
-        var value = add
+        var value = 0
         for roll in 1...diceNum {
             value += Int.random(in: 1...diceValue)
         }
+        var unmodified = value
+        value += add
+        var output = String(value)
+        if diceValue >= 6 {
+            if unmodified == diceNum * diceValue {
+                output = IRCFormat.color(.Green, output)
+            } else if unmodified == diceNum {
+                output = IRCFormat.color(.LightRed, output)
+            }
+        }
         if add > 0 {
-            command.message.reply(message: "\(diceNum)d\(diceValue)+\(add) = \(value)")
+            command.message.reply(message: "\(diceNum)d\(diceValue)+\(add) = \(output)")
         } else {
-            command.message.reply(message: "\(diceNum)d\(diceValue) = \(value)")
+            command.message.reply(message: "\(diceNum)d\(diceValue) = \(output)")
         }
     }
 
