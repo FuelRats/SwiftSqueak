@@ -98,6 +98,7 @@ class MechaSqueak {
             if let operLogin = configuration.general.operLogin {
                 client.connectCommands = [ { client in
                     client.send(command: .OPER, parameters: operLogin)
+                    client.send(command: .MODE, parameters: [client.currentNick, "+B"])
                 }]
             }
             return client
