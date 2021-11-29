@@ -342,7 +342,7 @@ class BoardCommands: IRCBotModule {
         [.argument("pc"), .argument("xb"), .argument("ps"), .options(["o"])],
         category: .other,
         description: "Displays the amount of time since the last rescue",
-        permission: .DispatchRead,
+        permission: .RescueReadOwn,
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
