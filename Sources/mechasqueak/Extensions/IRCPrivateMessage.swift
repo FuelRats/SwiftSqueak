@@ -42,7 +42,11 @@ extension IRCPrivateMessage {
         if self.user.settings?.preferredPrivateMethod == .Notice {
             self.client.sendNotice(toTarget: self.user.nickname, contents: message)
         }
-        self.client.sendMessage(toTarget: self.user.nickname, contents: message)
+        var tags: [String: String?] = [:]
+        if let msgid = self.raw.messageTags["msgid"] {
+            tags["+draft/reply"] = msgid
+        }
+        self.client.sendMessage(toTarget: self.user.nickname, contents: message, additionalTags: tags)
     }
 
     func replyPrivate (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
