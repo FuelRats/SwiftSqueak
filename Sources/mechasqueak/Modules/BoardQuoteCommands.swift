@@ -82,7 +82,7 @@ class BoardQuoteCommands: IRCBotModule {
         [.param("case id/client/assigned rat", "SpaceDawg")],
         category: .board,
         description: "Grab the last message by the client or assigned rat and add it to an existing rescue",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveGrabCommand = { command in
