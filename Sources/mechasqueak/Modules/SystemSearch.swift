@@ -44,7 +44,13 @@ class SystemSearch: IRCBotModule {
         let system = command.parameters.joined(separator: " ")
         
         do {
+            let extendedSearchWarningTimer = loop.next().scheduleTask(in: .seconds(45)) {
+                command.message.reply(key: "systemsearch.long", fromCommand: command, map: [
+                    "system": system
+                ])
+            }
             let searchResults = try await SystemsAPI.performSearch(forSystem: system)
+            extendedSearchWarningTimer.cancel()
             
             guard var results = searchResults.data else {
                 command.message.error(key: "systemsearch.error", fromCommand: command)

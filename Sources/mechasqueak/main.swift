@@ -36,7 +36,7 @@ try "\(processId)".write(toFile: "\(FileManager.default.currentDirectoryPath)/me
 
 let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
     redirectConfiguration: .none,
-    timeout: .init(connect: .seconds(5), read: .seconds(60))
+    timeout: .init(connect: .seconds(5), read: .seconds(180))
 ))
 
 var configPath = URL(
