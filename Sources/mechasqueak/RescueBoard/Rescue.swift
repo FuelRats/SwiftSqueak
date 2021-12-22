@@ -474,15 +474,6 @@ class Rescue {
             self.unidentifiedRats.append(param)
             return Result.success(.unidentified(param))
         }
-        
-        
-        let currentJumpCalls = await rat.getCurrentJumpCalls()
-        let existingCallsForCase = currentJumpCalls.first(where: { $0.1.id == self.id })
-        let existingCallsForOtherCase = currentJumpCalls.first(where: { $0.1.id != self.id })
-        
-        if existingCallsForCase == nil && existingCallsForOtherCase != nil && force == false {
-            return Result.failure(RescueAssignError.jumpCallConflict(rat))
-        }
 
         guard self.rats.contains(where: { $0.id.rawValue == rat.id.rawValue }) == false else {
             return Result.success(.duplicate(rat))
