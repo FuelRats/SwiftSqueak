@@ -85,6 +85,16 @@ class SessionLogger: IRCBotModule {
         addSessionMessage(channelMessage)
     }
     
+    @EventListener<IRCChannelActionMessageNotification>
+    var onChannelAction = { channelMessage in
+        guard channelMessage.raw.messageTags["batch"] == nil, configuration.general.drillChannels.contains(channelMessage.destination.name.lowercased()) else {
+            // Do not interpret commands from playback of old messages
+            return
+        }
+
+        addSessionMessage(channelMessage)
+    }
+    
     @EventListener<IRCEchoMessageNotification>
     var onEchoMessage = { echoMessage in
         guard echoMessage.raw.messageTags["batch"] == nil, configuration.general.drillChannels.contains(echoMessage.destination.name.lowercased()) else {
@@ -144,6 +154,10 @@ extension IRCPrivateMessage {
         timestampFormatter.dateFormat = "HH:mm:ss 'UTC'"
         
         let time = timestampFormatter.string(from: self.raw.time)
+        
+        if self.raw.isActionMessage {
+            return "[\(time)] * \(userMode)\(self.user.nickname) \(messageContents)"
+        }
         return "[\(time)] <\(userMode)\(self.user.nickname)> \(messageContents)"
     }
 }
