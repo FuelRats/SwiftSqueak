@@ -386,7 +386,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { (caseId, rescue) -> Bool in
-            return rescue.status != .Inactive && (platform == nil || rescue.platform == platform) && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
+            return rescue.status != .Inactive && (platform == nil || (rescue.platform == platform && rescue.odyssey == odyssey)) && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
             command.message.reply(key: "board.quiet.currentcalljumps", fromCommand: command, map: [
@@ -396,7 +396,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { rescue in
-            return rescue.1.status != .Inactive && (platform == nil || rescue.1.platform == platform)
+            return rescue.1.status != .Inactive && (platform == nil || rescue.1.platform == platform && rescue.1.odyssey == odyssey)
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
                 command.message.reply(key: "board.quiet.currentjoin", fromCommand: command, map: [
