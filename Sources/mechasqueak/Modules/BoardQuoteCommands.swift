@@ -137,7 +137,7 @@ class BoardQuoteCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["inject"],
-        [.options(["f"]), .param("case id/client", "4"), .param("text", "client is in the EZ", .continuous)],
+        [.options(["f"]), .param("case id/client", "4"), .param("text", "NLTT 48288 PC CR", .continuous)],
         category: .board,
         description: "Add some new information to the case, if one does not exist, create one with this information",
         permission: .DispatchWrite,
