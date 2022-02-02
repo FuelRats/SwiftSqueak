@@ -43,12 +43,12 @@ class SystemSearch: IRCBotModule {
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
         
+        let extendedSearchWarningTimer = loop.next().scheduleTask(in: .seconds(45)) {
+            command.message.reply(key: "systemsearch.long", fromCommand: command, map: [
+                "system": system
+            ])
+        }
         do {
-            let extendedSearchWarningTimer = loop.next().scheduleTask(in: .seconds(45)) {
-                command.message.reply(key: "systemsearch.long", fromCommand: command, map: [
-                    "system": system
-                ])
-            }
             let searchResults = try await SystemsAPI.performSearch(forSystem: system)
             extendedSearchWarningTimer.cancel()
             
@@ -72,6 +72,7 @@ class SystemSearch: IRCBotModule {
             ])
 
         } catch {
+            extendedSearchWarningTimer.cancel()
             command.message.error(key: "systemsearch.error", fromCommand: command)
         }
     }
