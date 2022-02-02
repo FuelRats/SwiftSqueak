@@ -91,6 +91,14 @@ class NicknameLookupManager {
             MechaSqueak.accounts.lookup(user: user)
         }
     }
+    
+    @EventListener<IRCChannelUserModeChangeNotification>
+    var onUserModeChange = { userModeChange in
+        guard userModeChange.channel == mecha.rescueChannel else {
+            return
+        }
+        MechaSqueak.accounts.lookup(user: userModeChange.target)
+    }
 }
 
 class NicknameLookupOperation: Operation {
