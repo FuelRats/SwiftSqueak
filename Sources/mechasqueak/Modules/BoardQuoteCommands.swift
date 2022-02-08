@@ -116,6 +116,8 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
         let quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
+        
+        rescue.quotes.removeAll(where: { $0.message == "<\(clientUser.nickname)> \(lastMessage.message)" })
         if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
             rescue.appendQuote(RescueQuote(
                 author: message.user.nickname,
@@ -187,6 +189,7 @@ class BoardQuoteCommands: IRCBotModule {
                 return
             }
         } else {
+            rescue?.quotes.removeAll(where: { $0.author == message.user.nickname && $0.message == injectMessage })
             rescue?.quotes.append(RescueQuote(
                 author: message.user.nickname,
                 message: injectMessage,

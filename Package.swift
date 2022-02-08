@@ -12,7 +12,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/xlexi/Lingo.git", from: Version(3, 0, 6)),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 3, 0)),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 8, 2)),
         .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 32, 3)),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 15, 1)),
         .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 10, 2)),
