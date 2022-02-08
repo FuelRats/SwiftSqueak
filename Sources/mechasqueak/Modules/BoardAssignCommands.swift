@@ -44,7 +44,7 @@ class BoardAssignCommands: IRCBotModule {
         let message = command.message
         
         let force = command.forceOverride
-        let carrier = command.namedOptions.contains("carrier")
+        let carrier = command.has(argument: "carrier")
 
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -88,7 +88,7 @@ class BoardAssignCommands: IRCBotModule {
         }
         
         let force = command.forceOverride
-        let carrier = command.namedOptions.contains("carrier")
+        let carrier = command.has(argument: "carrier")
 
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -204,7 +204,7 @@ class BoardAssignCommands: IRCBotModule {
     
     static func sendAssignMessages (assigns: [Result<AssignmentResult, RescueAssignError>], forRescue rescue: Rescue, fromCommand command: IRCBotCommand) -> Bool {
         let includeExistingAssigns = command.options.contains("a")
-        let carrier = command.namedOptions.contains("carrier")
+        let carrier = command.has(argument: "carrier")
         
         let failedAssigns = assigns.compactMap({ assign -> RescueAssignError? in
             if case let .failure(result) = assign {

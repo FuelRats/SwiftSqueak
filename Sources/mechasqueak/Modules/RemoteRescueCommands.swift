@@ -490,7 +490,7 @@ class RemoteRescueCommands: IRCBotModule {
                 return
             }
 
-            if command.namedOptions.contains("all") {
+            if command.has(argument: "all") {
                 guard command.message.user.hasPermission(permission: .UserRead) else {
                     command.message.error(key: "board.nopermission", fromCommand: command, map: [
                         "nick": command.message.user.nickname

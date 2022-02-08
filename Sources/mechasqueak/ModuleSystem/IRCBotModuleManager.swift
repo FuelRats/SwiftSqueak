@@ -89,7 +89,7 @@ class IRCBotModuleManager {
             return
         }
 
-        let illegalNamedOptions = ircBotCommand.namedOptions.subtracting(command.namedOptions)
+        let illegalNamedOptions = Set(ircBotCommand.arguments.keys).subtracting(Set(command.arguments.keys))
         if illegalNamedOptions.count > 0 {
             message.error(key: "command.illegalnamedoptions", fromCommand: ircBotCommand, map: [
                 "options": Array(illegalNamedOptions).englishList,

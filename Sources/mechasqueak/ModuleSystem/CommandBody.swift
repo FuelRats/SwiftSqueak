@@ -26,7 +26,7 @@ import Foundation
 
 enum CommandBody {
     case options([Character])
-    case argument(String)
+    case argument(String, parameterRequired: Bool = false)
     case param(String, String = "", ParameterType = .standard, ParameterNullability = .required)
     
     enum ParameterType {
@@ -71,13 +71,15 @@ extension Array where Element == CommandBody {
         return OrderedSet(optionCase.first ?? [])
     }
     
-    var namedOptions: OrderedSet<String> {
-        return OrderedSet(self.compactMap({ (token: CommandBody) -> String? in
-            guard case .argument(let option) = token else {
-                return nil
+    var arguments: [String: Bool] {
+        return self.reduce([:], { (args: [String: Bool], token: CommandBody) -> [String: Bool] in
+            guard case .argument(let option, let requiredParameter) = token else {
+                return args
             }
-            return option
-        }))
+            var args = args
+            args[option] = requiredParameter
+            return args
+        })
     }
     
     var paramText: String {

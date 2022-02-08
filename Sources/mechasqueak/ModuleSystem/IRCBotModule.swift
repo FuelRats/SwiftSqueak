@@ -54,7 +54,7 @@ typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
             onCommand: self.wrappedValue,
             parameters: body.parameters,
             options: body.options,
-            namedOptions: body.namedOptions,
+            arguments: body.arguments,
             category: category,
             description: description,
             permission: permission,
@@ -86,7 +86,7 @@ typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
             asyncOnCommand: self.wrappedValue,
             parameters: body.parameters,
             options: body.options,
-            namedOptions: body.namedOptions,
+            arguments: body.arguments,
             category: category,
             description: description,
             permission: permission,
@@ -101,7 +101,7 @@ typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
 struct IRCBotCommandDeclaration {
     let commands: [String]
     let options: OrderedSet<Character>
-    let namedOptions: OrderedSet<String>
+    let arguments: [String: Bool]
     let permission: AccountPermission?
     let allowedDestinations: AllowedCommandDestination
     let cooldown: TimeInterval?
@@ -118,7 +118,7 @@ struct IRCBotCommandDeclaration {
         asyncOnCommand: AsyncBotCommandFunction? = nil,
         parameters: [CommandBody],
         options: OrderedSet<Character> = [],
-        namedOptions: OrderedSet<String> = [],
+        arguments: [String: Bool] = [:],
         category: HelpCategory?,
         description: String,
         permission: AccountPermission? = nil,
@@ -128,7 +128,7 @@ struct IRCBotCommandDeclaration {
         self.commands = commands
         self.parameters = parameters
         self.options = options
-        self.namedOptions = namedOptions
+        self.arguments = arguments
         self.permission = permission
         self.onCommand = onCommand
         self.asyncOnCommand = asyncOnCommand
@@ -145,8 +145,8 @@ struct IRCBotCommandDeclaration {
             usage += " [-\(String(self.options))]"
         }
 
-        if self.namedOptions.count > 0 {
-            usage += " " + Array(self.namedOptions).map({ "[--\($0)]" }).joined(separator: " ")
+        if self.arguments.count > 0 {
+            usage += " " + Array(self.arguments).map({ "[--\($0)]" }).joined(separator: " ")
         }
 
         usage += " \(paramText)"

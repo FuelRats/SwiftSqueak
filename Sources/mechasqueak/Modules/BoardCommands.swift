@@ -65,11 +65,11 @@ class BoardCommands: IRCBotModule {
             return ListCommandArgument(rawValue: String($0))
         })
         
-        arguments.append(contentsOf: command.namedOptions.compactMap({
+        arguments.append(contentsOf: command.arguments.keys.compactMap({
             return ListCommandArgument(rawValue: $0)
         }))
         
-        let filteredPlatforms = command.namedOptions.compactMap({
+        let filteredPlatforms = command.arguments.keys.compactMap({
             GamePlatform(rawValue: $0)
         })
 
@@ -97,11 +97,11 @@ class BoardCommands: IRCBotModule {
                 return false
             }
             
-            if command.namedOptions.contains("horizons") && command.namedOptions.contains("odyssey") == false && rescue.odyssey == true {
+            if command.has(argument: "horizons") && command.has(argument: "odyssey") == false && rescue.odyssey == true {
                 return false
             }
             
-            if command.namedOptions.contains("horizons") == false && command.namedOptions.contains("odyssey") && rescue.odyssey == false {
+            if command.has(argument: "horizons") == false && command.has(argument: "odyssey") && rescue.odyssey == false {
                 return false
             }
 
@@ -344,19 +344,19 @@ class BoardCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
-        var namedOptions = command.namedOptions
-        guard namedOptions.count < 2 else {
+        var arguments = command.arguments
+        guard arguments.count < 2 else {
             command.message.reply(message: "Yeah no you're gonna have to make up your mind and pick one")
             return
         }
         let odyssey = command.options.contains("o")
-        if odyssey && namedOptions.count == 0 {
-            namedOptions.append("pc")
+        if odyssey && arguments.count == 0 {
+            arguments["pc"] = nil
         }
         var lastSignalDate: Date? = nil
         var platform: GamePlatform? = nil
         
-        if let filteredPlatform = namedOptions.first {
+        if let filteredPlatform = arguments.keys.first {
             guard let commandPlatform = GamePlatform(rawValue: filteredPlatform) else {
                 return
             }

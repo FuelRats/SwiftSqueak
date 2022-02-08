@@ -49,7 +49,7 @@ class FactCommands: IRCBotModule {
         guard var allFacts = try? await Fact.getAllFacts() else {
             return
         }
-        if command.namedOptions.contains("locales") {
+        if command.has(argument: "locales") {
             let languages = allFacts.reduce(Set<String>(), { languages, fact in
                 var languages = languages
                 languages.insert(fact.language)
@@ -413,9 +413,9 @@ class FactCommands: IRCBotModule {
                 command.parameters = targets.map({ $0.0 })
                 sendFact(command: command, message: message)
             }
-        } else if command.namedOptions.contains("locales") {
+        } else if command.has(argument: "locales") {
             factLocales(command: command)
-        } else if command.namedOptions.contains("info") {
+        } else if command.has(argument: "info") {
             factInfo(command: command)
         } else if command.command == "quit" {
             command.command = "prepcr"

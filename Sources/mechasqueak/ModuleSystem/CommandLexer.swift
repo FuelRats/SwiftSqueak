@@ -39,7 +39,7 @@ struct IRCBotCommand {
     var command: String
     var parameters: [String]
     var options: OrderedSet<Character>
-    var namedOptions: OrderedSet<String>
+    var arguments: [String: String?]
     var locale: Locale
     let message: IRCPrivateMessage
     
@@ -58,27 +58,45 @@ struct IRCBotCommand {
             self.message = privateMessage
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
-
-            self.namedOptions = OrderedSet(tokens.compactMap({
-                guard case let .NamedOption(option) = $0 else {
-                    return nil
+            
+            guard let commandDefinition = MechaSqueak.commands.first(where: {
+                $0.commands.contains(commandToken.identifier)
+            }) else {
+                return nil
+            }
+            
+            var arguments = [String: String?]()
+            var options = OrderedSet<Character>()
+            var parameters = [String]()
+            
+            var tokenIterator = tokens.makeIterator()
+            while let currentToken = tokenIterator.next() {
+                switch currentToken {
+                case .Argument(let argumentName):
+                    if let argumentDefinition = commandDefinition.arguments[argumentName], argumentDefinition == true {
+                        if case .Parameter(let param) = tokenIterator.next() {
+                            arguments[argumentName] = param
+                        } else {
+                            return nil
+                        }
+                    } else {
+                        arguments[argumentName] = nil
+                    }
+                case .Option(let optionName):
+                    options.append(optionName)
+                    
+                case .Parameter(let param):
+                    parameters.append(param)
+                    
+                default:
+                    break
                 }
-                return option
-            }))
+            }
 
-            self.options = OrderedSet(tokens.compactMap({
-                guard case let .Option(option) = $0 else {
-                    return nil
-                }
-                return option
-            }))
+            self.arguments = arguments
 
-            self.parameters = tokens.compactMap({
-                guard case let .Parameter(param) = $0 else {
-                    return nil
-                }
-                return param
-            })
+            self.options = options
+            self.parameters = parameters
         } catch LexerError.noCommand {
             return nil
         } catch LexerError.invalidOption {
@@ -117,6 +135,14 @@ struct IRCBotCommand {
         }
     }
     
+    func has (argument: String) -> Bool {
+        return self.arguments.keys.contains(argument.lowercased())
+    }
+    
+    func argumentValue (for arg: String) -> String? {
+        return self.arguments[arg] ?? nil
+    }
+    
     var isRepeatInvocation: Bool {
         let previousIncoation = IRCBotModuleManager.commandHistory.elements.reversed().first(where: {
             $0.id != self.id && $0.command == self.command && $0.parameters == self.parameters && $0.message.user.nickname == self.message.user.nickname
@@ -125,7 +151,7 @@ struct IRCBotCommand {
     }
     
     var forceOverride: Bool {
-        return self.options.contains("f") || self.namedOptions.contains("force") || self.isRepeatInvocation
+        return self.options.contains("f") || self.arguments.keys.contains("force") || self.isRepeatInvocation
     }
     
     var param1: String? {
@@ -158,7 +184,7 @@ enum Token {
     case Command(CommandToken)
     case Delimiter
     case Option(Character)
-    case NamedOption(String)
+    case Argument(String)
     case Parameter(String)
 }
 
@@ -198,7 +224,7 @@ struct Lexer {
         switch  (state, current, isIdentifier, next, nextIsIdentifier) {
             case (.Command,      "!",    _,   _, true): return try lexCommand()
             case (.Parameters,   " ",    _,   _,    _): return delimit()
-            case (.Parameters,   "-",    _, "-",    _): return try lexNamedOption()
+            case (.Parameters,   "-",    _, "-",    _): return try lexArgument()
             case (.Parameters,   "-",    _,   _, true): do {
                 state = .ParsingOptions
                 return delimit()
@@ -208,7 +234,7 @@ struct Lexer {
                 state = .Parameters
                 return delimit()
             }
-            case (.Parameters,     _,     _,  _,    _): return try lexArgument()
+            case (.Parameters,     _,     _,  _,    _): return try lexParameter()
             case (.Command,        _,     _,  _,    _): throw LexerError.noCommand
         }
     }
@@ -234,12 +260,12 @@ struct Lexer {
         return Token.Command(command)
     }
 
-    private mutating func lexNamedOption () throws -> Token {
+    private mutating func lexArgument () throws -> Token {
         _ = readWhile({ $0 == "-" })
         if peek()?.isWhitespace != false {
             throw LexerError.invalidOption
         }
-        return Token.NamedOption(readWhile({ $0.isWhitespace == false }))
+        return Token.Argument(readWhile({ $0.isWhitespace == false }).lowercased())
     }
 
     private mutating func lexOption () -> Token {
@@ -248,7 +274,7 @@ struct Lexer {
         return Token.Option(option!)
     }
 
-    private mutating func lexArgument () throws -> Token {
+    private mutating func lexParameter () throws -> Token {
         if peek() == "`" {
             pop()
             let arg = readWhile({ $0 != "`" })

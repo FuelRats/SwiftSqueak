@@ -54,7 +54,7 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
             html += "<em>[-\(String(self.options))] </em>"
         }
         
-        for option in self.namedOptions {
+        for option in self.arguments {
             html += "<em>[--\(option)] </em>"
         }
         html += "</span>"
@@ -143,7 +143,7 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
             """
         }
         
-        if self.options.count > 0 || self.namedOptions.count > 0 {
+        if self.options.count > 0 || self.arguments.count > 0 {
             html += """
                 <p style="margin-left: 30.0px;">
                   <span style="color: rgb(0,0,0);text-decoration: none;">Options:</span>
@@ -159,7 +159,7 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
                 """
             }
             
-            for option in namedOptions {
+            for option in arguments {
                 let optionDescription = lingo.localize("help.command.\(self.commands[0]).\(option)", locale: "en-GB")
                 html += """
                     <p style="margin-left: 60.0px;">

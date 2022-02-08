@@ -358,10 +358,10 @@ class GeneralCommands: IRCBotModule {
             return
         }
         let system = command.parameters[4]
-        let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
+        let crStatus = command.has(argument: "cr") ? "NOT OK" : "OK"
         
         var key = "announcement"
-        if command.namedOptions.contains("odyssey") {
+        if command.has(argument: "odyssey") {
             if platform != .PC {
                 command.message.error(key: "announce.invalidplatform", fromCommand: command)
                 return
