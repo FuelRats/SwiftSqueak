@@ -303,9 +303,10 @@ class MechaSqueak {
                     }
                 } else {
                     do {
+                        var banDueToVpn = quitMessage.contains("banned VPN network")
                         try await rescue.trash(reason: "Client was banned")
                         
-                        mecha.reportingChannel?.send(key: "board.bannedmd", map: [
+                        mecha.reportingChannel?.send(key: banDueToVpn ? "board.bannedvpn" : "board.bannedmd", map: [
                             "caseId": caseId,
                             "client": rescue.clientDescription
                         ])

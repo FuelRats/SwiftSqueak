@@ -257,7 +257,7 @@ class GeneralCommands: IRCBotModule {
             return
         }
         var components = command.param1?.components(separatedBy: " ") ?? []
-        guard components.count > 2, let index = components.firstIndex(of: "in") ?? let index = components.firstIndex(of: "to") else {
+        guard components.count > 2, let index = components.firstIndex(of: "in") ?? components.firstIndex(of: "to") else {
             command.message.reply(message: "Error: Could not understand the request, usage: !timezone <time> in <timezone>. e.g !timezone 3pm EST in CET")
             return
         }
