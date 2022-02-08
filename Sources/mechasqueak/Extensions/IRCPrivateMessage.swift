@@ -83,11 +83,18 @@ private let retaliationPhrases = [
     "launches a tactical nuclear strike in %@'s direction",
     "adds %@ to the top of \"the list\"",
     "drops %@ into a pool of piranhas",
-    "teleports %@ to Blighttown",
+    "drops %@ into Blighttown with only a sword hilt and no armour",
     "banishes %@ to the shadow realm",
     "drops %@ into a black hole",
     "releases an army of protomolecule hybrid monsters at %@",
     "pours maple syrup inside %@'s computer",
     "executes order 66",
-    "designates %@ as the official dispatch for all future Xbox CR cases with australian internet connections"
+    "designates %@ as the official dispatch for all future Xbox CR cases with australian internet connections",
+    "designates %@'s email address as the official destination for all Odyssey related bug reports",
+    "forces %@ to make their way to beagle point using a T9 with a 2E FSD and 1E fuel scoop",
+    "pours glitter onto %@'s keyboard",
+    "announces that everyone can now send any paperwork that needs completing in PM to %@",
+    "prepares to turn %@ into the new stuffed rat",
+    "forces %@ to play a vanilla ranger in D&D 5th edition",
+    "forces %@ to play the last level of Simpsons Hit & Run over and over for 7 days"
 ]
