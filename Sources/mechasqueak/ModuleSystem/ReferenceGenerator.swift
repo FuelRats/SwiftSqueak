@@ -54,8 +54,12 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
             html += "<em>[-\(String(self.options))] </em>"
         }
         
-        for option in self.arguments {
-            html += "<em>[--\(option)] </em>"
+        for (option, reqVal, argDesc) in self.helpArguments {
+            if let argDesc = argDesc, reqVal {
+                html += "<em>[--\(option) &lt;\(argDesc)&gt;] </em>"
+            } else {
+                html += "<em>[--\(option)] </em>"
+            }
         }
         html += "</span>"
         for case .param(let name, _, let type, let nullability) in parameters {
@@ -159,13 +163,21 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
                 """
             }
             
-            for option in arguments {
+            for (option, requiredValue, argDesc) in helpArguments {
                 let optionDescription = lingo.localize("help.command.\(self.commands[0]).\(option)", locale: "en-GB")
-                html += """
-                    <p style="margin-left: 60.0px;">
-                      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--\(option)</strong> \(optionDescription)</span>
-                    </p>
-                """
+                if let argDesc = argDesc, requiredValue {
+                    html += """
+                        <p style="margin-left: 60.0px;">
+                          <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--\(option) &lt;\(argDesc)&gt;</strong> \(optionDescription)</span>
+                        </p>
+                    """
+                } else {
+                    html += """
+                        <p style="margin-left: 60.0px;">
+                          <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--\(option)</strong> \(optionDescription)</span>
+                        </p>
+                    """
+                }
             }
         }
         
