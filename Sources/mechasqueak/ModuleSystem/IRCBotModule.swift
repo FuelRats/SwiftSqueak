@@ -145,8 +145,12 @@ struct IRCBotCommandDeclaration {
             usage += " [-\(String(self.options))]"
         }
 
-        if self.arguments.count > 0 {
-            usage += " " + Array(self.arguments).map({ "[--\($0)]" }).joined(separator: " ")
+        for (argument, valueRequired) in arguments {
+            if valueRequired {
+                usage += " [--\(argument) value]"
+            } else {
+                usage += " [--\(argument)]"
+            }
         }
 
         usage += " \(paramText)"

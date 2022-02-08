@@ -216,9 +216,13 @@ class HelpCommands: IRCBotModule {
         if helpCommand.options.count > 0 || helpCommand.arguments.count > 0 {
             destination.send(message: "Options:")
         }
-        for option in helpCommand.arguments {
+        for (option, valueRequired) in helpCommand.arguments {
             let optionDescription = lingo.localize("help.command.\(helpCommand.commands[0]).\(option)", locale: "en-GB")
-            destination.send(message: " --\(option): \(optionDescription)")
+            if valueRequired {
+                destination.send(message: " --\(option) <value>: \(optionDescription)")
+            } else {
+                destination.send(message: " --\(option): \(optionDescription)")
+            }
         }
         
         for option in helpCommand.options {
