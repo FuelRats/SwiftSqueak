@@ -55,6 +55,7 @@ typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
             parameters: body.parameters,
             options: body.options,
             arguments: body.arguments,
+            helpArguments: body.helpArguments,
             category: category,
             description: description,
             permission: permission,
@@ -102,6 +103,7 @@ struct IRCBotCommandDeclaration {
     let commands: [String]
     let options: OrderedSet<Character>
     let arguments: [String: Bool]
+    let helpArguments: [(String, Bool, String?)]
     let permission: AccountPermission?
     let allowedDestinations: AllowedCommandDestination
     let cooldown: TimeInterval?
@@ -119,6 +121,7 @@ struct IRCBotCommandDeclaration {
         parameters: [CommandBody],
         options: OrderedSet<Character> = [],
         arguments: [String: Bool] = [:],
+        helpArguments: [(String, Bool, String?)] = [],
         category: HelpCategory?,
         description: String,
         permission: AccountPermission? = nil,
@@ -129,6 +132,7 @@ struct IRCBotCommandDeclaration {
         self.parameters = parameters
         self.options = options
         self.arguments = arguments
+        self.helpArguments = helpArguments
         self.permission = permission
         self.onCommand = onCommand
         self.asyncOnCommand = asyncOnCommand
@@ -145,9 +149,9 @@ struct IRCBotCommandDeclaration {
             usage += " [-\(String(self.options))]"
         }
 
-        for (argument, valueRequired) in arguments {
-            if valueRequired {
-                usage += " [--\(argument) value]"
+        for (argument, valueRequired, valueDesc) in helpArguments {
+            if let valueDesc = valueDesc, valueRequired {
+                usage += " [--\(argument) \(valueDesc)]"
             } else {
                 usage += " [--\(argument)]"
             }
