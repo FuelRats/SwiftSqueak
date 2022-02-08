@@ -69,4 +69,25 @@ extension IRCPrivateMessage {
             self.replyPrivate(message: message)
         }
     }
+    
+    func retaliate () {
+        let phrase = retaliationPhrases[Int.random(in: 0..<retaliationPhrases.count)]
+        self.client.sendActionMessage(toChannel: self.destination, contents: String(format: phrase, arguments: [self.user.nickname]))
+    }
 }
+
+
+private let retaliationPhrases = [
+    "ejects %@ out the airlock",
+    "revokes %@'s snickers rations for 1 month",
+    "launches a tactical nuclear strike in %@'s direction",
+    "adds %@ to the top of \"the list\"",
+    "drops %@ into a pool of piranhas",
+    "teleports %@ to Blighttown",
+    "banishes %@ to the shadow realm",
+    "drops %@ into a black hole",
+    "releases an army of protomolecule hybrid monsters at %@",
+    "pours maple syrup inside %@'s computer",
+    "executes order 66",
+    "designates %@ as the official dispatch for all future Xbox CR cases with australian internet connections"
+]

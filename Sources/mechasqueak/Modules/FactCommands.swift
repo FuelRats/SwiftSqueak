@@ -506,8 +506,8 @@ class FactCommands: IRCBotModule {
     func messageFact (command: IRCBotCommand, fact: Fact) {
         if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
-            if firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "xlexious" {
-                command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "bonks \(command.message.user.nickname)")
+            if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "xlexious") && command.message.destination != mecha.rescueChannel {
+                command.message.retaliate()
                 return
             }
 
