@@ -26,7 +26,7 @@ import Foundation
 
 enum CommandBody {
     case options([Character])
-    case argument(String, parameterRequired: Bool = false)
+    case argument(String, valueRequired: Bool = false, example: String? = nil)
     case param(String, String = "", ParameterType = .standard, ParameterNullability = .required)
     
     enum ParameterType {
@@ -73,7 +73,7 @@ extension Array where Element == CommandBody {
     
     var arguments: [String: Bool] {
         return self.reduce([:], { (args: [String: Bool], token: CommandBody) -> [String: Bool] in
-            guard case .argument(let option, let requiredParameter) = token else {
+            guard case .argument(let option, let requiredParameter, _) = token else {
                 return args
             }
             var args = args
