@@ -388,10 +388,12 @@ class Rescue {
         }
     }
     
-    func close (firstLimpet: Rat? = nil) async throws {
+    func close (firstLimpet: Rat? = nil, paperworkOnly: Bool = false) async throws {
         let wasInactive = self.status == .Inactive
         self.status = .Closed
-        self.firstLimpet = firstLimpet
+        if paperworkOnly == false {
+            self.firstLimpet = firstLimpet
+        }
         if let firstLimpet = firstLimpet, self.rats.contains(where: {
             $0.id.rawValue == firstLimpet.id.rawValue
         }) == false {

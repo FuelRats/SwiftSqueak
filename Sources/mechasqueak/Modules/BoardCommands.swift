@@ -145,7 +145,7 @@ class BoardCommands: IRCBotModule {
     var didReceiveCloseCommand = { command in
         let message = command.message
         let override = command.forceOverride
-        let noFirstLimpet = command.options.contains("p")
+        let pwOnly = command.options.contains("p")
         
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             if command.parameters.count > 1, let (caseId, _) = await message.destination.member(named: command.parameters[1])?.getAssignedRescue() {
@@ -193,11 +193,9 @@ class BoardCommands: IRCBotModule {
                 return
             }
          }
-
-        var closeFl = noFirstLimpet ? nil : firstLimpet
         
         do {
-            try await rescue.close(firstLimpet: closeFl)
+            try await rescue.close(firstLimpet: firstLimpet, paperworkOnly: pwOnly)
             
             await board.remove(id: caseId)
 
