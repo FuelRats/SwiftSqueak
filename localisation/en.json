@@ -212,6 +212,7 @@
   "rescue.pwreminder": "Hi %{nick}, you seem to have some unfiled paperwork; %{rescues}.",
   "rescue.pwreminder.meme": "%{nick}, you didn't file your paperwork last night; %{rescues}. I am watching you, %{nick}.",
   "rescue.pwreminder.rescue": "client \"%{client}\" %{timeAgo} ago (%{link})",
+  "rescue.pwreminder.special": "%{nick} has once again failed to file their paperwork in a timely manner, %{snickers} snickers has been revoked from their rations.",
   
   "rescue.closed.invalid": "Could not list recently closed cases, !closed takes an optional number between 1 and 10.",
   "rescue.closed.error": "Failed to look up recently closed cases due to an error in the rescue server.",

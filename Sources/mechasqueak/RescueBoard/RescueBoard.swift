@@ -42,6 +42,7 @@ actor RescueBoard {
     var recentIdentifiers: [Int] = []
     var recentlyClosed = [Int: Rescue]()
     static var pendingClientJoins: [String: (EventLoopPromise<Void>, Rescue)] = [:]
+    var pwReminderSpecialReminderAccounts = ["Ravenov", "MrNeutron", "Elysiumchains"]
     
     var lastPaperworkReminder: [UUID: Date] = [:]
 
@@ -599,6 +600,12 @@ actor RescueBoard {
                     "nick": latestNick.nickname,
                     "rescues": rescueStrings.joined(separator: ", ")
                 ]))
+                if pwReminderSpecialReminderAccounts.contains(latestNick.account) {
+                    mecha.reportingChannel?.send(key: "rescue.pwreminder.special", map: [
+                        "nick": latestNick,
+                        "snickers": rescues.count * 10
+                    ])
+                }
             }
         }
     }
