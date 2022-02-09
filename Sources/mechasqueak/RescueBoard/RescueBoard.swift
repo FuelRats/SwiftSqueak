@@ -600,7 +600,7 @@ actor RescueBoard {
                     "nick": latestNick.nickname,
                     "rescues": rescueStrings.joined(separator: ", ")
                 ]))
-                if pwReminderSpecialReminderAccounts.contains(latestNick.account) {
+                if let account = latestNick.account, await pwReminderSpecialReminderAccounts.contains(account) {
                     mecha.reportingChannel?.send(key: "rescue.pwreminder.special", map: [
                         "nick": latestNick,
                         "snickers": rescues.count * 10

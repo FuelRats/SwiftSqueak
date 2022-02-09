@@ -53,7 +53,7 @@ class BoardCommands: IRCBotModule {
     }
     
     @AsyncBotCommand(
-        ["create"],
+        ["addcase", "create"],
         [
             .param("client nick", "SpaceDawg"),
             .argument("pc", example: ""),
@@ -66,7 +66,7 @@ class BoardCommands: IRCBotModule {
             .argument("lang", "language code", example: "ru")
         ],
         category: .board,
-        description: "Create a new rescue",
+        description: "Create a new rescue case and add it to the board",
         permission: .DispatchWrite
     )
     var didReceiveCreateCommand = { command in
