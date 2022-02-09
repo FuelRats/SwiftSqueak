@@ -65,11 +65,9 @@ struct IRCBotCommand {
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
             
-            guard let commandDefinition = MechaSqueak.commands.first(where: {
+            let commandDefinition = MechaSqueak.commands.first(where: {
                 $0.commands.contains(commandToken.identifier)
-            }) else {
-                return nil
-            }
+            })
             
             var arguments = [String: String?]()
             var options = OrderedSet<Character>()
@@ -79,7 +77,7 @@ struct IRCBotCommand {
             while let currentToken = tokenIterator.next() {
                 switch currentToken {
                 case .Argument(let argumentName):
-                    if let argumentDefinition = commandDefinition.arguments[argumentName], argumentDefinition != nil {
+                    if let argumentDefinition = commandDefinition?.arguments[argumentName], argumentDefinition != nil {
                         if case .Parameter(let param) = tokenIterator.next() {
                             arguments[argumentName] = param
                         } else {

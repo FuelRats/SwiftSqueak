@@ -51,6 +51,57 @@ class BoardCommands: IRCBotModule {
     var didReceiveSyncCommand = { command in
         try? await board.sync()
     }
+    
+    @AsyncBotCommand(
+        ["create"],
+        [
+            .param("client nick", "SpaceDawg"),
+            .argument("pc", example: ""),
+            .argument("xb"),
+            .argument("ps"),
+            .argument("odyssey", example: ""),
+            .argument("cr", example: ""),
+            .argument("sys", "system", example: "NLTT 48288"),
+            .argument("cmdr", "CMDR name", example: "Space Dawg"),
+            .argument("lang", "language code", example: "ru")
+        ],
+        category: .board,
+        description: "Create a new rescue",
+        permission: .DispatchWrite
+    )
+    var didReceiveCreateCommand = { command in
+        let nickname = command.parameters[0]
+        
+        let platform = command.arguments.keys.compactMap({ GamePlatform(rawValue: $0) }).first
+        print(command.arguments)
+        let odyssey = command.has(argument: "odyssey")
+        let codeRed = command.has(argument: "cr")
+        let starSystem = command.argumentValue(for: "sys")
+        let cmdrName = command.argumentValue(for: "cmdr")
+        var locale: Locale? = nil
+        if let lang = command.argumentValue(for: "lang") {
+            locale = Locale(identifier: lang)
+        }
+        
+        let rescue = Rescue(
+            client: cmdrName ?? nickname,
+            nick: nickname,
+            platform: platform,
+            system: starSystem,
+            locale: locale,
+            codeRed: codeRed,
+            odyssey: odyssey,
+            fromCommand: command
+        )
+        rescue.quotes.append(RescueQuote(
+            author: command.message.client.currentNick,
+            message: "<\(command.message.user.nickname)> \(command.message.message)",
+            createdAt: Date(),
+            updatedAt: Date(),
+            lastAuthor: command.message.client.currentNick
+        ))
+        try? await board.insert(rescue: rescue, fromMessage: command.message, initiated: .insertion)
+    }
 
     @AsyncBotCommand(
         ["list"],

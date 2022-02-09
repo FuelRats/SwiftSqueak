@@ -48,7 +48,7 @@ class ShortenURLCommands: IRCBotModule {
         if command.message.destination.isPrivateMessage {
             ongoingShortenUrls[command.message.user.nickname] = longUrl
             
-            await Task.sleep(1_000_000_000)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
             longUrl = ongoingShortenUrls[command.message.user.nickname] ?? longUrl
             ongoingShortenUrls.removeValue(forKey: command.message.user.nickname)
         }

@@ -202,6 +202,39 @@ class Rescue {
         self.updatedAt = Date()
         self.uploaded = false
     }
+    
+    init (client: String, nick: String, platform: GamePlatform?, system: String? = nil, locale: Locale? = nil, codeRed: Bool = false, odyssey: Bool = false, fromCommand command: IRCBotCommand) {
+        self.id = UUID()
+
+        self.client = client
+        self.clientNick = nick
+        self.clientLanguage = locale ?? Locale(identifier: "en")
+
+        if let systemName = system {
+            self.system = StarSystem(name: systemName)
+        } else {
+            self.system = nil
+        }
+
+        self.channelName = command.message.destination.name
+
+        self.platform = platform
+        self.odyssey = odyssey
+
+        self.codeRed = codeRed
+        self.notes = ""
+
+        self.quotes = []
+
+        self.status = .Open
+        self.unidentifiedRats = []
+        self.rats = []
+        self.jumpCalls = []
+
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.uploaded = false
+    }
 
     init (fromAPIRescue apiRescue: RemoteRescue, withRats rats: [Rat], firstLimpet: Rat?, onBoard board: RescueBoard) {
         self.id = apiRescue.id.rawValue
@@ -424,7 +457,7 @@ class Rescue {
             let activeCases = await board.activeCases
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
                 Task {
-                    try? await QueueAPI.dequeue()
+                    _ = try? await QueueAPI.dequeue()
                     if let platform = self.platform, await board.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: self.odyssey)] ?? Date(timeIntervalSince1970: 0) < self.createdAt {
                         await board.setLastSignalReceived(platform: platform, odyssey: self.odyssey, date: self.createdAt)
                     }

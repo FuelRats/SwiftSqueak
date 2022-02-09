@@ -437,6 +437,15 @@
   "help.command.quiet.o": "Show the last time there was a case on PC (Odyssey)",
   "sendhelp.nouser": "Could not find %{nick} in the channel",
   
+  "help.command.create.pc": "Set platform to PC",
+  "help.command.create.xb": "Set platform to Xbox",
+  "help.command.create.ps": "Set platform to PS4",
+  "help.command.create.odyssey": "Mark rescue as being on Odyssey",
+  "help.command.create.cr": "Mark rescue as a code red",
+  "help.command.create.sys": "Set the star system name of the rescue",
+  "help.command.create.cmdr": "Set the CMDR name of the client (if different from the nickname)",
+  "help.command.create.lang": "Set the language of the rescue (English by default)",
+  
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announcement.odyssey": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} (Odyssey) - O2: %{crStatus} - Language: English (en-GB) - IRC Nickname: %{nick}",
   "announce.invalidchannel": "Invalid channel given to announce command",
