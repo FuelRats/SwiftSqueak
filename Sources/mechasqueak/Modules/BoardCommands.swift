@@ -72,9 +72,11 @@ class BoardCommands: IRCBotModule {
     var didReceiveCreateCommand = { command in
         let nickname = command.parameters[0]
         
-        let platform = command.arguments.keys.compactMap({ GamePlatform(rawValue: $0) }).first
-        print(command.arguments)
+        var platform = command.arguments.keys.compactMap({ GamePlatform(rawValue: $0) }).first
         let odyssey = command.has(argument: "odyssey")
+        if odyssey && platform == nil {
+            platform = .PC
+        }
         let codeRed = command.has(argument: "cr")
         let starSystem = command.argumentValue(for: "sys")
         let cmdrName = command.argumentValue(for: "cmdr")
