@@ -334,7 +334,16 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["announce"],
-        [.argument("cr"), .argument("odyssey"), .param("channel", "#drillrats"), .param("client name", "Space Dawg"), .param("client nick", "SpaceDawg"), .param("PC/XB/PS", "PC"), .param("system", "NLTT 48288", .continuous)],
+        [
+            .argument("cr"),
+            .argument("odyssey"),
+            .argument("lang", "language code", example: "ru"),
+            .param("channel", "#drillrats"),
+            .param("client name", "Space Dawg"),
+            .param("client nick", "SpaceDawg"),
+            .param("PC/XB/PS", "PC"),
+            .param("system", "NLTT 48288", .continuous)
+        ],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",
         permission: .AnnouncementWrite
@@ -368,6 +377,11 @@ class GeneralCommands: IRCBotModule {
             }
             key += ".odyssey"
         }
+        
+        var locale = Locale(identifier: "en")
+        if let langCode = command.argumentValue(for: "lang") {
+            locale = Locale(identifier: langCode)
+        }
 
         command.message.reply(key: "announce.success", fromCommand: command, map: [
             "channel": channel,
@@ -382,7 +396,9 @@ class GeneralCommands: IRCBotModule {
             "system": system,
             "platform": platform.rawValue.uppercased(),
             "crStatus": crStatus,
-            "nick": clientNick
+            "nick": clientNick,
+            "language": locale.englishDescription,
+            "langCode": locale.identifier
         ])
 
 
