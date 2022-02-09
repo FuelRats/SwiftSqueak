@@ -88,6 +88,7 @@ typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
             parameters: body.parameters,
             options: body.options,
             arguments: body.arguments,
+            helpArguments: body.helpArguments,
             category: category,
             description: description,
             permission: permission,
@@ -102,8 +103,8 @@ typealias AsyncBotCommandFunction = (IRCBotCommand) async -> Void
 struct IRCBotCommandDeclaration {
     let commands: [String]
     let options: OrderedSet<Character>
-    let arguments: [String: Bool]
-    let helpArguments: [(String, Bool, String?)]
+    let arguments: [String: String?]
+    let helpArguments: [(String, String?, String?)]
     let permission: AccountPermission?
     let allowedDestinations: AllowedCommandDestination
     let cooldown: TimeInterval?
@@ -120,8 +121,8 @@ struct IRCBotCommandDeclaration {
         asyncOnCommand: AsyncBotCommandFunction? = nil,
         parameters: [CommandBody],
         options: OrderedSet<Character> = [],
-        arguments: [String: Bool] = [:],
-        helpArguments: [(String, Bool, String?)] = [],
+        arguments: [String: String?] = [:],
+        helpArguments: [(String, String?, String?)] = [],
         category: HelpCategory?,
         description: String,
         permission: AccountPermission? = nil,
@@ -149,9 +150,9 @@ struct IRCBotCommandDeclaration {
             usage += " [-\(String(self.options))]"
         }
 
-        for (argument, valueRequired, valueDesc) in helpArguments {
-            if let valueDesc = valueDesc, valueRequired {
-                usage += " [--\(argument) \(valueDesc)]"
+        for (argument, valueDesc, _) in helpArguments {
+            if let valueDesc = valueDesc {
+                usage += " [--\(argument) <\(valueDesc)>]"
             } else {
                 usage += " [--\(argument)]"
             }
@@ -170,7 +171,20 @@ struct IRCBotCommandDeclaration {
     }
     
     var example: String {
-        return self.parameters.example
+        var example = ""
+        for argument in helpArguments {
+            let (name, argValue, _) = argument
+            if let exampleText = argument.2 {
+                if argValue != nil {
+                    example += "--\(name) \"\(exampleText)\" "
+                } else {
+                    example += "--\(name) "
+                }
+            }
+        }
+        
+        example += self.parameters.example
+        return example
     }
     
     var paramText: String {

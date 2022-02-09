@@ -54,8 +54,8 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
             html += "<em>[-\(String(self.options))] </em>"
         }
         
-        for (option, reqVal, argDesc) in self.helpArguments {
-            if let argDesc = argDesc, reqVal {
+        for (option, argDesc, _) in self.helpArguments {
+            if let argDesc = argDesc {
                 html += "<em>[--\(option) &lt;\(argDesc)&gt;] </em>"
             } else {
                 html += "<em>[--\(option)] </em>"
@@ -163,9 +163,9 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
                 """
             }
             
-            for (option, requiredValue, argDesc) in helpArguments {
+            for (option, argDesc, _) in helpArguments {
                 let optionDescription = lingo.localize("help.command.\(self.commands[0]).\(option)", locale: "en-GB")
-                if let argDesc = argDesc, requiredValue {
+                if let argDesc = argDesc {
                     html += """
                         <p style="margin-left: 60.0px;">
                           <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--\(option) &lt;\(argDesc)&gt;</strong> \(optionDescription)</span>

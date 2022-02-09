@@ -49,7 +49,13 @@ struct IRCBotCommand {
 
         var lexer = Lexer(body: message)
         do {
-            let tokens = try lexer.lex()
+            var tokens = try lexer.lex()
+            tokens = tokens.filter({
+                if case .Delimiter = $0 {
+                    return false
+                }
+                return true
+            })
 
             guard tokens.count > 0, case let .Command(commandToken) = tokens[0] else {
                 return nil
@@ -73,14 +79,14 @@ struct IRCBotCommand {
             while let currentToken = tokenIterator.next() {
                 switch currentToken {
                 case .Argument(let argumentName):
-                    if let argumentDefinition = commandDefinition.arguments[argumentName], argumentDefinition == true {
+                    if let argumentDefinition = commandDefinition.arguments[argumentName], argumentDefinition != nil {
                         if case .Parameter(let param) = tokenIterator.next() {
                             arguments[argumentName] = param
                         } else {
                             return nil
                         }
                     } else {
-                        arguments[argumentName] = nil
+                        arguments.updateValue(nil, forKey: argumentName)
                     }
                 case .Option(let optionName):
                     options.append(optionName)
