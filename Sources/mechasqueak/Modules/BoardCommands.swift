@@ -59,8 +59,8 @@ class BoardCommands: IRCBotModule {
             .argument("pc", example: ""),
             .argument("xb"),
             .argument("ps"),
-            .argument("odyssey", example: ""),
-            .argument("cr", example: ""),
+            .argument("odyssey"),
+            .argument("cr"),
             .argument("sys", "system", example: "NLTT 48288"),
             .argument("cmdr", "CMDR name", example: "Space Dawg"),
             .argument("lang", "language code", example: "ru")
