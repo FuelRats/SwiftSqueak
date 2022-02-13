@@ -82,7 +82,7 @@ class SystemSearch: IRCBotModule {
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
-        cooldown: .seconds(30)
+        cooldown: .seconds(15)
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
