@@ -34,7 +34,8 @@ class SystemsAPI {
         "IX": "Ix",
         "H": "h",
         "AO": "Ao",
-        "EL": "El"
+        "EL": "El",
+        "KI": "Ki"
     ]
     
     static func performSearch (forSystem systemName: String, quickSearch: Bool = false) async throws -> SearchDocument {
