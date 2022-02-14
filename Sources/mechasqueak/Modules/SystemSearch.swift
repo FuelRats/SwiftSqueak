@@ -92,6 +92,10 @@ class SystemSearch: IRCBotModule {
         if system.lowercased().starts(with: "near ") {
             system.removeFirst(5)
         }
+        if system.lowercased() == "seer" {
+            command.message.retaliate()
+            return
+        }
         
         var starSystem = StarSystem(name: system)
         
