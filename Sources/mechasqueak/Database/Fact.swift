@@ -196,7 +196,7 @@ struct Fact: Codable, Hashable {
             .set("author", to: author)
             .set("updatedAt", to: updateDate)
             .where("fact", .equal, SQLBind(fact))
-            .where("locale", .equal, SQLBind(locale.short))
+            .where("language", .equal, SQLBind(locale.short))
             .run().asContinuation()
     }
     

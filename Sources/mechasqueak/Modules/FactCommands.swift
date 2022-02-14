@@ -172,6 +172,7 @@ class FactCommands: IRCBotModule {
                 "message": message.excerpt(maxLength: 350)
             ])
         } catch {
+            debug(String(describing: error))
             command.message.error(key: "addfact.error", fromCommand: command)
         }
     }

@@ -285,7 +285,7 @@
 "addfact.added": "Added %{locale} (%{language}) translation for fact %{fact} with message \"%{message}\"",
 "addfact.exists": "This fact already exists, try !setfact",
 "setfact.notfound": "This fact does not exist, try !addfact",
-"setfact.set": "Updated %{locale} (%{language]) translation for fact with message \"%{message}\"",
+"setfact.set": "Updated %{locale} (%{language}) translation for fact with message \"%{message}\"",
 "delfact.dropped": "Deleted %{fact} and its aliases from the facts list",
 "delfact.deleted": "Deleted %{locale} (%{language}) translation of %{fact}",
 "aliasfact.notexist": "%{fact} does not exist, you need to alias an existing fact",
