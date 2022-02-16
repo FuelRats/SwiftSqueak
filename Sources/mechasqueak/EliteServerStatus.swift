@@ -16,6 +16,7 @@ struct EliteServerStatus: Codable {
         var request = try! HTTPClient.Request(url: "http://hosting.zaonce.net/launcher-status/status.json", method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Content-Type", value: "application/json")
+        request.headers.add(name: "Accept-Encoding", value: "gzip, deflate, br")
 
         do {
             return try await httpClient.execute(request: request, forDecodable: EliteServerStatus.self)
