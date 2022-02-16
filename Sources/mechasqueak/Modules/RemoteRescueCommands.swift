@@ -117,7 +117,7 @@ class RemoteRescueCommands: IRCBotModule {
         ["deleteall", "cleartrash"],
         category: .rescues,
         description: "Delete all rescues currently in the trashlist",
-        permission: .RescueWrite
+        permission: .UserWrite
     )
     var didReceiveDeleteAllCommand = { command in
         do {
