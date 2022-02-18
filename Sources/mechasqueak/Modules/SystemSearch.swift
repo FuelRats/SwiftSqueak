@@ -123,13 +123,14 @@ class SystemSearch: IRCBotModule {
     
     @AsyncBotCommand(
         ["distance", "plot", "distanceto"],
-        [.param("departure system / case id / client name", "NLTT 48288"), .param("arrival system / case id / client name", "Sagittarius A*")],
+        [.argument("range", "jump range", example: "68"), .param("departure system / case id / client name", "NLTT 48288"), .param("arrival system / case id / client name", "Sagittarius A*")],
         category: .utility,
         description: "Calculate the distance between two star systems",
         cooldown: .seconds(30)
     )
     var didReceiveDistanceCommand = { command in
         var (depSystem, arrSystem) = command.param2 as! (String, String)
+        let range = command.argumentValue(for: "range")
         
         if let (_, rescue) = await board.findRescue(withCaseIdentifier: depSystem) {
             depSystem = rescue.system?.name ?? depSystem
@@ -166,8 +167,8 @@ class SystemSearch: IRCBotModule {
             }
             
             var spanshUrl: URL? = nil
-            if distance > 1000 {
-                spanshUrl = try? await generateSpanshRoute(from: plotDepName, to: plotArrName)
+            if distance > 1000 || range != nil {
+                spanshUrl = try? await generateSpanshRoute(from: plotDepName, to: plotArrName, range: Int(range ?? "65") ?? 65)
             }
             
             var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"

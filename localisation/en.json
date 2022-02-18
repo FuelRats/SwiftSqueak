@@ -448,6 +448,8 @@
   "help.command.addcase.cmdr": "Set the CMDR name of the client (Only needed if it's different from the nickname).",
   "help.command.addcase.lang": "Set the language of the rescue (English by default)",
   
+  "help.command.distance.range": "Define the desired ship jump range for the Spansh plot link",
+  
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",
   "announcement.odyssey": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} (Odyssey) - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",
   "announce.invalidchannel": "Invalid channel given to announce command",

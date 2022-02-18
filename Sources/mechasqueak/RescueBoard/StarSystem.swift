@@ -273,12 +273,12 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
  }
 
-func generateSpanshRoute (from: String, to: String) async throws -> URL {
+func generateSpanshRoute (from: String, to: String, range: Int = 65) async throws -> URL {
     var request = try HTTPClient.Request(url: URL(string: "https://spansh.co.uk/api/route")!, method: .POST)
     
     let requestBody: [String: String?] = [
         "efficiency": "60",
-        "range": "65",
+        "range": String(range),
         "from": from,
         "to": to
     ]
