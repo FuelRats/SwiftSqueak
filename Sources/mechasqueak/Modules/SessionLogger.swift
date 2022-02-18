@@ -51,7 +51,7 @@ class SessionLogger: IRCBotModule {
     }
     
     @AsyncBotCommand(
-        ["savelogs"],
+        ["savelogs", "stoplogs"],
         category: .utility,
         description: "Save logs from a drill or training session, use after the session has completed",
         permission: .AnnouncementWrite,
