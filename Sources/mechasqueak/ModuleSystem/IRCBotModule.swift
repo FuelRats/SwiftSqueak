@@ -150,6 +150,8 @@ struct IRCBotCommandDeclaration {
             usage += " [-\(String(self.options))]"
         }
 
+        usage += " \(paramText)"
+        
         for (argument, valueDesc, _) in helpArguments {
             if let valueDesc = valueDesc {
                 usage += " [--\(argument) <\(valueDesc)>]"
@@ -157,8 +159,6 @@ struct IRCBotCommandDeclaration {
                 usage += " [--\(argument)]"
             }
         }
-
-        usage += " \(paramText)"
         return usage
     }
 
@@ -171,19 +171,18 @@ struct IRCBotCommandDeclaration {
     }
     
     var example: String {
-        var example = ""
+        var example = self.parameters.example
+        
         for argument in helpArguments {
             let (name, argValue, _) = argument
             if let exampleText = argument.2 {
                 if argValue != nil {
-                    example += "--\(name) \"\(exampleText)\" "
+                    example += " --\(name) \(exampleText)"
                 } else {
-                    example += "--\(name) "
+                    example += " --\(name)"
                 }
             }
         }
-        
-        example += self.parameters.example
         return example
     }
     

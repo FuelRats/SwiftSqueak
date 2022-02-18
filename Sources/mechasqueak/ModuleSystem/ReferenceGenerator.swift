@@ -54,14 +54,6 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
             html += "<em>[-\(String(self.options))] </em>"
         }
         
-        for (option, argDesc, _) in self.helpArguments {
-            if let argDesc = argDesc {
-                html += "<em>[--\(option) &lt;\(argDesc)&gt;] </em>"
-            } else {
-                html += "<em>[--\(option)] </em>"
-            }
-        }
-        html += "</span>"
         for case .param(let name, _, let type, let nullability) in parameters {
             switch type {
             case .standard:
@@ -100,6 +92,14 @@ extension IRCBotCommandDeclaration: HTMLRepresentable {
                 }
             }
         }
+        for (option, argDesc, _) in self.helpArguments {
+            if let argDesc = argDesc {
+                html += "<em> [--\(option) &lt;\(argDesc)&gt;]</em>"
+            } else {
+                html += "<em> [--\(option)]</em>"
+            }
+        }
+        html += "</span>"
         
         html += "</span></span></h3>"
         
