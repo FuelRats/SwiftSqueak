@@ -332,7 +332,7 @@ class FactCommands: IRCBotModule {
             let targets: [(String, Rescue?)] = await command.parameters.asyncMap({ target in
                 var target = target
                 var (_, rescue) = await board.findRescue(withCaseIdentifier: target) ?? (nil, nil)
-                if rescue == nil {
+                if rescue == nil && configuration.general.drillMode == false {
                     rescue = await board.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
                 }
                 if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
