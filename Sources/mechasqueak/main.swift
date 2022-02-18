@@ -355,7 +355,7 @@ class MechaSqueak {
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
                     channelMessage.client.sendActionMessage(toChannel: channelMessage.destination, contents: "drinks")
                 })
-            } else if channelMessage.message.count > 410 {
+            } else if channelMessage.message.count > 405 {
                 lastDeltaMessageTime = Date()
             }
         }
