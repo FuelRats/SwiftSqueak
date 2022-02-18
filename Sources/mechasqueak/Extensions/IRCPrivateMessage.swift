@@ -35,7 +35,7 @@ extension IRCPrivateMessage {
     }
 
     func replyPrivate (message: String) {
-        if self.destination.isPrivateMessage || configuration.general.drillMode == true {
+        if self.destination.isPrivateMessage || (configuration.general.drillMode == true && configuration.general.drillChannels.contains(self.destination.name.lowercased())) {
             self.reply(message: message)
             return
         }
