@@ -445,7 +445,7 @@
   "help.command.addcase.odyssey": "Mark rescue as being on Odyssey",
   "help.command.addcase.cr": "Mark rescue as a code red",
   "help.command.addcase.sys": "Set the star system name of the rescue",
-  "help.command.addcase.cmdr": "Set the CMDR name of the client (if different from the nickname)",
+  "help.command.addcase.cmdr": "Set the CMDR name of the client (Only needed if it's different from the nickname).",
   "help.command.addcase.lang": "Set the language of the rescue (English by default)",
   
   "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",

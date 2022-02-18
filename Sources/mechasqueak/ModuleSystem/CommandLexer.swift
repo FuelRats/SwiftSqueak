@@ -73,19 +73,22 @@ struct IRCBotCommand {
             var options = OrderedSet<Character>()
             var parameters = [String]()
             
-            var tokenIterator = tokens.makeIterator()
-            while let currentToken = tokenIterator.next() {
+            var tokenIndex = 0
+            while tokenIndex < tokens.count {
+                let currentToken = tokens[tokenIndex]
+                
                 switch currentToken {
                 case .Argument(let argumentName):
-                    if let argumentDefinition = commandDefinition?.arguments[argumentName], argumentDefinition != nil {
-                        if case .Parameter(let param) = tokenIterator.next() {
-                            arguments[argumentName] = param
-                        } else {
-                            return nil
-                        }
-                    } else {
+                    guard let argumentDefinition = commandDefinition?.arguments[argumentName], argumentDefinition != nil else {
                         arguments.updateValue(nil, forKey: argumentName)
+                        break
                     }
+                    var params: [String] = []
+                    while tokenIndex + 1 < tokens.count, case .Parameter(let param) = tokens[tokenIndex + 1] {
+                        params.append(param)
+                        tokenIndex += 1
+                    }
+                    arguments.updateValue(params.joined(separator: " "), forKey: argumentName)
                 case .Option(let optionName):
                     options.append(optionName)
                     
@@ -95,6 +98,7 @@ struct IRCBotCommand {
                 default:
                     break
                 }
+                tokenIndex += 1
             }
 
             self.arguments = arguments
