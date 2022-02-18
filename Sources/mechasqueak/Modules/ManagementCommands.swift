@@ -88,7 +88,7 @@ class ManagementCommands: IRCBotModule {
         [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Invalidate a single name in the cache and fetch it again.",
-        permission: .UserWrite
+        permission: .RescueWrite
     )
     var didReceiveFlushCommand = { command in
         guard let user = command.message.client.channels.first(where: {
