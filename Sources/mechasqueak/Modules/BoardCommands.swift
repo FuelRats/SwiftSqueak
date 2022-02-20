@@ -553,10 +553,14 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        await board.cancelPrepTimer(forRescue: rescue)
-        command.message.reply(key: "board.sprep", fromCommand: command, map: [
-            "caseId": caseId
-        ])
+        let didCancel = await board.cancelPrepTimer(forRescue: rescue)
+        if didCancel {
+            command.message.reply(key: "board.sprep", fromCommand: command, map: [
+                "caseId": caseId
+            ])
+        } else {
+            command.message.reply(message: "Not sure why you used !sprep on this case but sure I'll pretend to do something.")
+        }
     }
 }
 

@@ -731,10 +731,14 @@ actor RescueBoard {
         }
     }
     
-    func cancelPrepTimer (forRescue rescue: Rescue) async {
+   @discardableResult
+    func cancelPrepTimer (forRescue rescue: Rescue) async -> Bool {
         if let prepTimer = self.prepTimers[rescue.id] {
             prepTimer?.cancel()
             self.prepTimers.removeValue(forKey: rescue.id)
+            return true
+        } else {
+            return false
         }
     }
     
