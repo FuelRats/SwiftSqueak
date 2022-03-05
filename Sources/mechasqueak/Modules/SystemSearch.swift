@@ -102,7 +102,7 @@ class SystemSearch: IRCBotModule {
         do {
             
             var result = try await SystemsAPI.performSystemCheck(forSystem: starSystem.name)
-            if result.landmarkDescription == nil {
+            if result.landmark == nil && result.proceduralCheck?.isPgSystem != true {
                 starSystem = autocorrect(system: starSystem)
                 result = try await SystemsAPI.performSystemCheck(forSystem: starSystem.name)
             }
