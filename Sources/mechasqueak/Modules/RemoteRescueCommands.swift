@@ -473,7 +473,7 @@ class RemoteRescueCommands: IRCBotModule {
 
     @AsyncBotCommand(
         ["clientpw", "pwclient"],
-        [.argument("all"), .param("client name", "SpaceDawg")],
+        [.argument("all"), .param("client name", "SpaceDawg", .continuous)],
         category: .rescues,
         description: "Get paperwork link for a previous client by name.",
         permission: .DispatchRead
