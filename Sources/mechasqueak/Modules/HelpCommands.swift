@@ -176,6 +176,7 @@ class HelpCommands: IRCBotModule {
         
         let destination = IRCChannel(privateMessage: user, onClient: command.message.client)
         sendCommandHelp(helpCommand: helpCommand, destination: destination)
+        command.message.reply(message: "Help message for \"!\(commandText)\" sent")
     }
     
     static func sendCommandHelp (helpCommand: IRCBotCommandDeclaration, destination: IRCChannel) {
