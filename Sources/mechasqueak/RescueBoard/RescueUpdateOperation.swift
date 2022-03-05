@@ -137,7 +137,7 @@ class RescueUpdateOperation: Operation {
                 ])
                 errorReported = true
             }
-            await try? Task.sleep(nanoseconds: 30 * 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
             return try await performUploadUntilSuccess()
         }
     }
