@@ -404,7 +404,7 @@ class BoardCommands: IRCBotModule {
         }
         let odyssey = command.options.contains("o")
         if odyssey && arguments.count == 0 {
-            arguments["pc"] = nil
+            arguments.updateValue(nil, forKey: "pc")
         }
         var lastSignalDate: Date? = nil
         var platform: GamePlatform? = nil
@@ -447,7 +447,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { rescue in
-            return rescue.1.status != .Inactive && (platform == nil || rescue.1.platform == platform && rescue.1.odyssey == odyssey)
+            return rescue.1.status != .Inactive && (platform == nil || (rescue.1.platform == platform && rescue.1.odyssey == odyssey))
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
                 command.message.reply(key: "board.quiet.currentjoin", fromCommand: command, map: [
