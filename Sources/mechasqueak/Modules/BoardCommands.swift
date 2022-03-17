@@ -265,7 +265,7 @@ class BoardCommands: IRCBotModule {
             
             if let firstLimpet = firstLimpet {
                 var key = "board.close.reportFirstlimpet"
-                if firstLimpet.id.rawValue == UUID(uuidString: "75c90d14-5b45-4054-a391-47c70162de78") {
+                if firstLimpet.id.rawValue == UUID(uuidString: "75c90d14-5b45-4054-a391-47c70162de78") || firstLimpet.id.rawValue == UUID(uuidString: "5ed94356-bdcc-4139-9208-3cec320d51c9")  {
                     key += ".aleethia"
                 }
                 message.client.sendMessage(
