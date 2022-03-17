@@ -602,11 +602,11 @@ actor RescueBoard {
                 ]))
                 if let account = latestNick.account, await pwReminderSpecialReminderAccounts.contains(account) {
                     let snickersCalculation = await ceil(self.rescues.values.reduce(0, { acc, rescue in
-                        return acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600)
+                        return (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
                     }) * 10)
                     mecha.reportingChannel?.send(key: "rescue.pwreminder.special", map: [
                         "nick": latestNick.nickname,
-                        "snickers": Int(snickersCalculation)
+                        "snickers": Swift.max(Int(snickersCalculation), 1)
                     ])
                 }
             }
