@@ -309,6 +309,7 @@ actor RescueBoard {
                     "id": recentRescue.id.ircRepresentation,
                     "caseId": caseId
                 ]))
+                try? rescue.save()
                 return
             }
         }
