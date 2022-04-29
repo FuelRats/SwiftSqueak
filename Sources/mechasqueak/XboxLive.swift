@@ -65,7 +65,7 @@ struct XboxLive {
                     try await refreshAuthenticationToken()
                     return await performXuidLookup(gamertag: gamertag, retried: true)
                 } catch {
-                    mecha.connections.first?.sendMessage(toTarget: "xlexious", contents: String(describing: error))
+                    mecha.connections.first?.sendMessage(toChannelName: "#rattech", contents: String(describing: error))
                     return .failure
                 }
             }
