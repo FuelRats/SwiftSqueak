@@ -42,7 +42,7 @@ actor RescueBoard {
     var recentIdentifiers: [Int] = []
     var recentlyClosed = [Int: Rescue]()
     static var pendingClientJoins: [String: (EventLoopPromise<Void>, Rescue)] = [:]
-    var pwReminderSpecialReminderAccounts = ["Ravenov", "MrNeutron", "Elysiumchains"]
+    var pwReminderSpecialReminderAccounts = ["Ravenov", "MrNeutron11", "Elysiumchains"]
     
     var lastPaperworkReminder: [UUID: Date] = [:]
 
