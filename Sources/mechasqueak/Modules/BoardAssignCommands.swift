@@ -242,7 +242,9 @@ class BoardAssignCommands: IRCBotModule {
                 return nil
             })
             if unidentified.count > 0 {
-                if rescue.platform == .PC {
+                if carrier {
+                    errorMessage += "\(unidentified.joined(separator: ", ")) is not logged in"
+                } else if rescue.platform == .PC {
                     if rescue.odyssey {
                         errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.Orange, "Odyssey")))"
                     } else {
