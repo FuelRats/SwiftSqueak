@@ -129,6 +129,15 @@ class BoardAttributeCommands: IRCBotModule {
         }
         try? rescue.save(command)
         
+        if rescue.system.landmark?.distance > 2500, let plotUrl = try? await generateSpanshRoute(from: "Sol", to: self.name) {
+            command.message.reply(key: key + ".spansh", fromCommand: command, map: [
+                "caseId": caseId,
+                "client": rescue.client!,
+                "systemInfo": rescue.system.description,
+                "plotUrl": plotUrl.absoluteString
+            ])
+        }
+        
         command.message.reply(key: key, fromCommand: command, map: [
             "caseId": caseId,
             "client": rescue.client!,
