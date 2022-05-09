@@ -227,6 +227,10 @@ class BoardCommands: IRCBotModule {
                     return false
                 }) ?? nick.getRatRepresenting(platform: rescue.platform)
             else {
+                if rescue.clientNick?.lowercased() == target.lowercased() {
+                    command.message.reply(message: "\(command.message.user.nickname) I'm not sure telling the client to do their own paperwork is a good idea..")
+                    return
+                }
                 command.message.error(key: "board.close.notfound", fromCommand: command, map: [
                     "caseId": caseId,
                     "firstLimpet": command.parameters[1]

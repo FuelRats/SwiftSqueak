@@ -12,7 +12,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/xlexi/Lingo.git", from: Version(3, 0, 6)),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 8, 2)),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 10, 0)),
         .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 32, 3)),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 15, 1)),
         .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 10, 2)),
@@ -20,7 +20,7 @@ let package = Package(
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(5, 0, 1)),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 4, 1)),
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 10, 0)),
-        .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 3, 2)),
+        .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 6, 0)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
         .package(url: "https://github.com/swift-server/swift-backtrace.git", from: Version(1, 3, 1)),
         .package(path: "../IRCKit")
