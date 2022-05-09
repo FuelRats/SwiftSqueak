@@ -250,7 +250,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         
         if let permit = self.permit {
             if let permitName = permit.name {
-                description += " (REQUIRES \(permitName.uppercased()) PERMIT"
+                description += " (REQUIRES \(permitName.uppercased()) PERMIT)"
             } else {
                 description += " (REQUIRES PERMIT)"
             }
