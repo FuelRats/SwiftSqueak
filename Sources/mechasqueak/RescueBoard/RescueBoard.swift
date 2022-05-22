@@ -42,7 +42,6 @@ actor RescueBoard {
     var recentIdentifiers: [Int] = []
     var recentlyClosed = [Int: Rescue]()
     static var pendingClientJoins: [String: (EventLoopPromise<Void>, Rescue)] = [:]
-    var pwReminderSpecialReminderAccounts = ["Ravenov", "MrNeutron11", "Elysiumchains"]
     
     var lastPaperworkReminder: [UUID: Date] = [:]
 
@@ -601,7 +600,7 @@ actor RescueBoard {
                     "nick": latestNick.nickname,
                     "rescues": rescueStrings.joined(separator: ", ")
                 ]))
-                if let account = latestNick.account, await pwReminderSpecialReminderAccounts.contains(account) {
+                if rescues.count > 1 {
                     let snickersCalculation = ceil(rescues.reduce(0, { acc, rescue in
                         return (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
                     }) * 10)
