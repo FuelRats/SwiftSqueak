@@ -567,7 +567,7 @@ actor RescueBoard {
                 guard let latestNick = presentNicks.first else {
                     continue
                 }
-                if latestNick.getAssignedRescue() != nil {
+                if await latestNick.getAssignedRescue() != nil {
                     continue
                 }
                 await self.setLastPaperworkReminder(forUser: userId, toDate: Date())
