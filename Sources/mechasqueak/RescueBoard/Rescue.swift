@@ -338,7 +338,7 @@ class Rescue {
             return nil
         }
         guard let presence = self.psnProfile?.1 else {
-            return IRCFormat.color(.LightRed, "Unavailable")
+            return IRCFormat.color(.LightRed, " (Unavailable)")
         }
         guard presence.basicPresence.primaryPlatformInfo?.onlineStatus == .online else {
             if let lastSeenAgo = presence.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(maximumUnits: 1) {
@@ -348,7 +348,7 @@ class Rescue {
         }
         
         if presence.elitePresence != nil {
-            return IRCFormat.color(.LightGreen, "In game")
+            return IRCFormat.color(.LightGreen, " (In game)")
         }
         return IRCFormat.color(.Yellow, " (Online, not in-game)")
     }
