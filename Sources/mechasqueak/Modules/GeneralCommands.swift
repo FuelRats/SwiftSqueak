@@ -466,19 +466,17 @@ class GeneralCommands: IRCBotModule {
             return
         }
         
-        // let privacy = profile.privacy.isAllowed ? IRCFormat.color(.LightGreen, "OK") : IRCFormat.color(.LightRed, "Communication Blocked")
-        
         guard let presence = presence else {
-            command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(IRCFormat.color(.LightRed, "Communication Blocked"))")
+            command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(IRCFormat.color(.LightRed, "Communication Blocked")) \(profile.psPlusStatus)")
             return
         }
         
         guard let currentActivity = presence.currentActivity else {
-            command.message.reply(message: "\(profile.onlineId) \(presence.status). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+            command.message.reply(message: "\(profile.onlineId) \(presence.status). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK")) \(profile.psPlusStatus)")
             return
         }
         
-        command.message.reply(message: "\(profile.onlineId) \(presence.status)) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+        command.message.reply(message: "\(profile.onlineId) \(presence.status) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK")) \(profile.psPlusStatus)")
     }
 }
 

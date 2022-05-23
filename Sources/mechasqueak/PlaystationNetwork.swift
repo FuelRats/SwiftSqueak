@@ -148,6 +148,13 @@ struct PlaystationNetwork {
         let personalDetailSharing: String
         let personalDetailSharingRequestMessageFlag: Bool
         let requestMessageFlag: Bool
+        
+        var psPlusStatus: String {
+            if self.plus > 0 {
+                return IRCFormat.bold(IRCFormat.color(.Yellow, "PS+"))
+            }
+            return IRCFormat.color(.Grey, "(No PS+)")
+        }
     }
     
     struct PresenceResponse: Codable {

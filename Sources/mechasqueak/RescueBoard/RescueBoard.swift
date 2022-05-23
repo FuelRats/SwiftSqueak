@@ -441,6 +441,13 @@ actor RescueBoard {
         }
         
         if case .found(_) = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
+            if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
+                message.reply(message: lingo.localize("board.psplusmissing", locale: "en", interpolations: [
+                    "caseId": identifier,
+                    "client": rescue.clientDescription
+                ]))
+            }
+            
             message.reply(message: lingo.localize("board.psnprivacy", locale: "en", interpolations: [
                 "caseId": identifier,
                 "client": rescue.clientDescription
