@@ -24,6 +24,9 @@
 
 import Foundation
 import AsyncHTTPClient
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 
 struct PlaystationNetwork {
