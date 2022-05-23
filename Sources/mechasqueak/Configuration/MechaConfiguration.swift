@@ -35,6 +35,7 @@ struct MechaConfiguration: Codable {
     let shortener: URLShortenerConfiguration
     let sourcePath: URL
     var xbox: XboxLiveConfiguration?
+    var psn: PlayStationNetworkConfiguration?
     let chrono: ChronoConfiguration?
     
     func save () throws {
@@ -94,6 +95,11 @@ struct XboxLiveConfiguration: Codable {
     var refreshToken: String
     let clientId: String
     let clientSecret: String
+}
+
+struct PlayStationNetworkConfiguration: Codable {
+    var token: String
+    var refreshToken: String
 }
 
 struct ChronoConfiguration: Codable {

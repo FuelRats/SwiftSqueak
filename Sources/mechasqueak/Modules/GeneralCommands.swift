@@ -441,6 +441,45 @@ class GeneralCommands: IRCBotModule {
         }
         command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(privacy)")
     }
+    
+    @AsyncBotCommand(
+        ["psn"],
+        [.param("case id/username", "SpaceDawg", .continuous)],
+        category: .utility,
+        description: "See information about a playstation user",
+        permission: nil,
+        cooldown: .seconds(30)
+    )
+    var didReceivePSNCommand = { command in
+        var username = command.parameters[0]
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: username), rescue.platform == .PS {
+            username = rescue.client ?? username
+        }
+        
+        let (profileLookup, presence) = await PSN.performLookup(name: username)
+        guard case let .found(profile) = profileLookup else {
+            if case .notFound = profileLookup {
+                command.message.error(key: "psn.notfound", fromCommand: command)
+                return
+            }
+            command.message.error(key: "psn.error", fromCommand: command)
+            return
+        }
+        
+        // let privacy = profile.privacy.isAllowed ? IRCFormat.color(.LightGreen, "OK") : IRCFormat.color(.LightRed, "Communication Blocked")
+        
+        guard let presence = presence else {
+            command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(IRCFormat.color(.LightRed, "Communication Blocked"))")
+            return
+        }
+        
+        guard let currentActivity = presence.currentActivity else {
+            command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+            return
+        }
+        
+        command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+    }
 }
 
 func shell (_ command: String, arguments: [String] = []) -> String? {

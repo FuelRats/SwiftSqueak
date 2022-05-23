@@ -57,6 +57,7 @@ class Rescue {
     var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
     var xboxProfile: XboxLive.ProfileLookup? = nil
+    var psnProfile: (PSN.ProfileLookup, PSN.PresenceResponse?)? = nil
     var banned: Bool = false
     var synced: Bool = false
     var uploaded: Bool
@@ -294,6 +295,17 @@ class Rescue {
     }
     
     var onlineStatus: String? {
+        switch self.platform {
+        case .Xbox:
+            return self.xboxLiveStatus
+        case .PS:
+            return self.psnStatus
+        default:
+            return nil
+        }
+    }
+    
+    var xboxLiveStatus: String? {
         guard case let .found(profile) = self.xboxProfile else {
             if case .notFound = self.xboxProfile {
                 return IRCFormat.color(.Orange, " (XBL Profile not found)")
@@ -314,6 +326,29 @@ class Rescue {
                 return IRCFormat.color(.LightGreen, " (In game, location hidden)")
             }
             return IRCFormat.color(.LightGreen, " (\(presence))")
+        }
+        return IRCFormat.color(.Yellow, " (Online, not in-game)")
+    }
+    
+    var psnStatus: String? {
+        guard case .found(_) = self.psnProfile?.0 else {
+            if case .notFound = self.xboxProfile {
+                return IRCFormat.color(.Orange, " (PSN Profile not found)")
+            }
+            return nil
+        }
+        guard let presence = self.psnProfile?.1 else {
+            return IRCFormat.color(.LightRed, "Unavailable")
+        }
+        guard presence.basicPresence.primaryPlatformInfo?.onlineStatus == .online else {
+            if let lastSeenAgo = presence.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(maximumUnits: 1) {
+                return IRCFormat.color(.Grey, " (Last online \(lastSeenAgo) ago)")
+            }
+            return IRCFormat.color(.Grey, " (Offline)")
+        }
+        
+        if presence.elitePresence != nil {
+            return IRCFormat.color(.LightGreen, "In game")
         }
         return IRCFormat.color(.Yellow, " (Online, not in-game)")
     }

@@ -188,6 +188,17 @@ class BoardAttributeCommands: IRCBotModule {
             }
         }
         
+        if rescue.platform == .PS {
+            rescue.psnProfile = await PSN.performLookup(name: client)
+            
+            if case .found(_) = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
+                command.message.reply(message: lingo.localize("board.psnprivacy", locale: "en", interpolations: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ]))
+            }
+        }
+        
         var clientName = rescue.clientDescription
         if let onlineStatus = rescue.onlineStatus {
             clientName += " \(onlineStatus)"

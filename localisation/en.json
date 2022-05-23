@@ -56,6 +56,7 @@
   "sctime.response": "The estimated super cruise travel time for %{distance} is %{time}. Stipulations: https://t.fuelr.at/sctimes",
 
   "board.xboxprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's Xbox Live privacy settings may prevent them from joining a team https://t.fuelr.at/xbtrouble (#%{caseId}, %{client})",
+  "board.psnprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's PSN privacy settings may prevent them from joining a team https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
   "board.xboxsyschange": "The star system of case #%{caseId} (%{client}) was automatically corrected based on information retrieved from Xbox Live",
   "board.clientjoin": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) has rejoined!",
   "board.clientjoin.needsrats": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) in %{system} has rejoined!",
@@ -332,6 +333,9 @@
   
   "xbl.notfound": "No Xbox Live profile was found by that name",
   "xbl.error": "An error occured when attempting to retrieve an Xbox Live profile",
+  
+  "psn.notfound": "No Playstation username was found by that name",
+  "psn.error": "An error occured when attempting to retrieve a Playstation Network profile",
 
   "flushall.response": "Cleared local cache and fetching user data for all logged in users..",
   "flush.notfound": "%{name} was not found in the account data cache.",

@@ -351,6 +351,9 @@ actor RescueBoard {
                 systemChangedByXboxLive = true
             }
         }
+        if rescue.platform == .PS, let name = rescue.client {
+            rescue.psnProfile = await PSN.performLookup(name: name)
+        }
         guard rescue.system != nil else {
             let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
                 "caseId": identifier,
@@ -435,6 +438,22 @@ actor RescueBoard {
                 )
                 try? rescue.save()
             }
+        }
+        
+        if case .found(_) = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
+            message.reply(message: lingo.localize("board.psnprivacy", locale: "en", interpolations: [
+                "caseId": identifier,
+                "client": rescue.clientDescription
+            ]))
+            
+            rescue.appendQuote(RescueQuote(
+                author: message.client.currentNick,
+                message: "WARNING: This client's PSN privacy settings may prevent them from joining a team",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: message.client.currentNick)
+            )
+            try? rescue.save()
         }
     }
     
