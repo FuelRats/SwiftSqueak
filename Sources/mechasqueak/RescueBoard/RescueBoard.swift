@@ -45,12 +45,12 @@ actor RescueBoard {
     
     var lastPaperworkReminder: [UUID: Date] = [:]
 
-    init () {
-        
+    
+    nonisolated func startUpRoutines () {
         if configuration.general.drillMode == false {
             loop.next().scheduleRepeatedTask(initialDelay: .minutes(15), delay: .minutes(15), self.checkElapsedPaperwork)
         }
-
+        
         Task {
             guard let rescues = try? await FuelRatsAPI.getLastRescues().body.primaryResource, rescues.values.count > 0 else {
                 return
@@ -74,7 +74,6 @@ actor RescueBoard {
                     }
                 }
             }
-            
         }
     }
     

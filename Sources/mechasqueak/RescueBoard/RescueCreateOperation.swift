@@ -129,7 +129,7 @@ class RescueCreateOperation: Operation {
                 ])
                 errorReported = true
             }
-            await Task.sleep(30 * 1000 * 1000)
+            try await Task.sleep(nanoseconds: 30 * 1000 * 1000)
             try await performUploadUntilSuccess()
         }
     }

@@ -427,5 +427,6 @@ func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
 }
 let mecha = MechaSqueak()
 let board = RescueBoard()
+board.startUpRoutines()
 
 RunLoop.main.run()
