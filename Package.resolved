@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "cbf533073d9a5edfb16c266d14151f69137ba7c9",
-          "version": "1.8.2"
+          "revision": "24425989dadab6d6e4167174791a23d4e2a6d0c3",
+          "version": "1.10.0"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
         "state": {
           "branch": null,
-          "revision": "12f2389aca4a07e0dd54c86ec23d0721ed88b8db",
-          "version": "1.4.3"
+          "revision": "039f56c5d7960f277087a0be51f5eb04ed0ec073",
+          "version": "1.5.1"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/mattpolzin/JSONAPI.git",
         "state": {
           "branch": null,
-          "revision": "717f3d610e87705adca2bb91a03fd4e92c433845",
-          "version": "5.0.1"
+          "revision": "a72ed5c349567ca6f5254f7e8e59cd555e4711b8",
+          "version": "5.0.2"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/vapor/postgres-kit.git",
         "state": {
           "branch": null,
-          "revision": "a050d338b41531bff65bccc87cf2a42871e87ff5",
-          "version": "2.3.3"
+          "revision": "221e3e39e9c7d9b4999f38038c6b5f3122f4d438",
+          "version": "2.6.0"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/postgres-nio.git",
         "state": {
           "branch": null,
-          "revision": "780a510863bfc00b2239b649df4f403080c4bc9c",
-          "version": "1.7.2"
+          "revision": "a7a160bb861ca88b0c8f1cc11e15c4892ab897bf",
+          "version": "1.10.0"
         }
       },
       {
@@ -114,8 +114,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "9cc30f8cef132e91a07e36005612b37f918731fc",
-          "version": "3.16.0"
+          "revision": "89b0a0a5f110e77272fb5a775064a31bfc1f155c",
+          "version": "3.18.0"
         }
       },
       {
@@ -168,8 +168,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "51c3fc2e4a0fcdf4a25089b288dd65b73df1b0ef",
-          "version": "2.37.0"
+          "revision": "124119f0bb12384cef35aa041d7c3a686108722d",
+          "version": "2.40.0"
         }
       },
       {

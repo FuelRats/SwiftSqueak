@@ -17,11 +17,11 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 15, 1)),
         .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 10, 2)),
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
-        .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(5, 0, 1)),
-        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 4, 1)),
-        .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 10, 0)),
+        .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(5, 0, 2)),
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 5, 1)),
+        .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 18, 0)),
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 6, 0)),
-        .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 1)),
+        .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 2)),
         .package(url: "https://github.com/swift-server/swift-backtrace.git", from: Version(1, 3, 1)),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 15, 0))
