@@ -474,11 +474,11 @@ class GeneralCommands: IRCBotModule {
         }
         
         guard let currentActivity = presence.currentActivity else {
-            command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+            command.message.reply(message: "\(profile.onlineId) \(presence.status). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
             return
         }
         
-        command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+        command.message.reply(message: "\(profile.onlineId) \(presence.status)) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
     }
 }
 

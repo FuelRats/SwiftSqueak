@@ -24,6 +24,7 @@
 
 import Foundation
 import AsyncHTTPClient
+import IRCKit
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -129,7 +130,7 @@ struct PlaystationNetwork {
         
         request.headers.add(name: "Authorization", value: "Bearer \(psnConfig.token)")
         
-        return try await httpClient.execute(request: request, forDecodable: PresenceResponse.self)
+        return try! await httpClient.execute(request: request, forDecodable: PresenceResponse.self)
     }
     
     struct ProfileResponse: Codable {
@@ -176,6 +177,17 @@ struct PlaystationNetwork {
         var currentActivity: String? {
             return self.basicPresence.gameTitleInfoList?.first?.titleName
         }
+        
+        var status: String {
+            let status = self.basicPresence.primaryPlatformInfo?.onlineStatus
+            if status == .online {
+                return IRCFormat.color(.LightGreen, "Online")
+            }
+            if let lastSeen = self.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(maximumUnits: 1) {
+                return IRCFormat.color(.LightGrey, "Ofline, last seen \(lastSeen) ago")
+            }
+            return IRCFormat.color(.LightGrey, "Offline")
+        }
     }
     
     struct Title: Codable {
@@ -188,7 +200,7 @@ struct PlaystationNetwork {
     enum Platform: String, Codable {
         case ps3
         case ps4
-        case ps5
+        case PS5
     }
     
     struct RefreshTokenResponse: Codable {
