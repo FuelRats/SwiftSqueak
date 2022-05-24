@@ -130,7 +130,7 @@ struct PlaystationNetwork {
         
         request.headers.add(name: "Authorization", value: "Bearer \(psnConfig.token)")
         
-        return try! await httpClient.execute(request: request, forDecodable: PresenceResponse.self)
+        return try await httpClient.execute(request: request, forDecodable: PresenceResponse.self)
     }
     
     struct ProfileResponse: Codable {
