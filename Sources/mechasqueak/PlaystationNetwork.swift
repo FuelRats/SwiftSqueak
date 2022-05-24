@@ -188,12 +188,12 @@ struct PlaystationNetwork {
         var status: String {
             let status = self.basicPresence.primaryPlatformInfo?.onlineStatus
             if status == .online {
-                return IRCFormat.color(.LightGreen, "Online")
+                return IRCFormat.color(.LightGreen, "(Online)")
             }
             if let lastSeen = self.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(maximumUnits: 1) {
-                return IRCFormat.color(.LightGrey, "Ofline, last seen \(lastSeen) ago")
+                return IRCFormat.color(.LightGrey, "(Ofline, last seen \(lastSeen) ago)")
             }
-            return IRCFormat.color(.LightGrey, "Offline")
+            return IRCFormat.color(.LightGrey, "(Offline)")
         }
     }
     
