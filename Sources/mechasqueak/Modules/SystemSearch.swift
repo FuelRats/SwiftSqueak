@@ -212,6 +212,9 @@ class SystemSearch: IRCBotModule {
                 systemName = nearestSystemSearch.name
                 proceduralCheck = systemCheck?.proceduralCheck
                 nearestSystem = nearestSystemSearch
+            } else {
+                command.message.error(key: "station.notfound", fromCommand: command)
+                return
             }
         }
         
