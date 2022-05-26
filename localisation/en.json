@@ -178,7 +178,7 @@
   "board.close.conflict": "You attempted to close case #%{closeCaseId} to %{rat} but they belong to case #%{conflictId}. If this is not an error, send the same command again within the next 30 seconds.",
   "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
   "board.close.firstLimpetPaperwork": "Here is your paperwork for case #%{caseId} (%{client}): %{link}",
-  "board.close.reportFirstlimpet.aleethia": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Continue ignoring the paperwork: %{link}",
+  "board.close.reportFirstlimpet.aleethia": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork about 14 hours from now after you've ignored it long enough and accrued around 6 of them: %{link}",
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
