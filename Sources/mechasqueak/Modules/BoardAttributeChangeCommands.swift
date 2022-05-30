@@ -197,13 +197,6 @@ class BoardAttributeCommands: IRCBotModule {
                     "client": rescue.clientDescription
                 ]))
             }
-            
-            if case .found(_) = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
-                command.message.reply(message: lingo.localize("board.psnprivacy", locale: "en", interpolations: [
-                    "caseId": caseId,
-                    "client": rescue.clientDescription
-                ]))
-            }
         }
         
         var clientName = rescue.clientDescription

@@ -447,20 +447,6 @@ actor RescueBoard {
                     "client": rescue.clientDescription
                 ]))
             }
-            
-            message.reply(message: lingo.localize("board.psnprivacy", locale: "en", interpolations: [
-                "caseId": identifier,
-                "client": rescue.clientDescription
-            ]))
-            
-            rescue.appendQuote(RescueQuote(
-                author: message.client.currentNick,
-                message: "WARNING: This client's PSN privacy settings may prevent them from joining a team",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: message.client.currentNick)
-            )
-            try? rescue.save()
         }
     }
     
