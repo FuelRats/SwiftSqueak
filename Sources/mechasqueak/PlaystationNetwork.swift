@@ -75,7 +75,9 @@ struct PlaystationNetwork {
             return .failure
         }
         
-        var url = URLComponents(string: "https://us-prof.np.community.playstation.net/userProfile/v1/users/\(name)/profile2")!
+        guard var url = URLComponents(string: "https://us-prof.np.community.playstation.net/userProfile/v1/users/\(name)/profile2") else {
+            return .failure
+        }
         url.queryItems = []
         url.queryItems?.append(URLQueryItem(name: "fields", value: "npId,onlineId,accountId,avatarUrls,plus,aboutMe,languagesUsed,trophySummary(@default,level,progress,earnedTrophies),isOfficiallyVerified,personalDetail(@default,profilePictureUrls),personalDetailSharing,personalDetailSharingRequestMessageFlag,primaryOnlineStatus,presences(@default,@titleInfo,platform,lastOnlineDate,hasBroadcastData),requestMessageFlag,blocking,friendRelation,following,consoleAvailability"))
         do {
