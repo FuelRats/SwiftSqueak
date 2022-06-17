@@ -216,8 +216,10 @@ class GeneralCommands: IRCBotModule {
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
 
+        let gitDir = configuration.sourcePath
+        let version = shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         command.message.reply(key: replyKey, fromCommand: command, map: [
-            "version": mecha.version,
+            "version": "3 (Update \(version))",
             "uptime": mecha.startupTime.timeAgo(maximumUnits: 2),
             "startup": mecha.startupTime.description
         ])
