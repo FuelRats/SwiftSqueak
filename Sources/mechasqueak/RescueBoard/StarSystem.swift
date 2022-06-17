@@ -47,6 +47,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     var data: SystemGetDocument?
     var position: Vector3?
     var lookupAttempted: Bool = false
+    var jumpCallWarned: Bool = false
 
     init (
         name: String,

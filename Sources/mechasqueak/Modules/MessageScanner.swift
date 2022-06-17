@@ -120,7 +120,7 @@ class MessageScanner: IRCBotModule {
                 }
             }
 
-            if rescue.system?.isIncomplete == true && channelMessage.message.components(separatedBy: " ").count < 4 {
+            if rescue.system?.isIncomplete == true && channelMessage.message.components(separatedBy: " ").count < 4, rescue.system?.jumpCallWarned != true {
                 channelMessage.client.sendMessage(
                     toChannelName: channelMessage.destination.name,
                     withKey: "jumpcall.incompletesys",
@@ -129,6 +129,7 @@ class MessageScanner: IRCBotModule {
                         "nick": channelMessage.user.nickname
                     ]
                 )
+                rescue.system?.jumpCallWarned = true
             }
             
             let containsCarrierPhrase = carrierPhrases.contains(where: { channelMessage.message.lowercased().contains($0) })
