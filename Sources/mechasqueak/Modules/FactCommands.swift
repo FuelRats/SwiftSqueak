@@ -364,6 +364,12 @@ class FactCommands: IRCBotModule {
                 ])
             }
             
+            if command.command == "sctimes" && command.param1?.first?.isNumber == true {
+                command.command = "sctime"
+                await IRCBotModuleManager.handleIncomingCommand(ircBotCommand: command)
+                return
+            }
+            
             
             if command.command == "kgbfoam" && targets.contains(where: { $1?.odyssey == true }) {
                 command.command = "newkgbfoam"
