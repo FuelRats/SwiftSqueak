@@ -513,7 +513,7 @@ class FactCommands: IRCBotModule {
     func messageFact (command: IRCBotCommand, fact: Fact) {
         if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
-            if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "xlexious") && command.message.destination != mecha.rescueChannel {
+            if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "supermanifolds") && command.message.destination != mecha.rescueChannel {
                 command.message.retaliate()
                 return
             }
