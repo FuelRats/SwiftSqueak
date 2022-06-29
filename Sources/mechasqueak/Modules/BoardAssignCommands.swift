@@ -117,6 +117,10 @@ class BoardAssignCommands: IRCBotModule {
         let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
         
         if didSend {
+            guard carrier == false else {
+                command.message.reply(message: "I could try asking the client to befriend a fleet carrier but I don't think that's going to help much")
+                return
+            }
             var factName = rescue.codeRed && rescue.platform == .PC ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
             guard let fact = try? await Fact.getWithFallback(name: factName, forLocale: command.locale) else {
                 return
