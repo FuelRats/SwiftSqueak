@@ -96,10 +96,6 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         var systemName = command.parameters[1].uppercased()
-        if systemName.hasSuffix(" SYSTEM") {
-            systemName.removeLast(7)
-        }
-        
         if systemName == rescue.system?.name {
             command.message.error(key: "board.syschange.nochange", fromCommand: command, map: [
                 "caseId": caseId

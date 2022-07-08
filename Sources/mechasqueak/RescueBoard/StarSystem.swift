@@ -61,6 +61,9 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         lookupAttempted: Bool = false
     ) {
         self.name = name.prefix(64).uppercased()
+        if self.name.hasSuffix(" SYSTEM") {
+            self.name.removeLast(7)
+        }
         self.manuallyCorrected = manuallyCorrected
         self.searchResult = searchResult
         if let searchResult = searchResult {
