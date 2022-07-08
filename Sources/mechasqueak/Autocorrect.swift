@@ -144,7 +144,7 @@ struct ProceduralSystem: CustomStringConvertible {
         self.sectorName = sectorName
         var proceduralComponents = procedural.components(separatedBy: CharacterSet.alphanumerics.inverted).filter({ $0.count > 0 })
         
-        guard proceduralComponents.count > 1 && proceduralComponents.first!.count > 1 else {
+        guard proceduralComponents.count > 2 && proceduralComponents.first!.count > 1 else {
             return nil
         }
         let part1: Character = proceduralComponents[0].removeFirst()
