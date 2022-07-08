@@ -123,7 +123,7 @@ class SystemSearch: IRCBotModule {
     
     @AsyncBotCommand(
         ["distance", "plot", "distanceto"],
-        [.argument("range", "jump range", example: "68"), .param("departure system / case id / client name", "NLTT 48288"), .param("arrival system / case id / client name", "Sagittarius A*")],
+        [.argument("range", "jump range", example: "68"), .param("departure system / case id / client name", "NLTT 48288"), .param("arrival system / case id / client name", "Sagittarius A*", .continuous)],
         category: .utility,
         description: "Calculate the distance between two star systems",
         cooldown: .seconds(30)
