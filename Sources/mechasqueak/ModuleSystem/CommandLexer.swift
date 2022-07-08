@@ -38,6 +38,7 @@ struct IRCBotCommand {
     var id: UUID
     var command: String
     var parameters: [String]
+    var parameterQuoted: [Bool]
     var options: OrderedSet<Character>
     var arguments: [String: String?]
     var locale: Locale
@@ -72,6 +73,7 @@ struct IRCBotCommand {
             var arguments = [String: String?]()
             var options = OrderedSet<Character>()
             var parameters = [String]()
+            var parameterQuoted = [Bool]()
             
             var tokenIndex = 0
             while tokenIndex < tokens.count {
@@ -84,7 +86,7 @@ struct IRCBotCommand {
                         break
                     }
                     var params: [String] = []
-                    while tokenIndex + 1 < tokens.count, case .Parameter(let param) = tokens[tokenIndex + 1] {
+                    while tokenIndex + 1 < tokens.count, case .Parameter(let param, _) = tokens[tokenIndex + 1] {
                         params.append(param)
                         tokenIndex += 1
                     }
@@ -92,8 +94,9 @@ struct IRCBotCommand {
                 case .Option(let optionName):
                     options.append(optionName)
                     
-                case .Parameter(let param):
+                case .Parameter(let param, let quoted):
                     parameters.append(param)
+                    parameterQuoted.append(quoted)
                     
                 default:
                     break
@@ -105,6 +108,7 @@ struct IRCBotCommand {
 
             self.options = options
             self.parameters = parameters
+            self.parameterQuoted = parameterQuoted
         } catch LexerError.noCommand {
             return nil
         } catch LexerError.invalidOption {
@@ -193,7 +197,7 @@ enum Token {
     case Delimiter
     case Option(Character)
     case Argument(String)
-    case Parameter(String)
+    case Parameter(String, quoted: Bool)
 }
 
 enum LexerError: Error {
@@ -291,7 +295,7 @@ struct Lexer {
             }
             pop()
 
-            return Token.Parameter(arg)
+            return Token.Parameter(arg, quoted: true)
         }
         if peek() == "\"" {
             pop()
@@ -301,9 +305,9 @@ struct Lexer {
             }
             pop()
 
-            return Token.Parameter(arg)
+            return Token.Parameter(arg, quoted: true)
         }
-        return Token.Parameter(readWhile({ $0.isWhitespace == false }))
+        return Token.Parameter(readWhile({ $0.isWhitespace == false }), quoted: false)
     }
 
     @discardableResult
