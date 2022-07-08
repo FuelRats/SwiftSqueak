@@ -39,6 +39,11 @@ class HelpCommands: IRCBotModule {
         description: "View help for MechaSqueak."
     )
     var didReceiveHelpCommand = { command in
+        if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
+            command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
+                "nick": command.message.user.nickname,
+            ])
+        }
         let message = command.message
         guard command.parameters.count > 0 else {
             message.replyPrivate(key: "help.howto", fromCommand: command)

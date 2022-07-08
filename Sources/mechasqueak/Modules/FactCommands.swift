@@ -49,6 +49,11 @@ class FactCommands: IRCBotModule {
         guard var allFacts = try? await Fact.getAllFacts() else {
             return
         }
+        if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
+            command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
+                "nick": command.message.user.nickname,
+            ])
+        }
         if command.has(argument: "locales") {
             let languages = allFacts.reduce(Set<String>(), { languages, fact in
                 var languages = languages

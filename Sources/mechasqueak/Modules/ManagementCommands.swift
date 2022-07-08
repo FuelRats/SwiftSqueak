@@ -55,7 +55,7 @@ class ManagementCommands: IRCBotModule {
             MechaSqueak.accounts.lookupIfNotExists(user: user)
         }
 
-        command.message.replyPrivate(key: "flushall.response", fromCommand: command)
+        command.message.reply(key: "flushall.response", fromCommand: command)
     }
     
     @BotCommand(
@@ -94,7 +94,7 @@ class ManagementCommands: IRCBotModule {
         guard let user = command.message.client.channels.first(where: {
             $0.member(named: command.parameters[0]) != nil
         })?.member(named: command.parameters[0]) else {
-            command.message.replyPrivate(key: "flush.nouser", fromCommand: command, map: [
+            command.message.reply(key: "flush.nouser", fromCommand: command, map: [
                 "name": command.parameters[0]
             ])
             return
@@ -104,7 +104,7 @@ class ManagementCommands: IRCBotModule {
             MechaSqueak.accounts.mapping.removeValue(forKey: account)
         }
         MechaSqueak.accounts.lookupIfNotExists(user: user)
-        command.message.replyPrivate(key: "flush.response", fromCommand: command, map: [
+        command.message.reply(key: "flush.response", fromCommand: command, map: [
             "name": command.parameters[0]
         ])
     }
@@ -120,7 +120,7 @@ class ManagementCommands: IRCBotModule {
         guard let user = command.message.client.channels.first(where: {
             $0.member(named: command.parameters[0]) != nil
         })?.member(named: command.parameters[0]) else {
-            command.message.replyPrivate(key: "groups.nouser", fromCommand: command, map: [
+            command.message.reply(key: "groups.nouser", fromCommand: command, map: [
                 "nick": command.parameters[0]
             ])
             return

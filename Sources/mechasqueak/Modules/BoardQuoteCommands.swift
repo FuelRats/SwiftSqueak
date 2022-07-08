@@ -43,6 +43,11 @@ class BoardQuoteCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
+        if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
+            command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
+                "nick": command.message.user.nickname,
+            ])
+        }
 
         let output = try! stencil.renderLine(name: "quote.stencil", context: [
             "caseId": caseId,
