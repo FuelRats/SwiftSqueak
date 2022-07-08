@@ -401,21 +401,12 @@ class MechaSqueak {
     }
 }
 
-signal(SIGINT, SIG_IGN) // // Make sure the signal does not terminate the application.
 signal(SIGTERM, SIG_IGN)
-
-let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
-sigintSrc.setEventHandler {
-    print("Got SIGINT")
-    // ...
-    exit(0)
-}
-sigintSrc.resume()
 
 let sigtermSrc = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
 sigtermSrc.setEventHandler {
-    print("Got SIGTERM")
-    // ...
+    mecha.reportingChannel?.send(message: IRCFormat.bold("Performing a planned restart, I will be back in a jiffy"))
+    mecha.reportingChannel?.client.sendQuit(message: "Restarting..")
     exit(0)
 }
 sigtermSrc.resume()
