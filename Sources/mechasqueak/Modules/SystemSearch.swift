@@ -115,6 +115,7 @@ class SystemSearch: IRCBotModule {
             }
             command.message.reply(message: await result.info)
         } catch {
+            print(String(describing: error))
             command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
                 "system": system
             ])
@@ -272,7 +273,7 @@ class SystemSearch: IRCBotModule {
                 "additionalServices": station.services.count - station.notableServices.count
             ]))
         } catch {
-            print(String(describing: error))
+            debug(String(describing: error))
             command.error(error)
         }
     }

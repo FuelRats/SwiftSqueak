@@ -34,9 +34,9 @@ enum StationDescription: ResourceObjectDescription {
         public var type: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType>
         public var name: Attribute<String>
         public var distanceToArrival: Attribute<Double>
-        public var allegiance: Attribute<String>
-        public var government: Attribute<SystemsAPI.Government>
-        public var economy: Attribute<String>
+        public var allegiance: Attribute<String?>
+        public var government: Attribute<SystemsAPI.Government?>
+        public var economy: Attribute<String?>
         public var haveMarket: Attribute<Bool>
         public var haveShipyard: Attribute<Bool>
         public var haveOutfitting: Attribute<Bool>

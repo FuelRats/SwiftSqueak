@@ -153,22 +153,29 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
             
             let allegiance = stations.first?.allegiance
+            
             let government = stations.reduce([:], { (acc: [SystemsAPI.Government: Int], current) in
                 var acc = acc
-                if let value = acc[current.government] {
-                    acc[current.government] = value + 1
+                guard let currentGov = current.government else {
+                    return acc
+                }
+                if let value = acc[currentGov] {
+                    acc[currentGov] = value + 1
                 } else {
-                    acc[current.government] = 1
+                    acc[currentGov] = 1
                 }
                 return acc
             }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key.ircFormatted
             
             let economy = stations.reduce([:], { (acc: [String: Int], current) in
                 var acc = acc
-                if let value = acc[current.economy] {
-                    acc[current.economy] = value + 1
+                guard let currentEcon = current.economy else {
+                    return acc
+                }
+                if let value = acc[currentEcon] {
+                    acc[currentEcon] = value + 1
                 } else {
-                    acc[current.economy] = 1
+                    acc[currentEcon] = 1
                 }
                 return acc
             }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
