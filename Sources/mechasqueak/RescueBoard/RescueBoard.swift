@@ -771,6 +771,7 @@ actor RescueBoard {
     @EventListener<RatSocketRescueCreatedNotification>
     var onRemoteRescueCreated = { rescueCreation in
         guard
+            configuration.general.drillMode == false,
             rescueCreation.sender != configuration.api.userId,
             let remoteRescue = rescueCreation.body?.body.data?.primary.value
         else {
@@ -785,6 +786,7 @@ actor RescueBoard {
     @AsyncEventListener<RatSocketRescueUpdatedNotification>
     var onRemoteRescueUpdated = { rescueUpdate in
         guard
+            configuration.general.drillMode == false,
             rescueUpdate.sender != configuration.api.userId,
             let remoteRescue = rescueUpdate.body?.body.data?.primary.value
         else {
@@ -810,6 +812,7 @@ actor RescueBoard {
     @AsyncEventListener<RatSocketRescueDeletedNotification>
     var onRemoteRescueDeleted = { rescueDeletion in
         guard
+            configuration.general.drillMode == false,
             rescueDeletion.sender != configuration.api.userId,
             let rescueIdString = rescueDeletion.resourceIdentifier,
             let rescueId = UUID(uuidString: rescueIdString)
