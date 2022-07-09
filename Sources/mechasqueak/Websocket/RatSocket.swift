@@ -122,8 +122,8 @@ class RatSocket {
 //                case .rescueDeleted:
 //                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
 //
-//                case .userUpdated:
-//                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
+                case .userUpdated:
+                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
 
                 default:
                     break
