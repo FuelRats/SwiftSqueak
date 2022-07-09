@@ -772,7 +772,7 @@ actor RescueBoard {
     var onRemoteRescueCreated = { rescueCreation in
         guard
             configuration.general.drillMode == false,
-            rescueCreation.sender != configuration.api.userId,
+            rescueCreation.sender.uuidString != configuration.api.userId.uuidString,
             let remoteRescue = rescueCreation.body?.body.data?.primary.value
         else {
             return
@@ -787,7 +787,7 @@ actor RescueBoard {
     var onRemoteRescueUpdated = { rescueUpdate in
         guard
             configuration.general.drillMode == false,
-            rescueUpdate.sender != configuration.api.userId,
+            rescueUpdate.sender.uuidString != configuration.api.userId.uuidString,
             let remoteRescue = rescueUpdate.body?.body.data?.primary.value
         else {
             return
@@ -813,7 +813,7 @@ actor RescueBoard {
     var onRemoteRescueDeleted = { rescueDeletion in
         guard
             configuration.general.drillMode == false,
-            rescueDeletion.sender != configuration.api.userId,
+            rescueDeletion.sender.uuidString != configuration.api.userId.uuidString,
             let rescueIdString = rescueDeletion.resourceIdentifier,
             let rescueId = UUID(uuidString: rescueIdString)
         else {
