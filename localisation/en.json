@@ -19,6 +19,7 @@
   "whois.response": "%{nick} is logged in as user %{account} (%{verified}) and have Fuel Rats User ID %{userId}. Joined: %{joined}. Rats: %{rats}.",
   "groups.nouser": "No user data was found for nick: %{nick}",
   "groups.response": "The nick %{nick} has the following permission groups: %{groups}",
+  "sendraw": "Performing %{command} %{contents}",
 
   "jumpcall.notfound": "CAUTION: You called jumps for case #%{case} but this case is not currently on the board.",
   "jumpcall.noaccount": "CAUTION: You called jumps for case #%{case} but no Fuel Rats account can be found for you.",

@@ -300,4 +300,28 @@ class ManagementCommands: IRCBotModule {
         ])
         command.message.client.sendActionMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
     }
+    
+    @BotCommand(
+            ["sendraw"],
+            [.param("command") ,.param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional)],
+            category: nil,
+            description: "Send a raw command to the IRC server"
+        )
+        var didReceiveSendRawCommand = { command in
+            guard command.message.user.isIRCOperator else {
+                command.message.retaliate()
+                return
+            }
+            
+            guard let ircCommand = IRCCommand(rawValue: command.parameters[0].uppercased()) else {
+                return
+            }
+            
+            command.message.reply(key: "sendraw", fromCommand: command, map: [
+                "command": command.parameters[0],
+                "contents": command.parameters.dropFirst().joined(separator: " ")
+            ])
+            
+            command.message.client.send(command: ircCommand, parameters: Array(command.parameters.dropFirst()))
+        }
 }
