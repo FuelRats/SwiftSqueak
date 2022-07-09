@@ -193,7 +193,7 @@ class MechaSqueak {
             return
         }
 
-        accounts.lookupIfNotExists(user: user)
+        accounts.lookup(user: user)
     }
 
     @AsyncEventListener<IRCUserJoinedChannelNotification>
@@ -397,7 +397,7 @@ class MechaSqueak {
         })?.member(named: sender.nickname) else {
             return
         }
-        accounts.lookupIfNotExists(user: user)
+        accounts.lookup(user: user)
     }
 }
 
