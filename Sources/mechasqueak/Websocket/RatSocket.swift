@@ -113,17 +113,17 @@ class RatSocket {
                     connectedAndAuthenticated = true
                     debug("Received welcome from Websocket connection")
 
-                case .rescueCreated:
-                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
-
-                case .rescueUpdated:
-                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
-
-                case .rescueDeleted:
-                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
-                    
-                case .userUpdated:
-                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
+//                case .rescueCreated:
+//                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
+//
+//                case .rescueUpdated:
+//                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
+//
+//                case .rescueDeleted:
+//                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
+//
+//                case .userUpdated:
+//                    RatSocket.getEventAndPost(notification: RatSocketUserUpdatedNotification.self, from: data)
 
                 default:
                     break
