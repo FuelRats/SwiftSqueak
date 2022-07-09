@@ -394,7 +394,8 @@
   "help.commandtitle": "\u0002%{command}\u0002 %{example}",
   "help.commandaliases": "Aliases: %{aliases}",
   "help.commanderror": "!%{command} is not a known command",
-
+  "help.smartfact": "\u0002!%{command} <case id/client name>\u0002 is a command that automatically messages the fact message appropriate for the platform of the target. !%{command} is equivalent to either !pc%{command}, !x%{command}, or !ps%{command} depending on what platform the target is using. Commands like these only work with an active case since otherwise I have no idea what platform you want me to use.",
+  "help.smartfact.seeall": "A list of all available automatic platform facts you can use the \u0002!facts\u0002 command.",
   "help.category.board": "View, edit and manage cases on the board.",
   "help.category.rescues": "View, edit and manage rescues that have already been completed.",
   "help.category.facts": "View, edit and manage the list of information commands such as !prep",

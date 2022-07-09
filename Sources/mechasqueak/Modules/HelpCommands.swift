@@ -134,6 +134,13 @@ class HelpCommands: IRCBotModule {
                 command.message.replyPrivate(message: fact.message)
                 return
             }
+            if Fact.platformFacts.contains(commandText) {
+                command.message.replyPrivate(key: "help.smartfact", fromCommand: command, map: [
+                    "command": commandText
+                ])
+                command.message.replyPrivate(key: "help.smartfact.seeall", fromCommand: command)
+                return
+            }
             message.error(key: "help.commanderror", fromCommand: command, map: [
                 "command": commandText
             ])
