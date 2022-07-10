@@ -145,6 +145,10 @@ class IRCBotModuleManager {
             while paramIndex < maxParameters && paramIndex < ircBotCommand.parameters.count {
                 if paramIndex == maxParameters - 1 {
                     var remainderComponents = Array(ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex])
+                    if remainderComponents.count == 1 {
+                        parameters.append(remainderComponents[0])
+                        break
+                    }
                     remainderComponents = remainderComponents.enumerated().map({
                         if ircBotCommand.parameterQuoted[$0.offset+paramIndex] == true {
                             return "\"\($0.element)\""
