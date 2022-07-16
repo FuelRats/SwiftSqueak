@@ -15,7 +15,7 @@
 {% elif system|proceduralInfo %}
 {{ system|proceduralInfo }}
 {% elif invalid %}
-{{ "Invalid system name"|color:4 }}
+{{ "Invalid system name"|color:8 }}
 {% else %}
 {{ "Unconfirmed"|color:10 }}
 {% endif %}
