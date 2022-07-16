@@ -1,7 +1,4 @@
 "{{ system.name }}"
-{% if government %}
- {{ government }}
-{% endif %}
 {% filter italic %}
  (
 {% if landmark %}
