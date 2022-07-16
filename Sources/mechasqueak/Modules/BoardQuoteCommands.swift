@@ -32,7 +32,7 @@ class BoardQuoteCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["quote"],
         [.param("case id/client", "4")],
         category: .board,
@@ -82,7 +82,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["grab"],
         [.param("case id/client/assigned rat", "SpaceDawg")],
         category: .board,
@@ -142,7 +142,7 @@ class BoardQuoteCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["inject"],
         [.options(["f"]), .param("case id/client", "4"), .param("text", "NLTT 48288 PC CR", .continuous)],
         category: .board,
@@ -211,7 +211,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["sub"],
         [.param("case id/client", "4"), .param("line number", "1"), .param("new text", "Client is in EZ", .continuous, .optional)],
         category: .board,

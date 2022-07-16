@@ -31,7 +31,7 @@ class BoardAttributeCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
         [.param("case id/client", "4"), .param("message", "client left irc", .continuous, .optional)],
         category: .board,
@@ -82,7 +82,7 @@ class BoardAttributeCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["system", "sys", "loc", "location"],
         [.options(["f"]), .param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
         category: .utility,
@@ -141,7 +141,7 @@ class BoardAttributeCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["cmdr", "client", "commander"],
         [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continuous)],
         category: .board,
@@ -208,7 +208,7 @@ class BoardAttributeCommands: IRCBotModule {
         try? rescue.save(command)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["nick", "ircnick", "nickname"],
         [.param("case id/client", "4"), .param("new nick", "SpaceDawg")],
         category: .board,
@@ -242,7 +242,7 @@ class BoardAttributeCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["lang", "language"],
         [.param("case id/client", "4"), .param("language code", "de")],
         category: .board,
@@ -274,7 +274,7 @@ class BoardAttributeCommands: IRCBotModule {
 
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["cr", "codered", "casered"],
         [.param("case id/client", "4")],
         category: .board,
@@ -313,7 +313,7 @@ class BoardAttributeCommands: IRCBotModule {
         try? rescue.save(command)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["title", "operation"],
         [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continuous)],
         category: .board,
@@ -336,7 +336,7 @@ class BoardAttributeCommands: IRCBotModule {
         ])
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["odyssey", "horizon", "horizons"],
         [.param("case id/client", "4")],
         category: .board,

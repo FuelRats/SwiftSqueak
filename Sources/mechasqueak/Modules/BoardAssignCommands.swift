@@ -32,7 +32,7 @@ class BoardAssignCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["go", "assign", "add"],
         [.options(["a", "f"]), .argument("carrier"), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
         category: .board,
@@ -73,7 +73,7 @@ class BoardAssignCommands: IRCBotModule {
 
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["gofr", "assignfr", "frgo"],
         [.options(["a", "f"]),  .argument("carrier"), .param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)],
         category: .board,
@@ -131,7 +131,7 @@ class BoardAssignCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["unassign", "deassign", "rm", "remove", "standdown"],
         [.param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
         category: .board,

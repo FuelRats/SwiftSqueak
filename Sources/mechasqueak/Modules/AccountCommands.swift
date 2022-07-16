@@ -198,7 +198,7 @@ class AccountCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["changeemail", "changemail"],
         [.param("email", "spacedawg@fuelrats.com")],
         category: .account,
@@ -254,7 +254,7 @@ class AccountCommands: IRCBotModule {
         command.message.replyPrivate(list: permits, separator: ", ", heading: "\(heading) ")
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["addpermit", "permitadd"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .account,
@@ -307,7 +307,7 @@ class AccountCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["delpermit", "permitdel"],
         [.param("permit name", "Pilot's Federation District", .continuous)],
         category: .account,
@@ -347,7 +347,7 @@ class AccountCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["useodyssey"],
         category: .account,
         description: "Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
@@ -373,7 +373,7 @@ class AccountCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["usehorizons"],
         category: .account,
         description: "Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",

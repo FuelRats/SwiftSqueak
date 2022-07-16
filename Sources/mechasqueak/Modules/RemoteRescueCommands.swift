@@ -33,7 +33,7 @@ class RemoteRescueCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["closed", "recent"],
         [.param("number of cases", "10", .standard, .optional)],
         category: .rescues,
@@ -86,7 +86,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["delete"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -118,7 +118,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["deleteall", "cleartrash"],
         category: .rescues,
         description: "Delete all rescues currently in the trashlist",
@@ -151,7 +151,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["trashlist", "mdlist", "purgelist", "listtrash"],
         category: .rescues,
         description: "Shows all the rescues that have been added to the trash list but not yet deleted",
@@ -186,7 +186,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["restore", "mdremove", "trashremove", "mdr", "tlr", "trashlistremove", "mdd", "mddeny"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -228,7 +228,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["unfiled", "pwn", "paperworkneeded", "needspaperwork", "npw"],
         category: .rescues,
         description: "Get a list of rescues that have not had their paperwork completed.",
@@ -273,7 +273,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["quoteid"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -326,7 +326,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["reopen"],
         [.param("rescue uuid/client name", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
@@ -414,7 +414,7 @@ class RemoteRescueCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["unclose"],
         [.param("recently closed case number", "5")],
         category: .rescues,
@@ -487,7 +487,7 @@ class RemoteRescueCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["clientpw", "pwclient"],
         [.argument("all"), .param("client name", "SpaceDawg", .continuous)],
         category: .rescues,
@@ -546,7 +546,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["renameid"],
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"), .param("client name", "SpaceDawg")],
         category: .rescues,

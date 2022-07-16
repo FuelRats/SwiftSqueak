@@ -50,7 +50,7 @@ class SessionLogger: IRCBotModule {
         command.message.reply(key: "savelogs.started", fromCommand: command)
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["savelogs", "stoplogs"],
         category: .utility,
         description: "Save logs from a drill or training session, use after the session has completed",

@@ -32,7 +32,7 @@ class HelpCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["help"],
         [.param("category/command", "!assign", .continuous, .optional)],
         category: nil,
@@ -156,7 +156,7 @@ class HelpCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["sendhelp"],
         [.param("nick", "SpaceDawg"), .param("command", "!assign", .continuous)],
         category: nil,

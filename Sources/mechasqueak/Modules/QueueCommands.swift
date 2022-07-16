@@ -42,7 +42,7 @@ class QueueCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["queue"],
         category: .queue,
         description: "Get current information on the queue",
@@ -67,7 +67,7 @@ class QueueCommands: IRCBotModule {
         ])
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["queuestats"],
         [.param("start date", "2021-04-01", .standard, .optional)],
         category: .queue,
@@ -102,7 +102,7 @@ class QueueCommands: IRCBotModule {
         ])
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["dequeue", "next"],
         category: .queue,
         description: "Manually move the next client from the queue into the rescue channel",
@@ -119,7 +119,7 @@ class QueueCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["maxclients", "maxload", "maxcases"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,

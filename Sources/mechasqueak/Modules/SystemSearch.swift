@@ -33,7 +33,7 @@ class SystemSearch: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["search"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
@@ -77,7 +77,7 @@ class SystemSearch: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["landmark"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
@@ -122,7 +122,7 @@ class SystemSearch: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["distance", "plot", "distanceto"],
         [.argument("range", "jump range", example: "68"), .param("departure system / case id / client name", "NLTT 48288"), .param("arrival system / case id / client name", "Sagittarius A*", .continuous)],
         category: .utility,
@@ -189,7 +189,7 @@ class SystemSearch: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["station", "stations"],
         [.param("reference system / case id / client name", "Sagittarius A*", .continuous), .options(["p", "l"])],
         category: .utility,

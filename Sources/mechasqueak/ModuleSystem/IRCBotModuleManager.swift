@@ -206,7 +206,6 @@ class IRCBotModuleManager {
             ])
         }
 
-        command.onCommand?(ircBotCommand)
-        await command.asyncOnCommand?(ircBotCommand)
+        await command.onCommand?(ircBotCommand)
     }
 }

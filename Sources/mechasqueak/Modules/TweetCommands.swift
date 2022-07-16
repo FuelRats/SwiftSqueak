@@ -32,7 +32,7 @@ class TweetCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
@@ -69,7 +69,7 @@ class TweetCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,

@@ -39,7 +39,7 @@ class FactCommands: IRCBotModule {
         return (name, locale)
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["facts", "listfacts", "factlist", "fact"],
         [.argument("locales")],
         category: .facts,
@@ -90,7 +90,7 @@ class FactCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["addfact"],
         [.param("fact-language", "pcquit-en"), .param("fact message", "Get out it's gonna blow!", .continuous)],
         category: .facts,
@@ -145,7 +145,7 @@ class FactCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["setfact"],
         [.param("fact-language", "pcquit-en"), .param("fact message", "Get out it's gonna blow!", .continuous)],
         category: .facts,
@@ -182,7 +182,7 @@ class FactCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["delfact"],
         [.param("fact-language", "pcquit-en")],
         category: .facts,
@@ -224,7 +224,7 @@ class FactCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["alias", "aliasfact"],
         [.param("fact", "ircguide"), .param("alias", "ircguides")],
         category: .facts,
@@ -262,7 +262,7 @@ class FactCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["delalias"],
         [.param("alias", "ircguides")],
         category: .facts,

@@ -40,7 +40,7 @@ class BoardCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["sync", "fbr", "refreshboard", "reindex", "resetboard", "forcerestartboard",
                    "forcerefreshboard", "frb", "boardrefresh"],
         category: .rescues,
@@ -52,7 +52,7 @@ class BoardCommands: IRCBotModule {
         try? await board.sync()
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["addcase", "create"],
         [
             .param("client nick", "SpaceDawg"),
@@ -105,7 +105,7 @@ class BoardCommands: IRCBotModule {
         try? await board.insert(rescue: rescue, fromMessage: command.message, initiated: .insertion)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["list"],
         [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("horizons"), .argument("odyssey")],
         category: .board,
@@ -187,7 +187,7 @@ class BoardCommands: IRCBotModule {
         command.message.reply(list: generatedList, separator: ", ", heading: "\(generatedList.count) rescues found: ")
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["clear", "close"],
         [.options(["f", "p"]), .param("case id/client", "4"), .param("first limpet rat", "SpaceDawg", .standard, .optional)],
         category: .board,
@@ -321,7 +321,7 @@ class BoardCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["trash", "md", "purge", "mdadd", "yeet"],
         [.options(["f"]), .param("case id/client", "4"), .param("message", "client left before rats were assigned", .continuous)],
         category: .board,
@@ -373,7 +373,7 @@ class BoardCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["paperwork", "pwl"],
         [.param("case id/client", "4")],
         category: .board,
@@ -392,7 +392,7 @@ class BoardCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["quiet", "last"],
         [.argument("pc"), .argument("xb"), .argument("ps"), .options(["o"])],
         category: .other,
@@ -491,7 +491,7 @@ class BoardCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["sysc"],
         [.param("case id/client", "4"), .param("number", "1")],
         category: .board,
@@ -544,7 +544,7 @@ class BoardCommands: IRCBotModule {
         return rescue
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["sprep"],
         [.param("case id/client", "4")],
         category: .board,

@@ -141,7 +141,7 @@ class ManagementCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["addgroup"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
@@ -185,7 +185,7 @@ class ManagementCommands: IRCBotModule {
         }
     }
     
-    @AsyncBotCommand(
+    @BotCommand(
         ["delgroup"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
@@ -229,7 +229,7 @@ class ManagementCommands: IRCBotModule {
         }
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["suspend"],
         [.param("nickname/user id", "SpaceDawg"), .param("timespan", "7d")],
         category: .management,

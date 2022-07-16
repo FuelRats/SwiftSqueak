@@ -46,7 +46,7 @@ class BoardPlatformCommands: IRCBotModule {
         ])
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["xb"],
         [.param("case id/client", "4")],
         category: .board,
@@ -58,7 +58,7 @@ class BoardPlatformCommands: IRCBotModule {
         await platformChangeCommand(platform: .Xbox, command: command)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["pc"],
         [.param("case id/client", "4")],
         category: .board,
@@ -70,7 +70,7 @@ class BoardPlatformCommands: IRCBotModule {
         await platformChangeCommand(platform: .PC, command: command)
     }
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["ps", "ps4", "ps5"],
         [.param("case id/client", "4")],
         category: .board,

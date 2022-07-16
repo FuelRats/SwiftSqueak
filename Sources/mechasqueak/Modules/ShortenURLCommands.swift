@@ -29,7 +29,7 @@ class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
     static var ongoingShortenUrls: [String: String] = [:]
 
-    @AsyncBotCommand(
+    @BotCommand(
         ["shorten", "short", "shortener"],
         [.param("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"), .param("custom link", "importantinfo", .standard, .optional)],
         category: .utility,
