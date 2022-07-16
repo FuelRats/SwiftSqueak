@@ -482,10 +482,12 @@ class GeneralCommands: IRCBotModule {
     }
     
     @BotCommand(
-            ["toobs"],
+            ["toobs", "toby"],
             category: nil,
             description: "Bulli the toobs",
-            permission: .RescueWrite
+            permission: .RescueWrite,
+            cooldown: .seconds(600)
+            cooldownOverride: .UserWrite
         )
     var didReceiveTobyCommand = { command in
         command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense- continued rebellion may result in additional fines and or tail-chopping.")
