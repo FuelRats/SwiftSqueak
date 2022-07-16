@@ -486,7 +486,7 @@ class GeneralCommands: IRCBotModule {
             category: nil,
             description: "Bulli the toobs",
             permission: .RescueWrite,
-            cooldown: .seconds(600)
+            cooldown: .seconds(600),
             cooldownOverride: .UserWrite
         )
     var didReceiveTobyCommand = { command in
