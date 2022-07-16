@@ -305,14 +305,10 @@ class ManagementCommands: IRCBotModule {
             ["sendraw"],
             [.param("command") ,.param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional)],
             category: nil,
-            description: "Send a raw command to the IRC server"
+            description: "Send a raw command to the IRC server",
+            permission: .GroupWrite
         )
         var didReceiveSendRawCommand = { command in
-            guard command.message.user.isIRCOperator else {
-                command.message.retaliate()
-                return
-            }
-            
             guard let ircCommand = IRCCommand(rawValue: command.parameters[0].uppercased()) else {
                 return
             }
