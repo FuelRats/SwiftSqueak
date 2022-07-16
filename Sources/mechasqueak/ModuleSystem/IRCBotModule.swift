@@ -44,7 +44,8 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
         description: String,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
-        cooldown: DispatchTimeInterval? = nil
+        cooldown: DispatchTimeInterval? = nil,
+        cooldownOverride: AccountPermission? = .RescueWrite
     ) {
         self.wrappedValue = value
 
@@ -59,7 +60,8 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
             description: description,
             permission: permission,
             allowedDestinations: allowedDestinations,
-            cooldown: TimeInterval(dispatchTimeInterval: cooldown)
+            cooldown: TimeInterval(dispatchTimeInterval: cooldown),
+            cooldownOverride: cooldownOverride
         )
 
         MechaSqueak.commands.append(declaration)
@@ -74,6 +76,7 @@ struct IRCBotCommandDeclaration {
     let permission: AccountPermission?
     let allowedDestinations: AllowedCommandDestination
     let cooldown: TimeInterval?
+    let cooldownOverride: AccountPermission?
     let category: HelpCategory?
     let description: String
     var parameters: [CommandBody]
@@ -91,7 +94,8 @@ struct IRCBotCommandDeclaration {
         description: String,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
-        cooldown: TimeInterval? = nil
+        cooldown: TimeInterval? = nil,
+        cooldownOverride: AccountPermission?
     ) {
         self.commands = commands
         self.parameters = parameters
@@ -104,6 +108,7 @@ struct IRCBotCommandDeclaration {
         self.category = category
         self.description = description
         self.cooldown = cooldown
+        self.cooldownOverride = cooldownOverride
     }
 
     func usageDescription (command: IRCBotCommand?) -> String {
