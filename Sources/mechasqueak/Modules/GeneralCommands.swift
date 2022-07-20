@@ -494,7 +494,7 @@ class GeneralCommands: IRCBotModule {
             return
         }
         let newCount = toobsInfo.count + 5
-        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense- continued rebellion may result in additional fines and or tail-chopping. Toby has been fined \(newCount) snickers so far")
+        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense – continued rebellion may result in additional fines and or tail-chopping. Toby has been fined \(newCount) snickers so far")
         try? await ToobInfo.update(count: newCount)
     }
 }
