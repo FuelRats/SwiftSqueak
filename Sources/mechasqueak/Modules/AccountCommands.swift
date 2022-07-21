@@ -405,7 +405,7 @@ class AccountCommands: IRCBotModule {
             command.message.user.flush()
             
             for rescue in await board.rescues {
-                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey }) {
+                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey == false }) {
                     rescue.value.channel?.send(key: "jumpcall.change.horizons", map: [
                         "caseId": rescue.key,
                         "name": command.message.user.nickname,
