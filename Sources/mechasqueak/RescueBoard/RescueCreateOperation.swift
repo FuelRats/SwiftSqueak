@@ -122,6 +122,10 @@ class RescueCreateOperation: Operation {
                     "caseId": caseId
                 ])
             }
+            let allSuccess = await board.rescues.allSatisfy({ $0.value.synced && $0.value.uploaded })
+            if allSuccess {
+                await board.setIsSynced(true)
+            }
         } catch {
             if errorReported == false {
                 mecha.reportingChannel?.send(key: "board.sync.error", map: [

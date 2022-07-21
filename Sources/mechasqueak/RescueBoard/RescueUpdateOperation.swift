@@ -129,6 +129,10 @@ class RescueUpdateOperation: Operation {
                     "caseId": caseId
                 ])
             }
+            let allSuccess = await board.rescues.allSatisfy({ $0.value.synced && $0.value.uploaded })
+            if allSuccess {
+                await board.setIsSynced(true)
+            }
             return rescue
         } catch {
             if errorReported == false {

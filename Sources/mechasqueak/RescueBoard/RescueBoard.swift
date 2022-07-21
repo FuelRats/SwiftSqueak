@@ -77,6 +77,10 @@ actor RescueBoard {
         }
     }
     
+    func setIsSynced(_ synced: Bool) {
+        self.isSynced = synced
+    }
+    
     func sync () async throws {
         self.queue.cancelAllOperations()
         guard configuration.general.drillMode == false else {
@@ -156,6 +160,7 @@ actor RescueBoard {
             "api": configuration.api.url,
             "updates": updates.englishList
         ])
+        isSynced = true
         mecha.reportingChannel?.send(message: syncMessage)
     }
     

@@ -533,8 +533,9 @@ class Rescue {
             }
         }
         
+        let boardSynced = await board.isSynced
         guard let rat = rat else {
-            guard force || configuration.general.drillMode else {
+            guard force || configuration.general.drillMode || boardSynced == false else {
                 return Result.failure(.unidentified(param))
             }
             guard self.unidentifiedRats.contains(param) == false else {
