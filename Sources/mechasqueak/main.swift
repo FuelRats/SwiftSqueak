@@ -206,11 +206,8 @@ class MechaSqueak {
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
-            do {
-                try await board.sync()
-            } catch {
-                await board.setIsSynced(false)
-                mecha.reportingChannel?.send(key: "board.syncfailed")
+            Task {
+                await board.performSyncUntilSuccess()
             }
             
             let gitDir = configuration.sourcePath

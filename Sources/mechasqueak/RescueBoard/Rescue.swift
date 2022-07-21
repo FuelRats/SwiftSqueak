@@ -273,6 +273,7 @@ class Rescue {
         
         self.system?.permit = attr.data.value.permit
         self.uploaded = true
+        self.synced = true
         
         Task {
             if var system = self.system {

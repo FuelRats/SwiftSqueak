@@ -764,6 +764,18 @@ actor RescueBoard {
         }
     }
     
+    func performSyncUntilSuccess (reported: Bool = false) async {
+            do {
+                try await self.sync()
+            } catch {
+                if reported == false {
+                    mecha.reportingChannel?.send(key: "board.syncfailed")
+                }
+                try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+                await performSyncUntilSuccess(reported: true)
+            }
+        }
+    
     @EventListener<IRCUserJoinedChannelNotification>
     var onJoinChannel = { joinEvent in
         // Check if joining user is a client of a pending announcement

@@ -49,12 +49,7 @@ class BoardCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSyncCommand = { command in
-        do {
-            try await board.sync()
-        } catch {
-            await board.setIsSynced(false)
-            command.message.reply(key: "board.syncfailed", fromCommand: command)
-        }
+        await board.performSyncUntilSuccess()
     }
     
     @BotCommand(
