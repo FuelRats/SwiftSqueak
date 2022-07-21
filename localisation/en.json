@@ -30,8 +30,8 @@
   "jumpcall.publicpermit": "CAUTION: %{nick} does not have the %{permit} permit required by case #%{caseId}.",
   "jumpcall.clientodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is using Odyssey, but the rat is not marked as being an Odyssey user",
   "jumpcall.ratodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is NOT using Odyssey, but the rat is marked as being an Odyssey user",
-  "jumpcall.change.odyssey": "%{nick} has switched from Horizons to Odyssey (Called %{jumps} for Case #%{caseId})",
-  "jumpcall.change.horizons": "%{nick} has switched from Odyssey to Horizons (Called %{jumps} for Case #%{caseId})",
+  "jumpcall.change.odyssey": "%{nick} has switched from Horizons to Odyssey (Called %{jumps}j for Case #%{caseId})",
+  "jumpcall.change.horizons": "%{nick} has switched from Odyssey to Horizons (Called %{jumps}j for Case #%{caseId})",
   
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",

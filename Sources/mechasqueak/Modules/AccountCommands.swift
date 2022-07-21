@@ -373,7 +373,7 @@ class AccountCommands: IRCBotModule {
                 if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey }) {
                     rescue.value.channel?.send(key: "jumpcall.change.odyssey", map: [
                         "caseId": rescue.key,
-                        "name": command.message.user.nickname,
+                        "nick": command.message.user.nickname,
                         "jumps": jumpCall.1
                     ])
                     break
@@ -408,7 +408,7 @@ class AccountCommands: IRCBotModule {
                 if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey == false }) {
                     rescue.value.channel?.send(key: "jumpcall.change.horizons", map: [
                         "caseId": rescue.key,
-                        "name": command.message.user.nickname,
+                        "nick": command.message.user.nickname,
                         "jumps": jumpCall.1
                     ])
                     break
