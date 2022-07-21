@@ -368,6 +368,17 @@ class AccountCommands: IRCBotModule {
             command.message.reply(key: "useodyssey.odyssey", fromCommand: command, map: [
                 "name": currentRat.attributes.name.value
             ])
+            
+            for rescue in await board.rescues {
+                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey }) {
+                    rescue.value.channel?.send(key: "jumpcall.change.odyssey", map: [
+                        "caseId": rescue.key,
+                        "name": command.message.user.nickname,
+                        "jumps": jumpCall.1
+                    ])
+                    break
+                }
+            }
         } catch {
             command.error(error)
         }
@@ -392,6 +403,17 @@ class AccountCommands: IRCBotModule {
                 "name": currentRat.attributes.name.value
             ])
             command.message.user.flush()
+            
+            for rescue in await board.rescues {
+                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey }) {
+                    rescue.value.channel?.send(key: "jumpcall.change.horizons", map: [
+                        "caseId": rescue.key,
+                        "name": command.message.user.nickname,
+                        "jumps": jumpCall.1
+                    ])
+                    break
+                }
+            }
         } catch {
             command.error(error)
         }

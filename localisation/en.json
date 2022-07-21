@@ -30,6 +30,8 @@
   "jumpcall.publicpermit": "CAUTION: %{nick} does not have the %{permit} permit required by case #%{caseId}.",
   "jumpcall.clientodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is using Odyssey, but the rat is not marked as being an Odyssey user",
   "jumpcall.ratodyssey": "CAUTION: %{nick} called jumps for case #%{caseId} which is NOT using Odyssey, but the rat is marked as being an Odyssey user",
+  "jumpcall.change.odyssey": "%{nick} has switched from Horizons to Odyssey (Called %{jumps} for Case #%{caseId})",
+  "jumpcall.change.horizons": "%{nick} has switched from Odyssey to Horizons (Called %{jumps} for Case #%{caseId})",
   
   "systemsearch.noresults": "No results were found for this system.",
   "systemsearch.nearestmatches": "Nearest matches for %{system} are %{results}.",
@@ -72,7 +74,7 @@
   "board.nickcorrected": "Caution: Nickname of case #%{caseId} (%{client}) has been automatically corrected to %{newNick}",
   "board.synced": "Successfully synced board with %{api}. %{updates}",
   "board.sync.error": "\u0002Alert:\u0002 I am having trouble updating case #%{caseId} on the server, the dispatch board is no longer up to date. I will keep trying and let you know when the issue has been resolved.",
-  "board.sync.errorsolved": "The problems with syncing case #%{caseId} has been resolved.",
+  "board.sync.errorsolved": "The problems with syncing case #%{caseId} have been resolved.",
   "board.synced.downstreamNew": {
       "one": "%{count} new rescue was downloaded from the server",
       "other": "%{count} new rescues were downloaded from the server"
