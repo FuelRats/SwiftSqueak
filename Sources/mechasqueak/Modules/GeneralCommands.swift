@@ -486,6 +486,7 @@ class GeneralCommands: IRCBotModule {
             category: nil,
             description: "Bulli the toobs",
             permission: .RescueWrite,
+            allowedDestinations: .Channel,
             cooldown: .seconds(600),
             cooldownOverride: .UserWrite
         )
@@ -503,6 +504,7 @@ class GeneralCommands: IRCBotModule {
         category: nil,
         description: "Unbulli the toobs",
         permission: .RescueWrite,
+        allowedDestinations: .Channel,
         cooldown: .seconds(600),
         cooldownOverride: .UserWrite
     )
