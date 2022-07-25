@@ -482,19 +482,36 @@ class GeneralCommands: IRCBotModule {
     }
     
     @BotCommand(
-            ["toobs", "toby"],
+            ["toobs", "toby", "badtoobs", "badtoby"],
             category: nil,
             description: "Bulli the toobs",
             permission: .RescueWrite,
             cooldown: .seconds(600),
             cooldownOverride: .UserWrite
         )
-    var didReceiveTobyCommand = { command in
+    var didReceiveBadTobyCommand = { command in
+        guard let toobsInfo = try? await ToobInfo.get() else {
+            return
+        }
+        let newCount = toobsInfo.count - 5
+        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense – continued rebellion may result in additional fines and or tail-chopping. Toby has a balance of \(newCount) snickers.")
+        try? await ToobInfo.update(count: newCount)
+    }
+    
+    @BotCommand(
+        ["goodtoobs", "goodtoby"],
+        category: nil,
+        description: "Unbulli the toobs",
+        permission: .RescueWrite,
+        cooldown: .seconds(600),
+        cooldownOverride: .UserWrite
+    )
+    var didReceiveGoodTobyCommand = { command in
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
         let newCount = toobsInfo.count + 5
-        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense – continued rebellion may result in additional fines and or tail-chopping. Toby has been fined \(newCount) snickers so far")
+        command.message.reply(message: "Toby_Charles has been granted 5 snickers but this should not be considered an endorsment and does not reflect the views of management. Toby has a balance of \(newCount) snickers.")
         try? await ToobInfo.update(count: newCount)
     }
 }
