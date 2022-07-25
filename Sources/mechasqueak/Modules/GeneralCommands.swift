@@ -510,6 +510,12 @@ class GeneralCommands: IRCBotModule {
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
+        if command.message.user.account == "TobyCharles" {
+            let newCount = toobsInfo.count - 1000
+            command.message.reply(message: "Nice try, 1000 snickers have been deducted from your balance, shame on you!")
+            try? await ToobInfo.update(count: newCount)
+            return
+        }
         let newCount = toobsInfo.count + 5
         command.message.reply(message: "Toby_Charles has been granted 5 snickers but this should not be considered an endorsment and does not reflect the views of management. Toby has a balance of \(newCount) snickers.")
         try? await ToobInfo.update(count: newCount)
