@@ -513,8 +513,8 @@ class GeneralCommands: IRCBotModule {
             return
         }
         if command.message.user.account == "TobyCharles" {
-            let newCount = toobsInfo.count - 1000
-            command.message.reply(message: "Nice try, 1000 snickers have been deducted from your balance, shame on you!")
+            let newCount = toobsInfo.count - 100
+            command.message.reply(message: "Nice try, 100 snickers have been deducted from your balance, shame on you!")
             try? await ToobInfo.update(count: newCount)
             return
         }
