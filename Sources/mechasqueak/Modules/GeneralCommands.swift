@@ -488,7 +488,6 @@ class GeneralCommands: IRCBotModule {
             permission: .RescueWrite,
             allowedDestinations: .Channel,
             cooldown: .seconds(600),
-            cooldownOverride: .UserWrite
         )
     var didReceiveBadTobyCommand = { command in
         guard command.message.destination.isPrivateMessage == false else {
@@ -529,6 +528,18 @@ class GeneralCommands: IRCBotModule {
         let newCount = toobsInfo.count + 5
         command.message.reply(message: "Toby_Charles has been granted 5 snickers but this should not be considered an endorsment and does not reflect the views of management. Toby has a balance of \(newCount) snickers.")
         try? await ToobInfo.update(count: newCount)
+    }
+    
+    @BotCommand(
+        ["meow"],
+        category: nil,
+        description: "Meow",
+    )
+    var didReceiveGoodTobyCommand = { command in
+        guard command.message.user.account == "Calomiriel[PC]" else {
+            return
+        }
+        command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "mewos")
     }
 }
 
