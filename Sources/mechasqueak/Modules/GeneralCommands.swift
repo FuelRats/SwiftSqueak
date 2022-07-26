@@ -533,13 +533,13 @@ class GeneralCommands: IRCBotModule {
     @BotCommand(
         ["meow"],
         category: nil,
-        description: "Meow",
+        description: "Meow"
     )
-    var didReceiveGoodTobyCommand = { command in
+    var didReceiveMeowCommand = { command in
         guard command.message.user.account == "Calomiriel[PC]" else {
             return
         }
-        command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "mewos")
+        command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "meows")
     }
 }
 
