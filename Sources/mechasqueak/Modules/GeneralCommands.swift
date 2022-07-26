@@ -491,6 +491,10 @@ class GeneralCommands: IRCBotModule {
             cooldownOverride: .UserWrite
         )
     var didReceiveBadTobyCommand = { command in
+        guard command.message.destination.isPrivateMessage == false else {
+            command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !badtoby in PM")
+            return
+        }
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
@@ -512,6 +516,10 @@ class GeneralCommands: IRCBotModule {
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
+        guard command.message.destination.isPrivateMessage == false else {
+                command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !goodtoby in PM")
+                return
+            }
         if command.message.user.account == "TobyCharles" {
             let newCount = toobsInfo.count - 100
             command.message.reply(message: "Nice try, 100 snickers have been deducted from your balance, shame on you!")
