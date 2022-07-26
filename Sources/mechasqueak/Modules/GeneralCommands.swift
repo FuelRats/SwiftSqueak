@@ -487,7 +487,7 @@ class GeneralCommands: IRCBotModule {
             description: "Bulli the toobs",
             permission: .RescueWrite,
             allowedDestinations: .Channel,
-            cooldown: .seconds(600),
+            cooldown: .seconds(600)
         )
     var didReceiveBadTobyCommand = { command in
         guard command.message.destination.isPrivateMessage == false else {
