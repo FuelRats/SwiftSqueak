@@ -12,6 +12,7 @@ import PostgresKit
 struct ToobInfo: Codable, Hashable {
     
     var count: Int
+    var lastCalomrielBribe: Date
     
     public static func get () async throws -> ToobInfo? {
             return try await withCheckedThrowingContinuation({ continuation in
@@ -30,10 +31,16 @@ struct ToobInfo: Codable, Hashable {
             })
         }
     
-    public static func update (count: Int) async throws {
+    public static func update (count: Int, lastCalomrielBribe: Date? = nil) async throws {
+        if let date = lastCalomrielBribe {
             return try await sql.update("toobs")
-                .set("count", to: count)
-                .run().asContinuation()
+                            .set("count", to: count)
+                            .set("lastCalomrielBribe", to: date)
+                            .run().asContinuation()
         }
+        return try await sql.update("toobs")
+            .set("count", to: count)
+            .run().asContinuation()
+    }
     
 }

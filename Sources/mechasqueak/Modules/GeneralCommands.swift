@@ -515,19 +515,27 @@ class GeneralCommands: IRCBotModule {
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
+        if command.message.user.account == "Calomiriel[PC]" && Date().timeIntervalSince(toobsInfo.lastCalomrielBribe) < (24 * 60 * 60) {
+            command.message.reply(message: "Calomriel is only allowed to use !goodtoby once every 24 hours")
+            return
+        }
         guard command.message.destination.isPrivateMessage == false else {
                 command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !goodtoby in PM")
                 return
-            }
+        }
         if command.message.user.account == "TobyCharles" {
             let newCount = toobsInfo.count - 100
             command.message.reply(message: "Nice try, 100 snickers have been deducted from your balance, shame on you!")
             try? await ToobInfo.update(count: newCount)
             return
         }
+        var calomrielDate: Date? = nil
+        if command.message.user.account == "Calomiriel[PC]" {
+            calomrielDate = Date()
+        }
         let newCount = toobsInfo.count + 5
         command.message.reply(message: "Toby_Charles has been granted 5 snickers but this should not be considered an endorsment and does not reflect the views of management. Toby has a balance of \(newCount) snickers.")
-        try? await ToobInfo.update(count: newCount)
+        try? await ToobInfo.update(count: newCount, lastCalomrielBribe: calomrielDate)
     }
     
     @BotCommand(
