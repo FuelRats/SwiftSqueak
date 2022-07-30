@@ -509,7 +509,7 @@ class GeneralCommands: IRCBotModule {
         permission: .RescueWrite,
         allowedDestinations: .Channel,
         cooldown: .seconds(600),
-        cooldownOverride: .UserWrite
+        cooldownOverride: nil
     )
     var didReceiveGoodTobyCommand = { command in
         guard let toobsInfo = try? await ToobInfo.get() else {
