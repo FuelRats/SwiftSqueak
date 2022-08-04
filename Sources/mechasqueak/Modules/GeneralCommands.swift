@@ -487,9 +487,13 @@ class GeneralCommands: IRCBotModule {
             description: "Bulli the toobs",
             permission: .RescueWrite,
             allowedDestinations: .Channel,
-            cooldown: .seconds(600)
+            cooldown: .seconds(600),
+            cooldownOverride: nil
         )
     var didReceiveBadTobyCommand = { command in
+        guard configuration.general.drillMode == false && command.message.destination.channelModes[IRCChannelMode.isSecret] != nil else {
+            return
+        }
         guard command.message.destination.isPrivateMessage == false else {
             command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !badtoby in PM")
             return
@@ -512,6 +516,9 @@ class GeneralCommands: IRCBotModule {
         cooldownOverride: nil
     )
     var didReceiveGoodTobyCommand = { command in
+        guard configuration.general.drillMode == false && command.message.destination.channelModes[IRCChannelMode.isSecret] != nil else {
+            return
+        }
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
