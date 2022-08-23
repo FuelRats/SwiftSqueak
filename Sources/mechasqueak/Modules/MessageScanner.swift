@@ -133,6 +133,7 @@ class MessageScanner: IRCBotModule {
             }
             
             let containsCarrierPhrase = carrierPhrases.contains(where: { channelMessage.message.lowercased().contains($0) })
+            let boardSynced = await board.isSynced
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)
@@ -151,7 +152,7 @@ class MessageScanner: IRCBotModule {
                         )
                     }
                 }
-            } else if configuration.general.drillMode == false {
+            } else if configuration.general.drillMode == false && boardSynced {
                 channelMessage.replyPrivate(message: lingo.localize(
                     "jumpcall.noaccount",
                     locale: "en-GB",

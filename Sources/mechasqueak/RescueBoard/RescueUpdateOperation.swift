@@ -122,16 +122,21 @@ class RescueUpdateOperation: Operation {
             self.isFinished = true
             throw CancellationError()
         }
+        let previousSyncState = self.rescue.synced
         do {
             let rescue = try await attemptUpload()
-            if errorReported {
+            if errorReported && previousSyncState == false {
                 mecha.reportingChannel?.send(key: "board.sync.errorsolved", map: [
                     "caseId": caseId
                 ])
             }
+            let allSuccess = await board.rescues.allSatisfy({ $0.value.synced && $0.value.uploaded })
+            if allSuccess {
+                await board.setIsSynced(true)
+            }
             return rescue
         } catch {
-            if errorReported == false {
+            if errorReported == false && previousSyncState == true {
                 mecha.reportingChannel?.send(key: "board.sync.error", map: [
                     "caseId": caseId
                 ])

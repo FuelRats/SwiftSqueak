@@ -122,6 +122,10 @@ class RescueCreateOperation: Operation {
                     "caseId": caseId
                 ])
             }
+            let allSuccess = await board.rescues.allSatisfy({ $0.value.synced && $0.value.uploaded })
+            if allSuccess {
+                await board.setIsSynced(true)
+            }
         } catch {
             if errorReported == false {
                 mecha.reportingChannel?.send(key: "board.sync.error", map: [
@@ -129,7 +133,7 @@ class RescueCreateOperation: Operation {
                 ])
                 errorReported = true
             }
-            try await Task.sleep(nanoseconds: 30 * 1000 * 1000)
+            try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
             try await performUploadUntilSuccess()
         }
     }

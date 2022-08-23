@@ -183,6 +183,22 @@ extension IRCUser {
                 .AnnouncementWrite
             ]
         }
+        
+        if self.hostmask.hasSuffix("trainer.fuelrats.com") {
+            return [
+                .UserReadOwn,
+                .UserWriteOwn,
+                .RatReadOwn,
+                .RatWriteOwn,
+                .RescueRead,
+                .RescueReadOwn,
+                .RescueWriteOwn,
+                .DispatchRead,
+                .DispatchWrite,
+                .TwitterWrite,
+                .AnnouncementWrite
+            ]
+        }
 
         if self.hostmask.hasSuffix("rat.fuelrats.com") {
             return [
@@ -194,7 +210,8 @@ extension IRCUser {
                 .RescueReadOwn,
                 .RescueWriteOwn,
                 .DispatchRead,
-                .DispatchWrite
+                .DispatchWrite,
+                .TwitterWrite
             ]
         }
 

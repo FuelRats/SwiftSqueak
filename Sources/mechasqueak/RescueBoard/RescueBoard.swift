@@ -77,6 +77,10 @@ actor RescueBoard {
         }
     }
     
+    func setIsSynced(_ synced: Bool) {
+        self.isSynced = synced
+    }
+    
     func sync () async throws {
         self.queue.cancelAllOperations()
         guard configuration.general.drillMode == false else {
@@ -156,6 +160,7 @@ actor RescueBoard {
             "api": configuration.api.url,
             "updates": updates.englishList
         ])
+        isSynced = true
         mecha.reportingChannel?.send(message: syncMessage)
     }
     
@@ -758,6 +763,18 @@ actor RescueBoard {
             return false
         }
     }
+    
+    func performSyncUntilSuccess (reported: Bool = false) async {
+            do {
+                try await self.sync()
+            } catch {
+                if reported == false {
+                    mecha.reportingChannel?.send(key: "board.syncfailed")
+                }
+                try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+                await performSyncUntilSuccess(reported: true)
+            }
+        }
     
     @EventListener<IRCUserJoinedChannelNotification>
     var onJoinChannel = { joinEvent in

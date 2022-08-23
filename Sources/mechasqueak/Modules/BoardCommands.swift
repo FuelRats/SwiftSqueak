@@ -49,7 +49,7 @@ class BoardCommands: IRCBotModule {
         allowedDestinations: .Channel
     )
     var didReceiveSyncCommand = { command in
-        try? await board.sync()
+        await board.performSyncUntilSuccess()
     }
     
     @BotCommand(

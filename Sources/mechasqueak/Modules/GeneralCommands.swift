@@ -482,20 +482,79 @@ class GeneralCommands: IRCBotModule {
     }
     
     @BotCommand(
-            ["toobs", "toby"],
+            ["toobs", "toby", "badtoobs", "badtoby"],
             category: nil,
             description: "Bulli the toobs",
             permission: .RescueWrite,
+            allowedDestinations: .Channel,
             cooldown: .seconds(600),
-            cooldownOverride: .UserWrite
+            cooldownOverride: nil
         )
-    var didReceiveTobyCommand = { command in
+    var didReceiveBadTobyCommand = { command in
+        guard configuration.general.drillMode == false && command.message.destination.channelModes[IRCChannelMode.isSecret] != nil else {
+            return
+        }
+        guard command.message.destination.isPrivateMessage == false else {
+            command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !badtoby in PM")
+            return
+        }
         guard let toobsInfo = try? await ToobInfo.get() else {
             return
         }
-        let newCount = toobsInfo.count + 5
-        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense – continued rebellion may result in additional fines and or tail-chopping. Toby has been fined \(newCount) snickers so far")
+        let newCount = toobsInfo.count - 5
+        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense – continued rebellion may result in additional fines and or tail-chopping. Toby has a balance of \(newCount) snickers.")
         try? await ToobInfo.update(count: newCount)
+    }
+    
+    @BotCommand(
+        ["goodtoobs", "goodtoby"],
+        category: nil,
+        description: "Unbulli the toobs",
+        permission: .RescueWrite,
+        allowedDestinations: .Channel,
+        cooldown: .seconds(600),
+        cooldownOverride: nil
+    )
+    var didReceiveGoodTobyCommand = { command in
+        guard configuration.general.drillMode == false && command.message.destination.channelModes[IRCChannelMode.isSecret] != nil else {
+            return
+        }
+        guard let toobsInfo = try? await ToobInfo.get() else {
+            return
+        }
+        if command.message.user.account == "Calomiriel[PC]" && Date().timeIntervalSince(toobsInfo.lastCalomrielBribe) < (24 * 60 * 60) {
+            command.message.reply(message: "Calomriel is only allowed to use !goodtoby once every 24 hours")
+            return
+        }
+        guard command.message.destination.isPrivateMessage == false else {
+                command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !goodtoby in PM")
+                return
+        }
+        if command.message.user.account == "TobyCharles" {
+            let newCount = toobsInfo.count - 100
+            command.message.reply(message: "Nice try, 100 snickers have been deducted from your balance, shame on you!")
+            try? await ToobInfo.update(count: newCount)
+            return
+        }
+        var calomrielDate: Date? = nil
+        if command.message.user.account == "Calomiriel[PC]" {
+            calomrielDate = Date()
+        }
+        let newCount = toobsInfo.count + 5
+        command.message.reply(message: "Toby_Charles has been granted 5 snickers but this should not be considered an endorsment and does not reflect the views of management. Toby has a balance of \(newCount) snickers.")
+        try? await ToobInfo.update(count: newCount, lastCalomrielBribe: calomrielDate)
+    }
+    
+    @BotCommand(
+        ["meow"],
+        category: nil,
+        description: "Meow"
+    )
+    var didReceiveMeowCommand = { command in
+        guard command.message.user.account == "Calomiriel[PC]" else {
+            return
+        }
+        command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "meows")
     }
 }
 
