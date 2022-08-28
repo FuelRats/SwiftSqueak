@@ -516,6 +516,10 @@ class FactCommands: IRCBotModule {
     }
 
     func messageFact (command: IRCBotCommand, fact: Fact) {
+        if (command.command == "discord" || command.command == "spritz") && command.message.user.account == "Wacky" {
+            command.message.retaliate()
+            return
+        }
         if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
             if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "supermanifolds") && command.message.destination != mecha.rescueChannel {
