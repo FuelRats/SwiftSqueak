@@ -15,9 +15,8 @@
 {% endif %}
 {% endfilter %}
  ({{ platform }}
-
-{% if rescue.odyssey %}
- {{ "O"|color:7|bold }}
+{% if expansion %}
+ {{ expansion }}
 {% endif %}
 {% if rescue.codeRed %}
  {{ "CR"|color:4|bold }}

@@ -29,12 +29,12 @@ struct SignalScanner {
     private static let platformExpression = "\\b(?:platform(?:\\: )?)?\\b(pc|xbox one|xbox|xb1|xb|playstation(?: 4)?|ps4|ps5|ps)\\b".r!
     private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b".r!
     private static let oxygenExpression = "\\b(?:(?:o2|oxygen)(?:\\:)? )?(ok|not ok|code red|cr)\\b".r!
-    private static let odysseyExpression = "\\b(odyssey)\\b".r!
+    private static let expansionExpression = "\\b(horizons 3|horizons 4|odyssey| horizons 3.8|horizons 4.0)\\b".r!
     
     var system: String? 
     let platform: String?
     let crStatus: String?
-    var odyssey: Bool
+    var expansion: String?
 
     var isCodeRed: Bool {
         if let crText = self.crStatus {
@@ -75,11 +75,9 @@ struct SignalScanner {
         }
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        if let odysseyMatch = SignalScanner.odysseyExpression.findFirst(in: message) {
-            self.odyssey = true
-            message = message.replacingOccurrences(of: odysseyMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
-        } else {
-            self.odyssey = false
+        if let expMatch = SignalScanner.expansionExpression.findFirst(in: message) {
+            self.expansion = expMatch.group(at: 1)?.lowercased()
+            message = message.replacingOccurrences(of: expMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         }
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 

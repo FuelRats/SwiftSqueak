@@ -176,6 +176,10 @@ class HelpCommands: IRCBotModule {
         if commandText.starts(with: "!") {
             commandText.removeFirst()
         }
+        if commandText == "sendhelp" {
+            command.message.retaliate()
+            return
+        }
         
         guard let helpCommand = MechaSqueak.commands.first(where: {
             $0.commands.contains(commandText)

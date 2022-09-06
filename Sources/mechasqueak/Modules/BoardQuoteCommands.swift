@@ -53,6 +53,7 @@ class BoardQuoteCommands: IRCBotModule {
             "caseId": caseId,
             "rescue": rescue,
             "platform": rescue.platform.ircRepresentable,
+            "expansion": rescue.platform == .PC ? rescue.expansion.ircRepresentable : "",
             "system": rescue.system as Any,
             "landmark": rescue.system?.landmark as Any,
             "status": rescue.status.rawValue

@@ -35,7 +35,7 @@ enum RatDescription: ResourceObjectDescription {
         public var name: Attribute<String>
         public var data: Attribute<RatDataObject>
         public var platform: Attribute<GamePlatform>
-        public var odyssey: Attribute<Bool>
+        public var expansion: Attribute<GameExpansion>
         public let frontierId: Attribute<String>?
         public let createdAt: Attribute<Date>
         public let updatedAt: Attribute<Date>
@@ -120,8 +120,8 @@ extension Rat {
         _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
     }
     
-    func setIsUsingOdyssey (_ isUsingOdyssey: Bool) async throws {
-        let updatedRat = self.tappingAttributes({ $0.odyssey = .init(value: isUsingOdyssey) })
+    func setGameExpansion (_ expansion: GameExpansion) async throws {
+        let updatedRat = self.tappingAttributes({ $0.expansion = .init(value: expansion) })
         return try await updatedRat.update()
     }
 }
@@ -204,6 +204,76 @@ enum GamePlatform: String, Codable, CaseIterable {
                 return nil
         }
     }
+}
+
+enum GameExpansion: String, Codable, CaseIterable {
+    case horizons3
+    case horizons4
+    case odyssey
+    
+    init (from decoder: Decoder) throws {
+        let rawValue = try decoder.singleValueContainer().decode(String.self)
+        if let value = GameExpansion.parsedFromText(text: rawValue) {
+            self = value
+        } else {
+            throw DecodingError.dataCorrupted(DecodingError.Context.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Invalid Enum Raw Value"
+            ))
+        }
+    }
+    
+    static var englishDescriptions: [GameExpansion: String] = [
+        .horizons3: "3.8 Horizons",
+        .horizons4: "4.0 Horizons",
+        .odyssey: "Odyssey"
+    ]
+    var englishDescription: String {
+        return GameExpansion.englishDescriptions[self]!
+    }
+    
+    static var shortEnglishDescriptions: [GameExpansion: String] = [
+        .horizons3: "3.8H",
+        .horizons4: "4.0H",
+        .odyssey: "ODY"
+    ]
+    var shortEnglishDescription: String {
+        return GameExpansion.shortEnglishDescriptions[self]!
+    }
+    
+    static var colors: [GameExpansion: IRCColor] = [
+        .horizons3: .Pink,
+        .horizons4: .LightCyan,
+        .odyssey: .Orange
+    ]
+    var color: IRCColor {
+        return GameExpansion.colors[self]!
+    }
+    
+    var ircRepresentable: String {
+        return IRCFormat.color(self.color, self.englishDescription)
+    }
+    
+    var shortIRCRepresentable: String {
+        return IRCFormat.color(self.color, self.shortEnglishDescription)
+    }
+    
+    static func parsedFromText (text: String) -> GameExpansion? {
+            let text = text.lowercased()
+            switch text {
+                case "horizons3", "horizons 3", "horizons 3.8", "h3", "h3.8", "3horizons", "3h", "3.8h", "3":
+                    return .horizons3
+
+                case "horizons4", "horizons 4", "horizons 4.0", "h4", "h4.0", "4horizons", "4h", "4.0h", "4":
+                    return .horizons4
+
+                case "odyssey", "o", "ody":
+                    return .odyssey
+
+                default:
+                    return nil
+            }
+        }
 }
 
 extension Optional where Wrapped == GamePlatform {

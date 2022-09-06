@@ -336,10 +336,7 @@ class FactCommands: IRCBotModule {
         if command.parameters.count > 0 {
             let targets: [(String, Rescue?)] = await command.parameters.asyncMap({ target in
                 var target = target
-                var (_, rescue) = await board.findRescue(withCaseIdentifier: target) ?? (nil, nil)
-                if rescue == nil && configuration.general.drillMode == false {
-                    rescue = await board.recentlyClosed.first(where: { $0.value.clientNick?.lowercased() == target.lowercased() })?.value
-                }
+                var (_, rescue) = await board.findRescue(withCaseIdentifier: target, includingRecentlyClosed: true) ?? (nil, nil)
                 if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
                     let targetLowercased = target.lowercased()
                     if let fuzzyTarget = command.message.destination.members.first(where: {
@@ -376,7 +373,7 @@ class FactCommands: IRCBotModule {
             }
             
             
-            if command.command == "kgbfoam" && targets.contains(where: { $1?.odyssey == true }) {
+            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion != .horizons3 }) {
                 command.command = "newkgbfoam"
             }
             
@@ -392,10 +389,10 @@ class FactCommands: IRCBotModule {
                     if command.command == "fr" && platform == .PC && targets.contains(where: { $1?.codeRed ?? false == true }) {
                         smartCommand.command += "cr"
                     }
-                    if smartCommand.command == "pcteam" && targets.contains(where: { $1?.odyssey == false }) {
+                    if smartCommand.command == "pcteam" && targets.contains(where: { $1?.expansion == .horizons3 }) {
                         smartCommand.command = "pcwing"
                     }
-                    if smartCommand.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
+                    if smartCommand.command == "pcwing" && targets.contains(where: { $1?.expansion != .horizons3 }) {
                         smartCommand.command = "pcteam"
                     }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
@@ -415,10 +412,10 @@ class FactCommands: IRCBotModule {
                     sendFact(command: command, message: message)
                 }
             } else {
-                if command.command == "pcteam" && targets.contains(where: { $1?.odyssey == false }) {
+                if command.command == "pcteam" && targets.contains(where: { $1?.expansion == .horizons3 }) {
                     command.command = "pcwing"
                 }
-                if command.command == "pcwing" && targets.contains(where: { $1?.odyssey == true }) {
+                if command.command == "pcwing" && targets.contains(where: { $1?.expansion != .horizons3 }) {
                     command.command = "pcteam"
                 }
                 

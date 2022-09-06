@@ -4,11 +4,11 @@
  #{{ caseId }}
 {% endfilter %}
  {{ platform|bold }}
+{% if expansion %}
+ {{ expansion }}
+{% endif %}
 {% if rescue.codeRed %}
  ({{ "Code Red"|color:4 }})
-{% endif %}
-{% if rescue.odyssey %}
- ({{ "Odyssey"|color:7 }})
 {% endif %}
  – {{ "CMDR"|bold }} {{ rescue.client|default:"unknown client" }}
 {{ rescue|inGameStatus }}

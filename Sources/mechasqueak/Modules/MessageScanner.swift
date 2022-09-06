@@ -40,7 +40,7 @@ class MessageScanner: IRCBotModule {
         "fr+", "fr-", "friend+", "wr+", "wing+", "wr-", "bc+", "bc-", "fuel+", "fuel-", "sys-", "sysconf", "destroyed", "exploded",
         "code red", "oxygen", "supercruise", "prep-", "prep+", "ez", "inst-", "open", "menu", "private", "actual",
         "solo", "ready", "pos+", "rdy", "stand down", "stnd", "stdn", "log off", "mmconf", "sys", "system", "tm-", "tm+",
-        "horizons", "odyssey"
+        "horizons", "odyssey", "3.8", "4.0"
     ]
     private static let standDownPhrases = ["stand down", "stnd", "stdn"]
     private static let carrierPhrases = ["fc", "carrier", "horizons", "odyssey"]
@@ -179,29 +179,19 @@ class MessageScanner: IRCBotModule {
             
             let platform = rescue.platform
             if configuration.general.drillMode == false && platform == .PC, let rat = channelMessage.user.getRatRepresenting(platform: platform!) {
-                if rescue.odyssey && rat.attributes.odyssey.value == false && containsCarrierPhrase == false {
+                if rescue.expansion != rat.attributes.expansion.value && containsCarrierPhrase == false {
                     channelMessage.client.sendMessage(
                         toChannelName: channelMessage.destination.name,
-                        withKey: "jumpcall.clientodyssey",
+                        withKey: "jumpcall.clientexpansion",
                         mapping: [
                             "caseId": caseId,
-                            "nick": channelMessage.user.nickname
+                            "nick": channelMessage.user.nickname,
+                            "rescueExpansion": rescue.expansion.ircRepresentable,
+                            "ratExpansion": rat.attributes.expansion.value.ircRepresentable
                         ]
                     )
                     
-                    message += " (Missing Odyssey)"
-                }
-                if rescue.odyssey == false && rat.attributes.odyssey.value && containsCarrierPhrase == false {
-                    channelMessage.client.sendMessage(
-                        toChannelName: channelMessage.destination.name,
-                        withKey: "jumpcall.ratodyssey",
-                        mapping: [
-                            "caseId": caseId,
-                            "nick": channelMessage.user.nickname
-                        ]
-                    )
-                    
-                    message += " (Using Odyssey)"
+                    message += " (Using \(rat.expansion.englishDescription)"
                 }
             }
 

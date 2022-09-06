@@ -249,11 +249,7 @@ class BoardAssignCommands: IRCBotModule {
                 if carrier {
                     errorMessage += "\(unidentified.joined(separator: ", ")) is not logged in"
                 } else if rescue.platform == .PC {
-                    if rescue.odyssey {
-                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.Orange, "Odyssey")))"
-                    } else {
-                        errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(IRCFormat.color(.LightGrey, "Horizons")))"
-                    }
+                    errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(rescue.expansion.ircRepresentable))"
                 } else {
                     errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
                 }
@@ -267,6 +263,15 @@ class BoardAssignCommands: IRCBotModule {
             })
             if jumpCallConflicts.count > 0 {
                 errorMessage += "\(jumpCallConflicts.joined(separator: ", ")) called for a different case and not this one. "
+            }
+            let unqualifiedRats = failedAssigns.compactMap({ assign -> String? in
+                if case let .unqualified(name) = assign {
+                    return name
+                }
+                return nil
+            })
+            if unqualifiedRats.count > 0 {
+                errorMessage += "\(unqualifiedRats.joined(separator: ", ")) are not drilled yet they were assigned to a CR case, this is heavily discouraged "
             }
             command.message.reply(message: errorMessage)
             

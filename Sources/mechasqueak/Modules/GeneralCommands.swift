@@ -338,13 +338,13 @@ class GeneralCommands: IRCBotModule {
         ["announce"],
         [
             .argument("cr"),
-            .argument("odyssey"),
             .argument("lang", "language code", example: "ru"),
             .param("channel", "#drillrats"),
             .param("client name", "Space Dawg"),
             .param("client nick", "SpaceDawg"),
             .param("PC/XB/PS", "PC"),
-            .param("system", "NLTT 48288", .continuous)
+            .param("system", "NLTT 48288", .continuous),
+            .argument("mode", "game version", example: "3h / 4h / o")
         ],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",
@@ -370,14 +370,18 @@ class GeneralCommands: IRCBotModule {
         }
         let system = command.parameters[4]
         let crStatus = command.has(argument: "cr") ? "NOT OK" : "OK"
-        
-        var key = "announcement"
-        if command.has(argument: "odyssey") {
-            if platform != .PC {
-                command.message.error(key: "announce.invalidplatform", fromCommand: command)
+        var expansion: GameExpansion = .horizons3
+        if let expansionString = command.argumentValue(for: "mode") {
+            guard let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) else {
+                command.message.error(key: "announce.invalidexpansion", fromCommand: command)
                 return
             }
-            key += ".odyssey"
+            expansion = parsedExpansion
+        }
+        
+        var key = "announcement"
+        if platform == .PC {
+            key += ".pc"
         }
         
         var locale = Locale(identifier: "en")
@@ -390,6 +394,7 @@ class GeneralCommands: IRCBotModule {
             "client": clientName,
             "system": system,
             "platform": platform.ircRepresentable,
+            "expansion": expansion.englishDescription,
             "crStatus": crStatus
         ])
 
@@ -397,6 +402,7 @@ class GeneralCommands: IRCBotModule {
             "client": clientName,
             "system": system,
             "platform": platform.rawValue.uppercased(),
+            "expansion": expansion.englishDescription,
             "crStatus": crStatus,
             "nick": clientNick,
             "language": locale.englishDescription,
@@ -417,7 +423,7 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveXboxLiveCommand = { command in
         var gamertag = command.parameters[0]
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: gamertag), rescue.platform == .Xbox {
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: gamertag, includingRecentlyClosed: true), rescue.platform == .Xbox {
             gamertag = rescue.client ?? gamertag
         }
         
@@ -454,7 +460,7 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceivePSNCommand = { command in
         var username = command.parameters[0]
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: username), rescue.platform == .PS {
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: username, includingRecentlyClosed: true), rescue.platform == .PS {
             username = rescue.client ?? username
         }
         
@@ -479,70 +485,6 @@ class GeneralCommands: IRCBotModule {
         }
         
         command.message.reply(message: "\(profile.onlineId) \(presence.status) \(profile.psPlusStatus) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
-    }
-    
-    @BotCommand(
-            ["toobs", "toby", "badtoobs", "badtoby"],
-            category: nil,
-            description: "Bulli the toobs",
-            permission: .RescueWrite,
-            allowedDestinations: .Channel,
-            cooldown: .seconds(600),
-            cooldownOverride: nil
-        )
-    var didReceiveBadTobyCommand = { command in
-        guard configuration.general.drillMode == false && command.message.destination.channelModes[IRCChannelMode.isSecret] != nil else {
-            return
-        }
-        guard command.message.destination.isPrivateMessage == false else {
-            command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !badtoby in PM")
-            return
-        }
-        guard let toobsInfo = try? await ToobInfo.get() else {
-            return
-        }
-        let newCount = toobsInfo.count - 5
-        command.message.reply(message: "Toby_Charles has been fined 5 snickers for their offense – continued rebellion may result in additional fines and or tail-chopping. Toby has a balance of \(newCount) snickers.")
-        try? await ToobInfo.update(count: newCount)
-    }
-    
-    @BotCommand(
-        ["goodtoobs", "goodtoby"],
-        category: nil,
-        description: "Unbulli the toobs",
-        permission: .RescueWrite,
-        allowedDestinations: .Channel,
-        cooldown: .seconds(600),
-        cooldownOverride: nil
-    )
-    var didReceiveGoodTobyCommand = { command in
-        guard configuration.general.drillMode == false && command.message.destination.channelModes[IRCChannelMode.isSecret] != nil else {
-            return
-        }
-        guard let toobsInfo = try? await ToobInfo.get() else {
-            return
-        }
-        if command.message.user.account == "Calomiriel[PC]" && Date().timeIntervalSince(toobsInfo.lastCalomrielBribe) < (24 * 60 * 60) {
-            command.message.reply(message: "Calomriel is only allowed to use !goodtoby once every 24 hours")
-            return
-        }
-        guard command.message.destination.isPrivateMessage == false else {
-                command.message.client.sendMessage(toTarget: "SuperManifolds", contents: "\(command.message.user.nickname) tried to use !goodtoby in PM")
-                return
-        }
-        if command.message.user.account == "TobyCharles" {
-            let newCount = toobsInfo.count - 100
-            command.message.reply(message: "Nice try, 100 snickers have been deducted from your balance, shame on you!")
-            try? await ToobInfo.update(count: newCount)
-            return
-        }
-        var calomrielDate: Date? = nil
-        if command.message.user.account == "Calomiriel[PC]" {
-            calomrielDate = Date()
-        }
-        let newCount = toobsInfo.count + 5
-        command.message.reply(message: "Toby_Charles has been granted 5 snickers but this should not be considered an endorsment and does not reflect the views of management. Toby has a balance of \(newCount) snickers.")
-        try? await ToobInfo.update(count: newCount, lastCalomrielBribe: calomrielDate)
     }
     
     @BotCommand(

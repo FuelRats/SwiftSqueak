@@ -105,8 +105,8 @@ class TweetCommands: IRCBotModule {
         }
         
         var platformDescription = String(describing: platform)
-        if rescue.odyssey {
-            platformDescription += " (Odyssey)"
+        if rescue.platform == .PC {
+            platformDescription += " (\(rescue.expansion.englishDescription))"
         }
 
         let url = URL(string: "https://fuelrats.com/paperwork/\(rescue.id)")!

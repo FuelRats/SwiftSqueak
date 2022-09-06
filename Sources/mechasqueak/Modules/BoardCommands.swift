@@ -59,7 +59,7 @@ class BoardCommands: IRCBotModule {
             .argument("pc", example: ""),
             .argument("xb"),
             .argument("ps"),
-            .argument("odyssey"),
+            .argument("mode", "game version", example: "3h / 4h / o"),
             .argument("cr"),
             .argument("sys", "system", example: "NLTT 48288"),
             .argument("cmdr", "CMDR name", example: "Space Dawg"),
@@ -73,16 +73,20 @@ class BoardCommands: IRCBotModule {
         let nickname = command.parameters[0]
         
         var platform = command.arguments.keys.compactMap({ GamePlatform(rawValue: $0) }).first
-        let odyssey = command.has(argument: "odyssey")
-        if odyssey && platform == nil {
-            platform = .PC
-        }
         let codeRed = command.has(argument: "cr")
         let starSystem = command.argumentValue(for: "sys")
         let cmdrName = command.argumentValue(for: "cmdr")
         var locale: Locale? = nil
         if let lang = command.argumentValue(for: "lang") {
             locale = Locale(identifier: lang)
+        }
+        var expansion: GameExpansion = .horizons3
+        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
+            expansion = parsedExpansion
+        }
+        
+        if expansion != .horizons3 && platform != .PC {
+            platform = .PC
         }
         
         let rescue = Rescue(
@@ -92,7 +96,7 @@ class BoardCommands: IRCBotModule {
             system: starSystem,
             locale: locale,
             codeRed: codeRed,
-            odyssey: odyssey,
+            expansion: expansion,
             fromCommand: command
         )
         rescue.quotes.append(RescueQuote(
@@ -107,7 +111,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["list"],
-        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("horizons"), .argument("odyssey")],
+        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("mode", "game version", example: "h3 / h4 / o")],
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
         permission: .DispatchRead,
@@ -125,6 +129,11 @@ class BoardCommands: IRCBotModule {
         let filteredPlatforms = command.arguments.keys.compactMap({
             GamePlatform(rawValue: $0)
         })
+        
+        var filterExpansion: GameExpansion? = nil
+        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
+            filterExpansion = parsedExpansion
+        }
 
         let rescues = await board.rescues.filter({ (caseId, rescue) in
             if filteredPlatforms.count > 0 && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false {
@@ -150,11 +159,7 @@ class BoardCommands: IRCBotModule {
                 return false
             }
             
-            if command.has(argument: "horizons") && command.has(argument: "odyssey") == false && rescue.odyssey == true {
-                return false
-            }
-            
-            if command.has(argument: "horizons") == false && command.has(argument: "odyssey") && rescue.odyssey == false {
+            if let expansion = filterExpansion, rescue.expansion != expansion {
                 return false
             }
 
@@ -179,6 +184,7 @@ class BoardCommands: IRCBotModule {
                 "caseId": id,
                 "rescue": rescue,
                 "platform": rescue.platform.ircRepresentable,
+                "expansion": rescue.platform == .PC ?  rescue.expansion.shortIRCRepresentable : "",
                 "includeCaseIds": arguments.contains(.includeCaseIds)
             ])
             return output
@@ -381,7 +387,7 @@ class BoardCommands: IRCBotModule {
         permission: .DispatchRead
     )
     var didReceivePaperworkLinkCommand = { command in
-        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command, includingRecentlyClosed: true) else {
             return
         }
 
@@ -394,7 +400,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["quiet", "last"],
-        [.argument("pc"), .argument("xb"), .argument("ps"), .options(["o"])],
+        [.argument("pc"), .argument("xb"), .argument("ps"), .argument("mode", "game version", example: "h3 / h4 / o")],
         category: .other,
         description: "Displays the amount of time since the last rescue",
         permission: .RescueReadOwn,
@@ -406,31 +412,31 @@ class BoardCommands: IRCBotModule {
             command.message.reply(message: "Yeah no you're gonna have to make up your mind and pick one")
             return
         }
-        let odyssey = command.options.contains("o")
-        if odyssey && arguments.count == 0 {
-            arguments.updateValue(nil, forKey: "pc")
-        }
         var lastSignalDate: Date? = nil
         var platform: GamePlatform? = nil
+        var expansion: GameExpansion = .horizons3
+        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
+            expansion = parsedExpansion
+        }
         
         if let filteredPlatform = arguments.keys.first {
             guard let commandPlatform = GamePlatform(rawValue: filteredPlatform) else {
                 return
             }
             
-            if odyssey && commandPlatform != .PC {
-                command.message.reply(message: "What are you even trying to do there?")
+            if expansion != .horizons3 && commandPlatform != .PC {
+                command.message.reply(message: "Hey! Console doesn't have this \(command.message.user.nickname), wtf are you trying to pull?")
                 return
             }
             
-            lastSignalDate = await board.lastSignalsReceived[PlatformExpansion(platform: commandPlatform, odyssey: odyssey)]
+            lastSignalDate = await board.lastSignalsReceived[PlatformExpansion(platform: commandPlatform, expansion: expansion)]
             platform = commandPlatform
         } else {
             lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
         var ircPlatform = platform != nil ? platform.ircRepresentable + " " : ""
         if platform == .PC {
-            ircPlatform += odyssey ? "(Odyssey) " : "(Horizons) "
+            ircPlatform += expansion.ircRepresentable
         }
         
         guard let lastSignalDate = lastSignalDate else {
@@ -441,7 +447,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { (caseId, rescue) -> Bool in
-            return rescue.status != .Inactive && (platform == nil || (rescue.platform == platform && rescue.odyssey == odyssey)) && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
+            return rescue.status != .Inactive && (platform == nil || (rescue.platform == platform && rescue.expansion == expansion)) && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
             command.message.reply(key: "board.quiet.currentcalljumps", fromCommand: command, map: [
@@ -451,7 +457,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard await board.rescues.first(where: { rescue in
-            return rescue.1.status != .Inactive && (platform == nil || (rescue.1.platform == platform && rescue.1.odyssey == odyssey))
+            return rescue.1.status != .Inactive && (platform == nil || (rescue.1.platform == platform && rescue.1.expansion == expansion))
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {
                 command.message.reply(key: "board.quiet.currentjoin", fromCommand: command, map: [
@@ -533,8 +539,8 @@ class BoardCommands: IRCBotModule {
         ])
     }
 
-    static func assertGetRescueId (command: IRCBotCommand) async -> (Int, Rescue)? {
-        guard let rescue = await board.findRescue(withCaseIdentifier: command.parameters[0]) else {
+    static func assertGetRescueId (command: IRCBotCommand, includingRecentlyClosed: Bool = false) async -> (Int, Rescue)? {
+        guard let rescue = await board.findRescue(withCaseIdentifier: command.parameters[0], includingRecentlyClosed: includingRecentlyClosed) else {
             command.message.error(key: "board.casenotfound", fromCommand: command, map: [
                 "caseIdentifier": command.parameters[0]
             ])
@@ -578,8 +584,7 @@ enum ListCommandArgument: String {
     case showOnlyPC = "pc"
     case showOnlyXbox = "xb"
     case showOnlyPS = "ps"
-    case showOnlyHorizons = "horizons"
-    case showOnlyOdyssey = "odyssey"
+    case expansion = "mode"
 
     var description: String {
         let maps: [ListCommandArgument: String] = [
@@ -592,8 +597,7 @@ enum ListCommandArgument: String {
             .showOnlyPC: "Show only PC cases",
             .showOnlyXbox: "Show only Xbox cases",
             .showOnlyPS: "Show only Playstation cases",
-            .showOnlyHorizons: "Show only Horizons cases",
-            .showOnlyOdyssey: "Show only Odyssey cases"
+            .expansion: "Filter by game version"
         ]
         return maps[self]!
     }

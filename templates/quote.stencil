@@ -2,6 +2,9 @@
 Inactive
  {% endif %}
 {{ platform|bold }}
+{% if expansion %}
+ {{ expansion }}
+{% endif %}
  Case
 {% filter bold %}
  #{{ caseId }}:
@@ -15,9 +18,6 @@ Inactive
 {% endfilter %}
 {% if rescue.clientNick and rescue.client != rescue.clientNick %}
  (Nick: {{ rescue.clientNick }})
-{% endif %}
-{% if rescue.odyssey %}
- ({{ "Odyssey"|color:7 }})
 {% endif %}
  in
   {% include "starsystem.stencil" %}

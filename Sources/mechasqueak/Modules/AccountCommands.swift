@@ -63,8 +63,8 @@ class AccountCommands: IRCBotModule {
         }
 
         let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
-            if rat.odyssey {
-                return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable)) (\(IRCFormat.color(.Orange, "Odyssey")))"
+            if rat.platform == .PC {
+                return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable)) (\(rat.attributes.expansion.value.ircRepresentable))"
             }
             return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
         }).joined(separator: ", ")
@@ -140,8 +140,8 @@ class AccountCommands: IRCBotModule {
             if rat.data.permits?.contains("Pilots' Federation District") == true {
                 description += " (\(IRCFormat.color(.Grey, "Starter Zone")))"
             }
-            if rat.odyssey {
-                description += " (\(IRCFormat.color(.Orange, "Odyssey")))"
+            if rat.platform == .PC {
+                description += " (\(rat.attributes.expansion.value.ircRepresentable))"
             }
             return description
         }).joined(separator: ", ")
@@ -347,75 +347,72 @@ class AccountCommands: IRCBotModule {
         }
     }
     
+    
     @BotCommand(
-        ["useodyssey"],
+        ["mymode", "myversion"],
+        [.param("game version", "3h / 4h / o")],
         category: .account,
-        description: "Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
+        description: "Informs Mecha which PC game version you are using",
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage
     )
-    var didReceiveUseOdysseyCommand = { command in
+    var didReceiveMyExpansionCommand = { command in
         guard let currentRat = command.message.user.getRatRepresenting(platform: .PC) else {
-            command.message.replyPrivate(key: "useodyssey.norat", fromCommand: command)
+            command.message.replyPrivate(key: "myexpansion.norat", fromCommand: command)
             return
         }
         
-        let isUsingOdyssey = !currentRat.attributes.odyssey.value
+        let oldExpansion = currentRat.attributes.expansion.value
+        guard let expansion = GameExpansion.parsedFromText(text: command.parameters[0]) else {
+            command.message.error(key: "myexpansion.invalid", fromCommand: command, map: [
+                "expansion": command.parameters[0]
+            ])
+            return
+        }
         
         do {
-            try await currentRat.setIsUsingOdyssey(true)
+            try await currentRat.setGameExpansion(expansion)
             command.message.user.flush()
-            command.message.reply(key: "useodyssey.odyssey", fromCommand: command, map: [
-                "name": currentRat.attributes.name.value
+            command.message.reply(key: "myexpansion.success", fromCommand: command, map: [
+                "name": currentRat.attributes.name.value,
+                "expansion": expansion.englishDescription
             ])
             
             for rescue in await board.rescues {
-                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey }) {
-                    rescue.value.channel?.send(key: "jumpcall.change.odyssey", map: [
+                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.expansion == expansion }) {
+                    rescue.value.channel?.send(key: "jumpcall.change.expansion", map: [
                         "caseId": rescue.key,
                         "nick": command.message.user.nickname,
-                        "jumps": jumpCall.1
+                        "jumps": jumpCall.1,
+                        "oldExpansion": oldExpansion.ircRepresentable,
+                        "newExpansion": expansion.ircRepresentable
                     ])
                     break
                 }
             }
         } catch {
+            debug(String(describing: error))
             command.error(error)
         }
     }
     
     @BotCommand(
+        ["useodyssey"],
+        category: nil,
+        description: "DEPRECATED: Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
+        permission: .UserWriteOwn
+    )
+    var didReceiveUseOdysseyCommand = { command in
+        command.message.reply(message: "!useodyssey has been deprecated, use !mymode o")
+    }
+    
+    @BotCommand(
         ["usehorizons"],
-        category: .account,
-        description: "Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
-        permission: .UserWriteOwn,
-        allowedDestinations: .PrivateMessage
+        category: nil,
+        description: "DEPRECATED: Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
+        permission: .UserWriteOwn
     )
     var didReceiveUseHorizonsCommand = { command in
-        guard let currentRat = command.message.user.getRatRepresenting(platform: .PC) else {
-            command.message.replyPrivate(key: "useodyssey.norat", fromCommand: command)
-            return
-        }
-        
-        do {
-            try await currentRat.setIsUsingOdyssey(false)
-            command.message.reply(key: "useodyssey.horizons", fromCommand: command, map: [
-                "name": currentRat.attributes.name.value
-            ])
-            command.message.user.flush()
-            
-            for rescue in await board.rescues {
-                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.odyssey == false }) {
-                    rescue.value.channel?.send(key: "jumpcall.change.horizons", map: [
-                        "caseId": rescue.key,
-                        "nick": command.message.user.nickname,
-                        "jumps": jumpCall.1
-                    ])
-                    break
-                }
-            }
-        } catch {
-            command.error(error)
-        }
+        command.message.reply(message: "!usehorizons has been deprecated, use !mymode 3h or !mymode 4h depending on whether you are using 3.8 or 4.0")
     }
 }

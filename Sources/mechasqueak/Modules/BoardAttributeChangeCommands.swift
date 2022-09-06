@@ -337,30 +337,127 @@ class BoardAttributeCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["odyssey", "horizon", "horizons"],
-        [.param("case id/client", "4")],
+        ["mode"],
+        [.param("case id/client", "4"), .param("game version", "3h / 4h / o")],
         category: .board,
-        description: "Toggle a case between odyssey or not odyssey",
+        description: "Changes the PC expansion of a case",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
-    var didReceiveToggleOdysseycommand = { command in
+    var didReceiveExpansionCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-
-        rescue.odyssey = !rescue.odyssey
-        try? rescue.save(command)
         
-        if rescue.odyssey && rescue.platform != .PC {
-            command.message.error(key: "board.toggleodyssey.platform", fromCommand: command)
+        guard let expansion = GameExpansion.parsedFromText(text: command.parameters[1]) else {
+            command.message.error(key: "board.expansion.invalid", fromCommand: command, map: [
+                "expansion": command.parameters[1]
+            ])
             return
         }
         
-        let key = "board.toggleodyssey." + (rescue.odyssey ? "on" : "off")
-        command.message.reply(key: key, fromCommand: command, map: [
+        if rescue.expansion != .horizons3 && rescue.platform != .PC {
+            command.message.error(key: "board.expansion.platform", fromCommand: command)
+            return
+        }
+
+        rescue.expansion = expansion
+        try? rescue.save(command)
+        
+        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
             "caseId": caseId,
-            "client": rescue.clientDescription
+            "client": rescue.clientDescription,
+            "expansion": expansion.ircRepresentable
         ])
+    }
+    
+    @BotCommand(
+        ["horizons3", "3h", "h3"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Changes a PC case to use the 3.8 Horizons expansion",
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+        )
+    var didReceiveHorizons3Command = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+        
+        let expansion: GameExpansion = .horizons3
+        rescue.expansion = expansion
+        try? rescue.save(command)
+        
+        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
+            "caseId": caseId,
+            "client": rescue.clientDescription,
+            "expansion": expansion.ircRepresentable
+        ])
+    }
+    
+    @BotCommand(
+        ["horizons4", "4h", "h4"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Changes a PC case to use the 4.0 Horizons expansion",
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+        )
+    var didReceiveHorizons4Command = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+        
+        if rescue.platform != .PC {
+            command.message.error(key: "board.expansion.platform", fromCommand: command)
+            return
+        }
+        let expansion: GameExpansion = .horizons4
+        rescue.expansion = expansion
+        try? rescue.save(command)
+        
+        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
+            "caseId": caseId,
+            "client": rescue.clientDescription,
+            "expansion": expansion.ircRepresentable
+        ])
+    }
+    
+    @BotCommand(
+        ["odyssey", "ody", "o"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Changes a PC case to use the Odyssey expansion",
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+        )
+    var didReceiveOdysseyCommand = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+        
+        if rescue.platform != .PC {
+            command.message.error(key: "board.expansion.platform", fromCommand: command)
+            return
+        }
+        let expansion: GameExpansion = .odyssey
+        rescue.expansion = expansion
+        try? rescue.save(command)
+        
+        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
+            "caseId": caseId,
+            "client": rescue.clientDescription,
+            "expansion": expansion.ircRepresentable
+        ])
+    }
+    
+    @BotCommand(
+        ["horizon", "horizons"],
+        [.param("case id/client", "4")],
+        category: nil,
+        description: "DEPRECATED: Toggle a case between odyssey or not odyssey"
+    )
+    var didReceiveHorizonsCommand = { command in
+        command.message.reply(message: "This command has been deprecated, use !3h / !4h or !mode <case id/client name> <game version> (e.g !mode 4 3h, !mode 4 4h)")
     }
 }

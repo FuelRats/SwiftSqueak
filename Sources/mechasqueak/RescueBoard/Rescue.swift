@@ -29,7 +29,7 @@ import IRCKit
 import NIO
 
 class Rescue {
-    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( \\(Odyssey\\))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?".r!
+    private static let announcerExpression = "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( (Horizons 3|Horizons 4|Odyssey))? - O2: (.*) - Language: .* \\(([a-z]{2}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?".r!
 
     let id: UUID
 
@@ -39,7 +39,7 @@ class Rescue {
     var codeRed: Bool               { didSet { property(\.codeRed, didChangeFrom: oldValue) } }
     var notes: String               { didSet { property(\.notes, didChangeFrom: oldValue) } }
     var platform: GamePlatform?     { didSet { property(\.platform, didChangeFrom: oldValue) } }
-    var odyssey: Bool               { didSet { property(\.odyssey, didChangeFrom: oldValue) } }
+    var expansion: GameExpansion    { didSet { property(\.expansion, didChangeFrom: oldValue) } }
     var quotes: [RescueQuote]       { didSet { property(\.quotes, didChangeFrom: oldValue) } }
     var status: RescueStatus        { didSet { property(\.status, didChangeFrom: oldValue) } }
     var system: StarSystem?         { didSet { property(\.system, didChangeFrom: oldValue) } }
@@ -80,10 +80,11 @@ class Rescue {
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
-        self.odyssey = match.group(at: 4) != nil
+        let expansionText = match.group(at: 5)!
+        self.expansion = GameExpansion.parsedFromText(text: expansionText) ?? .horizons3
         
 
-        let o2StatusString = match.group(at: 5)!
+        let o2StatusString = match.group(at: 6)!
         if o2StatusString.uppercased() == "NOT OK" {
             self.codeRed = true
         } else {
@@ -134,7 +135,11 @@ class Rescue {
         if let platformString = signal.platform {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
-        self.odyssey = signal.odyssey
+        if let expansionString = signal.expansion {
+            self.expansion = GameExpansion.parsedFromText(text: expansionString) ?? .horizons3
+        } else {
+            self.expansion = .horizons3
+        }
         self.clientLanguage = Locale(identifier: "en")
 
         self.codeRed = signal.isCodeRed
@@ -183,10 +188,10 @@ class Rescue {
             self.platform = platform
         }
         
-        if self.platform == .PC {
-            self.odyssey = input.odyssey
+        if let expansionString = input.expansion, self.platform == .PC {
+            self.expansion = GameExpansion.parsedFromText(text: expansionString) ?? .horizons3
         } else {
-            self.odyssey = false
+            self.expansion = .horizons3
         }
 
         self.codeRed = input.isCodeRed
@@ -204,7 +209,7 @@ class Rescue {
         self.uploaded = false
     }
     
-    init (client: String, nick: String, platform: GamePlatform?, system: String? = nil, locale: Locale? = nil, codeRed: Bool = false, odyssey: Bool = false, fromCommand command: IRCBotCommand) {
+    init (client: String, nick: String, platform: GamePlatform?, system: String? = nil, locale: Locale? = nil, codeRed: Bool = false, expansion: GameExpansion?, fromCommand command: IRCBotCommand) {
         self.id = UUID()
 
         self.client = client
@@ -220,7 +225,7 @@ class Rescue {
         self.channelName = command.message.destination.name
 
         self.platform = platform
-        self.odyssey = odyssey
+        self.expansion = expansion ?? .horizons3
 
         self.codeRed = codeRed
         self.notes = ""
@@ -255,7 +260,7 @@ class Rescue {
         } else {
             self.system = nil
         }
-        self.odyssey = attr.odyssey.value
+        self.expansion = attr.expansion.value ?? .horizons3
         self.quotes = attr.quotes.value
         self.status = attr.status.value
         self.title = attr.title.value
@@ -400,7 +405,7 @@ class Rescue {
                 )),
                 notes: .init(value: self.notes),
                 platform: .init(value: self.platform),
-                odyssey: .init(value: self.odyssey),
+                expansion: .init(value: self.expansion),
                 system: .init(value: self.system?.name),
                 quotes: .init(value: self.quotes),
                 status: .init(value: self.status),
@@ -494,8 +499,8 @@ class Rescue {
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
                 Task {
                     _ = try? await QueueAPI.dequeue()
-                    if let platform = self.platform, await board.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: self.odyssey)] ?? Date(timeIntervalSince1970: 0) < self.createdAt {
-                        await board.setLastSignalReceived(platform: platform, odyssey: self.odyssey, date: self.createdAt)
+                    if let platform = self.platform, await board.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: self.expansion)] ?? Date(timeIntervalSince1970: 0) < self.createdAt {
+                        await board.setLastSignalReceived(platform: platform, expansion: self.expansion, date: self.createdAt)
                     }
                 }
             }
@@ -523,13 +528,16 @@ class Rescue {
         guard let nick = channel.member(named: param) else {
             return Result.failure(RescueAssignError.notFound(param))
         }
+        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false {
+            return Result.failure(.unqualified(nick.nickname))
+        }
         
         var rat: Rat? = nil
         if carrier {
             rat = nick.currentRat
         } else {
             let assignRat = nick.getRatRepresenting(platform: self.platform)
-            if assignRat?.attributes.odyssey.value == self.odyssey {
+            if assignRat?.attributes.expansion.value == self.expansion {
                 rat = assignRat
             }
         }
@@ -729,8 +737,8 @@ class Rescue {
         }
         
         if keyPath == \.platform {
-            if platform != .PC && odyssey {
-                odyssey = false
+            if platform != .PC && expansion != .horizons3 {
+                expansion = .horizons3
             }
         }
         synced = false
@@ -743,7 +751,7 @@ enum RescueAssignError: Error {
     case notFound(String)
     case jumpCallConflict(Rat)
     case unidentified(String)
-    
+    case unqualified(String)
 }
 
 enum AssignmentResult {

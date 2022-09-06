@@ -29,7 +29,7 @@ import Regex
 
 struct PlatformExpansion: Codable, Hashable {
     let platform: GamePlatform
-    let odyssey: Bool
+    let expansion: GameExpansion
 }
 
 actor RescueBoard {
@@ -57,20 +57,24 @@ actor RescueBoard {
             }
             
             for platform in GamePlatform.allCases {
-                guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.outcome != .Purge })?.createdAt else {
-                    continue
-                }
-                let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: false)]
-                if lastSignalReceived == nil || createdAt > lastSignalReceived! {
-                    await self.setLastSignalReceived(platform: platform, odyssey: false, createdAt)
-                }
-                if platform == .PC {
-                    guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.odyssey == true && $0.outcome != .Purge })?.createdAt else {
+                if platform != .PC {
+                    guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.outcome != .Purge })?.createdAt else {
                         continue
                     }
-                    let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: true)]
+                    let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: .horizons3)]
                     if lastSignalReceived == nil || createdAt > lastSignalReceived! {
-                        await self.setLastSignalReceived(platform: platform, odyssey: true, createdAt)
+                        await self.setLastSignalReceived(platform: platform, expansion: .horizons3, createdAt)
+                    }
+                    continue
+                }
+                
+                for expansion in GameExpansion.allCases {
+                    guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.expansion == expansion && $0.outcome != .Purge })?.createdAt else {
+                        continue
+                    }
+                    let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)]
+                    if lastSignalReceived == nil || createdAt > lastSignalReceived! {
+                        await self.setLastSignalReceived(platform: platform, expansion: expansion, date: createdAt)
                     }
                 }
             }
@@ -177,7 +181,7 @@ actor RescueBoard {
         return self.rescues.filter({ $0.value.status == .Open }).count
     }
 
-    func findRescue (withCaseIdentifier caseIdentifier: String) async -> (Int, Rescue)? {
+    func findRescue (withCaseIdentifier caseIdentifier: String, includingRecentlyClosed: Bool = false) async -> (Int, Rescue)? {
         var caseIdentifier = caseIdentifier
         if caseIdentifier.starts(with: "#") {
             caseIdentifier = String(caseIdentifier.suffix(
@@ -196,6 +200,16 @@ actor RescueBoard {
                 || clientNick == caseIdentifier.lowercased()
         }) {
             return (key: caseId, value:rescue)
+        }
+        if includingRecentlyClosed {
+            if let caseIdNumber = Int(caseIdentifier), let rescue = self.recentlyClosed[caseIdNumber] {
+                return (key: caseIdNumber, value: rescue)
+            }
+            if let (caseId, rescue) = self.recentlyClosed.first(where: { (_, rescue) in
+                return rescue.client?.lowercased() == caseIdentifier.lowercased() || rescue.clientNick?.lowercased() == caseIdentifier.lowercased()
+            }) {
+                return (key: caseId, value: rescue)
+            }
         }
         return nil
     }
@@ -364,6 +378,7 @@ actor RescueBoard {
                 "caseId": identifier,
                 "signal": configuration.general.signal.uppercased(),
                 "platform": rescue.platform.ircRepresentable,
+                "expansion": rescue.platform == .PC ? rescue.expansion.ircRepresentable : "",
                 "rescue": rescue,
                 "system": rescue.system as Any,
                 "landmark": rescue.system?.landmark as Any,
@@ -384,6 +399,7 @@ actor RescueBoard {
             "caseId": identifier,
             "signal": configuration.general.signal.uppercased(),
             "platform": rescue.platform.ircRepresentable,
+            "expansion": rescue.platform == .PC ? rescue.expansion.ircRepresentable : "",
             "rescue": rescue,
             "system": rescue.system as Any,
             "landmark": rescue.system?.landmark as Any,
@@ -465,8 +481,8 @@ actor RescueBoard {
         return false
     }
     
-    func setLastSignalReceived(platform: GamePlatform, odyssey: Bool, date: Date) {
-        self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: odyssey)] = date
+    func setLastSignalReceived(platform: GamePlatform, expansion: GameExpansion, date: Date) {
+        self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)] = date
     }
     
     func getNewIdentifier (even: Bool? = nil) -> Int {
@@ -538,8 +554,8 @@ actor RescueBoard {
         return identifier
     }
     
-    func setLastSignalReceived (platform: GamePlatform, odyssey: Bool, _ lastReceived: Date) async {
-        self.lastSignalsReceived[PlatformExpansion(platform: platform, odyssey: odyssey)] = lastReceived
+    func setLastSignalReceived (platform: GamePlatform, expansion: GameExpansion, _ lastReceived: Date) async {
+        self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)] = lastReceived
     }
     
     func setLastPaperworkReminder (forUser userId: UUID, toDate date: Date) async {
@@ -695,10 +711,8 @@ actor RescueBoard {
             changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
         }
         
-        if rescue.odyssey != existingRescue.odyssey && initiated == .announcer {
-            let currentExpansion = existingRescue.odyssey ? "Odyssey" : "Horizons"
-            let newExpansion = rescue.odyssey ? "Odyssey" : "Horizons"
-            changes.append("\(IRCFormat.bold("Expansion:")) \(currentExpansion) -> \(newExpansion)")
+        if rescue.expansion != existingRescue.expansion && initiated == .announcer {
+            changes.append("\(IRCFormat.bold("Expansion:")) \(existingRescue.expansion.englishDescription) -> \(rescue.expansion.englishDescription)")
         }
         if rescue.system != nil && rescue.system?.name != existingRescue.system?.name {
             changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)")
@@ -768,6 +782,7 @@ actor RescueBoard {
             do {
                 try await self.sync()
             } catch {
+                debug(String(describing: error))
                 if reported == false {
                     mecha.reportingChannel?.send(key: "board.syncfailed")
                 }

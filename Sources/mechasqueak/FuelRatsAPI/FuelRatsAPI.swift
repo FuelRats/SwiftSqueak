@@ -55,12 +55,8 @@ class FuelRatsAPI {
         let request = try! HTTPClient.Request(apiPath: "/rescues", method: .GET, query: query)
         
         let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
-        guard
-            let document = try? RescueSearchDocument.from(data: Data(buffer: response.body!)),
-            document.body.data != nil
-        else {
-            throw response
-        }
+        print(String(data: Data(buffer: response.body!), encoding: .utf8)!)
+        let document = try! RescueSearchDocument.from(data: Data(buffer: response.body!))
         
         return document
     }

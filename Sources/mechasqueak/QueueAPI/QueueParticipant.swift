@@ -41,7 +41,7 @@ struct QueueParticipant: Codable, Hashable {
             case platform
             case locale
             case o2Status = "o2Status"
-            case odyssey
+            case expansion
         }
         let id: Int
         var name: String
@@ -49,7 +49,7 @@ struct QueueParticipant: Codable, Hashable {
         var platform: GamePlatform
         var locale: String
         var o2Status: Bool
-        var odyssey: Bool
+        var expansion: GameExpansion?
     }
     
     init(from decoder: Decoder) throws {
