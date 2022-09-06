@@ -201,7 +201,7 @@ class SystemSearch: IRCBotModule {
         let requireLargePad = command.options.contains("l")
         let requireSpace = !(command.options.contains("p"))
         
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: systemName) {
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: systemName, includingRecentlyClosed: true) {
             systemName = rescue.system?.name ?? ""
         }
         
