@@ -41,7 +41,7 @@ struct QueueParticipant: Codable, Hashable {
             case platform
             case locale
             case o2Status = "o2Status"
-            case expansion
+            case expansion = "odyssey"
         }
         let id: Int
         var name: String

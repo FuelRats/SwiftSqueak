@@ -336,7 +336,7 @@ class FactCommands: IRCBotModule {
         if command.parameters.count > 0 {
             let targets: [(String, Rescue?)] = await command.parameters.asyncMap({ target in
                 var target = target
-                var (_, rescue) = await board.findRescue(withCaseIdentifier: target, includingRecentlyClosed: true) ?? (nil, nil)
+                let (_, rescue) = await board.findRescue(withCaseIdentifier: target, includingRecentlyClosed: true) ?? (nil, nil)
                 if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
                     let targetLowercased = target.lowercased()
                     if let fuzzyTarget = command.message.destination.members.first(where: {

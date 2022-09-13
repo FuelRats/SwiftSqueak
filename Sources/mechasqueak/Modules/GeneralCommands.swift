@@ -98,7 +98,7 @@ class GeneralCommands: IRCBotModule {
             return lingo.localize(format, locale: "en-GB", interpolations: [
                 "caseId": caseId,
                 "client": rescue.client ?? "?",
-                "platform": rescue.platform.ircRepresentable,
+                "platform": rescue.platformExpansion,
                 "systemInfo": rescue.system.description
             ])
         })

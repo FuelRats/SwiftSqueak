@@ -78,25 +78,26 @@ extension IRCPrivateMessage {
 
 
 private let retaliationPhrases = [
-    "ejects %@ out the airlock",
+    "yeets %@ out of the airlock",
     "revokes %@'s snickers rations for 1 month",
     "launches a tactical nuclear strike in %@'s direction",
     "adds %@ to the top of \"the list\"",
     "drops %@ into a pool of piranhas",
     "drops %@ into Blighttown with only a sword hilt and no armour",
     "banishes %@ to the shadow realm",
-    "drops %@ into a black hole",
+    "drops %@ into Sagittarius A*",
     "releases an army of protomolecule hybrid monsters at %@",
     "pours maple syrup inside %@'s computer",
-    "executes order 66",
-    "designates %@ as the official dispatch for all future Xbox CR cases with australian internet connections",
+    "designates %@ as the official dispatch for all future Xbox CR cases with australian internet",
     "designates %@'s email address as the official destination for all navlock related bug reports",
     "forces %@ to make their way to beagle point using a T9 with a 2E FSD and 1E fuel scoop",
     "pours glitter onto %@'s keyboard",
-    "announces that everyone can now send any paperwork that needs completing in PM to %@",
     "prepares to turn %@ into the new stuffed rat",
     "forces %@ to play a vanilla ranger in D&D 5th edition",
     "forces %@ to play the last level of Simpsons Hit & Run over and over for 7 days",
-    "arbitrarily splits the PC player base again making a version with everyone except %@",
-    ""
+    "locks %@ in a room that plays \"Baby Shark\" 24/7",
+    "fires %@ out of a cannon",
+    "turns the inside of %@'s PC into an aquarium",
+    "has set mode +b %@!*@*",
+    "locks %@ in a room with a TV playing season 8 of Game of Thrones on repeat"
 ]

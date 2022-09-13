@@ -191,7 +191,7 @@ class MessageScanner: IRCBotModule {
                         ]
                     )
                     
-                    message += " (Using \(rat.expansion.englishDescription)"
+                    message += " (Using \(rat.expansion.englishDescription))"
                 }
             }
 

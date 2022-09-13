@@ -91,10 +91,10 @@ class Rescue {
             self.codeRed = false
         }
 
-        let languageCode = match.group(at: 6)!
+        let languageCode = match.group(at: 7)!
         self.clientLanguage = Locale(identifier: languageCode)
 
-        self.clientNick = match.group(at: 7) ?? client
+        self.clientNick = match.group(at: 8) ?? client
 
         self.notes = ""
         self.quotes = [(RescueQuote(
@@ -381,6 +381,32 @@ class Rescue {
         }))
 
         return assigns.joined(separator: ", ")
+    }
+    
+    var platformExpansion: String {
+        if platform == .PC {
+            return "\(self.platform.ircRepresentable) \(self.expansion.shortIRCRepresentable)"
+        }
+        return self.platform.ircRepresentable
+    }
+    
+    var signal: String {
+        if configuration.general.drillMode {
+            return ""
+        }
+        switch self.platform {
+            case .PC:
+                return self.expansion.signal
+
+            case .Xbox:
+                return "(XB_SIGNAL)"
+
+            case .PS:
+                return "(PS_SIGNAL)"
+            
+            default:
+                return ""
+        }
     }
 
     func toApiRescue (withIdentifier identifier: Int) -> RemoteRescue {

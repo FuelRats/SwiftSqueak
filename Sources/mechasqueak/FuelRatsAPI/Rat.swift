@@ -163,22 +163,6 @@ enum GamePlatform: String, Codable, CaseIterable {
         return IRCFormat.color(platformMap[self]!, englishDescriptions[self]!)
     }
 
-    var signal: String {
-        if configuration.general.drillMode {
-            return ""
-        }
-        switch self {
-            case .PC:
-                return "(PC_SIGNAL)"
-
-            case .Xbox:
-                return "(XB_SIGNAL)"
-
-            case .PS:
-                return "(PS_SIGNAL)"
-        }
-    }
-
     var factPrefix: String {
         let platformMap: [GamePlatform: String] = [
             .PC: "pc",
@@ -220,6 +204,20 @@ enum GameExpansion: String, Codable, CaseIterable {
                 codingPath: decoder.codingPath,
                 debugDescription: "Invalid Enum Raw Value"
             ))
+        }
+    }
+    
+    var signal: String {
+        if configuration.general.drillMode {
+            return ""
+        }
+        switch self {
+            case .horizons3:
+                return "(H3_SIGNAL)"
+            case .horizons4:
+                return "(H4_SIGNAL)"
+            case .odyssey:
+                return "(ODY_SIGNAL)"
         }
     }
     

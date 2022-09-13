@@ -244,6 +244,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         var quote = rescue.quotes[quoteIndex]
         if command.parameters.count > 2 {
+            let previousContents = quote.message
             let contents = command.parameters[2]
 
             quote.message = contents
@@ -254,15 +255,20 @@ class BoardQuoteCommands: IRCBotModule {
             command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
                 "index": quoteIndex,
                 "caseId": caseId,
+                "client": rescue.clientDescription,
+                "previousContents": previousContents.excerpt(maxLength: 50),
                 "contents": contents
             ])
         } else {
-            rescue.quotes.remove(at: quoteIndex)
+            let removedQuote = rescue.quotes.remove(at: quoteIndex)
             try? rescue.save(command)
             
             command.message.reply(key: "board.sub.deleted", fromCommand: command, map: [
                 "index": quoteIndex,
-                "caseId": caseId
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "author": quote.author,
+                "contents": quote.message.excerpt(maxLength: 80)
             ])
         }
     }

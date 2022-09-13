@@ -372,6 +372,7 @@ class BoardCommands: IRCBotModule {
                 "client": rescue.clientDescription
             ])
         } catch {
+            debug(String(describing: error))
             rescue.status = .Inactive
             command.message.reply(key: "board.trash.error", fromCommand: command, map: [
                 "caseId": caseId
