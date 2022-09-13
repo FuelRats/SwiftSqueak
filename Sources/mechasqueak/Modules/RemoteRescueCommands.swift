@@ -492,7 +492,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.argument("all"), .param("client name", "SpaceDawg", .continuous)],
         category: .rescues,
         description: "Get paperwork link for a previous client by name.",
-        permission: .DispatchRead
+        permission: .RescueWrite
     )
     var didReceiveClientPaperworkCommand = { command in
         do {
@@ -507,12 +507,6 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             if command.has(argument: "all") {
-                guard command.message.user.hasPermission(permission: .UserRead) else {
-                    command.message.error(key: "board.nopermission", fromCommand: command, map: [
-                        "nick": command.message.user.nickname
-                    ])
-                    return
-                }
                 if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
                     command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
                         "nick": command.message.user.nickname,
