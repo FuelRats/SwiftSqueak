@@ -344,7 +344,7 @@ class GeneralCommands: IRCBotModule {
             .param("client nick", "SpaceDawg"),
             .param("PC/XB/PS", "PC"),
             .param("system", "NLTT 48288", .continuous),
-            .argument("mode", "game version", example: "3h / 4h / o")
+            .argument("mode", "game version", example: "h3 / h4 / o")
         ],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",

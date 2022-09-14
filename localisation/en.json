@@ -116,7 +116,7 @@
   "board.toggleactive": "The status of case #%{caseId} (%{client}) has been set to: %{status}.",
   "board.toggleactivemsg": "The status of case #%{caseId} (%{client}) has been set to: %{status} with message \"%{message}\"",
   "board.nopermission": "%{nick} is not in the sudoers file. This incident will be reported.",
-  "board.expansion.invalid": "\"%{expansion}\" is not a valid game version, try \"3h\", \"4h\", or \"o\"",
+  "board.expansion.invalid": "\"%{expansion}\" is not a valid game version, try \"h4\", \"h4\", or \"o\"",
   "board.expansion.success": "Case #%{caseId} (%{client}) is marked as using the %{expansion} version",
   "board.expansion.platform": "Only PC cases can have their game version set",
   
@@ -372,7 +372,8 @@
   "delpermit.removed": "Removed %{permit} Permit from CMDR %{name}",
 
   "myexpansion.norat": "Could not determine a valid rat to change game version for",
-  "myexpansion.invalid": "\"%{expansion}\" is not a valid game version, try \"3h\", \"4h\" or \"o\"",
+  "myexpansion.invalid": "\"%{expansion}\" is not a valid game version, try \"h3\", \"h4\" or \"o\"",
+  "myexpansion.cantswitch": "It is not possible for %{oldExpansion} CMDRs to switch to %{expansion}",
   "myexpansion.success": "Changed rat %{name} to use %{expansion}",
   
   "maxclients.invalid": "Parameter must be a number between 5 and 25",
@@ -432,7 +433,7 @@
   "help.command.sctime": "By default the command assumes that you are starting at the entry point to a system and accelerating away from all gravitational bodies, if you are going towards another gravitational body you can use the -g option.",
   "help.command.reopen": "Use a rescue UUID, or the name of the client (will fetch the latest created one in this case)",
   "help.command.announce.cr": "Announces the rescue as a code red",
-  "help.command.announce.mode": "Announces the rescue with a specific PC game version (3h / 4h / o)",
+  "help.command.announce.mode": "Announces the rescue with a specific PC game version (h3 / h4 / o)",
   "help.command.announce.lang": "Sets the language of the announced rescue to a specific language code",
   "help.command.clientpw.all": "Lists ALL previous cases for this client",
   "help.command.inject.f": "Forces a new case to be created from this inject bypassing all restrictions",
@@ -446,13 +447,13 @@
   "help.command.quiet.xb": "Show the last time there was a case on Xbox",
   "help.command.quiet.ps": "Show the last time there was a case on PS4/PS5",
   "help.command.quiet.o": "Show the last time there was a case on PC (Horizons 3.8 by default)",
-  "help.command.quiet.mode": "Shows last time for another PC game version (3h / 4h / o)",
+  "help.command.quiet.mode": "Shows last time for another PC game version (h3 / h4 / o)",
   "sendhelp.nouser": "Could not find %{nick} in the channel",
   
   "help.command.addcase.pc": "Set platform to PC",
   "help.command.addcase.xb": "Set platform to Xbox",
   "help.command.addcase.ps": "Set platform to PS4",
-  "help.command.addcase.mode": "Change the game version for PC (3h / 4h /o)",
+  "help.command.addcase.mode": "Change the game version for PC (h3 / h4 /o)",
   "help.command.addcase.cr": "Mark rescue as a code red",
   "help.command.addcase.sys": "Set the star system name of the rescue",
   "help.command.addcase.cmdr": "Set the CMDR name of the client (Only needed if it's different from the nickname).",

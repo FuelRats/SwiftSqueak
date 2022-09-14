@@ -59,7 +59,7 @@ class BoardCommands: IRCBotModule {
             .argument("pc", example: ""),
             .argument("xb"),
             .argument("ps"),
-            .argument("mode", "game version", example: "3h / 4h / o"),
+            .argument("mode", "game version", example: "h3 / h4 / o"),
             .argument("cr"),
             .argument("sys", "system", example: "NLTT 48288"),
             .argument("cmdr", "CMDR name", example: "Space Dawg"),

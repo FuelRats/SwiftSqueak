@@ -350,7 +350,7 @@ class AccountCommands: IRCBotModule {
     
     @BotCommand(
         ["mymode", "myversion"],
-        [.param("game version", "3h / 4h / o")],
+        [.param("game version", "h3 / h4 / o")],
         category: .account,
         description: "Informs Mecha which PC game version you are using",
         permission: .UserWriteOwn,
@@ -366,6 +366,14 @@ class AccountCommands: IRCBotModule {
         guard let expansion = GameExpansion.parsedFromText(text: command.parameters[0]) else {
             command.message.error(key: "myexpansion.invalid", fromCommand: command, map: [
                 "expansion": command.parameters[0]
+            ])
+            return
+        }
+        
+        if oldExpansion.canSwitchTo(expansion: expansion) == false {
+            command.message.error(key: "myexpansion.cantswitch", fromCommand: command, map: [
+                "oldExpansion": oldExpansion.ircRepresentable,
+                "expansion": expansion.ircRepresentable
             ])
             return
         }
@@ -413,6 +421,6 @@ class AccountCommands: IRCBotModule {
         permission: .UserWriteOwn
     )
     var didReceiveUseHorizonsCommand = { command in
-        command.message.reply(message: "!usehorizons has been deprecated, use !mymode 3h or !mymode 4h depending on whether you are using 3.8 or 4.0")
+        command.message.reply(message: "!usehorizons has been deprecated, use !mymode h3 or !mymode h4 depending on whether you are using 3.8 or 4.0")
     }
 }
