@@ -232,9 +232,9 @@ enum GameExpansion: String, Codable, CaseIterable {
     }
     
     static var englishDescriptions: [GameExpansion: String] = [
-        .horizons3: "Horizons (3.8)",
-        .horizons4: "Horizons (4.0)",
-        .odyssey: "Odyssey (4.0)"
+        .horizons3: "Horizons 3.8",
+        .horizons4: "Horizons 4.0",
+        .odyssey: "Odyssey 4.0"
     ]
     var englishDescription: String {
         return GameExpansion.englishDescriptions[self]!

@@ -453,7 +453,7 @@
   "help.command.addcase.pc": "Set platform to PC",
   "help.command.addcase.xb": "Set platform to Xbox",
   "help.command.addcase.ps": "Set platform to PS4",
-  "help.command.addcase.mode": "Change the game version for PC (h3 / h4 /o)",
+  "help.command.addcase.mode": "Change the game version for PC (h3 / h4 / o)",
   "help.command.addcase.cr": "Mark rescue as a code red",
   "help.command.addcase.sys": "Set the star system name of the rescue",
   "help.command.addcase.cmdr": "Set the CMDR name of the client (Only needed if it's different from the nickname).",
