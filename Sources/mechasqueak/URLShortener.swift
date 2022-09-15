@@ -40,7 +40,7 @@ class URLShortener {
             requestUrl.queryItems?.append(URLQueryItem(name: "keyword", value: keyword))
         }
 
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .GET)
+        var request = try HTTPClient.Request(url: requestUrl.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
         return try await httpClient.execute(request: request, forDecodable: ShortURLResponse.self)

@@ -40,9 +40,9 @@ class BoardPlatformCommands: IRCBotModule {
         try? rescue.save(command)
         
         command.message.reply(key: "board.platformset", fromCommand: command, map: [
-            "platform": rescue.platform!.ircRepresentable,
+            "platform": rescue.platform.ircRepresentable,
             "caseId": caseId,
-            "client": rescue.client!
+            "client": rescue.clientDescription
         ])
     }
 

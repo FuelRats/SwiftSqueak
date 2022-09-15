@@ -82,30 +82,34 @@ class RescueCreateOperation: Operation {
             )
             
             let url = URLComponents(string: "\(configuration.api.url)/rescues")!
-            var request = try! HTTPClient.Request(url: url.url!, method: .POST)
-            request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-            request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-            request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-            
-            request.body = try? .encodable(postDocument)
-            
-            httpClient.execute(request: request).whenComplete{ result in
-                switch result {
-                case .success(let response):
-                    if response.status == .created || response.status == .conflict {
-                        self.rescue.synced = true
-                        continuation.resume(returning: ())
-                    } else {
-                        self.rescue.synced = false
-                        continuation.resume(throwing: response)
+            do {
+                var request = try HTTPClient.Request(url: url.url!, method: .POST)
+                request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+                request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+                request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+                
+                request.body = try? .encodable(postDocument)
+                
+                httpClient.execute(request: request).whenComplete{ result in
+                    switch result {
+                    case .success(let response):
+                        if response.status == .created || response.status == .conflict {
+                            self.rescue.synced = true
+                            continuation.resume(returning: ())
+                        } else {
+                            self.rescue.synced = false
+                            continuation.resume(throwing: response)
+                        }
+                        
+                        self.isFinished = true
+                        self.isExecuting = false
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                        debug(String(describing: error))
                     }
-                    
-                    self.isFinished = true
-                    self.isExecuting = false
-                case .failure(let error):
-                    continuation.resume(throwing: error)
-                    debug(String(describing: error))
                 }
+            } catch {
+                continuation.resume(throwing: error)
             }
         }
     }

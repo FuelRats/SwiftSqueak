@@ -70,7 +70,7 @@ extension User {
             ]
         ]
 
-        var request = try! HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)", method: .PATCH)
+        var request = try HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 
@@ -95,7 +95,7 @@ extension User {
                 ]
             ]
         ]
-        var request = try! HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
+        var request = try HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
 

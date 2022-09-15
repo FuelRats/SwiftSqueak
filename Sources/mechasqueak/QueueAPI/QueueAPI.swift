@@ -46,7 +46,7 @@ class QueueAPI {
     }
     
     static func getConfig () async throws -> QueueAPIConfiguration {
-        let request = try! HTTPClient.Request(queuePath: "/config/", method: .GET)
+        let request = try HTTPClient.Request(queuePath: "/config/", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: decoder)
     }
@@ -56,20 +56,20 @@ class QueueAPI {
         dateFormatter.dateFormat = "YYYY-MM-dd"
         let formattedDate = dateFormatter.string(from: date)
         
-        let request = try! HTTPClient.Request(queuePath: "/queue/statistics/", method: .POST, query: ["daterequested": formattedDate, "detailed": "false"])
+        let request = try HTTPClient.Request(queuePath: "/queue/statistics/", method: .POST, query: ["daterequested": formattedDate, "detailed": "false"])
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIStatistics.self, withDecoder: decoder)
     }
     
     static func fetchQueue () async throws -> [QueueParticipant] {
-        let request = try! HTTPClient.Request(queuePath: "/queue/", method: .GET)
+        let request = try HTTPClient.Request(queuePath: "/queue/", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: [QueueParticipant].self, withDecoder: decoder)
     }
     
     @discardableResult
     static func dequeue () async throws -> QueueParticipant {
-        let request = try! HTTPClient.Request(queuePath: "/queue/dequeue", method: .POST)
+        let request = try HTTPClient.Request(queuePath: "/queue/dequeue", method: .POST)
         
         let participant = try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: decoder)
         
@@ -83,7 +83,7 @@ class QueueAPI {
     
     @discardableResult
     static func setMaxActiveClients (_ maxActiveClients: Int) async throws -> QueueAPIConfiguration {
-        let request = try! HTTPClient.Request(queuePath: "/config/max_active_clients", method: .PUT, query: ["max_active_clients": String(maxActiveClients)])
+        let request = try HTTPClient.Request(queuePath: "/config/max_active_clients", method: .PUT, query: ["max_active_clients": String(maxActiveClients)])
 
         return try await httpClient.execute(request: request, forDecodable: QueueAPIConfiguration.self, withDecoder: QueueAPI.decoder)
     }

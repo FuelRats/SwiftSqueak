@@ -130,11 +130,11 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
 
     var description: String {
-        return try! stencil.renderLine(name: "starsystem.stencil", context: [
+        return (try? stencil.renderLine(name: "starsystem.stencil", context: [
             "system": self,
             "landmark": self.landmark as Any,
             "invalid": self.isInvalid]
-        )
+        )) ?? ""
     }
     
     var info: String {
@@ -184,7 +184,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             let outposts = stations.filter({ $0.type == .Outpost })
             let planetary = stations.filter({ $0.type.isPlanetary })
             
-            return try! stencil.renderLine(name: "systeminfo.stencil", context: [
+            return (try? stencil.renderLine(name: "systeminfo.stencil", context: [
                 "system": self,
                 "landmark": self.landmark as Any,
                 "region": self.galacticRegion as Any,
@@ -199,7 +199,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 "allegiance": allegiance as Any,
                 "government": government as Any,
                 "economy": economy as Any
-            ])
+            ])) ?? ""
         }
     }
 

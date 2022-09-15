@@ -77,7 +77,7 @@ class BoardAttributeCommands: IRCBotModule {
         command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
             "status": status,
             "caseId": caseId,
-            "client": rescue.client!,
+            "client": rescue.clientDescription,
             "message": message
         ])
     }
@@ -128,7 +128,7 @@ class BoardAttributeCommands: IRCBotModule {
         if let distance = rescue.system?.landmark?.distance, distance > 2500, let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName) {
             command.message.reply(key: key + ".spansh", fromCommand: command, map: [
                 "caseId": caseId,
-                "client": rescue.client!,
+                "client": rescue.clientDescription,
                 "systemInfo": rescue.system.description,
                 "plotUrl": plotUrl.absoluteString
             ])
@@ -136,7 +136,7 @@ class BoardAttributeCommands: IRCBotModule {
         
         command.message.reply(key: key, fromCommand: command, map: [
             "caseId": caseId,
-            "client": rescue.client!,
+            "client": rescue.clientDescription,
             "systemInfo": rescue.system.description
         ])
     }
@@ -154,7 +154,7 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
         
-        let oldClient = rescue.client!
+        let oldClient = rescue.clientDescription
         let client = command.parameters[1]
         
         if let existingCase = await board.rescues.first(where: {
@@ -227,7 +227,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         command.message.reply(key: "board.nickchange", fromCommand: command, map: [
             "caseId": caseId,
-            "client": rescue.client!,
+            "client": rescue.clientDescription,
             "nick": nick
         ])
 
@@ -268,7 +268,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         command.message.reply(key: "board.languagechange", fromCommand: command, map: [
             "caseId": caseId,
-            "client": rescue.client!,
+            "client": rescue.clientDescription,
             "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
         ])
 
@@ -291,13 +291,13 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.codeRed = false
             command.message.reply(key: "board.codered.no", fromCommand: command, map: [
                 "caseId": caseId,
-                "client": rescue.client!
+                "client": rescue.clientDescription
             ])
         } else {
             rescue.codeRed = true
             command.message.reply(key: "board.codered.active", fromCommand: command, map: [
                 "caseId": caseId,
-                "client": rescue.client!
+                "client": rescue.clientDescription
             ])
 
             if rescue.rats.count > 0 {

@@ -49,7 +49,7 @@ class BoardQuoteCommands: IRCBotModule {
             ])
         }
 
-        let output = try! stencil.renderLine(name: "quote.stencil", context: [
+        let output = (try? stencil.renderLine(name: "quote.stencil", context: [
             "caseId": caseId,
             "rescue": rescue,
             "platform": rescue.platform.ircRepresentable,
@@ -57,7 +57,7 @@ class BoardQuoteCommands: IRCBotModule {
             "system": rescue.system as Any,
             "landmark": rescue.system?.landmark as Any,
             "status": rescue.status.rawValue
-        ])
+        ])) ?? ""
         command.message.replyPrivate(message: output)
 
         command.message.replyPrivate(key: "board.quote.dates", fromCommand: command, map: [
@@ -69,7 +69,7 @@ class BoardQuoteCommands: IRCBotModule {
             command.message.replyPrivate(key: "board.quote.noassigned", fromCommand: command)
         } else {
             command.message.replyPrivate(key: "board.quote.assigned", fromCommand: command, map: [
-                "rats": rescue.assignList!
+                "rats": rescue.assignList ?? ""
             ])
         }
 

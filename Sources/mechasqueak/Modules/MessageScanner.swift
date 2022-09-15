@@ -96,7 +96,7 @@ class MessageScanner: IRCBotModule {
             let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
             if let system = rescue.system, let permit = rescue.system?.permit {
                 
-                if (rat?.hasPermitFor(system: rescue.system!) ?? false) == false {
+                if (rat?.hasPermitFor(system: system) ?? false) == false {
                     if rat?.attributes.data.value.permits?.count ?? 0 > 0 {
                         channelMessage.reply(message: lingo.localize(
                             "jumpcall.publicpermit",

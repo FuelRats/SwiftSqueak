@@ -515,7 +515,7 @@ class Rescue {
             links: .none
         )
 
-        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
+        var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         
         request.body = try .encodable(patchDocument)
@@ -614,7 +614,7 @@ class Rescue {
             links: .none
         )
 
-        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
+        var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         request.body = try .encodable(patchDocument)

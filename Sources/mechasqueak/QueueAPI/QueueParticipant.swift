@@ -73,29 +73,29 @@ struct QueueParticipant: Codable, Hashable {
     
     @discardableResult
     func setInProgress () async throws -> QueueParticipant {
-        var request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+        var request = try HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
         
         var queueItem = self
         queueItem.inProgress = true
-        request.body = try! .data(QueueAPI.encoder.encode(queueItem))
+        request.body = try .data(QueueAPI.encoder.encode(queueItem))
 
         return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
     
     @discardableResult
     func changeName (name: String) async throws -> QueueParticipant {
-        var request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+        var request = try HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
         
         var queueItem = self
         queueItem.client.name = name
-        request.body = try! .data(QueueAPI.encoder.encode(queueItem))
+        request.body = try .data(QueueAPI.encoder.encode(queueItem))
 
         return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
     
     @discardableResult
     func delete () async throws -> HTTPClient.Response {
-        let request = try! HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
+        let request = try HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
 
         return try await httpClient.execute(request: request, deadline: nil, expecting: 204)
     }

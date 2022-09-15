@@ -206,7 +206,7 @@ struct XboxLive {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .formatted(.iso8601Full)
             
-            return try! decoder.decode(LiveTokenResponse.self, from: result)
+            return try decoder.decode(LiveTokenResponse.self, from: result)
         }
         
         static func xstsAuthorize (token: String) async throws -> XSTSResponse {
@@ -233,7 +233,7 @@ struct XboxLive {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .formatted(.iso8601Full)
             
-            return try! decoder.decode(XSTSResponse.self, from: result)
+            return try decoder.decode(XSTSResponse.self, from: result)
         }
         
         struct RefreshTokenResponse: Codable {

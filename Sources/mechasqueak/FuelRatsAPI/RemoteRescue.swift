@@ -191,7 +191,7 @@ extension RemoteRescue {
             links: .none
         )
 
-        var request = try! HTTPClient.Request(apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
+        var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
         request.body = try .encodable(patchDocument)

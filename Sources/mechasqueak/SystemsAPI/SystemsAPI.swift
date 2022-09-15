@@ -46,14 +46,14 @@ class SystemsAPI {
             queryItems["fast"] = "true"
         }
 
-        let request = try! HTTPClient.Request(systemApiPath: "/mecha", method: .GET, query: queryItems)
+        let request = try HTTPClient.Request(systemApiPath: "/mecha", method: .GET, query: queryItems)
 
         let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(180))
         return try await httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
     
     static func performLandmarkCheck (forSystem systemName: String) async throws -> LandmarkDocument {
-        let request = try! HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
+        let request = try HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
             "name": systemName
         ])
         return try await httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
@@ -75,7 +75,7 @@ class SystemsAPI {
     }
 
     static func performProceduralCheck (forSystem systemName: String) async throws -> ProceduralCheckDocument {
-        let request = try! HTTPClient.Request(systemApiPath: "/procname", method: .GET, query: [
+        let request = try HTTPClient.Request(systemApiPath: "/procname", method: .GET, query: [
             "name": systemName
         ])
 
@@ -84,7 +84,7 @@ class SystemsAPI {
     
     
     static func getSystemData (forId id: Int64) async throws -> SystemGetDocument {
-        let request = try! HTTPClient.Request(systemApiPath: "/api/systems/\(id)", method: .GET, query: [
+        let request = try HTTPClient.Request(systemApiPath: "/api/systems/\(id)", method: .GET, query: [
             "include": "stars,planets,stations"
         ])
         
@@ -92,7 +92,7 @@ class SystemsAPI {
     }
     
     static func getNearestStations (forSystem systemName: String, limit: Int = 10) async throws -> NearestPopulatedDocument {
-        let request = try! HTTPClient.Request(systemApiPath: "/nearest_populated", method: .GET, query: [
+        let request = try HTTPClient.Request(systemApiPath: "/nearest_populated", method: .GET, query: [
             "name": systemName,
             "limit": String(limit)
         ])
@@ -121,7 +121,7 @@ class SystemsAPI {
     }
     
     static func getNearestSystem (forCoordinates coords: Vector3) async throws -> NearestSystemDocument? {
-        let request = try! HTTPClient.Request(systemApiPath: "/nearest_coords", method: .GET, query: [
+        let request = try HTTPClient.Request(systemApiPath: "/nearest_coords", method: .GET, query: [
             "x": String(coords.x),
             "y": String(coords.y),
             "z": String(coords.z)
@@ -163,7 +163,7 @@ class SystemsAPI {
     }
     
     static func getStatistics () async throws -> StatisticsDocument {
-        let request = try! HTTPClient.Request(systemApiPath: "/api/stats", method: .GET)
+        let request = try HTTPClient.Request(systemApiPath: "/api/stats", method: .GET)
 
         let response = try await httpClient.execute(request: request, expecting: 200)
         
@@ -176,7 +176,7 @@ class SystemsAPI {
     }
     
     static func fetchLandmarkList () async throws -> [LandmarkListDocument.LandmarkListEntry] {
-        let request = try! HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
+        let request = try HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
             "list": "true"
         ])
 
@@ -184,7 +184,7 @@ class SystemsAPI {
     }
     
     static func fetchSectorList () async throws -> [StarSector] {
-        let request = try! HTTPClient.Request(systemApiPath: "/get_ha_regions", method: .GET)
+        let request = try HTTPClient.Request(systemApiPath: "/get_ha_regions", method: .GET)
 
         let sectors = try await httpClient.execute(request: request, forDecodable: [String].self)
         return sectors.map({ sector -> StarSector in

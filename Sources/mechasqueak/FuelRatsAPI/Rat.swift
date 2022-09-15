@@ -89,9 +89,9 @@ extension Rat {
             return []
         }
         
-        return try! await board.filter({ (_, rescue) in
+        return (try? await board.filter({ (_, rescue) in
             rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
-        }).getAllResults()
+        }).getAllResults()) ?? []
     }
     
     func getCurrentJumpCalls () async -> [(key: Int, value: Rescue)] {

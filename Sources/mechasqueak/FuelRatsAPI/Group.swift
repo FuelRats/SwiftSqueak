@@ -141,7 +141,7 @@ extension Group {
     }
     
     static func getList () async throws -> GroupSearchDocument {
-        let request = try! HTTPClient.Request(apiPath: "/groups", method: .GET)
+        let request = try HTTPClient.Request(apiPath: "/groups", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
     }
@@ -152,9 +152,9 @@ extension Group {
             id: self.id.rawValue
         )])
 
-        var request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
+        var request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try! .encodable(relationship)
+        request.body = try .encodable(relationship)
         
         _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }
@@ -165,9 +165,9 @@ extension Group {
             id: self.id.rawValue
         )])
 
-        var request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
+        var request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try! .encodable(relationship)
+        request.body = try .encodable(relationship)
 
         _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }

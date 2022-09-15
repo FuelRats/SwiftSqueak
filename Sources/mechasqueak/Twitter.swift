@@ -29,7 +29,7 @@ import AsyncHTTPClient
 class Twitter {
     static func tweet (message: String) async throws {
         let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
+        var request = try HTTPClient.Request(url: url.url!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/json")

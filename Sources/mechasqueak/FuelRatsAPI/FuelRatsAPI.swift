@@ -33,7 +33,7 @@ class FuelRatsAPI {
     }
     
     static func getNickname (forIRCAccount account: String) async throws -> NicknameSearchDocument? {
-        let request = try! HTTPClient.Request(apiPath: "/nicknames", method: .GET, query: ["nick": account])
+        let request = try HTTPClient.Request(apiPath: "/nicknames", method: .GET, query: ["nick": account])
         
         let response = try await httpClient.execute(request: request, deadline: .now() + .seconds(5), expecting: 200)
         do {
@@ -52,17 +52,17 @@ class FuelRatsAPI {
     }
     
     static func rescueSearch (query: [String: String?]) async throws -> RescueSearchDocument {
-        let request = try! HTTPClient.Request(apiPath: "/rescues", method: .GET, query: query)
+        let request = try HTTPClient.Request(apiPath: "/rescues", method: .GET, query: query)
         
         let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
         print(String(data: Data(buffer: response.body!), encoding: .utf8)!)
-        let document = try! RescueSearchDocument.from(data: Data(buffer: response.body!))
+        let document = try RescueSearchDocument.from(data: Data(buffer: response.body!))
         
         return document
     }
     
     static func getRescue (id: UUID) async throws -> RescueGetDocument? {
-        let request = try! HTTPClient.Request(apiPath: "/rescues/\(id)", method: .GET)
+        let request = try HTTPClient.Request(apiPath: "/rescues/\(id)", method: .GET)
         
         let response = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
         return try? RescueGetDocument.from(data: Data(buffer: response.body!))

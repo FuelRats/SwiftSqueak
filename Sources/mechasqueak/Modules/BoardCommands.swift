@@ -180,13 +180,13 @@ class BoardCommands: IRCBotModule {
         }
 
         let generatedList = rescues.map({ (id: Int, rescue: Rescue) -> String in
-            let output = try! stencil.renderLine(name: "list.stencil", context: [
+            let output = (try? stencil.renderLine(name: "list.stencil", context: [
                 "caseId": id,
                 "rescue": rescue,
                 "platform": rescue.platform.ircRepresentable,
                 "expansion": rescue.platform == .PC ?  rescue.expansion.shortIRCRepresentable : "",
                 "includeCaseIds": arguments.contains(.includeCaseIds)
-            ])
+            ])) ?? ""
             return output
         })
         

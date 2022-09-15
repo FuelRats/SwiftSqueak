@@ -29,7 +29,7 @@ import NIO
 
 class Rodentbin {
     static func upload (contents: String) async throws -> Rodentbin.Response {
-        var request = try! HTTPClient.Request(url: "https://paste.fuelrats.com/documents", method: .POST)
+        var request = try HTTPClient.Request(url: "https://paste.fuelrats.com/documents", method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Content-Type", value: "application/json")
 

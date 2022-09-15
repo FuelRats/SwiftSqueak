@@ -82,37 +82,46 @@ class RescueUpdateOperation: Operation {
             )
             
             let url = URLComponents(string: "\(configuration.api.url)/rescues/\(rescue.id.uuidString.lowercased())")!
-            var request = try! HTTPClient.Request(url: url.url!, method: .PATCH)
-            request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-            request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-            request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
-            if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
-                //request.headers.add(name: "x-representing", value: userId.uuidString)
-            }
             
-            request.body = try? .encodable(patchDocument)
-            
-            httpClient.execute(request: request).whenComplete { result in
-                switch result {
-                case .success(let response):
-                    if response.status == .ok {
-                        self.rescue.synced = true
-                        
-                        let rescue = try! RescueGetDocument.from(data: Data(buffer: response.body!))
-                        continuation.resume(returning: rescue.body.data!.primary.value)
-                    } else {
-                        self.rescue.synced = false
-                        
-                        continuation.resume(throwing: response)
-                        debug(String(response.status.code))
-                        debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
-                    }
-                    
-                case .failure(let error):
-                    debug(String(describing: error))
-                    self.rescue.synced = false
-                    continuation.resume(throwing: error)
+            do {
+                var request = try HTTPClient.Request(url: url.url!, method: .PATCH)
+                request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+                request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+                request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+                if let user = representing, let userId = user.associatedAPIData?.user?.id.rawValue {
+                    //request.headers.add(name: "x-representing", value: userId.uuidString)
                 }
+                
+                request.body = try? .encodable(patchDocument)
+                
+                httpClient.execute(request: request).whenComplete { result in
+                    switch result {
+                    case .success(let response):
+                        if response.status == .ok {
+                            self.rescue.synced = true
+                            
+                            do {
+                                let rescue = try RescueGetDocument.from(data: Data(buffer: response.body!))
+                                continuation.resume(returning: rescue.body.data!.primary.value)
+                            } catch {
+                                continuation.resume(throwing: error)
+                            }
+                        } else {
+                            self.rescue.synced = false
+                            
+                            continuation.resume(throwing: response)
+                            debug(String(response.status.code))
+                            debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
+                        }
+                        
+                    case .failure(let error):
+                        debug(String(describing: error))
+                        self.rescue.synced = false
+                        continuation.resume(throwing: error)
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
             }
         }
     }
