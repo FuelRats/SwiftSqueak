@@ -80,8 +80,11 @@ class Rescue {
 
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
-        let expansionText = match.group(at: 5)!
-        self.expansion = GameExpansion.parsedFromText(text: expansionText) ?? .horizons3
+        if let expansionText = match.group(at: 5) {
+            self.expansion = GameExpansion.parsedFromText(text: expansionText) ?? .horizons3
+        } else {
+            self.expansion = .horizons3
+        }
         
 
         let o2StatusString = match.group(at: 6)!
