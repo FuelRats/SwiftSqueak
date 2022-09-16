@@ -356,7 +356,7 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
         
-        if rescue.expansion != .horizons3 && rescue.platform != .PC {
+        if expansion != .horizons3 && rescue.platform != .PC {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
         }
