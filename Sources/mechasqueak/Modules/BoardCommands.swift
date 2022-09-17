@@ -503,7 +503,7 @@ class BoardCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("number", "1")],
         category: .board,
         description: "Correct the system of a case to one of the options provided by the system correction search.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveSystemCorrectionCommand = { command in
