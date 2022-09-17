@@ -408,6 +408,10 @@ class BoardCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveQuietCommand = { command in
+        if command.message.user.account == "TobyCharles" {
+            command.message.reply(message: "Toby has been banned from using !last")
+            return
+        }
         var arguments = command.arguments
         var platforms = command.arguments.compactMap({ GamePlatform(rawValue: $0.key) })
         guard platforms.count < 2 else {
