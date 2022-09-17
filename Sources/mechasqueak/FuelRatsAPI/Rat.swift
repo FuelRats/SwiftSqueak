@@ -269,10 +269,10 @@ enum GameExpansion: String, Codable, CaseIterable {
     static func parsedFromText (text: String) -> GameExpansion? {
             let text = text.lowercased()
             switch text {
-                case "horizons3", "horizons 3", "horizons 3.8", "horizons (3.8)", "h3", "h3.8", "3horizons", "3h", "3.8h", "3":
+                case "horizons3", "horizons 3", "horizons 3.8", "horizons (3.8)", "h3", "h3.8", "3h", "3.8h", "3.8":
                     return .horizons3
 
-                case "horizons4", "horizons 4", "horizons 4.0", "horizons (4.0)", "h4", "h4.0", "4horizons", "4h", "4.0h", "4":
+                case "horizons4", "horizons 4", "horizons 4.0", "horizons (4.0)", "h4", "h4.0", "4h", "4.0h", "4.0":
                     return .horizons4
 
                 case "odyssey", "o", "ody", "ody4", "odyssey 4.0", "odyssey (4.0)":

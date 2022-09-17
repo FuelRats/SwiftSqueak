@@ -409,7 +409,8 @@ class BoardCommands: IRCBotModule {
     )
     var didReceiveQuietCommand = { command in
         var arguments = command.arguments
-        guard arguments.count < 2 else {
+        var platforms = command.arguments.compactMap({ GamePlatform(rawValue: $0.key) })
+        guard platforms.count < 2 else {
             command.message.reply(message: "Yeah no you're gonna have to make up your mind and pick one")
             return
         }
@@ -419,12 +420,11 @@ class BoardCommands: IRCBotModule {
         if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
             expansion = parsedExpansion
         }
+        if platforms.count == 0 && command.argumentValue(for: "mode") != nil {
+            platforms = [.PC]
+        }
         
-        if let filteredPlatform = arguments.keys.first {
-            guard let commandPlatform = GamePlatform(rawValue: filteredPlatform) else {
-                return
-            }
-            
+        if let commandPlatform = platforms.first {
             if expansion != .horizons3 && commandPlatform != .PC {
                 command.message.reply(message: "Hey! Console doesn't have this \(command.message.user.nickname), wtf are you trying to pull?")
                 return
