@@ -407,7 +407,7 @@ class BoardCommands: IRCBotModule {
         permission: .RescueReadOwn,
         cooldown: .seconds(300)
     )
-    var didReceiveQuietCommand = { 
+    var didReceiveQuietCommand = {  command in
         var arguments = command.arguments
         var platforms = command.arguments.compactMap({ GamePlatform(rawValue: $0.key) })
         guard platforms.count < 2 else {
