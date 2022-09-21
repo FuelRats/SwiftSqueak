@@ -407,11 +407,7 @@ class BoardCommands: IRCBotModule {
         permission: .RescueReadOwn,
         cooldown: .seconds(300)
     )
-    var didReceiveQuietCommand = { command in
-        if command.message.user.account == "TobyCharles" {
-            command.message.reply(message: "Toby has been banned from using !last")
-            return
-        }
+    var didReceiveQuietCommand = { 
         var arguments = command.arguments
         var platforms = command.arguments.compactMap({ GamePlatform(rawValue: $0.key) })
         guard platforms.count < 2 else {
@@ -507,7 +503,7 @@ class BoardCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("number", "1")],
         category: .board,
         description: "Correct the system of a case to one of the options provided by the system correction search.",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveSystemCorrectionCommand = { command in
