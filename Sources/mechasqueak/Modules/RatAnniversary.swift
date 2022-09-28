@@ -50,12 +50,16 @@ class RatAnniversary: IRCBotModule {
             }
             let joinComponents = Calendar.current.dateComponents([.day, .month, .year], from: joinDate)
             let todayComponents = Calendar.current.dateComponents([.day, .month, .year, .hour], from: Date())
-            guard todayComponents.hour! > 6 else {
+            guard todayComponents.hour! > 4 else {
                 return
             }
             let years = todayComponents.year! - joinComponents.year!
 
             if joinComponents.day! == todayComponents.day! && joinComponents.month! == todayComponents.month!, years > 0 {
+                var key = "birthday"
+                if channelMessage.user.account == "TobyCharles" {
+                    key += ".toby"
+                }
                 mecha.reportingChannel?.send(key: "birthday", map: [
                     "name": channelMessage.user.nickname,
                     "years": years

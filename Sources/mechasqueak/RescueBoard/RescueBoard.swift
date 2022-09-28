@@ -635,7 +635,7 @@ actor RescueBoard {
                     "nick": latestNick.nickname,
                     "rescues": rescueStrings.joined(separator: ", ")
                 ]))
-                if rescues.count > 1 {
+                if rescues.count > 0 {
                     let snickersCalculation = ceil(rescues.reduce(0, { acc, rescue in
                         return (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
                     }) * 10)
