@@ -60,7 +60,7 @@ class RatAnniversary: IRCBotModule {
                 if channelMessage.user.account == "TobyCharles" {
                     key += ".toby"
                 }
-                mecha.reportingChannel?.send(key: "birthday", map: [
+                mecha.reportingChannel?.send(key: key, map: [
                     "name": channelMessage.user.nickname,
                     "years": years
                 ])
