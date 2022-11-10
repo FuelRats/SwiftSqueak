@@ -121,10 +121,10 @@
   "board.expansion.platform": "Only PC cases can have their game version set",
   
   "board.syschange": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo}",
-  "board.syschange.spansh": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo} (%{plotUrl})",
+  "board.syschange.spansh": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo} %{plotUrl}",
   "board.syschange.nochange": "Case #%{caseId} is already set to this system.",
   "board.syschange.autocorrect": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo} \u000308(Automatically corrected)\u0003",
-  "board.syschange.autocorrect.spansh": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo} (%{plotUrl}) \u000308(Automatically corrected)\u0003",
+  "board.syschange.autocorrect.spansh": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo} %{plotUrl} \u000308(Automatically corrected)\u0003",
 
   "board.languagechange": "The language for case #%{caseId} (%{client}) has now been changed to %{language}",
   "board.languagechange.error": "The case language could not be changed as %{language} is not a valid language",

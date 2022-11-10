@@ -132,6 +132,7 @@ class BoardAttributeCommands: IRCBotModule {
                 "systemInfo": rescue.system.description,
                 "plotUrl": plotUrl.absoluteString
             ])
+            return
         }
         
         command.message.reply(key: key, fromCommand: command, map: [
