@@ -121,6 +121,7 @@ class TweetCommands: IRCBotModule {
         
         do {
             try await Twitter.tweet(message: tweet)
+            try await Mastodon.post(message: tweet)
             
             command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
                 "tweet": tweet
