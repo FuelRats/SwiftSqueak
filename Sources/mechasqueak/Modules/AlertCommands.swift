@@ -26,17 +26,17 @@ import Foundation
 import IRCKit
 
 class TweetCommands: IRCBotModule {
-    var name: String = "Tweet Commands"
+    var name: String = "Alert Commands"
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }
 
     @BotCommand(
-        ["tweet"],
+        ["alert", "tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
-        description: "Send a tweet from @FuelRatAlerts",
+        description: "Send a message on Twitter (@FuelRatAlerts) and Mastodon (@fuelratsalerts@mastodon.localecho.net)",
         permission: .TwitterWrite,
         allowedDestinations: .Channel
     )
@@ -63,6 +63,7 @@ class TweetCommands: IRCBotModule {
         
         do {
             try await Twitter.tweet(message: contents)
+            try await Mastodon.post(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
         } catch {
             command.message.error(key: "tweet.error", fromCommand: command)
@@ -70,10 +71,10 @@ class TweetCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["tweetcase", "tweetc"],
+        ["alertcase", "alertc", "tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,
-        description: "Tweet information about a case from @FuelRatAlerts",
+        description: "Notify users that rats are needed on a case via Twitter (@FuelRatAlerts) and Mastodon (@fuelratsalerts@mastodon.localecho.net)",
         permission: .DispatchRead,
         allowedDestinations: .Channel
     )

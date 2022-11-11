@@ -37,6 +37,7 @@ struct MechaConfiguration: Codable {
     var xbox: XboxLiveConfiguration?
     var psn: PlayStationNetworkConfiguration?
     let chrono: ChronoConfiguration?
+    let mastodon: MastodonConfiguration?
     
     func save () throws {
         let configEncoder = JSONEncoder()
@@ -105,4 +106,8 @@ struct PlayStationNetworkConfiguration: Codable {
 struct ChronoConfiguration: Codable {
     let nodePath: String
     let file: String
+}
+
+struct MastodonConfiguration: Codable {
+    let token: String
 }
