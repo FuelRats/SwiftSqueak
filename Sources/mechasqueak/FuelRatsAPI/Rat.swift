@@ -213,9 +213,9 @@ enum GameExpansion: String, Codable, CaseIterable {
         }
         switch self {
             case .horizons3:
-                return "(H3_SIGNAL)"
+                return "(LEG_SIGNAL)"
             case .horizons4:
-                return "(H4_SIGNAL)"
+                return "(HOR_SIGNAL)"
             case .odyssey:
                 return "(ODY_SIGNAL)"
         }
@@ -232,8 +232,8 @@ enum GameExpansion: String, Codable, CaseIterable {
     }
     
     static var englishDescriptions: [GameExpansion: String] = [
-        .horizons3: "Horizons 3.8",
-        .horizons4: "Horizons 4.0",
+        .horizons3: "Legacy",
+        .horizons4: "Horizons",
         .odyssey: "Odyssey"
     ]
     var englishDescription: String {
@@ -241,9 +241,9 @@ enum GameExpansion: String, Codable, CaseIterable {
     }
     
     static var shortEnglishDescriptions: [GameExpansion: String] = [
-        .horizons3: "H3.8",
-        .horizons4: "H4.0",
-        .odyssey: "ODY"
+        .horizons3: "L",
+        .horizons4: "H",
+        .odyssey: "O"
     ]
     var shortEnglishDescription: String {
         return GameExpansion.shortEnglishDescriptions[self]!
@@ -269,13 +269,13 @@ enum GameExpansion: String, Codable, CaseIterable {
     static func parsedFromText (text: String) -> GameExpansion? {
             let text = text.lowercased()
             switch text {
-                case "horizons3", "horizons 3", "horizons 3.8", "horizons (3.8)", "h3", "h3.8", "3h", "3.8h", "3.8":
+                case "legacy", "horizons3", "horizons 3", "horizons 3.8", "horizons (3.8)", "h3", "h3.8", "3h", "3.8h", "3.8":
                     return .horizons3
 
-                case "horizons4", "horizons 4", "horizons 4.0", "horizons (4.0)", "h4", "h4.0", "4h", "4.0h", "4.0":
+                case "horizons", "live", "horizons4", "horizons 4", "horizons 4.0", "horizons (4.0)", "h4", "h4.0", "4h", "4.0h", "4.0":
                     return .horizons4
 
-                case "odyssey", "o", "ody", "ody4", "odyssey 4.0", "odyssey (4.0)":
+                case "odyssey", "o", "ody":
                     return .odyssey
 
                 default:

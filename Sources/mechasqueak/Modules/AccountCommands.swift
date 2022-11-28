@@ -350,7 +350,7 @@ class AccountCommands: IRCBotModule {
     
     @BotCommand(
         ["mymode", "myversion"],
-        [.param("game version", "h3")],
+        [.param("game version", "h")],
         category: .account,
         description: "Informs Mecha which PC game version you are using",
         permission: .UserWriteOwn,

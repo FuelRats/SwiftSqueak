@@ -59,7 +59,7 @@ class BoardCommands: IRCBotModule {
             .argument("pc", example: ""),
             .argument("xb"),
             .argument("ps"),
-            .argument("mode", "game version", example: "h3"),
+            .argument("mode", "game version", example: "h"),
             .argument("cr"),
             .argument("sys", "system", example: "NLTT 48288"),
             .argument("cmdr", "CMDR name", example: "Space Dawg"),
@@ -111,7 +111,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["list"],
-        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("mode", "game version", example: "h3")],
+        [.options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"), .argument("ps"), .argument("mode", "game version", example: "h")],
         category: .board,
         description: "List all the rescues on the board. Use flags to filter results or change what is displayed",
         permission: .DispatchRead,
@@ -401,7 +401,7 @@ class BoardCommands: IRCBotModule {
 
     @BotCommand(
         ["quiet", "last"],
-        [.argument("pc"), .argument("xb"), .argument("ps"), .argument("mode", "game version", example: "h3")],
+        [.argument("pc"), .argument("xb"), .argument("ps"), .argument("mode", "game version", example: "h")],
         category: .other,
         description: "Displays the amount of time since the last rescue",
         permission: .RescueReadOwn,

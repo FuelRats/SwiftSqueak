@@ -373,10 +373,10 @@ class BoardAttributeCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["horizons3", "h3"],
+        ["legacy", "leg", "horizons3", "h3"],
         [.param("case id/client", "4")],
         category: .board,
-        description: "Changes a PC case to use the 3.8 Horizons expansion",
+        description: "Changes a PC case to use legacy mode",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
         )
@@ -397,10 +397,10 @@ class BoardAttributeCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["horizons4", "h4"],
+        ["horizons", "h", "live", "horizons4", "h4"],
         [.param("case id/client", "4")],
         category: .board,
-        description: "Changes a PC case to use the 4.0 Horizons expansion",
+        description: "Changes a PC case to use the live Horizons expansion",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
         )
@@ -450,15 +450,5 @@ class BoardAttributeCommands: IRCBotModule {
             "client": rescue.clientDescription,
             "expansion": expansion.ircRepresentable
         ])
-    }
-    
-    @BotCommand(
-        ["horizon", "horizons"],
-        [.param("case id/client", "4")],
-        category: nil,
-        description: "DEPRECATED: Toggle a case between odyssey or not odyssey"
-    )
-    var didReceiveHorizonsCommand = { command in
-        command.message.reply(message: "This command has been deprecated, use !h3 / !h4 or !mode <case id/client name> <game version> (e.g !mode 4 h3, !mode 4 h4)")
     }
 }
