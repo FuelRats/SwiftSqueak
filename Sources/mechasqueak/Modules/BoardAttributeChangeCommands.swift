@@ -397,7 +397,7 @@ class BoardAttributeCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["horizons", "h", "live", "horizons4", "h4"],
+        ["horizons", "hor", "h", "live", "horizons4", "h4"],
         [.param("case id/client", "4")],
         category: .board,
         description: "Changes a PC case to use the live Horizons expansion",
