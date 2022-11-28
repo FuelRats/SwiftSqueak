@@ -46,6 +46,9 @@ extension IRCPrivateMessage {
         if let msgid = self.raw.messageTags["msgid"] {
             tags["+draft/reply"] = msgid
         }
+        if self.destination.isPrivateMessage == false {
+            tags["+draft/channel-context"] = self.destination.name
+        }
         self.client.sendMessage(toTarget: self.user.nickname, contents: message, additionalTags: tags)
     }
 
