@@ -241,9 +241,9 @@ enum GameExpansion: String, Codable, CaseIterable {
     }
     
     static var shortEnglishDescriptions: [GameExpansion: String] = [
-        .horizons3: "L",
-        .horizons4: "H",
-        .odyssey: "O"
+        .horizons3: "LEG",
+        .horizons4: "HOR",
+        .odyssey: "ODY"
     ]
     var shortEnglishDescription: String {
         return GameExpansion.shortEnglishDescriptions[self]!
