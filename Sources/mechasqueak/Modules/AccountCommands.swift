@@ -363,7 +363,7 @@ class AccountCommands: IRCBotModule {
         }
         
         let oldExpansion = currentRat.attributes.expansion.value
-        guard let expansion = GameExpansion.parsedFromText(text: command.parameters[0]) else {
+        guard let expansion = GameMode.parsedFromText(text: command.parameters[0]) else {
             command.message.error(key: "myexpansion.invalid", fromCommand: command, map: [
                 "expansion": command.parameters[0]
             ])

@@ -80,12 +80,12 @@ class BoardCommands: IRCBotModule {
         if let lang = command.argumentValue(for: "lang") {
             locale = Locale(identifier: lang)
         }
-        var expansion: GameExpansion = .horizons3
-        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
+        var expansion: GameMode = .legacy
+        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameMode.parsedFromText(text: expansionString) {
             expansion = parsedExpansion
         }
         
-        if expansion != .horizons3 && platform != .PC {
+        if expansion != .legacy && platform != .PC {
             platform = .PC
         }
         
@@ -130,8 +130,8 @@ class BoardCommands: IRCBotModule {
             GamePlatform(rawValue: $0)
         })
         
-        var filterExpansion: GameExpansion? = nil
-        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
+        var filterExpansion: GameMode? = nil
+        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameMode.parsedFromText(text: expansionString) {
             filterExpansion = parsedExpansion
         }
 
@@ -416,8 +416,8 @@ class BoardCommands: IRCBotModule {
         }
         var lastSignalDate: Date? = nil
         var platform: GamePlatform? = nil
-        var expansion: GameExpansion = .horizons3
-        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) {
+        var expansion: GameMode = .legacy
+        if let expansionString = command.argumentValue(for: "mode"), let parsedExpansion = GameMode.parsedFromText(text: expansionString) {
             expansion = parsedExpansion
         }
         if platforms.count == 0 && command.argumentValue(for: "mode") != nil {
@@ -425,7 +425,7 @@ class BoardCommands: IRCBotModule {
         }
         
         if let commandPlatform = platforms.first {
-            if expansion != .horizons3 && commandPlatform != .PC {
+            if expansion != .legacy && commandPlatform != .PC {
                 command.message.reply(message: "Hey! Console doesn't have this \(command.message.user.nickname), wtf are you trying to pull?")
                 return
             }

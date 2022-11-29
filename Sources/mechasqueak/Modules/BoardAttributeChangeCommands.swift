@@ -350,14 +350,14 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
         
-        guard let expansion = GameExpansion.parsedFromText(text: command.parameters[1]) else {
+        guard let expansion = GameMode.parsedFromText(text: command.parameters[1]) else {
             command.message.error(key: "board.expansion.invalid", fromCommand: command, map: [
                 "expansion": command.parameters[1]
             ])
             return
         }
         
-        if expansion != .horizons3 && rescue.platform != .PC {
+        if expansion != .legacy && rescue.platform != .PC {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
         }
@@ -385,7 +385,7 @@ class BoardAttributeCommands: IRCBotModule {
             return
         }
         
-        let expansion: GameExpansion = .horizons3
+        let expansion: GameMode = .legacy
         rescue.expansion = expansion
         try? rescue.save(command)
         
@@ -413,7 +413,7 @@ class BoardAttributeCommands: IRCBotModule {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
         }
-        let expansion: GameExpansion = .horizons4
+        let expansion: GameMode = .horizons
         rescue.expansion = expansion
         try? rescue.save(command)
         
@@ -441,7 +441,7 @@ class BoardAttributeCommands: IRCBotModule {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
         }
-        let expansion: GameExpansion = .odyssey
+        let expansion: GameMode = .odyssey
         rescue.expansion = expansion
         try? rescue.save(command)
         

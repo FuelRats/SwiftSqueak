@@ -370,9 +370,9 @@ class GeneralCommands: IRCBotModule {
         }
         let system = command.parameters[4]
         let crStatus = command.has(argument: "cr") ? "NOT OK" : "OK"
-        var expansion: GameExpansion = .horizons3
+        var expansion: GameMode = .legacy
         if let expansionString = command.argumentValue(for: "mode") {
-            guard let parsedExpansion = GameExpansion.parsedFromText(text: expansionString) else {
+            guard let parsedExpansion = GameMode.parsedFromText(text: expansionString) else {
                 command.message.error(key: "announce.invalidexpansion", fromCommand: command)
                 return
             }

@@ -49,7 +49,7 @@ struct QueueParticipant: Codable, Hashable {
         var platform: GamePlatform
         var locale: String
         var o2Status: Bool
-        var expansion: GameExpansion?
+        var expansion: GameMode?
     }
     
     init(from decoder: Decoder) throws {

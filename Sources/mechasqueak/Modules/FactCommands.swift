@@ -373,7 +373,7 @@ class FactCommands: IRCBotModule {
             }
             
             
-            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion != .horizons3 }) {
+            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion != .legacy }) {
                 command.command = "newkgbfoam"
             }
             
@@ -389,10 +389,10 @@ class FactCommands: IRCBotModule {
                     if command.command == "fr" && platform == .PC && targets.contains(where: { $1?.codeRed ?? false == true }) {
                         smartCommand.command += "cr"
                     }
-                    if smartCommand.command == "pcteam" && targets.contains(where: { $1?.expansion == .horizons3 }) {
+                    if smartCommand.command == "pcteam" && targets.contains(where: { $1?.expansion == .legacy }) {
                         smartCommand.command = "pcwing"
                     }
-                    if smartCommand.command == "pcwing" && targets.contains(where: { $1?.expansion != .horizons3 }) {
+                    if smartCommand.command == "pcwing" && targets.contains(where: { $1?.expansion != .legacy }) {
                         smartCommand.command = "pcteam"
                     }
                     smartCommand.parameters = platformTargets.map({ $0.0 })
@@ -412,10 +412,10 @@ class FactCommands: IRCBotModule {
                     sendFact(command: command, message: message)
                 }
             } else {
-                if command.command == "pcteam" && targets.contains(where: { $1?.expansion == .horizons3 }) {
+                if command.command == "pcteam" && targets.contains(where: { $1?.expansion == .legacy }) {
                     command.command = "pcwing"
                 }
-                if command.command == "pcwing" && targets.contains(where: { $1?.expansion != .horizons3 }) {
+                if command.command == "pcwing" && targets.contains(where: { $1?.expansion != .legacy }) {
                     command.command = "pcteam"
                 }
                 

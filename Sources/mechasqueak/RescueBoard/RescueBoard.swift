@@ -29,7 +29,7 @@ import Regex
 
 struct PlatformExpansion: Codable, Hashable {
     let platform: GamePlatform
-    let expansion: GameExpansion
+    let expansion: GameMode
 }
 
 actor RescueBoard {
@@ -61,14 +61,14 @@ actor RescueBoard {
                     guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.outcome != .Purge })?.createdAt else {
                         continue
                     }
-                    let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: .horizons3)]
+                    let lastSignalReceived = await self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: .legacy)]
                     if lastSignalReceived == nil || createdAt > lastSignalReceived! {
-                        await self.setLastSignalReceived(platform: platform, expansion: .horizons3, createdAt)
+                        await self.setLastSignalReceived(platform: platform, expansion: .legacy, createdAt)
                     }
                     continue
                 }
                 
-                for expansion in GameExpansion.allCases {
+                for expansion in GameMode.allCases {
                     guard let createdAt = rescues.values.first(where: { $0.platform == platform && $0.expansion == expansion && $0.outcome != .Purge })?.createdAt else {
                         continue
                     }
@@ -481,7 +481,7 @@ actor RescueBoard {
         return false
     }
     
-    func setLastSignalReceived(platform: GamePlatform, expansion: GameExpansion, date: Date) {
+    func setLastSignalReceived(platform: GamePlatform, expansion: GameMode, date: Date) {
         self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)] = date
     }
     
@@ -554,7 +554,7 @@ actor RescueBoard {
         return identifier
     }
     
-    func setLastSignalReceived (platform: GamePlatform, expansion: GameExpansion, _ lastReceived: Date) async {
+    func setLastSignalReceived (platform: GamePlatform, expansion: GameMode, _ lastReceived: Date) async {
         self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)] = lastReceived
     }
     

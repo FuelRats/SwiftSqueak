@@ -39,7 +39,7 @@ class Rescue {
     var codeRed: Bool               { didSet { property(\.codeRed, didChangeFrom: oldValue) } }
     var notes: String               { didSet { property(\.notes, didChangeFrom: oldValue) } }
     var platform: GamePlatform?     { didSet { property(\.platform, didChangeFrom: oldValue) } }
-    var expansion: GameExpansion    { didSet { property(\.expansion, didChangeFrom: oldValue) } }
+    var expansion: GameMode    { didSet { property(\.expansion, didChangeFrom: oldValue) } }
     var quotes: [RescueQuote]       { didSet { property(\.quotes, didChangeFrom: oldValue) } }
     var status: RescueStatus        { didSet { property(\.status, didChangeFrom: oldValue) } }
     var system: StarSystem?         { didSet { property(\.system, didChangeFrom: oldValue) } }
@@ -81,9 +81,9 @@ class Rescue {
         let platformString = match.group(at: 3)!
         self.platform = GamePlatform.parsedFromText(text: platformString)
         if let expansionText = match.group(at: 5) {
-            self.expansion = GameExpansion.parsedFromText(text: expansionText) ?? .horizons3
+            self.expansion = GameMode.parsedFromText(text: expansionText) ?? .legacy
         } else {
-            self.expansion = .horizons3
+            self.expansion = .legacy
         }
         
 
@@ -139,9 +139,9 @@ class Rescue {
             self.platform = GamePlatform.parsedFromText(text: platformString)
         }
         if let expansionString = signal.expansion {
-            self.expansion = GameExpansion.parsedFromText(text: expansionString) ?? .horizons3
+            self.expansion = GameMode.parsedFromText(text: expansionString) ?? .legacy
         } else {
-            self.expansion = .horizons3
+            self.expansion = .legacy
         }
         self.clientLanguage = Locale(identifier: "en")
 
@@ -192,9 +192,9 @@ class Rescue {
         }
         
         if let expansionString = input.expansion, self.platform == .PC {
-            self.expansion = GameExpansion.parsedFromText(text: expansionString) ?? .horizons3
+            self.expansion = GameMode.parsedFromText(text: expansionString) ?? .legacy
         } else {
-            self.expansion = .horizons3
+            self.expansion = .legacy
         }
 
         self.codeRed = input.isCodeRed
@@ -212,7 +212,7 @@ class Rescue {
         self.uploaded = false
     }
     
-    init (client: String, nick: String, platform: GamePlatform?, system: String? = nil, locale: Locale? = nil, codeRed: Bool = false, expansion: GameExpansion?, fromCommand command: IRCBotCommand) {
+    init (client: String, nick: String, platform: GamePlatform?, system: String? = nil, locale: Locale? = nil, codeRed: Bool = false, expansion: GameMode?, fromCommand command: IRCBotCommand) {
         self.id = UUID()
 
         self.client = client
@@ -228,7 +228,7 @@ class Rescue {
         self.channelName = command.message.destination.name
 
         self.platform = platform
-        self.expansion = expansion ?? .horizons3
+        self.expansion = expansion ?? .legacy
 
         self.codeRed = codeRed
         self.notes = ""
@@ -263,7 +263,7 @@ class Rescue {
         } else {
             self.system = nil
         }
-        self.expansion = attr.expansion.value ?? .horizons3
+        self.expansion = attr.expansion.value ?? .legacy
         self.quotes = attr.quotes.value
         self.status = attr.status.value
         self.title = attr.title.value
@@ -766,8 +766,8 @@ class Rescue {
         }
         
         if keyPath == \.platform {
-            if platform != .PC && expansion != .horizons3 {
-                expansion = .horizons3
+            if platform != .PC && expansion != .legacy {
+                expansion = .legacy
             }
         }
         synced = false
