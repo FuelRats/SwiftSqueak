@@ -562,7 +562,7 @@ class Rescue {
         }
         
         var rat: Rat? = nil
-        if carrier {
+        if carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
             rat = nick.currentRat
         } else {
             let assignRat = nick.getRatRepresenting(platform: self.platform)

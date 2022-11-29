@@ -272,6 +272,13 @@ enum GameMode: String, Codable, CaseIterable {
                 return nil
         }
     }
+    
+    func hasSharedUniverse (with mode: GameMode) -> Bool {
+        if self != .legacy {
+            return mode != .legacy
+        }
+        return mode == .legacy
+    }
 }
 
 extension Optional where Wrapped == GamePlatform {
