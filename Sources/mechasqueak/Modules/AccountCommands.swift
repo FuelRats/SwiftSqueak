@@ -370,14 +370,6 @@ class AccountCommands: IRCBotModule {
             return
         }
         
-        if oldExpansion.canSwitchTo(expansion: expansion) == false {
-            command.message.error(key: "myexpansion.cantswitch", fromCommand: command, map: [
-                "oldExpansion": oldExpansion.ircRepresentable,
-                "expansion": expansion.ircRepresentable
-            ])
-            return
-        }
-        
         do {
             try await currentRat.setGameExpansion(expansion)
             command.message.user.flush()

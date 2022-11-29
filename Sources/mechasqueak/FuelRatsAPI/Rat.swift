@@ -221,16 +221,6 @@ enum GameExpansion: String, Codable, CaseIterable {
         }
     }
     
-    func canSwitchTo (expansion: GameExpansion) -> Bool {
-        if self == .horizons4 && expansion == .odyssey {
-            return false
-        }
-        if self == .odyssey && expansion == .horizons4 {
-            return false
-        }
-        return true
-    }
-    
     static var englishDescriptions: [GameExpansion: String] = [
         .horizons3: "Legacy",
         .horizons4: "Horizons",
@@ -267,21 +257,21 @@ enum GameExpansion: String, Codable, CaseIterable {
     }
     
     static func parsedFromText (text: String) -> GameExpansion? {
-            let text = text.lowercased()
-            switch text {
-                case "legacy", "leg", "horizons3", "horizons 3", "horizons 3.8", "horizons (3.8)", "h3", "h3.8", "3h", "3.8h", "3.8":
-                    return .horizons3
+        let text = text.lowercased()
+        switch text {
+            case "legacy", "leg", "horizons3", "horizons 3", "horizons 3.8", "horizons (3.8)", "h3", "h3.8", "3h", "3.8h", "3.8":
+                return .horizons3
 
-                case "horizons", "hor", "live", "horizons4", "horizons 4", "horizons 4.0", "horizons (4.0)", "h4", "h4.0", "4h", "4.0h", "4.0":
-                    return .horizons4
+            case "horizons", "hor", "live", "horizons4", "horizons 4", "horizons 4.0", "horizons (4.0)", "h4", "h4.0", "4h", "4.0h", "4.0":
+                return .horizons4
 
-                case "odyssey", "o", "ody":
-                    return .odyssey
+            case "odyssey", "o", "ody":
+                return .odyssey
 
-                default:
-                    return nil
-            }
+            default:
+                return nil
         }
+    }
 }
 
 extension Optional where Wrapped == GamePlatform {
