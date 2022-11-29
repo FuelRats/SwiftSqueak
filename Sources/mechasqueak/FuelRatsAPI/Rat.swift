@@ -259,10 +259,10 @@ enum GameMode: String, Codable, CaseIterable {
     static func parsedFromText (text: String) -> GameMode? {
         let text = text.lowercased()
         switch text {
-            case "legacy", "leg", "l", "horizons3", "horizons 3", "h3", "3h":
+            case "legacy", "leg", "l", "horizons3", "horizons 3", "h3", "3h", "horizons 3.8":
                 return .legacy
 
-            case "horizons", "hor", "h", "live", "horizons4", "horizons 4", "h4",  "4h":
+            case "horizons", "hor", "h", "live", "horizons4", "horizons 4", "h4",  "4h", "horizons 4.0":
                 return .horizons
 
             case "odyssey", "o", "ody":
