@@ -199,8 +199,8 @@
   "board.quiet.unknown": "Unfortunately I do not know when the last %{platform} case was.",
   "board.quiet.recent": "The last %{platform}case was %{timespan} ago.",
   "board.quiet.notrecent": "The last %{platform} case was %{timespan} ago. Time to summon a case?",
-  "board.quiet.quiet": "Wow, the last %{platform}signal was a long time ago... %{timespan} ago to be exact! Orangey approves!",
-  "board.quiet.current": "A %{platform}case is on going right now! What are you playing at?",
+  "board.quiet.quiet": "Wow, the last %{platform} signal was a long time ago... %{timespan} ago to be exact! Orangey approves!",
+  "board.quiet.current": "A %{platform} case is on going right now! What are you playing at?",
   "board.quiet.currentjoin": "A %{platform} case is on going right now! Maybe you should join #fuelrats instead of bothering me ಥ_ಥ",
   "board.quiet.currentcalljumps": "A %{platform} case is on going right now! Maybe you should be calling jumps instead of using !quiet 🤔",
 
