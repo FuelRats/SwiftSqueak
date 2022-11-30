@@ -437,7 +437,7 @@ class BoardCommands: IRCBotModule {
         }
         var ircPlatform = platform != nil ? platform.ircRepresentable + " " : ""
         if platform == .PC {
-            ircPlatform += expansion.ircRepresentable
+            ircPlatform += expansion.ircRepresentable + " "
         }
         
         guard let lastSignalDate = lastSignalDate else {
