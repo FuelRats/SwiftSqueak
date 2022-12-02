@@ -63,10 +63,17 @@ class AccountCommands: IRCBotModule {
         }
 
         let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
+            var description = "\(rat.attributes.name.value)"
+            
             if rat.platform == .PC {
-                return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable)) (\(rat.attributes.expansion.value.ircRepresentable))"
+                description += " (\(rat.attributes.platform.value.ircRepresentable) \(rat.attributes.expansion.value.ircRepresentable))"
+            } else {
+                description += " (\(rat.attributes.platform.value.ircRepresentable))"
             }
-            return "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
+            if rat.data.permits?.contains("Pilots' Federation District") == true {
+                description += " (\(IRCFormat.color(.Grey, "Starter Zone")))"
+            }
+            return description
         }).joined(separator: ", ")
 
         let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
@@ -136,12 +143,15 @@ class AccountCommands: IRCBotModule {
         }
 
         let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
-            var description = "\(rat.attributes.name.value) (\(rat.attributes.platform.value.ircRepresentable))"
+            var description = "\(rat.attributes.name.value)"
+            
+            if rat.platform == .PC {
+                description += " (\(rat.attributes.platform.value.ircRepresentable) \(rat.attributes.expansion.value.ircRepresentable))"
+            } else {
+                description += " (\(rat.attributes.platform.value.ircRepresentable))"
+            }
             if rat.data.permits?.contains("Pilots' Federation District") == true {
                 description += " (\(IRCFormat.color(.Grey, "Starter Zone")))"
-            }
-            if rat.platform == .PC {
-                description += " (\(rat.attributes.expansion.value.ircRepresentable))"
             }
             return description
         }).joined(separator: ", ")
