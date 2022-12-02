@@ -723,6 +723,7 @@ actor RescueBoard {
                 }
 
                 existingRescue.system = result
+                try? existingRescue.save()
 
                 message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
                     "caseId": caseId,
