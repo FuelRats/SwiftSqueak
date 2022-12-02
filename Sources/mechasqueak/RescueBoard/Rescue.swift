@@ -561,6 +561,10 @@ class Rescue {
             return Result.failure(.unqualified(nick.nickname))
         }
         
+        guard nick.associatedAPIData != nil else {
+            return Result.failure(.notLoggedIn(nick.nickname))
+        }
+        
         var rat: Rat? = nil
         if carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
             rat = nick.currentRat
@@ -781,6 +785,7 @@ enum RescueAssignError: Error {
     case jumpCallConflict(Rat)
     case unidentified(String)
     case unqualified(String)
+    case notLoggedIn(String)
 }
 
 enum AssignmentResult {

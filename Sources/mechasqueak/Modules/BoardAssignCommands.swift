@@ -239,6 +239,16 @@ class BoardAssignCommands: IRCBotModule {
                 errorMessage += "\(invalid.joined(separator: ", ")) as they are not a fuel rat. "
             }
             
+            let notLoggedIn = failedAssigns.compactMap({ assign -> String? in
+                if case let .notLoggedIn(rat) = assign {
+                    return rat
+                }
+                return nil
+            })
+            if notLoggedIn.count > 0 {
+                errorMessage += "\(invalid.joined(separator: ", ")) as they do not appear to be logged in. "
+            }
+            
             let unidentified = failedAssigns.compactMap({ assign -> String? in
                 if case let .unidentified(rat) = assign {
                     return rat
@@ -246,9 +256,7 @@ class BoardAssignCommands: IRCBotModule {
                 return nil
             })
             if unidentified.count > 0 {
-                if carrier {
-                    errorMessage += "\(unidentified.joined(separator: ", ")) is not logged in"
-                } else if rescue.platform == .PC {
+                if rescue.platform == .PC {
                     errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(rescue.expansion.ircRepresentable))"
                 } else {
                     errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
