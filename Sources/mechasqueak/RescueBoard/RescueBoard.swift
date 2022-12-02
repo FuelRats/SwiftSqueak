@@ -284,6 +284,15 @@ actor RescueBoard {
             return
         }
         
+        if let lastHostname = rescue.clientLastHostName {
+            if let (_, existingRescue) = await self.first(where: {
+                $0.value.clientLastHostName == lastHostname
+            }) {
+                try? await announceExistingRescue(existingRescue, conflictingWith: rescue, initiated: initiated, inMessage: message)
+                return
+            }
+        }
+        
         if initiated == .announcer && configuration.queue != nil {
             if let promise = QueueAPI.pendingQueueJoins.first(where: {
                 $0.key.lowercased() == clientName
@@ -706,6 +715,12 @@ actor RescueBoard {
         }
 
         var changes: [String] = []
+        if rescue.clientNick != existingRescue.clientNick {
+            changes.append("\(IRCFormat.bold("IRC Nick:")) \(existingRescue.clientNick ?? "?") -> \(rescue.clientNick ?? "?")")
+            existingRescue.clientNick = rescue.clientNick
+            try? existingRescue.save()
+        }
+        
         let platform = rescue.platform
         if platform != existingRescue.platform && platform != nil, platform != .PC {
             changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
@@ -796,6 +811,7 @@ actor RescueBoard {
     var onJoinChannel = { joinEvent in
         // Check if joining user is a client of a pending announcement
         if let (promise, rescue) = pendingClientJoins[joinEvent.user.nickname.lowercased()], joinEvent.channel == rescue.channel {
+            rescue.clientLastHostName = joinEvent.user.hostmask
             promise.succeed(())
             pendingClientJoins.removeValue(forKey: joinEvent.user.nickname.lowercased())
         }

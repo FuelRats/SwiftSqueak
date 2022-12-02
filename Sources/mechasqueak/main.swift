@@ -178,17 +178,19 @@ class MechaSqueak {
         } else {
             accounts.lookup(user: userJoin.user)
             if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: userJoin.user.nickname) {
+                rescue.clientLastHostName = userJoin.user.hostmask
+                
                 var quotes = rescue.quotes
-                    quotes.removeAll(where: {
-                        $0.message.starts(with: "Client rejoined the rescue channel")
-                    })
-                    quotes.append(RescueQuote(
-                        author: userJoin.raw.client.currentNick,
-                        message: "Client rejoined the rescue channel",
-                        createdAt: Date(),
-                        updatedAt: Date(),
-                        lastAuthor: userJoin.raw.client.currentNick)
-                    )
+                quotes.removeAll(where: {
+                    $0.message.starts(with: "Client rejoined the rescue channel")
+                })
+                quotes.append(RescueQuote(
+                    author: userJoin.raw.client.currentNick,
+                    message: "Client rejoined the rescue channel",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: userJoin.raw.client.currentNick)
+                )
                 
                 rescue.setQuotes(quotes)
                 try? rescue.save()

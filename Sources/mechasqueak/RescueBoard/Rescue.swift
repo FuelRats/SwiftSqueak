@@ -54,6 +54,7 @@ class Rescue {
     var updatedAt: Date
     
     var channelName: String
+    var clientLastHostName: String?
     var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
     var xboxProfile: XboxLive.ProfileLookup? = nil
@@ -117,6 +118,7 @@ class Rescue {
         self.rats = []
         self.jumpCalls = []
         self.uploaded = false
+        self.clientLastHostName = nil
     }
 
     init? (fromRatsignal message: IRCPrivateMessage) {
@@ -161,6 +163,7 @@ class Rescue {
         self.unidentifiedRats = []
         self.rats = []
         self.jumpCalls = []
+        self.clientLastHostName = message.user.hostmask
 
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -210,6 +213,7 @@ class Rescue {
         self.createdAt = Date()
         self.updatedAt = Date()
         self.uploaded = false
+        self.clientLastHostName = nil
     }
     
     init (client: String, nick: String, platform: GamePlatform?, system: String? = nil, locale: Locale? = nil, codeRed: Bool = false, expansion: GameMode?, fromCommand command: IRCBotCommand) {
@@ -239,6 +243,7 @@ class Rescue {
         self.unidentifiedRats = []
         self.rats = []
         self.jumpCalls = []
+        self.clientLastHostName = nil
 
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -278,6 +283,7 @@ class Rescue {
         self.rats = rats
         self.firstLimpet = firstLimpet
         self.jumpCalls = []
+        self.clientLastHostName = attr.data.value.clientLastHostname
         
         self.system?.permit = attr.data.value.permit
         self.uploaded = true
@@ -430,7 +436,8 @@ class Rescue {
                 data: .init(value: RescueData(
                     permit: self.system?.permit,
                     landmark: self.system?.landmark,
-                    dispatchers: self.dispatchers
+                    dispatchers: self.dispatchers,
+                    clientLastHostname: self.clientLastHostName
                 )),
                 notes: .init(value: self.notes),
                 platform: .init(value: self.platform),

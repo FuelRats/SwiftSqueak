@@ -81,6 +81,7 @@ struct RescueData: Codable, Equatable {
     var IRCNick: String?
     var boardIndex: Int?
     var markedForDeletion: MarkForDeletionEntry?
+    var clientLastHostname: String?
 }
 
 struct RescueQuote: Codable, Equatable {
