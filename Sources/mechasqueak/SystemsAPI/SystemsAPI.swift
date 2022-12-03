@@ -474,6 +474,7 @@ class SystemsAPI {
                     case UnderAttack
                     case Destroyed
                     case Abandoned
+                    case Damaged
                 }
                 
                 enum StationType: String, Codable {

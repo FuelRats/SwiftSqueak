@@ -210,7 +210,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         }
         let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
         return stations.contains(where: {
-            $0.stationState == .UnderAttack || $0.stationState == .Destroyed || $0.stationState == .Abandoned
+            $0 != nil
         })
     }
 
