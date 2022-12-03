@@ -82,7 +82,7 @@ extension SystemsAPI {
         case Empire
         case Alliance
         case Independent
-        case PilotsFederation
+        case PilotsFederation = "Pilots Federation"
         case Thargoid
         case Unknown = ""
     }
