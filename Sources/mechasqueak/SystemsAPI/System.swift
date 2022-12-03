@@ -82,8 +82,33 @@ extension SystemsAPI {
         case Empire
         case Alliance
         case Independent
-        case PilotsFederation = "Pilots Federation"
+        case PilotsFederation
         case Thargoid
-        case Unknown = ""
+        
+        public init?(rawValue: String) {
+            switch rawValue {
+            case "Federation":
+                self = .Federation
+                
+            case "Empire":
+                self = .Empire
+                
+            case "Alliance":
+                self = .Alliance
+                
+            case "Independent":
+                self = .Independent
+                
+            case "Pilots Federation", "PilotsFederation": // FDEV, why are you like this?
+                self = .PilotsFederation
+                
+            case "Thargoid":
+                self = .Thargoid
+                
+            default:
+                return nil
+            }
+            
+        }
     }
 }
