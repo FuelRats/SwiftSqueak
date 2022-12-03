@@ -82,5 +82,6 @@ extension SystemsAPI {
         case Empire
         case Independent
         case Thargoid
+        case Unknown = ""
     }
 }
