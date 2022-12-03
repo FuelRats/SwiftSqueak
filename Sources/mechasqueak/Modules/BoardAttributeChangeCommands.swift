@@ -123,6 +123,19 @@ class BoardAttributeCommands: IRCBotModule {
                 manuallyCorrected: true
             )
         }
+        
+        if let system = rescue.system, system.isUnderAttack {
+            command.message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
+                "system": system.name
+            ]))
+            rescue.appendQuote(RescueQuote(
+                author: command.message.client.currentNick,
+                message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: command.message.client.currentNick)
+            )
+        }
         try? rescue.save(command)
         
         if let distance = rescue.system?.landmark?.distance, distance > 2500, let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName) {

@@ -34,7 +34,7 @@ enum StationDescription: ResourceObjectDescription {
         public var type: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType>
         public var name: Attribute<String>
         public var distanceToArrival: Attribute<Double>
-        public var allegiance: Attribute<String?>
+        public var allegiance: Attribute<SystemsAPI.Allegiance?>
         public var government: Attribute<SystemsAPI.Government?>
         public var economy: Attribute<String?>
         public var haveMarket: Attribute<Bool>
@@ -42,6 +42,7 @@ enum StationDescription: ResourceObjectDescription {
         public var haveOutfitting: Attribute<Bool>
         public var otherServices: Attribute<[String]>
         public var systemName: Attribute<String>
+        public var stationState: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.State>?
     }
 
     public struct Relationships: JSONAPI.Relationships {

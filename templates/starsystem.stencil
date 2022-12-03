@@ -1,4 +1,7 @@
 "{{ system.name }}"
+{% if system|isUnderAttack %}
+ ⚠️
+{% endif %}
 {% filter italic %}
  (
 {% if landmark %}

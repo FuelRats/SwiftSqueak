@@ -51,6 +51,7 @@ enum SystemDescription: ResourceObjectDescription {
     public struct Attributes: JSONAPI.Attributes {
         public var name: Attribute<String>
         public var coords: Attribute<Vector3>
+        public var systemAllegiance: Attribute<SystemsAPI.Allegiance?>
     }
 
     public struct Relationships: JSONAPI.Relationships {
@@ -74,5 +75,12 @@ extension SystemsAPI {
         public var type: String?
         public var innerRadius: Double?
         public var outerRadius: Double?
+    }
+    
+    public enum Allegiance: String, Codable {
+        case Federation
+        case Empire
+        case Independent
+        case Thargoid
     }
 }

@@ -61,6 +61,7 @@
   "board.psnprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's PSN privacy settings may prevent them from joining a team https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
   "board.psplusmissing": "\u0002\u000304WARNING:\u0003\u0002 This client does not have PS+ on their account and may not be able to join open play https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
   "board.xboxsyschange": "The star system of case #%{caseId} (%{client}) was automatically corrected based on information retrieved from Xbox Live",
+  "board.systemattack": "\u0002\u000304CAUTION:\u0003\u0002 %{system} is currently under attack by Thargoids",
   "board.clientjoin": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) has rejoined!",
   "board.clientjoin.needsrats": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) in %{system} has rejoined!",
   "board.clientjoinhost": "Caution: Case #%{caseId} client (%{client}) has rejoined with a different name! (%{nick})",

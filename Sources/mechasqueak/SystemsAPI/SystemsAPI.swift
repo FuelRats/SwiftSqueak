@@ -468,6 +468,14 @@ class SystemsAPI {
                 let hasOutfitting: Bool
                 let services: [String]
                 
+                
+                
+                public enum State: String, Codable {
+                    case UnderAttack
+                    case Destroyed
+                    case Abandoned
+                }
+                
                 enum StationType: String, Codable {
                     case CoriolisStarport = "Coriolis Starport"
                     case OcellusStarport = "Ocellus Starport"

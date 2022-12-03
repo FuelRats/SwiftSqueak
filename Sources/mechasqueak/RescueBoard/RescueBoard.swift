@@ -452,6 +452,20 @@ actor RescueBoard {
             )
         }
         
+        if let system = rescue.system, system.isUnderAttack {
+            message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
+                "system": system.name
+            ]))
+            rescue.appendQuote(RescueQuote(
+                author: message.client.currentNick,
+                message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: message.client.currentNick)
+            )
+            try? rescue.save()
+        }
+        
         if case let .found(xboxProfile) = rescue.xboxProfile {
             if xboxProfile.privacy.isAllowed == false {
                 message.reply(message: lingo.localize("board.xboxprivacy", locale: "en", interpolations: [
@@ -715,7 +729,7 @@ actor RescueBoard {
         }
 
         var changes: [String] = []
-        if rescue.clientNick != existingRescue.clientNick {
+        if rescue.clientNick?.lowercased() != existingRescue.clientNick?.lowercased() {
             changes.append("\(IRCFormat.bold("IRC Nick:")) \(existingRescue.clientNick ?? "?") -> \(rescue.clientNick ?? "?")")
             existingRescue.clientNick = rescue.clientNick
             try? existingRescue.save()
@@ -745,6 +759,19 @@ actor RescueBoard {
                     "client": rescue.client!,
                     "systemInfo": existingRescue.system.description
                 ]))
+                
+                if let system = rescue.system, system.isUnderAttack {
+                    message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
+                        "system": system.name
+                    ]))
+                    rescue.appendQuote(RescueQuote(
+                        author: message.client.currentNick,
+                        message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                        createdAt: Date(),
+                        updatedAt: Date(),
+                        lastAuthor: message.client.currentNick)
+                    )
+                }
 
             }
         }
