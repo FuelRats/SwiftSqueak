@@ -452,9 +452,9 @@ class SystemsAPI {
             func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
                 return self.stations.filter({
                     (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type.isLargeSpaceStation) && $0.stationState == nil
-                }).sorted(by: { $0.distance < $1.distance })
+                }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
                     .sorted(by: {
-                    ($0.type.rating < $1.type.rating && ($0.distance - $1.distance) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && ($0.distance - $1.distance) < 150000)
+                    ($0.type.rating < $1.type.rating && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
                 })
             }
             
@@ -462,7 +462,7 @@ class SystemsAPI {
                 static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Restock"]
                 let name: String
                 let type: StationType
-                let distance: Double
+                let distance: Double?
                 let hasMarket: Bool
                 let hasShipyard: Bool
                 let hasOutfitting: Bool
