@@ -42,7 +42,7 @@ enum StationDescription: ResourceObjectDescription {
         public var haveOutfitting: Attribute<Bool>
         public var otherServices: Attribute<[String]>
         public var systemName: Attribute<String>
-        public var stationState: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.State>?
+        public var stationState: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.State?>?
     }
 
     public struct Relationships: JSONAPI.Relationships {
