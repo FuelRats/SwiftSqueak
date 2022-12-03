@@ -80,6 +80,7 @@ extension SystemsAPI {
     public enum Allegiance: String, Codable {
         case Federation
         case Empire
+        case Alliance
         case Independent
         case Thargoid
         case Unknown = ""
