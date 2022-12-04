@@ -84,31 +84,46 @@ extension SystemsAPI {
         case Independent
         case PilotsFederation
         case Thargoid
+        case Unknown
         
-        public init?(rawValue: String) {
+        init (from decoder: Decoder) throws {
+            let rawValue = try decoder.singleValueContainer().decode(String.self)
+            if let value = Allegiance.parseAllegience(rawValue: rawValue) {
+                self = value
+            } else {
+                throw DecodingError.dataCorrupted(DecodingError.Context.init(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid Enum Raw Value"
+                ))
+            }
+        }
+        
+        public static func parseAllegience (rawValue: String) -> Allegiance? {
             switch rawValue {
             case "Federation":
-                self = .Federation
+                return .Federation
                 
             case "Empire":
-                self = .Empire
+                return .Empire
                 
             case "Alliance":
-                self = .Alliance
+                return .Alliance
                 
             case "Independent":
-                self = .Independent
+                return .Independent
                 
             case "Pilots Federation", "PilotsFederation": // FDEV, why are you like this?
-                self = .PilotsFederation
+                return .PilotsFederation
                 
             case "Thargoid":
-                self = .Thargoid
+                return.Thargoid
+                
+            case "":
+                return .Unknown
                 
             default:
                 return nil
             }
-            
         }
     }
 }
