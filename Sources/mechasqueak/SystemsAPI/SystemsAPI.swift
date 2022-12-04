@@ -451,17 +451,17 @@ class SystemsAPI {
             
             func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
                 return self.stations.filter({
-                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type.isLargeSpaceStation) && $0.stationState == nil
+                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type?.isLargeSpaceStation ?? false) && $0.stationState == nil
                 }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
                     .sorted(by: {
-                    ($0.type.rating < $1.type.rating && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
+                        (($0.type ?? .FleetCarrier).rating < ($1.type ?? .FleetCarrier).rating && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
                 })
             }
             
             struct Station: Codable {
                 static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Restock"]
                 let name: String
-                let type: StationType
+                let type: StationType?
                 let distance: Double?
                 let hasMarket: Bool
                 let hasShipyard: Bool
