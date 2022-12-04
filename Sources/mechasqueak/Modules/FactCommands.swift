@@ -373,8 +373,12 @@ class FactCommands: IRCBotModule {
             }
             
             
-            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion != .legacy }) {
-                command.command = "newkgbfoam"
+            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion == .legacy }) {
+                command.command = "oldkgbfoam"
+            }
+            
+            if command.command == "crinst" && targets.contains(where: { $1?.expansion == .legacy }) {
+                command.command = "oldcrinst"
             }
             
             if Fact.platformFacts.contains(where: { $0 == command.command }) {
