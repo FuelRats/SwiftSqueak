@@ -377,6 +377,7 @@
   "myexpansion.invalid": "\"%{expansion}\" is not a valid game version, try \"l\", \"h\" or \"o\"",
   "myexpansion.cantswitch": "It is not possible for %{oldExpansion} CMDRs to switch to %{expansion}",
   "myexpansion.success": "Changed rat %{name} to use %{expansion}",
+  "myexpansion.already": "You are already set as using %{expansion}",
   
   "maxclients.invalid": "Parameter must be a number between 5 and 25",
   "maxclients.set": "Maximum clients before queueing set to: %{count}",

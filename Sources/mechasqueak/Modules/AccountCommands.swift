@@ -379,6 +379,12 @@ class AccountCommands: IRCBotModule {
             ])
             return
         }
+        if oldExpansion == expansion {
+            command.message.error(key: "myexpansion.already", fromCommand: command, map: [
+                "expansion": command.parameters[0]
+            ])
+            return
+        }
         
         do {
             try await currentRat.setGameExpansion(expansion)
