@@ -432,7 +432,7 @@ class SystemsAPI {
         let data: [PopulatedSystem]
         
         func preferableSystems (requireLargePad: Bool = false, requireSpace: Bool = false) -> [PopulatedSystem] {
-            return self.data.sorted(by: {
+            return self.data.filter({ $0.allegiance != .Thargoid }).sorted(by: {
                 ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad == true
                  && $1.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad != true)
                 && $1.distance / $0.distance < 10
@@ -444,6 +444,7 @@ class SystemsAPI {
             let name: String
             let id64: Int64
             let stations: [Station]
+            let allegiance: SystemsAPI.Allegiance?
             
             var hasStationWithLargePad: Bool {
                 return self.stations.contains(where: { $0.hasLargePad })
