@@ -180,9 +180,9 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 return acc
             }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
             
-            let largeStations = stations.filter({ $0.type.isLargeSpaceStation })
+            let largeStations = stations.filter({ $0.type?.isLargeSpaceStation == true })
             let outposts = stations.filter({ $0.type == .Outpost })
-            let planetary = stations.filter({ $0.type.isPlanetary })
+            let planetary = stations.filter({ $0.type?.isPlanetary == true })
             
             return (try? stencil.renderLine(name: "systeminfo.stencil", context: [
                 "system": self,
