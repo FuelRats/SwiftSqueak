@@ -236,7 +236,7 @@ enum GameMode: String, Codable, CaseIterable {
         .odyssey: "Odyssey"
     ]
     var announcerDescription: String {
-        return GameMode.englishDescriptions[self]!
+        return GameMode.announcerDescriptions[self]!
     }
     
     static var shortEnglishDescriptions: [GameMode: String] = [
