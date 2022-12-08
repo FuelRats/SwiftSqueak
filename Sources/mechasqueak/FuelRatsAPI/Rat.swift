@@ -235,7 +235,7 @@ enum GameMode: String, Codable, CaseIterable {
         .horizons: "Horizon 4.0",
         .odyssey: "Odyssey"
     ]
-    var eannouncerDescription: String {
+    var announcerDescription: String {
         return GameMode.englishDescriptions[self]!
     }
     
