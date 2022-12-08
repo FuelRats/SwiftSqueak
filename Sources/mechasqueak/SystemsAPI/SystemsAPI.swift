@@ -137,9 +137,7 @@ class SystemsAPI {
         }
         
         let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
-        let searchResult = searchResults?.data?.first(where: {
-            $0.similarity == 1
-        })
+        let searchResult = searchResults?.data?.filter({ $0.similarity == 1 }).sorted(by: { $0.coords.distance(from: Vector3(0, 0, 0)) < $1.coords.distance(from: Vector3(0, 0, 0)) }).first
         let properName = searchResult?.name ?? systemName
         
         var starSystem = StarSystem(
