@@ -394,7 +394,7 @@ class GeneralCommands: IRCBotModule {
             "client": clientName,
             "system": system,
             "platform": platform.ircRepresentable,
-            "expansion": expansion.announcerDescription,
+            "expansion": expansion.englishDescription,
             "crStatus": crStatus
         ])
 
@@ -402,7 +402,7 @@ class GeneralCommands: IRCBotModule {
             "client": clientName,
             "system": system,
             "platform": platform.rawValue.uppercased(),
-            "expansion": expansion.englishDescription,
+            "expansion": expansion.announcerDescription,
             "crStatus": crStatus,
             "nick": clientNick,
             "language": locale.englishDescription,
