@@ -67,6 +67,22 @@ extension SystemsAPI {
         case Engineer = "Workshop (Engineer)"
         case Prison
         
+        init (from decoder: Decoder) throws {
+            var rawValue = try decoder.singleValueContainer().decode(String.self)
+            if rawValue.starts(with: "$") {
+                rawValue.removeFirst(12)
+                rawValue.removeLast()
+            }
+            if let value = Government(rawValue: rawValue) {
+                self = value
+            } else {
+                throw DecodingError.dataCorrupted(DecodingError.Context.init(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid Enum Raw Value"
+                ))
+            }
+        }
+        
         var ircFormatted: String {
             switch self {
             case .Anarchy:
