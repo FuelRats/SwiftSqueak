@@ -119,6 +119,9 @@ extension SystemsAPI {
             case "Thargoid":
                 return.Thargoid
                 
+            case "Guardian":
+                return .Guardian
+                
             case "":
                 return .Unknown
                 
