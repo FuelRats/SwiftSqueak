@@ -452,7 +452,7 @@ actor RescueBoard {
             )
         }
         
-        if let system = rescue.system, system.isUnderAttack {
+        if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
             message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
                 "system": system.name
             ]))
@@ -760,7 +760,7 @@ actor RescueBoard {
                     "systemInfo": existingRescue.system.description
                 ]))
                 
-                if let system = rescue.system, system.isUnderAttack {
+                if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
                     message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
                         "system": system.name
                     ]))

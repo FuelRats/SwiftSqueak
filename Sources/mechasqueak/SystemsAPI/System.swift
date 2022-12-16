@@ -83,6 +83,7 @@ extension SystemsAPI {
         case Alliance
         case Independent
         case PilotsFederation
+        case Guardian
         case Thargoid
         case Unknown
         

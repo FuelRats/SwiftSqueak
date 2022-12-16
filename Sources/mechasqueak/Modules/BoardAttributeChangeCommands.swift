@@ -124,7 +124,7 @@ class BoardAttributeCommands: IRCBotModule {
             )
         }
         
-        if let system = rescue.system, system.isUnderAttack {
+        if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
             command.message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
                 "system": system.name
             ]))
