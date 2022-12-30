@@ -72,6 +72,9 @@ extension SystemsAPI {
             if rawValue.starts(with: "$") {
                 rawValue.removeFirst(12)
                 rawValue.removeLast()
+                if rawValue == "PrisonColony" {
+                    rawValue = "Prison colony"
+                }
             }
             if let value = Government(rawValue: rawValue) {
                 self = value
