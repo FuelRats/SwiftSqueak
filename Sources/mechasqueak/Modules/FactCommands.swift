@@ -361,9 +361,11 @@ class FactCommands: IRCBotModule {
             if command.command == "prep" && targets.contains(where: { $0.1?.codeRed == true }) && configuration.general.drillMode == false {
                 command.command = "quit"
                 
-                mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
-                    "nick": command.message.user.nickname
-                ])
+                if command.message.destination.isPrivateMessage == false {
+                    mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
+                        "nick": command.message.user.nickname
+                    ])
+                }
             }
             
             if command.command == "sctimes" && command.param1?.first?.isNumber == true {
