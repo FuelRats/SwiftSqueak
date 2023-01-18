@@ -123,7 +123,8 @@ class MechaSqueak {
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
-            SessionLogger(moduleManager)
+            SessionLogger(moduleManager),
+            OpenAI(moduleManager)
         ]
         
         if configuration.queue != nil {
