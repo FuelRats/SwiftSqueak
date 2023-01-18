@@ -26,9 +26,10 @@ import Foundation
 import IRCKit
 import OpenAISwift
 
+
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
-    static var birthdayAnnounced = Set<UUID>()
+    static var lastPromptTime: [String: Date] = [:]
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -40,6 +41,11 @@ class OpenAI: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
+        
+        if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 {
+            return
+        }
+        OpenAI.lastPromptTime[channelMessage.destination.name] = Date()
 
         if let token = configuration.openAIToken, channelMessage.message.starts(with: channelMessage.client.currentNick) {
             let openAI = OpenAISwift(authToken: token)
@@ -64,6 +70,11 @@ class OpenAI: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
+        
+        if let date = OpenAI.lastPromptTime[channelAction.destination.name], Date().timeIntervalSince(date) < 60 {
+            return
+        }
+        OpenAI.lastPromptTime[channelAction.destination.name] = Date()
         
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
             let openAI = OpenAISwift(authToken: token)
