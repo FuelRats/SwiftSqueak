@@ -36,7 +36,7 @@ class OpenAI: IRCBotModule {
 
     @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
-        guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination == mecha.reportingChannel else {
+        guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination != mecha.rescueChannel else {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
@@ -50,6 +50,29 @@ class OpenAI: IRCBotModule {
                 case .success(let success):
                     if let message = success.choices.first?.text.trimmingCharacters(in: .whitespacesAndNewlines) {
                         channelMessage.reply(message: message)
+                    }
+                default:
+                    break
+                }
+            }
+        }
+    }
+    
+    @EventListener<IRCChannelActionMessageNotification>
+    var onChannelAction = { channelAction in
+        guard channelAction.raw.messageTags["batch"] == nil && channelMessage.destination != mecha.rescueChannel else {
+            // Do not interpret commands from playback of old messages or in secret channels
+            return
+        }
+        
+        if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
+            let openAI = OpenAISwift(authToken: token)
+            let prompt = channelAction.message.replacingOccurrences(of: channelAction.client.currentNick, with: "you")
+            openAI.sendCompletion(with: prompt, maxTokens: 100) { result in
+                switch result {
+                case .success(let success):
+                    if let message = success.choices.first?.text.trimmingCharacters(in: .whitespacesAndNewlines) {
+                        channelAction.reply(message: message)
                     }
                 default:
                     break
