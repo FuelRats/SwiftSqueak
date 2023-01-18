@@ -24,7 +24,7 @@ let package = Package(
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 2)),
         .package(url: "https://github.com/swift-server/swift-backtrace.git", from: Version(1, 3, 1)),
         .package(url: "https://github.com/vapor/websocket-kit.git", from: Version(2, 5, 0)),
-        .package(url: "https://github.com/adamrushy/OpenAISwift.git", from: Version(1, 0, 0)),
+        .package(url: "https://github.com/adamrushy/OpenAISwift.git", revision: "3efc193f9a12c063a0987d9de0fb03ed47affcbf"),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 15, 0))
     ],
