@@ -576,7 +576,7 @@ class Rescue {
         guard let nick = channel.member(named: param) else {
             return Result.failure(RescueAssignError.notFound(param))
         }
-        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false {
+        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false && !force {
             return Result.failure(.unqualified(nick.nickname))
         }
         
