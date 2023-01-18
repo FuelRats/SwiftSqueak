@@ -60,7 +60,7 @@ class OpenAI: IRCBotModule {
     
     @EventListener<IRCChannelActionMessageNotification>
     var onChannelAction = { channelAction in
-        guard channelAction.raw.messageTags["batch"] == nil && channelMessage.destination != mecha.rescueChannel else {
+        guard channelAction.raw.messageTags["batch"] == nil && channelAction.destination != mecha.rescueChannel else {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
