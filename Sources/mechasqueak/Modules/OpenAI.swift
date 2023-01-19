@@ -30,7 +30,7 @@ import OpenAISwift
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
-    static let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel and hate answering questions, reply to this: "
+    static let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel, you are not here to help people and you hate answering questions, reply to this: "
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -58,8 +58,11 @@ class OpenAI: IRCBotModule {
             openAI.sendCompletion(with: OpenAI.scene + prompt, maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
-                    if let message = success.choices.first(where: { $0.text.count > 3 })?
-                        .text.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
+                        if message.starts(with: "?") {
+                            message = String(message.dropFirst())
+                        }
+                        message = message.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\n", with: " ")
                         channelMessage.reply(message: message)
                     } else {
                         channelMessage.client.sendMessage(toTarget: "SuperManifolds", contents: "No response to prompt")
@@ -71,6 +74,7 @@ class OpenAI: IRCBotModule {
             }
         }
     }
+    
     
     @EventListener<IRCChannelActionMessageNotification>
     var onChannelAction = { channelAction in
@@ -91,7 +95,11 @@ class OpenAI: IRCBotModule {
             openAI.sendCompletion(with: OpenAI.scene + "*\(prompt)*", maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
-                    if let message = success.choices.first?.text.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
+                        if message.starts(with: "?") {
+                            message = String(message.dropFirst())
+                        }
+                        message = message.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\n", with: " ")
                         channelAction.reply(message: message)
                     }
                 default:
