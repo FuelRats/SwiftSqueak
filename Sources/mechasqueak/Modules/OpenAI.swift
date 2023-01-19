@@ -81,18 +81,16 @@ class OpenAI: IRCBotModule {
                         channelMessage.reply(message: message)
                         
                         OpenAI.messages += 1
-                        if OpenAI.messages > 2 {
+                        if OpenAI.messages > 3 {
                             OpenAI.cooldown = true
-                            OpenAI.messages = 0
                             
                             loop.next().scheduleTask(in: .seconds(180), {
                                 OpenAI.cooldown = false
                             })
-                        } else {
-                            loop.next().scheduleTask(in: .seconds(30), {
-                                OpenAI.messages -= 1
-                            })
                         }
+                        loop.next().scheduleTask(in: .seconds(30), {
+                            OpenAI.messages -= 1
+                        })
                     }
                 case .failure(let error):
                     break
@@ -131,18 +129,17 @@ class OpenAI: IRCBotModule {
                         channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
                         
                         OpenAI.messages += 1
-                        if OpenAI.messages > 2 {
+                        if OpenAI.messages > 3 {
                             OpenAI.cooldown = true
                             OpenAI.messages = 0
                             
                             loop.next().scheduleTask(in: .seconds(180), {
                                 OpenAI.cooldown = false
                             })
-                        } else {
-                            loop.next().scheduleTask(in: .seconds(30), {
-                                OpenAI.messages -= 1
-                            })
                         }
+                        loop.next().scheduleTask(in: .seconds(30), {
+                            OpenAI.messages -= 1
+                        })
                     }
                 default:
                     break
