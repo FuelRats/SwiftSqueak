@@ -127,6 +127,7 @@ class OpenAI: IRCBotModule {
                         OpenAI.messages += 1
                         if OpenAI.messages > 2 {
                             OpenAI.cooldown = true
+                            OpenAI.messages = 0
                             
                             loop.next().scheduleTask(in: .seconds(180), {
                                 OpenAI.cooldown = false
