@@ -31,7 +31,9 @@ class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
     static var history: [String: [String]] = [:]
-    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in the star system Fuelum and founded by Surley Badger. You are not here to help people and you begrudgingly answering questions, here is the conversation so far, reply: "
+    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in the star system Fuelum and founded by Surley Badger. You are not here to help people, you don't make deals, and you begrudgingly answering questions, here is the conversation so far, reply: "
+    static var messages = 0
+    static var cooldown = false
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -48,6 +50,11 @@ class OpenAI: IRCBotModule {
             if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*5 {
                 history[channelMessage.destination.name] = []
             }
+            
+            if cooldown {
+                return
+            }
+            
             let openAI = OpenAISwift(authToken: token)
             
             let prompt = channelMessage.message
@@ -67,11 +74,21 @@ class OpenAI: IRCBotModule {
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
                         lastPromptTime[channelMessage.destination.name] = Date()
                         channelMessage.reply(message: message)
-                    } else {
-                        channelMessage.client.sendMessage(toTarget: "SuperManifolds", contents: "No response to prompt")
+                        
+                        OpenAI.messages += 1
+                        if OpenAI.messages > 2 {
+                            OpenAI.cooldown = true
+                            
+                            loop.next().scheduleTask(in: .seconds(180), {
+                                OpenAI.cooldown = false
+                            })
+                        } else {
+                            loop.next().scheduleTask(in: .seconds(30), {
+                                OpenAI.messages -= 1
+                            })
+                        }
                     }
                 case .failure(let error):
-                    channelMessage.client.sendMessage(toTarget: "SuperManifolds", contents: String(describing: error))
                     break
                 }
             }
@@ -87,6 +104,10 @@ class OpenAI: IRCBotModule {
         }
         
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
+            if cooldown {
+                return
+            }
+            
             let openAI = OpenAISwift(authToken: token)
             let prompt = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, user \(channelAction.user.nickname) just said: \"/me \(channelAction.message)\" reply back with your own /me action"
             
@@ -102,6 +123,19 @@ class OpenAI: IRCBotModule {
                             .replacingOccurrences(of: "\n", with: " ")
                             .replacingOccurrences(of: "/me ", with: "")
                         channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
+                        
+                        OpenAI.messages += 1
+                        if OpenAI.messages > 2 {
+                            OpenAI.cooldown = true
+                            
+                            loop.next().scheduleTask(in: .seconds(180), {
+                                OpenAI.cooldown = false
+                            })
+                        } else {
+                            loop.next().scheduleTask(in: .seconds(30), {
+                                OpenAI.messages -= 1
+                            })
+                        }
                     }
                 default:
                     break
