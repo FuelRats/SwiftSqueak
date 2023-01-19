@@ -49,7 +49,7 @@ class OpenAI: IRCBotModule {
         }
         OpenAI.lastPromptTime[channelMessage.destination.name] = Date()
 
-        if let token = configuration.openAIToken, channelMessage.message.starts(with: channelMessage.client.currentNick) {
+        if let token = configuration.openAIToken, channelMessage.message.starts(with: "MechaSqueak[BOT]") {
             let openAI = OpenAISwift(authToken: token)
             
             let prompt = channelMessage.message.components(separatedBy: " ")
@@ -85,7 +85,7 @@ class OpenAI: IRCBotModule {
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
             let openAI = OpenAISwift(authToken: token)
             let prompt = channelAction.message
-                .replacingOccurrences(of: channelAction.client.currentNick, with: "you")
+                .replacingOccurrences(of: "MechaSqueak[BOT]", with: "you")
             openAI.sendCompletion(with: OpenAI.scene + "*\(prompt)*", maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
