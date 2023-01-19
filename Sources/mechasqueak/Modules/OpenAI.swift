@@ -69,7 +69,7 @@ class OpenAI: IRCBotModule {
                         message = message
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                             .replacingOccurrences(of: "\n", with: " ")
-                            .replacingOccurrences(of: "MechaSqueak[BOT]: ", with: "")
+                            .replacingOccurrences(of: "MechaSqueak[BOT]:", with: "")
                         history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
                         lastPromptTime[channelMessage.destination.name] = Date()
