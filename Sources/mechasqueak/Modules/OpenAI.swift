@@ -78,15 +78,17 @@ class OpenAI: IRCBotModule {
                         history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
                         lastPromptTime[channelMessage.destination.name] = Date()
-                        channelMessage.reply(message: message)
                         
                         OpenAI.messages += 1
                         if OpenAI.messages > 3 {
                             OpenAI.cooldown = true
+                            channelMessage.reply(message: message + " ⏱️")
                             
                             loop.next().scheduleTask(in: .seconds(180), {
                                 OpenAI.cooldown = false
                             })
+                        } else {
+                            channelMessage.reply(message: message)
                         }
                         loop.next().scheduleTask(in: .seconds(30), {
                             OpenAI.messages -= 1
@@ -126,16 +128,18 @@ class OpenAI: IRCBotModule {
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                             .replacingOccurrences(of: "\n", with: " ")
                             .replacingOccurrences(of: "/me ", with: "")
-                        channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
                         
                         OpenAI.messages += 1
                         if OpenAI.messages > 3 {
                             OpenAI.cooldown = true
                             OpenAI.messages = 0
+                            channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message + " ⏱️")
                             
                             loop.next().scheduleTask(in: .seconds(180), {
                                 OpenAI.cooldown = false
                             })
+                        } else {
+                            channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
                         }
                         loop.next().scheduleTask(in: .seconds(30), {
                             OpenAI.messages -= 1
