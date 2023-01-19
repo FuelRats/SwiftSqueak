@@ -30,7 +30,7 @@ import OpenAISwift
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
-    static let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel, you are not here to help people and you begrudingly answering questions, reply to this: "
+    static let scene = "You are a sarcastic, mean, and rude AI chat bot in the fuel rats IRC channel, you are not here to help people and you begrudgingly answering questions, reply to this: "
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -43,7 +43,7 @@ class OpenAI: IRCBotModule {
             return
         }
 
-        if let token = configuration.openAIToken, channelMessage.message.starts(with: "MechaSqueak[BOT]") {
+        if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") {
             if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 && channelMessage.user.hasPermission(permission: .UserRead) == false {
                 return
             }
@@ -51,9 +51,8 @@ class OpenAI: IRCBotModule {
             
             let openAI = OpenAISwift(authToken: token)
             
-            let prompt = channelMessage.message.components(separatedBy: " ")
-                .dropFirst()
-                .joined(separator: " ")
+            let prompt = channelMessage.message
+                .replacingOccurrences(of: "MechaSqueak[BOT]", with: "")
                 .replacingOccurrences(of: "SuperManifolds", with: "your creator")
             
             openAI.sendCompletion(with: OpenAI.scene + prompt, maxTokens: 100) { result in
