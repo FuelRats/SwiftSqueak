@@ -27,9 +27,11 @@ import IRCKit
 import OpenAISwift
 
 
+let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel, reply to this: "
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
+    static let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel, reply to this: "
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -42,7 +44,7 @@ class OpenAI: IRCBotModule {
             return
         }
         
-        if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 {
+        if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 && channelMessage.user.hasPermission(permission: .UserRead) == false {
             return
         }
         OpenAI.lastPromptTime[channelMessage.destination.name] = Date()
@@ -50,8 +52,12 @@ class OpenAI: IRCBotModule {
         if let token = configuration.openAIToken, channelMessage.message.starts(with: channelMessage.client.currentNick) {
             let openAI = OpenAISwift(authToken: token)
             
-            let prompt = channelMessage.message.components(separatedBy: " ").dropFirst().joined(separator: " ")
-            openAI.sendCompletion(with: prompt, maxTokens: 100) { result in
+            let prompt = channelMessage.message.components(separatedBy: " ")
+                .dropFirst()
+                .joined(separator: " ")
+                .replacingOccurrences(of: "SuperManifolds", with: "your creator")
+            
+            openAI.sendCompletion(with: OpenAI.scene + prompt, maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
                     if let message = success.choices.first?.text.trimmingCharacters(in: .whitespacesAndNewlines) {
@@ -78,8 +84,9 @@ class OpenAI: IRCBotModule {
         
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
             let openAI = OpenAISwift(authToken: token)
-            let prompt = channelAction.message.replacingOccurrences(of: channelAction.client.currentNick, with: "you")
-            openAI.sendCompletion(with: prompt, maxTokens: 100) { result in
+            let prompt = channelAction.message
+                .replacingOccurrences(of: channelAction.client.currentNick, with: "you")
+            openAI.sendCompletion(with: OpenAI.scene + "*\(prompt)*", maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
                     if let message = success.choices.first?.text.trimmingCharacters(in: .whitespacesAndNewlines) {
