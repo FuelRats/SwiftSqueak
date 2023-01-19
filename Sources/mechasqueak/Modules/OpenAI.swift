@@ -42,12 +42,13 @@ class OpenAI: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
-        if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 && channelMessage.user.hasPermission(permission: .UserRead) == false {
-            return
-        }
-        OpenAI.lastPromptTime[channelMessage.destination.name] = Date()
 
         if let token = configuration.openAIToken, channelMessage.message.starts(with: "MechaSqueak[BOT]") {
+            if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 && channelMessage.user.hasPermission(permission: .UserRead) == false {
+                return
+            }
+            OpenAI.lastPromptTime[channelMessage.destination.name] = Date()
+            
             let openAI = OpenAISwift(authToken: token)
             
             let prompt = channelMessage.message.components(separatedBy: " ")
@@ -83,12 +84,12 @@ class OpenAI: IRCBotModule {
             return
         }
         
-        if let date = OpenAI.lastPromptTime[channelAction.destination.name], Date().timeIntervalSince(date) < 60 {
-            return
-        }
-        OpenAI.lastPromptTime[channelAction.destination.name] = Date()
-        
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
+            if let date = OpenAI.lastPromptTime[channelAction.destination.name], Date().timeIntervalSince(date) < 60 {
+                return
+            }
+            OpenAI.lastPromptTime[channelAction.destination.name] = Date()
+            
             let openAI = OpenAISwift(authToken: token)
             let prompt = channelAction.message
                 .replacingOccurrences(of: "MechaSqueak[BOT]", with: "you")
