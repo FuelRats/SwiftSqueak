@@ -30,7 +30,8 @@ import OpenAISwift
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
-    static let scene = "You are a sarcastic, mean, and rude AI chat bot in the fuel rats IRC channel, you are not here to help people and you begrudgingly answering questions, reply to this: "
+    static var history: [String: [String]] = [:]
+    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you are not here to help people and you begrudgingly answering questions, here is the conversation so far, reply: "
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -42,27 +43,30 @@ class OpenAI: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
-
-        if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") {
-            if let date = OpenAI.lastPromptTime[channelMessage.destination.name], Date().timeIntervalSince(date) < 60 && channelMessage.user.hasPermission(permission: .UserRead) == false {
-                return
+        
+        if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.starts(with: "!") == false {
+            if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*15 {
+                history[channelMessage.destination.name] = []
             }
-            OpenAI.lastPromptTime[channelMessage.destination.name] = Date()
-            
             let openAI = OpenAISwift(authToken: token)
             
             let prompt = channelMessage.message
-                .replacingOccurrences(of: "MechaSqueak[BOT]", with: "")
                 .replacingOccurrences(of: "SuperManifolds", with: "your creator")
-            
-            openAI.sendCompletion(with: OpenAI.scene + prompt, maxTokens: 100) { result in
+            let chat = OpenAI.scene + (history[channelMessage.destination.name]?.joined(separator: "\n") ?? "") + "\n" + channelMessage.user.nickname + ": " + prompt
+            openAI.sendCompletion(with: chat, maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
                     if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
                         if message.starts(with: "?") {
                             message = String(message.dropFirst())
                         }
-                        message = message.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\n", with: " ")
+                        message = message
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .replacingOccurrences(of: "\n", with: " ")
+                            .replacingOccurrences(of: "MechaSqueak[BOT]: ", with: "")
+                        history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
+                        history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
+                        lastPromptTime[channelMessage.destination.name] = Date()
                         channelMessage.reply(message: message)
                     } else {
                         channelMessage.client.sendMessage(toTarget: "SuperManifolds", contents: "No response to prompt")
@@ -84,23 +88,21 @@ class OpenAI: IRCBotModule {
         }
         
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
-            if let date = OpenAI.lastPromptTime[channelAction.destination.name], Date().timeIntervalSince(date) < 60 {
-                return
-            }
-            OpenAI.lastPromptTime[channelAction.destination.name] = Date()
-            
             let openAI = OpenAISwift(authToken: token)
-            let prompt = channelAction.message
-                .replacingOccurrences(of: "MechaSqueak[BOT]", with: "you")
-            openAI.sendCompletion(with: OpenAI.scene + "*\(prompt)*", maxTokens: 100) { result in
+            let prompt = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, user \(channelAction.user.nickname) just said: \"/me \(channelAction.message)\" reply back with your own /me action"
+            
+            openAI.sendCompletion(with: prompt, maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
                     if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
                         if message.starts(with: "?") {
                             message = String(message.dropFirst())
                         }
-                        message = message.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\n", with: " ")
-                        channelAction.reply(message: message)
+                        message = message
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .replacingOccurrences(of: "\n", with: " ")
+                            .replacingOccurrences(of: "/me ", with: "")
+                        channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
                     }
                 default:
                     break
