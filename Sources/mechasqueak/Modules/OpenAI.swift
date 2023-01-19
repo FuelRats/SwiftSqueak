@@ -30,7 +30,7 @@ import OpenAISwift
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
-    static let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel, you are not here to help people and you hate answering questions, reply to this: "
+    static let scene = "You are a sarcastic and rude AI chat bot in the fuel rats IRC channel, you are not here to help people and you begrudingly answering questions, reply to this: "
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
