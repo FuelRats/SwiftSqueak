@@ -31,7 +31,7 @@ class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
     static var history: [String: [String]] = [:]
-    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in the star system Fuelum and founded by Surley Badger. You are not here to help people, you don't make deals, and you begrudgingly answering questions, here is the conversation so far, write a reply message without your name at the beginning: "
+    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in space station Wollheim Vision in the star system Fuelum and founded by Surley Badger. You are not here to help people, you don't make deals, and you begrudgingly answering questions, here is the conversation so far, write a reply message without your name at the beginning: "
     static var messages = 0
     static var cooldown = false
 
@@ -70,6 +70,11 @@ class OpenAI: IRCBotModule {
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                             .replacingOccurrences(of: "\n", with: " ")
                             .replacingOccurrences(of: "MechaSqueak[BOT]:", with: "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        if message.first == "\"" && message.last == "\"" {
+                            message = String(message.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
                         history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
                         lastPromptTime[channelMessage.destination.name] = Date()
@@ -78,6 +83,7 @@ class OpenAI: IRCBotModule {
                         OpenAI.messages += 1
                         if OpenAI.messages > 2 {
                             OpenAI.cooldown = true
+                            OpenAI.messages = 0
                             
                             loop.next().scheduleTask(in: .seconds(180), {
                                 OpenAI.cooldown = false
