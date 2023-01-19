@@ -31,7 +31,7 @@ class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
     static var history: [String: [String]] = [:]
-    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you are not here to help people and you begrudgingly answering questions, here is the conversation so far, reply: "
+    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in the star system Fuelum and founded by Surley Badger. You are not here to help people and you begrudgingly answering questions, here is the conversation so far, reply: "
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -45,13 +45,12 @@ class OpenAI: IRCBotModule {
         }
         
         if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.starts(with: "!") == false {
-            if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*15 {
+            if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*5 {
                 history[channelMessage.destination.name] = []
             }
             let openAI = OpenAISwift(authToken: token)
             
             let prompt = channelMessage.message
-                .replacingOccurrences(of: "SuperManifolds", with: "your creator")
             let chat = OpenAI.scene + (history[channelMessage.destination.name]?.joined(separator: "\n") ?? "") + "\n" + channelMessage.user.nickname + ": " + prompt
             openAI.sendCompletion(with: chat, maxTokens: 100) { result in
                 switch result {
