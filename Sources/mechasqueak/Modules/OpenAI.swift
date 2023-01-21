@@ -46,7 +46,7 @@ class OpenAI: IRCBotModule {
             return
         }
         
-        if let token = configuration.openAIToken, (channelMessage.message.contains("MechaSqueak[BOT]") || (channelMessage.user.account == "TobyCharles" && Int.random(in: 1..<20) == 1)) && channelMessage.message.starts(with: "!") == false {
+        if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.starts(with: "!") == false {
             if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*5 {
                 history[channelMessage.destination.name] = []
             }
@@ -80,7 +80,7 @@ class OpenAI: IRCBotModule {
                         lastPromptTime[channelMessage.destination.name] = Date()
                         
                         OpenAI.messages += 1
-                        if OpenAI.messages > 3 {
+                        if OpenAI.messages > 2 {
                             OpenAI.cooldown = true
                             channelMessage.reply(message: message + " ⏱️")
                             
@@ -90,7 +90,7 @@ class OpenAI: IRCBotModule {
                         } else {
                             channelMessage.reply(message: message)
                         }
-                        loop.next().scheduleTask(in: .seconds(30), {
+                        loop.next().scheduleTask(in: .seconds(60), {
                             OpenAI.messages -= 1
                         })
                     }
