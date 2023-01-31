@@ -31,7 +31,7 @@ class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
     static var history: [String: [String]] = [:]
-    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in space station Wollheim Vision in the star system Fuelum and founded by Surley Badger. You are not here to help people, you don't make deals, and you begrudgingly answering questions, here is the conversation so far, write a reply message without your name at the beginning: "
+    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in space station Wollheim Vision in the star system Fuelum and founded by Surley Badger. You are not here to help people, and you begrudgingly answering questions, here is the conversation so far, write a reply message without your name at the beginning: "
     static var messages = 0
     static var cooldown = false
 
@@ -47,7 +47,7 @@ class OpenAI: IRCBotModule {
         }
         
         if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.starts(with: "!") == false {
-            if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*5 {
+            if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*2 {
                 history[channelMessage.destination.name] = []
             }
             
