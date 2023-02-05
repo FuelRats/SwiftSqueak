@@ -51,6 +51,7 @@ class OpenAI: IRCBotModule {
                 history[channelMessage.destination.name] = []
             }
             
+            
             if cooldown {
                 return
             }
@@ -58,12 +59,19 @@ class OpenAI: IRCBotModule {
             let openAI = OpenAISwift(authToken: token)
             
             let prompt = channelMessage.message
+            guard prompt.components(separatedBy: " ").count > 2 else {
+                return
+            }
+            
             let chat = OpenAI.scene + (history[channelMessage.destination.name]?.joined(separator: "\n") ?? "") + "\n" + channelMessage.user.nickname + ": " + prompt
             openAI.sendCompletion(with: chat, maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
                     if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
                         if message.starts(with: "?") {
+                            message = String(message.dropFirst())
+                        }
+                        if message.starts(with: ".") {
                             message = String(message.dropFirst())
                         }
                         message = message
@@ -74,6 +82,11 @@ class OpenAI: IRCBotModule {
                         
                         if message.first == "\"" && message.last == "\"" {
                             message = String(message.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                        
+                        if message.first!.isLowercase {
+                            channelMessage.reply(message: "¯\\_(ツ)_/¯")
+                            return
                         }
                         history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
