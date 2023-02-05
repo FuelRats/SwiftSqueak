@@ -75,6 +75,9 @@ extension SystemsAPI {
                 if rawValue == "PrisonColony" {
                     rawValue = "Prison colony"
                 }
+                if rawValue == "Engineer" {
+                    rawValue = "Workshop (Engineer)"
+                }
             }
             if let value = Government(rawValue: rawValue) {
                 self = value
