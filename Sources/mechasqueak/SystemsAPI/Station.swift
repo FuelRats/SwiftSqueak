@@ -31,7 +31,7 @@ enum StationDescription: ResourceObjectDescription {
 
     public struct Attributes: JSONAPI.Attributes {
         public var marketId: Attribute<Int64?>
-        public var type: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType>
+        public var type: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType?>
         public var name: Attribute<String>
         public var distanceToArrival: Attribute<Double>
         public var allegiance: Attribute<String?>
