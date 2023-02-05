@@ -33,7 +33,7 @@
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--ps</strong> Set platform to PS4</span>
     </p>    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Change the game version for PC (h3 / h4 / o)</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Change the game version for PC (l / h / o)</span>
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--cr</strong> Mark rescue as a code red</span>
     </p>    <p style="margin-left: 60.0px;">
@@ -52,7 +52,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!addcase SpaceDawg --pc --mode h3 --sys NLTT 48288 --cmdr Space Dawg --lang ru</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!addcase SpaceDawg --pc --mode h --sys NLTT 48288 --cmdr Space Dawg --lang ru</span>
         </span>
       </span>
     </p>
@@ -87,7 +87,7 @@
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--ps</strong> Show only Playstation cases</span>
     </p>    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Show only cases set to this game version (horizons 3.8, horizons 4.0, or odyssey)</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Show only cases set to this game version (legacy, horizons, or odyssey)</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -98,7 +98,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!list  --mode h3</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!list  --mode h</span>
         </span>
       </span>
     </p>
@@ -570,10 +570,10 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!horizons3 <span style="color: rgb(122,134,154);">&lt;case id/client&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!legacy <span style="color: rgb(122,134,154);">&lt;case id/client&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Aliases</strong>: !h3
+          <strong>Aliases</strong>: !leg !horizons3 !h3
         </span>
       </span>
     </p>    <p>
@@ -583,7 +583,7 @@
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Changes a PC case to use the 3.8 Horizons expansion</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;">Changes a PC case to use legacy mode</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -594,16 +594,16 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!horizons3 4</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!legacy 4</span>
         </span>
       </span>
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!horizons4 <span style="color: rgb(122,134,154);">&lt;case id/client&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!horizons <span style="color: rgb(122,134,154);">&lt;case id/client&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Aliases</strong>: !h4
+          <strong>Aliases</strong>: !hor !h !live !horizons4 !h4
         </span>
       </span>
     </p>    <p>
@@ -613,7 +613,7 @@
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Changes a PC case to use the 4.0 Horizons expansion</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;">Changes a PC case to use the live Horizons expansion</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -624,7 +624,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!horizons4 4</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!horizons 4</span>
         </span>
       </span>
     </p>
@@ -1198,119 +1198,7 @@
         </span>
       </strong>
     </p>
-    <h3>
-<span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!queue <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Drilled Rat
-        </span>
-      </span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Get current information on the queue</span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
-        </span>
-      </span>
-    </p>
-    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!queue </span>
-        </span>
-      </span>
-    </p>
-      <br/><h3>
-<span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!queuestats <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
-    <em>[start date]</em>
-</span></span></span></span></h3>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Drilled Rat
-        </span>
-      </span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Get statistics from the queueing system</span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
-        </span>
-      </span>
-    </p>
-    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!queuestats 2021-04-01</span>
-        </span>
-      </span>
-    </p>
-      <br/><h3>
-<span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!dequeue <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Aliases</strong>: !next
-        </span>
-      </span>
-    </p>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Drilled Rat
-        </span>
-      </span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Manually move the next client from the queue into the rescue channel</span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
-        </span>
-      </span>
-    </p>
-    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!dequeue </span>
-        </span>
-      </span>
-    </p>
-      <br/><h3>
-<span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!maxclients <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
-    <em>[number of clients]</em>
-</span></span></span></span></h3>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Aliases</strong>: !maxload !maxcases
-        </span>
-      </span>
-    </p>    <p>
-      <span style="color: rgb(0,0,0);text-decoration: none;">
-        <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Drilled Rat
-        </span>
-      </span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value</span>
-    </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
-        </span>
-      </span>
-    </p>
-    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);">
-        <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!maxclients 10</span>
-        </span>
-      </span>
-    </p>
-      <br/>
+    
     <br/>    <h2>
       <span style="color: rgb(0,0,0);">Facts</span>
     </h2>
@@ -1707,7 +1595,7 @@
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--lang &lt;language code&gt;</strong> Sets the language of the announced rescue to a specific language code</span>
     </p>    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Announces the rescue with a specific PC game version (h3 / h4 / o)</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Announces the rescue with a specific PC game version (l / h / o)</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -1718,7 +1606,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!announce #drillrats "Space Dawg" SpaceDawg PC NLTT 48288 --lang ru --mode h3</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!announce #drillrats "Space Dawg" SpaceDawg PC NLTT 48288 --lang ru --mode h</span>
         </span>
       </span>
     </p>
@@ -2327,7 +2215,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!mymode h3</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!mymode h</span>
         </span>
       </span>
     </p>
@@ -2367,7 +2255,7 @@
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--ps</strong> Show the last time there was a case on PS4/PS5</span>
     </p>    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Shows last time for another PC game version (h3 / h4 / o)</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--mode &lt;game version&gt;</strong> Shows last time for another PC game version (l / h / o)</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -2378,7 +2266,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!quiet  --mode h3</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!quiet  --mode h</span>
         </span>
       </span>
     </p>

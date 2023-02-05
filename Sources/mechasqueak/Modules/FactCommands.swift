@@ -30,7 +30,7 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
-    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo"]
+    private var prepFacts = ["prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit"]
 
     static func parseFromParameter (param: String) -> (String, Locale) {
         let factComponents = param.lowercased().components(separatedBy: "-")
@@ -361,9 +361,11 @@ class FactCommands: IRCBotModule {
             if command.command == "prep" && targets.contains(where: { $0.1?.codeRed == true }) && configuration.general.drillMode == false {
                 command.command = "quit"
                 
-                mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
-                    "nick": command.message.user.nickname
-                ])
+                if command.message.destination.isPrivateMessage == false {
+                    mecha.reportingChannel?.send(key: "facts.prepquitcorrection", map: [
+                        "nick": command.message.user.nickname
+                    ])
+                }
             }
             
             if command.command == "sctimes" && command.param1?.first?.isNumber == true {
@@ -373,8 +375,12 @@ class FactCommands: IRCBotModule {
             }
             
             
-            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion != .legacy }) {
-                command.command = "newkgbfoam"
+            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion == .legacy }) {
+                command.command = "oldkgbfoam"
+            }
+            
+            if command.command == "crinst" && targets.contains(where: { $1?.expansion == .legacy }) {
+                command.command = "oldcrinst"
             }
             
             if Fact.platformFacts.contains(where: { $0 == command.command }) {

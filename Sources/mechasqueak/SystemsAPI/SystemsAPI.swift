@@ -137,9 +137,7 @@ class SystemsAPI {
         }
         
         let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
-        let searchResult = searchResults?.data?.first(where: {
-            $0.similarity == 1
-        })
+        let searchResult = searchResults?.data?.filter({ $0.similarity == 1 }).sorted(by: { $0.coords.distance(from: Vector3(0, 0, 0)) < $1.coords.distance(from: Vector3(0, 0, 0)) }).first
         let properName = searchResult?.name ?? systemName
         
         var starSystem = StarSystem(
@@ -432,7 +430,7 @@ class SystemsAPI {
         let data: [PopulatedSystem]
         
         func preferableSystems (requireLargePad: Bool = false, requireSpace: Bool = false) -> [PopulatedSystem] {
-            return self.data.sorted(by: {
+            return self.data.filter({ $0.allegiance != .Thargoid }).sorted(by: {
                 ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad == true
                  && $1.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad != true)
                 && $1.distance / $0.distance < 10
@@ -444,6 +442,7 @@ class SystemsAPI {
             let name: String
             let id64: Int64
             let stations: [Station]
+            let allegiance: SystemsAPI.Allegiance?
             
             var hasStationWithLargePad: Bool {
                 return self.stations.contains(where: { $0.hasLargePad })
@@ -451,22 +450,31 @@ class SystemsAPI {
             
             func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
                 return self.stations.filter({
-                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type.isLargeSpaceStation)
-                }).sorted(by: { $0.distance < $1.distance })
+                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type?.isLargeSpaceStation ?? false) && $0.stationState == nil
+                }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
                     .sorted(by: {
-                    ($0.type.rating < $1.type.rating && ($0.distance - $1.distance) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && ($0.distance - $1.distance) < 150000)
+                        (($0.type ?? .FleetCarrier).rating < ($1.type ?? .FleetCarrier).rating && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
                 })
             }
             
             struct Station: Codable {
                 static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Restock"]
                 let name: String
-                let type: StationType
-                let distance: Double
+                let type: StationType?
+                let distance: Double?
                 let hasMarket: Bool
                 let hasShipyard: Bool
                 let hasOutfitting: Bool
                 let services: [String]
+                let stationState: State?
+                
+                
+                public enum State: String, Codable {
+                    case UnderAttack
+                    case Destroyed
+                    case Abandoned
+                    case Damaged
+                }
                 
                 enum StationType: String, Codable {
                     case CoriolisStarport = "Coriolis Starport"

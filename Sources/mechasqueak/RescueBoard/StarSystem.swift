@@ -133,8 +133,8 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         return (try? stencil.renderLine(name: "starsystem.stencil", context: [
             "system": self,
             "landmark": self.landmark as Any,
-            "invalid": self.isInvalid]
-        )) ?? ""
+            "invalid": self.isInvalid
+        ])) ?? ""
     }
     
     var info: String {
@@ -198,9 +198,20 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 "bodies": bodies,
                 "allegiance": allegiance as Any,
                 "government": government as Any,
-                "economy": economy as Any
+                "economy": economy as Any,
+                "underAttack": isUnderAttack as Any
             ])) ?? ""
         }
+    }
+    
+    var isUnderAttack: Bool {
+        if self.data?.body.data?.primary.value.attributes.systemAllegiance.value == .Thargoid {
+            return true
+        }
+        let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
+        return stations.contains(where: {
+            $0.stationState != nil
+        })
     }
 
     var isIncomplete: Bool {

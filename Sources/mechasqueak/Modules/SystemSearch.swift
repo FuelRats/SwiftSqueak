@@ -265,10 +265,10 @@ class SystemSearch: IRCBotModule {
                 "system": system,
                 "approximatedDistance": approximatedDistance as Any,
                 "station": station,
-                "travelTime": station.distance.distanceToSeconds(destinationGravity: true).timeSpan(maximumUnits: 1),
+                "travelTime": (station.distance ?? 0).distanceToSeconds(destinationGravity: true).timeSpan(maximumUnits: 1),
                 "services": station.allServices,
                 "notableServices": station.notableServices,
-                "stationType": station.type.rawValue,
+                "stationType": (station.type ?? .FleetCarrier).rawValue,
                 "showAllServices": command.options.contains("s"),
                 "additionalServices": station.services.count - station.notableServices.count
             ]))

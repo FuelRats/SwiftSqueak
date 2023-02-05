@@ -38,6 +38,7 @@ struct MechaConfiguration: Codable {
     var psn: PlayStationNetworkConfiguration?
     let chrono: ChronoConfiguration?
     let mastodon: MastodonConfiguration?
+    let openAIToken: String?
     
     func save () throws {
         let configEncoder = JSONEncoder()

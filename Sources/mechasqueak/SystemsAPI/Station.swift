@@ -34,7 +34,7 @@ enum StationDescription: ResourceObjectDescription {
         public var type: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType?>
         public var name: Attribute<String>
         public var distanceToArrival: Attribute<Double>
-        public var allegiance: Attribute<String?>
+        public var allegiance: Attribute<SystemsAPI.Allegiance?>
         public var government: Attribute<SystemsAPI.Government?>
         public var economy: Attribute<String?>
         public var haveMarket: Attribute<Bool>
@@ -42,6 +42,7 @@ enum StationDescription: ResourceObjectDescription {
         public var haveOutfitting: Attribute<Bool>
         public var otherServices: Attribute<[String]>
         public var systemName: Attribute<String>
+        public var stationState: Attribute<SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.State?>?
     }
 
     public struct Relationships: JSONAPI.Relationships {
@@ -65,6 +66,25 @@ extension SystemsAPI {
         case Theocracy
         case Engineer = "Workshop (Engineer)"
         case Prison
+        
+        init (from decoder: Decoder) throws {
+            var rawValue = try decoder.singleValueContainer().decode(String.self)
+            if rawValue.starts(with: "$") {
+                rawValue.removeFirst(12)
+                rawValue.removeLast()
+                if rawValue == "PrisonColony" {
+                    rawValue = "Prison colony"
+                }
+            }
+            if let value = Government(rawValue: rawValue) {
+                self = value
+            } else {
+                throw DecodingError.dataCorrupted(DecodingError.Context.init(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid Enum Raw Value"
+                ))
+            }
+        }
         
         var ircFormatted: String {
             switch self {

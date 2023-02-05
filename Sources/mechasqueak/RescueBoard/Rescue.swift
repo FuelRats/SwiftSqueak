@@ -168,6 +168,18 @@ class Rescue {
         self.createdAt = Date()
         self.updatedAt = Date()
         self.uploaded = false
+        
+        if message.user.associatedAPIData != nil {
+            if let providedPlatform = GamePlatform.parsedFromText(text: signal.platform ?? ""), let rat = message.user.getRatRepresenting(platform: providedPlatform) {
+                self.client = rat.name
+                self.platform = rat.platform
+                self.expansion = rat.expansion
+            } else if let rat = message.user.currentRat {
+                self.client = rat.name
+                self.platform = rat.platform
+                self.expansion = rat.expansion
+            }
+        }
     }
 
     init? (text: String, clientName: String, fromCommand command: IRCBotCommand) {
@@ -564,7 +576,7 @@ class Rescue {
         guard let nick = channel.member(named: param) else {
             return Result.failure(RescueAssignError.notFound(param))
         }
-        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false {
+        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false && !force {
             return Result.failure(.unqualified(nick.nickname))
         }
         

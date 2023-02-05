@@ -61,6 +61,7 @@
   "board.psnprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's PSN privacy settings may prevent them from joining a team https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
   "board.psplusmissing": "\u0002\u000304WARNING:\u0003\u0002 This client does not have PS+ on their account and may not be able to join open play https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
   "board.xboxsyschange": "The star system of case #%{caseId} (%{client}) was automatically corrected based on information retrieved from Xbox Live",
+  "board.systemattack": "\u0002\u000304CAUTION:\u0003\u0002 %{system} is currently under Thargoid invasion",
   "board.clientjoin": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) has rejoined!",
   "board.clientjoin.needsrats": "%{platform} case \u0002#%{caseId}\u0002 (%{client}) in %{system} has rejoined!",
   "board.clientjoinhost": "Caution: Case #%{caseId} client (%{client}) has rejoined with a different name! (%{nick})",
@@ -180,7 +181,7 @@
   "board.close.conflict": "You attempted to close case #%{closeCaseId} to %{rat} but they belong to case #%{conflictId}. If this is not an error, send the same command again within the next 30 seconds.",
   "board.close.reportFirstlimpet": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Do the paperwork: %{link}",
   "board.close.firstLimpetPaperwork": "Here is your paperwork for case #%{caseId} (%{client}): %{link}",
-  "board.close.reportFirstlimpet.aleethia": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Insert sarcastic remark here: %{link}",
+  "board.close.reportFirstlimpet.aleethia": "Closed case #%{caseId} (%{client}) to %{firstLimpet}. Neglect the paperwork %{link}",
   "board.close.report": "Closed case #%{caseId} (%{client}). Do the paperwork %{link}",
   "board.close.success": "Successfully closed case #%{caseId} (%{client}).",
   "board.close.error": "Failed to close case #%{caseId} due to an error with the rescue server.",
@@ -218,7 +219,7 @@
   "rescue.pwreminder": "Hi %{nick}, you seem to have some unfiled paperwork: %{rescues}. I recommend you do them, or suffer the consequences.",
   "rescue.pwreminder.meme": "Hi %{nick}, you seem to have some unfiled paperwork: %{rescues}. I recommend you do them, or suffer the consequences.",
   "rescue.pwreminder.rescue": "client \"%{client}\" %{timeAgo} ago (%{link})",
-  "rescue.pwreminder.special": "%{nick} has failed to do their paperwork, %{snickers} of their snickers have been sent into Sagittarius A*",
+  "rescue.pwreminder.special": "%{nick} has failed to do their paperwork, %{snickers} of their snickers have been sent to Frontier's Odyssey bug report form",
   
   "rescue.closed.invalid": "Could not list recently closed cases, !closed takes an optional number between 1 and 10.",
   "rescue.closed.error": "Failed to look up recently closed cases due to an error in the rescue server.",
@@ -376,6 +377,7 @@
   "myexpansion.invalid": "\"%{expansion}\" is not a valid game version, try \"l\", \"h\" or \"o\"",
   "myexpansion.cantswitch": "It is not possible for %{oldExpansion} CMDRs to switch to %{expansion}",
   "myexpansion.success": "Changed rat %{name} to use %{expansion}",
+  "myexpansion.already": "You are already set as using %{expansion}",
   
   "maxclients.invalid": "Parameter must be a number between 5 and 25",
   "maxclients.set": "Maximum clients before queueing set to: %{count}",

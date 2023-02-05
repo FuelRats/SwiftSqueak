@@ -230,6 +230,15 @@ enum GameMode: String, Codable, CaseIterable {
         return GameMode.englishDescriptions[self]!
     }
     
+    static var announcerDescriptions: [GameMode: String] = [
+        .legacy: "Horizons 3.8",
+        .horizons: "Horizons 4.0",
+        .odyssey: "Odyssey"
+    ]
+    var announcerDescription: String {
+        return GameMode.announcerDescriptions[self]!
+    }
+    
     static var shortEnglishDescriptions: [GameMode: String] = [
         .legacy: "LEG",
         .horizons: "HOR",

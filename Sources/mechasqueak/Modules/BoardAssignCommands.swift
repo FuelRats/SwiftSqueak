@@ -340,6 +340,14 @@ class BoardAssignCommands: IRCBotModule {
             var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
             if carrier {
                 format = "board.assign.carrier"
+                rescue.quotes.append(RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "This rescue has been assigned a fleet carrier",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick
+                ))
+                try? rescue.save()
             }
             
             if duplicates.count > 0 {

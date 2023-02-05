@@ -51,6 +51,7 @@ enum SystemDescription: ResourceObjectDescription {
     public struct Attributes: JSONAPI.Attributes {
         public var name: Attribute<String>
         public var coords: Attribute<Vector3>
+        public var systemAllegiance: Attribute<SystemsAPI.Allegiance?>
     }
 
     public struct Relationships: JSONAPI.Relationships {
@@ -74,5 +75,59 @@ extension SystemsAPI {
         public var type: String?
         public var innerRadius: Double?
         public var outerRadius: Double?
+    }
+    
+    public enum Allegiance: String, Codable {
+        case Federation
+        case Empire
+        case Alliance
+        case Independent
+        case PilotsFederation
+        case Guardian
+        case Thargoid
+        case Unknown
+        
+        init (from decoder: Decoder) throws {
+            let rawValue = try decoder.singleValueContainer().decode(String.self)
+            if let value = Allegiance.parseAllegience(rawValue: rawValue) {
+                self = value
+            } else {
+                throw DecodingError.dataCorrupted(DecodingError.Context.init(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid Enum Raw Value"
+                ))
+            }
+        }
+        
+        public static func parseAllegience (rawValue: String) -> Allegiance? {
+            switch rawValue {
+            case "Federation":
+                return .Federation
+                
+            case "Empire":
+                return .Empire
+                
+            case "Alliance":
+                return .Alliance
+                
+            case "Independent":
+                return .Independent
+                
+            case "Pilots Federation", "PilotsFederation": // FDEV, why are you like this?
+                return .PilotsFederation
+                
+            case "Thargoid":
+                return.Thargoid
+                
+            case "Guardian":
+                return .Guardian
+                
+            case "":
+                return .Unknown
+                
+            default:
+                return nil
+            }
+        }
     }
 }

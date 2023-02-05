@@ -435,9 +435,9 @@ class BoardCommands: IRCBotModule {
         } else {
             lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
-        var ircPlatform = platform != nil ? platform.ircRepresentable + " " : ""
+        var ircPlatform = platform != nil ? platform.ircRepresentable : ""
         if platform == .PC {
-            ircPlatform += expansion.ircRepresentable
+            ircPlatform += " " + expansion.ircRepresentable
         }
         
         guard let lastSignalDate = lastSignalDate else {
