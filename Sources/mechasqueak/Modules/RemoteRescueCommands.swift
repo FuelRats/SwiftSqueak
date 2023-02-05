@@ -542,7 +542,7 @@ class RemoteRescueCommands: IRCBotModule {
     
     @BotCommand(
         ["renameid"],
-        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"), .param("client name", "SpaceDawg")],
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"), .param("client name", "SpaceDawg", .continuous)],
         category: .rescues,
         description: "Change the client name of a closed case",
         permission: .RescueWrite
