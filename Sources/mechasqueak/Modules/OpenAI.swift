@@ -67,7 +67,9 @@ class OpenAI: IRCBotModule {
             openAI.sendCompletion(with: chat, maxTokens: 100) { result in
                 switch result {
                 case .success(let success):
-                    if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
+                    for choice in success.choices {
+                        var message = choice.text
+                        
                         if message.starts(with: "?") {
                             message = String(message.dropFirst())
                         }
@@ -85,15 +87,18 @@ class OpenAI: IRCBotModule {
                         }
                         
                         if message.first!.isLowercase {
-                            channelMessage.reply(message: "¯\\_(ツ)_/¯")
-                            return
+                            continue
+                        }
+                        
+                        if message.components(separatedBy: " ").count < 3 {
+                            continue
                         }
                         history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
                         lastPromptTime[channelMessage.destination.name] = Date()
                         
                         OpenAI.messages += 1
-                        if OpenAI.messages > 2 {
+                        if OpenAI.messages > 3 {
                             OpenAI.cooldown = true
                             channelMessage.reply(message: message + " ⏱️")
                             
@@ -106,7 +111,10 @@ class OpenAI: IRCBotModule {
                         loop.next().scheduleTask(in: .seconds(60), {
                             OpenAI.messages -= 1
                         })
+                        return
                     }
+                    
+                    channelMessage.reply(message: "¯\\_(ツ)_/¯")
                 case .failure(let error):
                     break
                 }
