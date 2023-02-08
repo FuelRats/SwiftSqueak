@@ -76,6 +76,9 @@ class OpenAI: IRCBotModule {
                         if message.starts(with: ".") {
                             message = String(message.dropFirst())
                         }
+                        if message.starts(with: ",") {
+                            message = String(message.dropFirst())
+                        }
                         message = message
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                             .replacingOccurrences(of: "\n", with: " ")
