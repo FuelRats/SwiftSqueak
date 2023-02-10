@@ -93,6 +93,10 @@ class OpenAI: IRCBotModule {
                             continue
                         }
                         
+                        if let firstWord = message.components(separatedBy: " ").first, firstWord == "Answer:" || firstWord == "Response:" {
+                            message = message.components(separatedBy: " ").dropFirst().joined(separator: " ")
+                        }
+                        
                         if message.components(separatedBy: " ").count < 3 {
                             continue
                         }
