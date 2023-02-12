@@ -256,7 +256,10 @@ class BoardAssignCommands: IRCBotModule {
                 return nil
             })
             if unidentified.count > 0 {
-                if rescue.platform == .PC {
+                if carrier {
+                    let universe = rescue.expansion == .legacy ? "legacy" : "live / odyssey"
+                    errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(rescue.expansion.ircRepresentable)), for carrier rescues make sure the rat has their CMDR set to \(universe)"
+                } else if rescue.platform == .PC {
                     errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(rescue.expansion.ircRepresentable))"
                 } else {
                     errorMessage += "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
