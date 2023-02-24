@@ -35,11 +35,11 @@ enum BodyDescription: ResourceObjectDescription {
         public var subType: Attribute<String>
         public var parents: Attribute<[[String: Int64]]>
         public var distanceToArrival: Attribute<Double?>
-        public var isLandable: Attribute<Bool>
+        public var isLandable: Attribute<Bool?>
         public var gravity: Attribute<Double>
         public var earthMasses: Attribute<Double>
         public var radius: Attribute<Double>
-        public var surfaceTemperature: Attribute<Double>
+        public var surfaceTemperature: Attribute<Double?>
         public var surfacePressure: Attribute<Double?>
         public var volcanismType: Attribute<String?>
         public var atmosphereType: Attribute<String?>

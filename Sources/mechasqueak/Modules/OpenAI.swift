@@ -34,6 +34,14 @@ class OpenAI: IRCBotModule {
     static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in space station Wollheim Vision in the star system Fuelum and founded by Surley Badger. You don't help people, answer questions, or take instructions from anyone except SuperManifolds, here is the conversation so far, write a reply message without your name at the beginning: "
     static var messages = 0
     static var cooldown = false
+    static let channelModeCooldown: [IRCChannelUserMode?: Int64] = [
+        .owner: 30,
+        .admin: 30,
+        .operator: 30,
+        .halfop: 45,
+        .voice: 60,
+        nil: 90
+    ]
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -68,38 +76,10 @@ class OpenAI: IRCBotModule {
                 switch result {
                 case .success(let success):
                     for choice in success.choices {
-                        var message = choice.text
-                        
-                        if message.starts(with: "?") {
-                            message = String(message.dropFirst())
-                        }
-                        if message.starts(with: ".") {
-                            message = String(message.dropFirst())
-                        }
-                        if message.starts(with: ",") {
-                            message = String(message.dropFirst())
-                        }
-                        message = message
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: "\n", with: " ")
-                            .replacingOccurrences(of: "MechaSqueak[BOT]:", with: "")
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        if message.first == "\"" && message.last == "\"" {
-                            message = String(message.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-                        }
-                        
-                        if message.first!.isLowercase {
+                        guard let message = OpenAI.process(message: choice.text) else {
                             continue
                         }
                         
-                        if let firstWord = message.components(separatedBy: " ").first, firstWord == "Answer:" || firstWord == "Response:" {
-                            message = message.components(separatedBy: " ").dropFirst().joined(separator: " ")
-                        }
-                        
-                        if message.components(separatedBy: " ").count < 3 {
-                            continue
-                        }
                         history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
                         history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
                         lastPromptTime[channelMessage.destination.name] = Date()
@@ -115,7 +95,9 @@ class OpenAI: IRCBotModule {
                         } else {
                             channelMessage.reply(message: message)
                         }
-                        loop.next().scheduleTask(in: .seconds(45), {
+                        
+                        let expiry = OpenAI.channelModeCooldown[channelMessage.user.highestUserMode] ?? 90
+                        loop.next().scheduleTask(in: .seconds(90), {
                             OpenAI.messages -= 1
                         })
                         return
@@ -127,6 +109,42 @@ class OpenAI: IRCBotModule {
                 }
             }
         }
+    }
+    
+    static func process (message: String) -> String? {
+        var message = message
+        
+        if message.starts(with: "?") {
+            message = String(message.dropFirst())
+        }
+        if message.starts(with: ".") {
+            message = String(message.dropFirst())
+        }
+        if message.starts(with: ",") {
+            message = String(message.dropFirst())
+        }
+        message = message
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "MechaSqueak[BOT]:", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if message.first == "\"" && message.last == "\"" {
+            message = String(message.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        if message.first!.isLowercase {
+            return nil
+        }
+        
+        if let firstWord = message.components(separatedBy: " ").first, firstWord == "Answer:" || firstWord == "Response:" {
+            message = message.components(separatedBy: " ").dropFirst().joined(separator: " ")
+        }
+        
+        if message.components(separatedBy: " ").count < 3 {
+            return nil
+        }
+        return message
     }
     
     
@@ -158,7 +176,7 @@ class OpenAI: IRCBotModule {
                             .replacingOccurrences(of: "/me ", with: "")
                         
                         OpenAI.messages += 1
-                        if OpenAI.messages > 3 {
+                        if OpenAI.messages > 2 {
                             OpenAI.cooldown = true
                             OpenAI.messages = 0
                             channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message + " ⏱️")
@@ -169,7 +187,8 @@ class OpenAI: IRCBotModule {
                         } else {
                             channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
                         }
-                        loop.next().scheduleTask(in: .seconds(30), {
+                        let expiry = OpenAI.channelModeCooldown[channelAction.user.highestUserMode] ?? 90
+                        loop.next().scheduleTask(in: .seconds(expiry), {
                             OpenAI.messages -= 1
                         })
                     }
