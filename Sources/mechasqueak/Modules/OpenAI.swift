@@ -54,7 +54,7 @@ class OpenAI: IRCBotModule {
             return
         }
         
-        if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.starts(with: "!") == false {
+        if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.contains("MechaSqueak[BOT]>") == false && channelMessage.message.starts(with: "!") == false {
             if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*2 {
                 history[channelMessage.destination.name] = []
             }
