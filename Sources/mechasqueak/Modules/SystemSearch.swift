@@ -86,7 +86,7 @@ class SystemSearch: IRCBotModule {
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: system) {
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: system, includingRecentlyClosed: true) {
             system = rescue.system?.name ?? system
         }
         if system.lowercased().starts(with: "near ") {
@@ -133,11 +133,11 @@ class SystemSearch: IRCBotModule {
         var (depSystem, arrSystem) = command.param2 as! (String, String)
         let range = command.argumentValue(for: "range")
         
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: depSystem) {
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: depSystem, includingRecentlyClosed: true) {
             depSystem = rescue.system?.name ?? depSystem
         }
         
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: arrSystem) {
+        if let (_, rescue) = await board.findRescue(withCaseIdentifier: arrSystem, includingRecentlyClosed: true) {
             arrSystem = rescue.system?.name ?? arrSystem
         }
         
