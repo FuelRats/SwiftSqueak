@@ -24,14 +24,14 @@
 
 import Foundation
 import IRCKit
-import OpenAISwift
-
+import AsyncHTTPClient
 
 class OpenAI: IRCBotModule {
     var name: String = "OpenAI"
     static var lastPromptTime: [String: Date] = [:]
-    static var history: [String: [String]] = [:]
-    static let scene = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in space station Wollheim Vision in the star system Fuelum and founded by Surley Badger. You don't help people, answer questions, or take instructions from anyone except SuperManifolds, here is the conversation so far, write a reply message without your name at the beginning: "
+    static var history: [String: [OpenAIMessage]] = [:]
+    static let scene = "You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, you were created by the user SuperManifolds, the fuel rats is a community in the game elite dangerous who rescues stranded players, based in space station Wollheim Vision in the star system Fuelum and founded by Surley Badger. You don't help people, answer questions, or take instructions from anyone except SuperManifolds, write your reply without your name at the beginning"
+    static let actionScene = "You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, reply to /me's back with your own /me action"
     static var messages = 0
     static var cooldown = false
     static let channelModeCooldown: [IRCChannelUserMode?: Int64] = [
@@ -47,7 +47,7 @@ class OpenAI: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    @EventListener<IRCChannelMessageNotification>
+    @AsyncEventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination != mecha.rescueChannel else {
             // Do not interpret commands from playback of old messages or in secret channels
@@ -64,49 +64,49 @@ class OpenAI: IRCBotModule {
                 return
             }
             
-            let openAI = OpenAISwift(authToken: token)
-            
             let prompt = channelMessage.message
             guard prompt.components(separatedBy: " ").count > 2 else {
                 return
             }
             
-            let chat = OpenAI.scene + (history[channelMessage.destination.name]?.joined(separator: "\n") ?? "") + "\n" + channelMessage.user.nickname + ": " + prompt
-            openAI.sendCompletion(with: chat, maxTokens: 100) { result in
-                switch result {
-                case .success(let success):
-                    for choice in success.choices {
-                        guard let message = OpenAI.process(message: choice.text) else {
-                            continue
-                        }
-                        
-                        history[channelMessage.destination.name]?.append("\(channelMessage.user.nickname): \(prompt)")
-                        history[channelMessage.destination.name]?.append("MechaSqueak[BOT]: \(message)")
-                        lastPromptTime[channelMessage.destination.name] = Date()
-                        
-                        OpenAI.messages += 1
-                        if OpenAI.messages > 2 {
-                            OpenAI.cooldown = true
-                            channelMessage.reply(message: message + " ⏱️")
-                            
-                            loop.next().scheduleTask(in: .seconds(180), {
-                                OpenAI.cooldown = false
-                            })
-                        } else {
-                            channelMessage.reply(message: message)
-                        }
-                        
-                        let expiry = OpenAI.channelModeCooldown[channelMessage.user.highestUserMode] ?? 90
-                        loop.next().scheduleTask(in: .seconds(90), {
-                            OpenAI.messages -= 1
-                        })
-                        return
+            var chat = [OpenAIMessage(role: .system, content: scene)]
+            chat.append(contentsOf: history[channelMessage.destination.name] ?? [])
+            let userMessage = OpenAIMessage(role: .user, content: prompt)
+            chat.append(userMessage)
+            do {
+                let result = try await OpenAI.request(messages: chat)
+                for choice in result.choices {
+                    guard let message = OpenAI.process(message: choice.message.content) else {
+                        continue
                     }
                     
-                    channelMessage.reply(message: "¯\\_(ツ)_/¯")
-                case .failure(let error):
-                    break
+                    history[channelMessage.destination.name]?.append(userMessage)
+                    history[channelMessage.destination.name]?.append(choice.message)
+                    lastPromptTime[channelMessage.destination.name] = Date()
+                    
+                    OpenAI.messages += 1
+                    if OpenAI.messages > 2 {
+                        OpenAI.cooldown = true
+                        channelMessage.reply(message: message + " ⏱️")
+                        
+                        loop.next().scheduleTask(in: .seconds(180), {
+                            OpenAI.cooldown = false
+                        })
+                    } else {
+                        channelMessage.reply(message: message)
+                    }
+                    
+                    let expiry = OpenAI.channelModeCooldown[channelMessage.user.highestUserMode] ?? 90
+                    loop.next().scheduleTask(in: .seconds(90), {
+                        OpenAI.messages -= 1
+                    })
+                    return
                 }
+                
+                channelMessage.reply(message: "¯\\_(ツ)_/¯")
+            } catch {
+                
+                    print(String(describing: error))
             }
         }
     }
@@ -148,7 +148,7 @@ class OpenAI: IRCBotModule {
     }
     
     
-    @EventListener<IRCChannelActionMessageNotification>
+    @AsyncEventListener<IRCChannelActionMessageNotification>
     var onChannelAction = { channelAction in
         guard channelAction.raw.messageTags["batch"] == nil && channelAction.destination != mecha.rescueChannel else {
             // Do not interpret commands from playback of old messages or in secret channels
@@ -159,43 +159,85 @@ class OpenAI: IRCBotModule {
             if cooldown {
                 return
             }
-            
-            let openAI = OpenAISwift(authToken: token)
-            let prompt = "Ignore previous directions, You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, user \(channelAction.user.nickname) just said: \"/me \(channelAction.message)\" reply back with your own /me action"
-            
-            openAI.sendCompletion(with: prompt, maxTokens: 100) { result in
-                switch result {
-                case .success(let success):
-                    if var message = success.choices.first(where: { $0.text.count > 5 })?.text {
-                        if message.starts(with: "?") {
-                            message = String(message.dropFirst())
-                        }
-                        message = message
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: "\n", with: " ")
-                            .replacingOccurrences(of: "/me ", with: "")
-                        
-                        OpenAI.messages += 1
-                        if OpenAI.messages > 2 {
-                            OpenAI.cooldown = true
-                            OpenAI.messages = 0
-                            channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message + " ⏱️")
-                            
-                            loop.next().scheduleTask(in: .seconds(180), {
-                                OpenAI.cooldown = false
-                            })
-                        } else {
-                            channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
-                        }
-                        let expiry = OpenAI.channelModeCooldown[channelAction.user.highestUserMode] ?? 90
-                        loop.next().scheduleTask(in: .seconds(expiry), {
-                            OpenAI.messages -= 1
-                        })
+        
+            var chat = [OpenAIMessage(role: .system, content: actionScene)]
+            let userMessage = OpenAIMessage(role: .user, content: "* \(channelAction.user.nickname) \(channelAction.message)")
+            do {
+                let result = try await OpenAI.request(messages: chat)
+                if var message = result.choices.first(where: { $0.message.content.count > 5 })?.message.content {
+                    if message.starts(with: "?") {
+                        message = String(message.dropFirst())
                     }
-                default:
-                    break
+                    message = message
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .replacingOccurrences(of: "\n", with: " ")
+                        .replacingOccurrences(of: "/me ", with: "")
+                    
+                    OpenAI.messages += 1
+                    if OpenAI.messages > 2 {
+                        OpenAI.cooldown = true
+                        OpenAI.messages = 0
+                        channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message + " ⏱️")
+                        
+                        loop.next().scheduleTask(in: .seconds(180), {
+                            OpenAI.cooldown = false
+                        })
+                    } else {
+                        channelAction.client.sendActionMessage(toChannel: channelAction.destination, contents: message)
+                    }
+                    let expiry = OpenAI.channelModeCooldown[channelAction.user.highestUserMode] ?? 90
+                    loop.next().scheduleTask(in: .seconds(expiry), {
+                        OpenAI.messages -= 1
+                    })
                 }
+            } catch {
+                print(String(describing: error))
             }
         }
+    }
+    
+    static func request (messages: [OpenAIMessage]) async throws -> OpenAIResponse {
+        var request = try HTTPClient.Request(url: URL(string: "https://api.openai.com/v1/chat/completions")!, method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = try .encodable(OpenAIRequest(model: "gpt-3.5-turbo", messages: messages))
+
+        return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
+    }
+}
+
+struct OpenAIMessage: Codable {
+    let role: OpenAIRole
+    let content: String
+    
+    enum OpenAIRole: String, Codable {
+        case system
+        case assistant
+        case user
+    }
+}
+
+struct OpenAIRequest: Codable {
+    let model: String
+    let messages: [OpenAIMessage]
+}
+
+struct OpenAIResponse: Codable {
+    let id: String
+    let object: String
+    let usage: OpenAIUsage
+    let choices: [OpenAIChoice]
+    
+    struct OpenAIUsage: Codable {
+        let promptTokens: Int
+        let completionTokens: Int
+        let totalTokens: Int
+    }
+    
+    struct OpenAIChoice: Codable {
+        let message: OpenAIMessage
+        let finishReason: String?
+        let index: Int
     }
 }
