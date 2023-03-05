@@ -53,6 +53,7 @@ class OpenAI: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
+        return
         
         if let token = configuration.openAIToken, channelMessage.message.contains("MechaSqueak[BOT]") && channelMessage.message.contains("MechaSqueak[BOT]>") == false && channelMessage.message.starts(with: "!") == false {
             if history[channelMessage.destination.name] == nil || Date().timeIntervalSince(lastPromptTime[channelMessage.destination.name] ?? Date()) > 60*2 {
@@ -154,6 +155,7 @@ class OpenAI: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
+        return
         
         if let token = configuration.openAIToken, channelAction.message.contains(channelAction.client.currentNick) {
             if cooldown {
