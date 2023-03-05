@@ -74,7 +74,7 @@ class OpenAI: IRCBotModule {
             let userMessage = OpenAIMessage(role: .user, content: prompt)
             chat.append(userMessage)
             do {
-                let result = try await OpenAI.request(params: OpenAIRequest(messages: chat, maxTokens: 150))
+                let result = try await OpenAI.request(params: OpenAIRequest(messages: chat, maxTokens: 100))
                 for choice in result.choices {
                     guard let message = OpenAI.process(message: choice.message.content) else {
                         continue
@@ -163,7 +163,7 @@ class OpenAI: IRCBotModule {
             var chat = [OpenAIMessage(role: .system, content: actionScene)]
             let userMessage = OpenAIMessage(role: .user, content: "* \(channelAction.user.nickname) \(channelAction.message)")
             do {
-                let result = try await OpenAI.request(params: OpenAIRequest(messages: chat, maxTokens: 80))
+                let result = try await OpenAI.request(params: OpenAIRequest(messages: chat, maxTokens: 60))
                 if var message = result.choices.first(where: { $0.message.content.count > 5 })?.message.content {
                     if message.starts(with: "?") {
                         message = String(message.dropFirst())

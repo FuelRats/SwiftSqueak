@@ -666,7 +666,7 @@ actor RescueBoard {
                             mecha.reportingChannel?.send(message: choice.message.content)
                         }
                     }
-                    
+                    return
                 }
             }
         }
