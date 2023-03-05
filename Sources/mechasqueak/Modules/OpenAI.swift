@@ -74,7 +74,7 @@ class OpenAI: IRCBotModule {
             let userMessage = OpenAIMessage(role: .user, content: prompt)
             chat.append(userMessage)
             do {
-                let result = try await OpenAI.request(messages: chat)
+                let result = try await OpenAI.request(params: OpenAIRequest(messages: chat, maxTokens: 150))
                 for choice in result.choices {
                     guard let message = OpenAI.process(message: choice.message.content) else {
                         continue
@@ -163,7 +163,7 @@ class OpenAI: IRCBotModule {
             var chat = [OpenAIMessage(role: .system, content: actionScene)]
             let userMessage = OpenAIMessage(role: .user, content: "* \(channelAction.user.nickname) \(channelAction.message)")
             do {
-                let result = try await OpenAI.request(messages: chat)
+                let result = try await OpenAI.request(params: OpenAIRequest(messages: chat, maxTokens: 80))
                 if var message = result.choices.first(where: { $0.message.content.count > 5 })?.message.content {
                     if message.starts(with: "?") {
                         message = String(message.dropFirst())
@@ -196,12 +196,12 @@ class OpenAI: IRCBotModule {
         }
     }
     
-    static func request (messages: [OpenAIMessage]) async throws -> OpenAIResponse {
+    static func request (params: OpenAIRequest) async throws -> OpenAIResponse {
         var request = try HTTPClient.Request(url: URL(string: "https://api.openai.com/v1/chat/completions")!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try .encodable(OpenAIRequest(model: "gpt-3.5-turbo", messages: messages))
+        request.body = try .encodable(params)
 
         return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
     }
@@ -220,7 +220,16 @@ struct OpenAIMessage: Codable {
 
 struct OpenAIRequest: Codable {
     let model: String
+    let temperature: Int
+    let maxTokens: Int?
     let messages: [OpenAIMessage]
+    
+    init (messages: [OpenAIMessage], model: String = "gpt-3.5-turbo", temperature: Int = 1, maxTokens: Int? = nil) {
+        self.model = model
+        self.temperature = temperature
+        self.maxTokens = maxTokens
+        self.messages = messages
+    }
 }
 
 struct OpenAIResponse: Codable {
