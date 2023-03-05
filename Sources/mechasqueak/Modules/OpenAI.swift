@@ -201,7 +201,10 @@ class OpenAI: IRCBotModule {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try .encodable(params)
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(params)
+        request.body = .data(data)
 
         return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
     }
