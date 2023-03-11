@@ -662,8 +662,8 @@ actor RescueBoard {
                     let prompt = "You are a sarcastic, mean, and rude AI chat bot named MechaSqueak[BOT] in the fuel rats IRC channel, \(latestNick.nickname) has once again forgotten to do their rescue paperwork, write a sarcastic message in the chat about it, without your name at the beginning"
                     Task {
                         let response = try await OpenAI.request(params: OpenAIRequest(messages: [OpenAIMessage(role: .user, content: prompt)]))
-                        if let choice = response.choices.first {
-                            mecha.reportingChannel?.send(message: choice.message.content)
+                        if let choice = response.choices.first, let message = OpenAI.process(message: choice.message.content) {
+                            mecha.reportingChannel?.send(message: message)
                         }
                     }
                     return
