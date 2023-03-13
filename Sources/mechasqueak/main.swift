@@ -239,6 +239,7 @@ class MechaSqueak {
 
     @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
+        try? await Task.sleep(nanoseconds: 2*10^8) // 200ms
         if
             let sender = userQuit.raw.sender,
             let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname)
