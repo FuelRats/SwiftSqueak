@@ -82,6 +82,13 @@ class TweetCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
+        
+        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick) {
+            if user.lastMessage == nil {
+                command.message.reply(message: "!alertc cannot be used on a case before the client has spoken")
+                return
+            }
+        }
 
         guard var platform = rescue.platform else {
             command.message.error(key: "tweetcase.noplatform", fromCommand: command, map: [
