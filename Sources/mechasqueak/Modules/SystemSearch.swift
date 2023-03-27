@@ -150,7 +150,6 @@ class SystemSearch: IRCBotModule {
             }
             
             let distance = arrCoords.distance(from: depCoords)
-            let formatter = NumberFormatter.englishFormatter()
             
             let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
             var plotDepName = departure.name
@@ -177,10 +176,12 @@ class SystemSearch: IRCBotModule {
                 key += ".plotter"
             }
             
+            let displayDistance = distance*60*60*24*365.25
+            
             command.message.reply(key: key, fromCommand: command, map: [
                 "departure": departure.name,
                 "arrival": arrival.name,
-                "distance": formatter.string(from: distance)!,
+                "distance": displayDistance.eliteDistance,
                 "plotterUrl": spanshUrl?.absoluteString ?? ""
             ])
         } catch {
