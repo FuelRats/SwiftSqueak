@@ -172,7 +172,7 @@ class MechaSqueak {
             }
             
             let gitDir = configuration.sourcePath
-            let release = shell("/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let release = shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines)
             if let releaseName = release, releaseName.count > 0 {
                 mecha.reportingChannel?.send(message: "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/\(releaseName)")
             }

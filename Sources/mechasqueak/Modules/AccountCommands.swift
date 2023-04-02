@@ -83,6 +83,7 @@ class AccountCommands: IRCBotModule {
             "joined": joinedDate?.eliteFormattedString ?? "unknown",
             "rats": associatedNickname.ratsBelongingTo(user: apiUser)
         ])) ?? ""
+        command.message.reply(message: output)
     }
 
     @BotCommand(
