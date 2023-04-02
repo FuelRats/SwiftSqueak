@@ -452,6 +452,10 @@
   "help.command.quiet.mode": "Shows last time for another PC game version (l / h / o)",
   "sendhelp.nouser": "Could not find %{nick} in the channel",
   
+  
+  "help.command.whoami.@": "Display user and rat UUIDs",
+  "help.command.whois.@": "Display user and rat UUIDs",
+  
   "help.command.addcase.pc": "Set platform to PC",
   "help.command.addcase.xb": "Set platform to Xbox",
   "help.command.addcase.ps": "Set platform to PS4",

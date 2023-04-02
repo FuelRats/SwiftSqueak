@@ -26,6 +26,7 @@ import Foundation
 import JSONAPI
 import NIO
 import AsyncHTTPClient
+import IRCKit
 
 enum GroupDescription: ResourceObjectDescription {
     public static var jsonType: String { return "groups" }
@@ -121,23 +122,51 @@ typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 extension Group {
     var groupNameMap: [String: String] {
         return [
-            "verified": "Verified User",
+            "verified": "Verified",
             "developer": "Developer",
             "rat": "Drilled Rat",
             "dispatch": "Drilled Dispatch",
             "trainer": "Trainer",
             "traineradmin": "Training Manager",
+            "merch": "Quartermaster",
             "overseer": "Overseer",
             "techrat": "Tech rat",
             "moderator": "Moderator",
             "operations": "Operations team",
             "netadmin": "Network administrator",
-            "admin": "Network moderator"
+            "admin": "Network moderator",
+            "owner": "Special snowflake",
+        ]
+    }
+    
+    var groupColor: [String: IRCColor] {
+        return [
+            "verified": .Grey,
+            "developer": .LightBlue,
+            "rat": .LightGreen,
+            "dispatch": .Green,
+            "trainer": .Yellow,
+            "traineradmin": .Purple,
+            "merch": .Grey,
+            "overseer": .Orange,
+            "techrat": .LightBlue,
+            "moderator": .LightRed,
+            "operations": .Purple,
+            "netadmin": .LightBlue,
+            "admin": .Purple,
+            "owner": .Purple
         ]
     }
     
     var groupDescription: String {
         return groupNameMap[self.name] ?? self.name
+    }
+    
+    var ircRepresentation: String {
+        if let color = groupColor[self.name] {
+            return IRCFormat.color(color, groupDescription)
+        }
+        return groupDescription
     }
     
     static func getList () async throws -> GroupSearchDocument {

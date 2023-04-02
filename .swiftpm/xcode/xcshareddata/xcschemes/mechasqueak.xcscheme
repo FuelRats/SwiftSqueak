@@ -103,7 +103,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/alex/mechaconfig.json"
+            argument = "/Users/alex/Developer/SwiftSqueak/config.json"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

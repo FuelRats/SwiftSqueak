@@ -62,20 +62,6 @@ class AccountCommands: IRCBotModule {
             return
         }
 
-        let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
-            var description = "\(rat.attributes.name.value)"
-            
-            if rat.platform == .PC {
-                description += " (\(rat.attributes.platform.value.ircRepresentable) \(rat.attributes.expansion.value.ircRepresentable))"
-            } else {
-                description += " (\(rat.attributes.platform.value.ircRepresentable))"
-            }
-            if rat.data.permits?.contains("Pilots' Federation District") == true {
-                description += " (\(IRCFormat.color(.Grey, "Starter Zone")))"
-            }
-            return description
-        }).joined(separator: ", ")
-
         let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
             if acc == nil || rat.attributes.createdAt.value < acc! {
                 return rat.attributes.createdAt.value
@@ -83,22 +69,25 @@ class AccountCommands: IRCBotModule {
             return acc
         })
 
-        let verifiedStatus = associatedNickname.permissions.contains(.UserVerified) ?
-            IRCFormat.color(.LightGreen, "Verified") :
-            IRCFormat.color(.Orange, "Unverified")
-
-        command.message.reply(key: "whoami.response", fromCommand: command, map: [
+        let group = associatedNickname.groups.sorted(by: {
+            $0.priority > $1.priority
+            
+        }).first?.ircRepresentation
+        
+        let output = (try? stencil.renderLine(name: "whois.stencil", context: [
+            "nick": command.message.user.nickname,
             "account": account,
-            "userId": apiUser.id.rawValue.ircRepresentation,
-            "rats": rats,
+            "id": associatedNickname.user?.id.rawValue.ircRepresentation ?? "",
+            "group": group as Any,
+            "displayId": command.options.contains("@"),
             "joined": joinedDate?.eliteFormattedString ?? "unknown",
-            "verified": verifiedStatus
-        ])
+            "rats": associatedNickname.ratsBelongingTo(user: apiUser)
+        ])) ?? ""
     }
 
     @BotCommand(
         ["whois", "ratid", "who", "id"],
-        [.param("nickname", "SpaceDawg")],
+        [.param("nickname", "SpaceDawg"), .options(["@"])],
         category: .account,
         description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
         permission: .RatReadOwn,
@@ -142,20 +131,6 @@ class AccountCommands: IRCBotModule {
             return
         }
 
-        let rats = associatedNickname.ratsBelongingTo(user: apiUser).map({ (rat: Rat) -> String in
-            var description = "\(rat.attributes.name.value)"
-            
-            if rat.platform == .PC {
-                description += " (\(rat.attributes.platform.value.ircRepresentable) \(rat.attributes.expansion.value.ircRepresentable))"
-            } else {
-                description += " (\(rat.attributes.platform.value.ircRepresentable))"
-            }
-            if rat.data.permits?.contains("Pilots' Federation District") == true {
-                description += " (\(IRCFormat.color(.Grey, "Starter Zone")))"
-            }
-            return description
-        }).joined(separator: ", ")
-
         let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
             if acc == nil || rat.attributes.createdAt.value < acc! {
                 return rat.attributes.createdAt.value
@@ -163,18 +138,22 @@ class AccountCommands: IRCBotModule {
             return acc
         })
 
-        let verifiedStatus = associatedNickname.permissions.contains(.UserVerified) ?
-            IRCFormat.color(.LightGreen, "Verified") :
-            IRCFormat.color(.Orange, "Unverified")
-
-        command.message.reply(key: "whois.response", fromCommand: command, map: [
+        let group = associatedNickname.groups.sorted(by: {
+            $0.priority > $1.priority
+            
+        }).first?.ircRepresentation
+        
+        let output = (try? stencil.renderLine(name: "whois.stencil", context: [
             "nick": nick,
             "account": account,
-            "userId": apiUser.id.rawValue.ircRepresentation,
-            "rats": rats,
+            "id": associatedNickname.user?.id.rawValue.ircRepresentation ?? "",
+            "group": group as Any,
+            "displayId": command.options.contains("@"),
             "joined": joinedDate?.eliteFormattedString ?? "unknown",
-            "verified": verifiedStatus
-        ])
+            "rats": associatedNickname.ratsBelongingTo(user: apiUser)
+        ])) ?? ""
+        
+        command.message.reply(message: output)
     }
 
     @BotCommand(

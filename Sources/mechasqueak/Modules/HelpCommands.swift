@@ -204,7 +204,7 @@ class HelpCommands: IRCBotModule {
         ])
         let permissionGroups = helpCommand.permission?.groups
             .sorted(by: { $0.priority < $1.priority })
-            .map({ $0.groupDescription }) ?? []
+            .map({ $0.ircRepresentation }) ?? []
         
         var secondLine = ""
         if helpCommand.commands.count > 1 {

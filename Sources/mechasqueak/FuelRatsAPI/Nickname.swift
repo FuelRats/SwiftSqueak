@@ -77,13 +77,17 @@ extension NicknameSearchDocument {
             })
         }) ?? []
     }
-
-    var permissions: [AccountPermission] {
+    
+    var groups: [Group] {
         let groupIds = self.user?.relationships.groups?.ids ?? []
 
         return self.body.includes![Group.self].filter({
             groupIds.contains($0.id)
-        }).flatMap({
+        })
+    }
+
+    var permissions: [AccountPermission] {
+        self.groups.flatMap({
             $0.attributes.permissions.value
         })
     }

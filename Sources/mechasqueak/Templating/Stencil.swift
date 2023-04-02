@@ -162,6 +162,45 @@ private func generateEnvironment () -> Environment {
         return nil
     }
     
+    ext.registerFilter("platform") { (value: Any?) in
+        if let rat = value as? Rat {
+            if rat.platform == .PC {
+                return "\(rat.attributes.platform.value.ircRepresentable) \(rat.attributes.expansion.value.ircRepresentable)"
+            }
+            return rat.attributes.platform.value.ircRepresentable
+        }
+        
+        if let rescue = value as? Rescue {
+            return rescue.platformExpansion
+        }
+
+      return nil
+    }
+    
+    ext.registerFilter("isStarterRat") { (value: Any?) in
+        if let rat = value as? Rat {
+            return rat.data.permits?.contains("Pilots' Federation District")
+        }
+
+      return false
+    }
+    
+    ext.registerFilter("name") { (value: Any?) in
+        if let rat = value as? Rat {
+            return rat.name
+        }
+
+      return nil
+    }
+    
+    ext.registerFilter("id") { (value: Any?) in
+        if let rat = value as? Rat {
+            return rat.id.rawValue.ircRepresentation
+        }
+
+      return nil
+    }
+    
     return environment
 }
 
