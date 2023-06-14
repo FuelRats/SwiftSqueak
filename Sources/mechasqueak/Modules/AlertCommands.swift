@@ -62,7 +62,6 @@ class TweetCommands: IRCBotModule {
         }
         
         do {
-            try await Twitter.tweet(message: contents)
             try await Mastodon.post(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
         } catch {
