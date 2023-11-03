@@ -36,7 +36,7 @@ class TweetCommands: IRCBotModule {
         ["alert", "tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
-        description: "Send a message on Twitter (@FuelRatAlerts) and Mastodon (@fuelratsalerts@mastodon.localecho.net)",
+        description: "Send a message on Mastodon (@fuelratsalerts@mastodon.localecho.net)",
         permission: .TwitterWrite,
         allowedDestinations: .Channel
     )
@@ -62,7 +62,6 @@ class TweetCommands: IRCBotModule {
         }
         
         do {
-            try await Twitter.tweet(message: contents)
             try await Mastodon.post(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
         } catch {
@@ -74,7 +73,7 @@ class TweetCommands: IRCBotModule {
         ["alertcase", "alertc", "tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,
-        description: "Notify users that rats are needed on a case via Twitter (@FuelRatAlerts) and Mastodon (@fuelratsalerts@mastodon.localecho.net)",
+        description: "Notify users that rats are needed on a case via Mastodon (@fuelratsalerts@mastodon.localecho.net)",
         permission: .DispatchRead,
         allowedDestinations: .Channel
     )
@@ -127,7 +126,6 @@ class TweetCommands: IRCBotModule {
         ])
         
         do {
-            try await Twitter.tweet(message: tweet)
             try await Mastodon.post(message: tweet)
             
             command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
