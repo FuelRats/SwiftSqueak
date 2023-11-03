@@ -55,7 +55,7 @@
   "sctime.error": "Unable to understand the distance given in this command.",
   "sctime.unknownunit": "How the heck am I supposed to know what \"%{unit}\" means? Use a real unit",
   "sctime.uniterror": "Unable to understand the distance unit provided to the command.",
-  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time}. Stipulations: https://t.fuelr.at/sctimes",
+  "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (%{timeGravity} if in a gravity well). Stipulations: https://t.fuelr.at/sctimes",
 
   "board.xboxprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's Xbox Live privacy settings may prevent them from joining a team https://t.fuelr.at/xbtrouble (#%{caseId}, %{client})",
   "board.psnprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's PSN privacy settings may prevent them from joining a team https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
@@ -420,7 +420,6 @@
   "help.command.list.xb": "Show only Xbox cases",
   "help.command.list.ps": "Show only Playstation cases",
   "help.command.list.mode": "Show only cases set to this game version (legacy, horizons, or odyssey)",
-  "help.command.sctime.g": "Calculate going from one gravitational body to another, rather than towards deep space",
   "help.command.go.a": "Include already assigned rats in the message telling clients who to add",
   "help.command.go.f": "Force mecha to assign someone even if it can't find a valid rat for them",
   "help.command.go.carrier": "Allows you to assign a rat from a different platform using a fleet carrier",
