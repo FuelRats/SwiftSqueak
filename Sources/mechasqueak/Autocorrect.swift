@@ -273,7 +273,7 @@ struct ProceduralSystem: CustomStringConvertible {
     }
     
     var corrected: ProceduralSystem? {
-        if mecha.sectors.count > 1 {
+        if mecha.sectors.count < 1 {
           return nil
         }
         var system = self
