@@ -37,7 +37,7 @@ extension HTTPClient {
     
     func execute <T: AnyRange> (
         request: Request,
-        deadline: NIODeadline? = nil,
+        deadline: NIODeadline? = .now() + .seconds(5),
         expecting statusCode: T
     ) async throws -> HTTPClient.Response where T.Bound == Int {
         try await withCheckedThrowingContinuation({ continuation in
@@ -60,7 +60,7 @@ extension HTTPClient {
     func execute<D> (
         request: Request,
         forDecodable decodable: D.Type,
-        deadline: NIODeadline? = nil,
+        deadline: NIODeadline? = .now() + .seconds(5),
         withDecoder decoder: JSONDecoder = defaultJsonDecoder
     ) async throws -> D where D: Decodable {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
