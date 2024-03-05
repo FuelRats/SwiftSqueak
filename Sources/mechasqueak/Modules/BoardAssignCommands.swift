@@ -51,7 +51,7 @@ class BoardAssignCommands: IRCBotModule {
             return
         }
         var command = command
-        if command.locale.identifier == "auto" {
+        if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
 
@@ -96,7 +96,7 @@ class BoardAssignCommands: IRCBotModule {
         }
 
         var command = command
-        if command.locale.identifier == "auto" {
+        if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
 
