@@ -352,10 +352,7 @@ class BoardAssignCommands: IRCBotModule {
                 ))
                 try? rescue.save()
             }
-            
-            if duplicates.count > 0 {
-                command.message.reply(key: "board.assign.duplicates", fromCommand: command)
-            }
+           
             command.message.reply(key: format, fromCommand: command, map: [
                             "client": rescue.clientNick!,
                             "rats": names.map({
