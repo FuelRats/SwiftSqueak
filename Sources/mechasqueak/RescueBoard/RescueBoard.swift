@@ -312,7 +312,7 @@ actor RescueBoard {
             
             return currentClient == clientName && Date().timeIntervalSince(updatedAt) < 900
         }), configuration.general.drillMode == false, initiated != .insertion {
-            if recentRescue.quotes.contains(where: { $0.message.contains("fuel+") }) == false {
+            if recentRescue.quotes.contains(where: { $0.message.lowercased().contains("fuel+") }) == false {
                 guard let result = try await FuelRatsAPI.getRescue(id: recentRescue.id) else {
                     return
                 }
