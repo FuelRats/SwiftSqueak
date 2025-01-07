@@ -510,7 +510,7 @@ class Rescue {
         }
     }
     
-    func close (firstLimpet: Rat? = nil, paperworkOnly: Bool = false) async throws {
+    func close (firstLimpet: Rat? = nil, paperworkOnly: Bool = false, command: IRCBotCommand?) async throws {
         let wasInactive = self.status == .Inactive
         self.status = .Closed
         if paperworkOnly == false {
@@ -536,6 +536,9 @@ class Rescue {
 
         var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+        }
         
         request.body = try .encodable(patchDocument)
         
@@ -617,7 +620,7 @@ class Rescue {
         return Result.success(.assigned(rat))
     }
     
-    func trash (reason: String) async throws {
+    func trash (reason: String, command: IRCBotCommand?) async throws {
         let wasInactive = self.status == .Inactive
         self.status = .Closed
         self.outcome = .Purge
@@ -639,6 +642,9 @@ class Rescue {
 
         var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+        }
 
         request.body = try .encodable(patchDocument)
         
@@ -694,7 +700,7 @@ class Rescue {
                 let starSystem = try await SystemsAPI.getSystemInfo(forSystem: autoCorrectableResult)
                 
                 self.system?.merge(starSystem)
-                try? self.save()
+                try? self.save(nil)
                 
                 self.channel?.send(
                     key: "sysc.autocorrect",
@@ -726,13 +732,13 @@ class Rescue {
         return
     }
     
-    func save (_ command: IRCBotCommand? = nil) throws {
+    func save (_ command: IRCBotCommand?) throws {
         Task {
             try await saveAndWait(command)
         }
     }
     
-    func saveAndWait (_ command: IRCBotCommand? = nil) async throws {
+    func saveAndWait (_ command: IRCBotCommand?) async throws {
         guard configuration.general.drillMode == false else {
             return
         }

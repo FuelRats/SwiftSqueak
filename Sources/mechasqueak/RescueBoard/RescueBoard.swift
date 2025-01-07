@@ -102,7 +102,7 @@ actor RescueBoard {
             if let (localKey, localRescue) = rescues.first(where: { $0.value.id == remoteRescue.1.id }) {
                 if localRescue.updatedAt > remoteRescue.1.updatedAt {
                     updateRemote += 1
-                    try? await localRescue.saveAndWait()
+                    try? await localRescue.saveAndWait(nil)
                 } else if remoteRescue.1.updatedAt > localRescue.updatedAt {
                     updateLocal += 1
                     self.rescues.removeValue(forKey: localKey)
@@ -124,7 +124,7 @@ actor RescueBoard {
             if remoteRescues.contains(where: { $0.1.id == localRescue.id }) == false {
                 upload += 1
                 localRescue.uploaded = false
-                try? await localRescue.saveAndWait()
+                try? await localRescue.saveAndWait(nil)
             }
         }
         
@@ -335,7 +335,7 @@ actor RescueBoard {
                     "id": recentRescue.id.ircRepresentation,
                     "caseId": caseId
                 ]))
-                try? rescue.save()
+                try? rescue.save(nil)
                 return
             }
         }
@@ -401,7 +401,7 @@ actor RescueBoard {
             return
         }
         
-        try? rescue.save()
+        try? rescue.save(nil)
         try? await rescue.validateSystem()
         
         let signal = try! stencil.renderLine(name: "ratsignal.stencil", context: [
@@ -434,7 +434,7 @@ actor RescueBoard {
                 updatedAt: Date(),
                 lastAuthor: message.client.currentNick)
             )
-            try? rescue.save()
+            try? rescue.save(nil)
         }
         
         if systemChangedByXboxLive {
@@ -463,7 +463,7 @@ actor RescueBoard {
                 updatedAt: Date(),
                 lastAuthor: message.client.currentNick)
             )
-            try? rescue.save()
+            try? rescue.save(nil)
         }
         
         if case let .found(xboxProfile) = rescue.xboxProfile {
@@ -480,7 +480,7 @@ actor RescueBoard {
                     updatedAt: Date(),
                     lastAuthor: message.client.currentNick)
                 )
-                try? rescue.save()
+                try? rescue.save(nil)
             }
         }
         
@@ -733,7 +733,7 @@ actor RescueBoard {
         if rescue.clientNick?.lowercased() != existingRescue.clientNick?.lowercased() {
             changes.append("\(IRCFormat.bold("IRC Nick:")) \(existingRescue.clientNick ?? "?") -> \(rescue.clientNick ?? "?")")
             existingRescue.clientNick = rescue.clientNick
-            try? existingRescue.save()
+            try? existingRescue.save(nil)
         }
         
         let platform = rescue.platform
@@ -753,7 +753,7 @@ actor RescueBoard {
                 }
 
                 existingRescue.system = result
-                try? existingRescue.save()
+                try? existingRescue.save(nil)
 
                 message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
                     "caseId": caseId,

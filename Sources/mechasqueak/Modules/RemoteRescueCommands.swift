@@ -138,7 +138,7 @@ class RemoteRescueCommands: IRCBotModule {
                 continue
             }
             do {
-                try await FuelRatsAPI.deleteRescue(id: id)
+                try await FuelRatsAPI.deleteRescue(id: id, command: command)
                 successDeletes.append(id)
             } catch {
                 failedDeletes.append(id)
@@ -182,7 +182,7 @@ class RemoteRescueCommands: IRCBotModule {
 
             for rescue in rescues {
                 do {
-                    try await FuelRatsAPI.deleteRescue(id: rescue.id.rawValue)
+                    try await FuelRatsAPI.deleteRescue(id: rescue.id.rawValue, command: command)
                     command.message.replyPrivate(
                         key: "rescue.delete.success", fromCommand: command,
                         map: [
@@ -283,7 +283,7 @@ class RemoteRescueCommands: IRCBotModule {
 
             rescue = rescue.tappingAttributes({ $0.outcome = .init(value: nil) })
 
-            try await rescue.update()
+            try await rescue.update(command: command)
         } catch {
             command.message.error(
                 key: "rescue.restore.error", fromCommand: command,
@@ -704,7 +704,7 @@ class RemoteRescueCommands: IRCBotModule {
             var rescue = result.body.data!.primary.value
 
             rescue = rescue.tappingAttributes({ $0.client = .init(value: command.parameters[1]) })
-            try await rescue.update()
+            try await rescue.update(command: command)
 
             command.message.reply(
                 key: "rescue.renameid.renamed", fromCommand: command,

@@ -350,7 +350,7 @@ class BoardAssignCommands: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: command.message.client.currentNick
                 ))
-                try? rescue.save()
+                try? rescue.save(command)
             }
            
             command.message.reply(key: format, fromCommand: command, map: [

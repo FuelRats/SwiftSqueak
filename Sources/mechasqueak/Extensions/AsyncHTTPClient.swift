@@ -84,7 +84,7 @@ extension HTTPClient {
 }
 
 extension HTTPClient.Request {
-    init (apiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+    init (apiPath: String, method: HTTPMethod, command: IRCBotCommand? = nil, query: [String: String?] = [:]) throws {
         var url = URLComponents(string: "\(configuration.api.url)")!
         url.path = apiPath
         
@@ -95,6 +95,9 @@ extension HTTPClient.Request {
         self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         self.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            self.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+        }
     }
 }
 

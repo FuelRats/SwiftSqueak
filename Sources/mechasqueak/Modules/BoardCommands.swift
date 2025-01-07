@@ -258,7 +258,7 @@ class BoardCommands: IRCBotModule {
          }
         
         do {
-            try await rescue.close(firstLimpet: firstLimpet, paperworkOnly: pwOnly)
+            try await rescue.close(firstLimpet: firstLimpet, paperworkOnly: pwOnly, command: command)
             
             await board.remove(id: caseId)
 
@@ -363,7 +363,7 @@ class BoardCommands: IRCBotModule {
         let reason = command.parameters[1]
 
         do {
-            try await rescue.trash(reason: reason)
+            try await rescue.trash(reason: reason, command: command)
             
             await board.remove(id: caseId)
 

@@ -206,7 +206,7 @@ class MessageScanner: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: channelMessage.client.currentNick
                 ))
-                try? rescue.save()
+                try? rescue.save(nil)
                 casesUpdatedForMessage.append(rescue)
 
             }
@@ -266,7 +266,7 @@ class MessageScanner: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: channelMessage.client.currentNick
             ))
-            try? rescue.save()
+            try? rescue.save(nil)
             casesUpdatedForMessage.append(rescue)
         }
     }

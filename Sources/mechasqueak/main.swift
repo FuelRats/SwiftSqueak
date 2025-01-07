@@ -123,8 +123,7 @@ class MechaSqueak {
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
-            SessionLogger(moduleManager),
-            OpenAI(moduleManager)
+            SessionLogger(moduleManager)
         ]
         
         if configuration.queue != nil {
@@ -194,7 +193,7 @@ class MechaSqueak {
                 )
                 
                 rescue.setQuotes(quotes)
-                try? rescue.save()
+                try? rescue.save(nil)
 
                 var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
                 userJoin.channel.send(key: key, map: [
@@ -227,7 +226,7 @@ class MechaSqueak {
                 lastAuthor: userPart.raw.client.currentNick)
             )
             rescue.setQuotes(quotes)
-            try? rescue.save()
+            try? rescue.save(nil)
 
             userPart.channel.send(key: "board.clientquit", map: [
                 "caseId": caseId,
@@ -256,7 +255,7 @@ class MechaSqueak {
                     let url = "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit"
                     
                     do {
-                        try await rescue.close()
+                        try await rescue.close(command: nil)
                         
                         mecha.reportingChannel?.send(key: "board.bannedclose", map: [
                             "caseId": caseId,
@@ -270,7 +269,7 @@ class MechaSqueak {
                 } else {
                     do {
                         var banDueToVpn = quitMessage.contains("banned VPN network")
-                        try await rescue.trash(reason: "Client was banned")
+                        try await rescue.trash(reason: "Client was banned", command: nil)
                         
                         mecha.reportingChannel?.send(key: banDueToVpn ? "board.bannedvpn" : "board.bannedmd", map: [
                             "caseId": caseId,
@@ -292,7 +291,7 @@ class MechaSqueak {
                 lastAuthor: userQuit.raw.client.currentNick)
             )
             
-            try? rescue.save()
+            try? rescue.save(nil)
 
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {

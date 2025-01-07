@@ -183,7 +183,7 @@ extension RemoteRescue {
         return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
     }
     
-    func update () async throws {
+    func update (command: IRCBotCommand?) async throws {
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self),
@@ -194,6 +194,9 @@ extension RemoteRescue {
 
         var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+        }
 
         request.body = try .encodable(patchDocument)
         
