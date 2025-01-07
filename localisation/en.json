@@ -226,10 +226,10 @@
   "rescue.closed.list": "Listing the %{count} most recently closed rescues:",
   "rescue.closed.entry": "%{index}: Client %{client} (%{platform}) in %{system} (%{id})",
   
-  "rescue.delete.invalid": "Could not delete rescue %{id} as it is not a valid rescue ID.",
+  "rescue.delete.invalid": "Could not delete rescues %{id} as they are not valid rescue IDs",
   "rescue.delete.active": "Could not delete rescue %{id} as it is currently open on the board as case #%{caseId}.",
-  "rescue.delete.success": "Successfully deleted rescue %{id}.",
-  "rescue.delete.failure": "Failed to delete rescue %{id} due to an error in the rescue server.",
+  "rescue.delete.success": "Successfully deleted rescues %{id}.",
+  "rescue.delete.failure": "Failed to delete rescues %{id} due to an error in the rescue server.",
   
   "rescue.trashlist.list": "Listing %{count} rescues added to the deletion list:",
   "rescue.trashlist.entry": "[%{id}] %{client} (%{platform}), Reason: %{reason}",
