@@ -537,7 +537,7 @@ class Rescue {
         var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         if let command = command, let user = command.message.user.associatedAPIData?.user {
-            request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+            //request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
         }
         
         request.body = try .encodable(patchDocument)
@@ -643,7 +643,7 @@ class Rescue {
         var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         if let command = command, let user = command.message.user.associatedAPIData?.user {
-            request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+            //request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
         }
 
         request.body = try .encodable(patchDocument)
