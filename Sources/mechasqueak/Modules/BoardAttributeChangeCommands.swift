@@ -49,7 +49,7 @@ class BoardAttributeCommands: IRCBotModule {
         } else {
             rescue.status = .Inactive
             await board.cancelPrepTimer(forRescue: rescue)
-            let activeCases = await board.activeCases
+            let activeCases = board.activeCases
             if activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
                 Task {
                     try? await QueueAPI.dequeue()
@@ -171,7 +171,7 @@ class BoardAttributeCommands: IRCBotModule {
         let oldClient = rescue.clientDescription
         let client = command.parameters[1]
         
-        if let existingCase = await board.rescues.first(where: {
+        if let existingCase = board.rescues.first(where: {
             $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
@@ -246,7 +246,7 @@ class BoardAttributeCommands: IRCBotModule {
         ])
 
 
-        if let existingCase = await board.rescues.first(where: {
+        if let existingCase = board.rescues.first(where: {
             $0.1.clientNick?.lowercased() == nick.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
