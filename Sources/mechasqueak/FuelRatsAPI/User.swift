@@ -1,3 +1,4 @@
+import AsyncHTTPClient
 /*
  Copyright 2020 The Fuel Rats Mischief
 
@@ -23,7 +24,6 @@
  */
 import Foundation
 import JSONAPI
-import AsyncHTTPClient
 import NIO
 
 enum UserDescription: ResourceObjectDescription {
@@ -51,51 +51,55 @@ enum UserDescription: ResourceObjectDescription {
     }
 }
 typealias User = JSONEntity<UserDescription>
-typealias UserGetDocument = Document<SingleResourceBody<User>, Include8<Rat, Ship, Epic, Nickname, Client, Decal, Group, AvatarImage>>
+typealias UserGetDocument = Document<
+    SingleResourceBody<User>, Include8<Rat, Ship, Epic, Nickname, Client, Decal, Group, AvatarImage>
+>
 
 extension User {
-    static func get (id: UUID) async throws -> UserGetDocument {
+    static func get(id: UUID) async throws -> UserGetDocument {
         let request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
-    
+
     @discardableResult
-    func update (attributes: [String: Any]) async throws -> UserGetDocument {
+    func update(attributes: [String: Any]) async throws -> UserGetDocument {
         let body: [String: Any] = [
             "data": [
                 "type": "users",
                 "id": self.id.rawValue.uuidString,
-                "attributes": attributes
+                "attributes": attributes,
             ]
         ]
 
-        var request = try HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)", method: .PATCH)
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(self.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
-    
+
     @discardableResult
-    func suspend (date: Date) async throws -> UserGetDocument {
+    func suspend(date: Date) async throws -> UserGetDocument {
         return try await self.update(attributes: [
             "suspended": DateFormatter.iso8601Full.string(from: date)
         ])
     }
-    
+
     @discardableResult
-    func changeEmail (to email: String) async throws -> UserGetDocument {
+    func changeEmail(to email: String) async throws -> UserGetDocument {
         let body: [String: Any] = [
             "data": [
                 "type": "email-changes",
                 "id": self.id.rawValue.uuidString,
                 "attributes": [
                     "email": email
-                ]
+                ],
             ]
         ]
-        var request = try HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
 

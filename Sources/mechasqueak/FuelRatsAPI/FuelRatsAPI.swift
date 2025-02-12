@@ -130,8 +130,8 @@ class FuelRatsAPI {
         return try await FuelRatsAPI.rescueSearch(query: query)
     }
     
-    static func deleteRescue (id: UUID) async throws -> Void {
-        let request = try! HTTPClient.Request(apiPath: "/rescues/\(id)", method: .DELETE)
+    static func deleteRescue (id: UUID, command: IRCBotCommand?) async throws -> Void {
+        let request = try! HTTPClient.Request(apiPath: "/rescues/\(id)", method: .DELETE, command: command)
         
        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }

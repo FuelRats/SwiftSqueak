@@ -27,7 +27,7 @@ import IRCKit
 import JSONAPI
 import AsyncHTTPClient
 
-class RescueCreateOperation: Operation {
+class RescueCreateOperation: Operation, @unchecked Sendable {
     let caseId: Int
     let rescue: Rescue
     let representing: IRCUser?
@@ -87,6 +87,9 @@ class RescueCreateOperation: Operation {
                 request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
                 request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
                 request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+                if let user = self.representing?.associatedAPIData?.user {
+                    request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+                }
                 
                 request.body = try? .encodable(postDocument)
                 

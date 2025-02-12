@@ -133,7 +133,7 @@ class MessageScanner: IRCBotModule {
             }
             
             let containsCarrierPhrase = carrierPhrases.contains(where: { channelMessage.message.lowercased().contains($0) })
-            let boardSynced = await board.isSynced
+            let boardSynced = board.isSynced
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
                 let rats = accountInfo.ratsBelongingTo(user: user)
@@ -206,7 +206,7 @@ class MessageScanner: IRCBotModule {
                     updatedAt: Date(),
                     lastAuthor: channelMessage.client.currentNick
                 ))
-                try? rescue.save()
+                try? rescue.save(nil)
                 casesUpdatedForMessage.append(rescue)
 
             }
@@ -231,7 +231,7 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        let mentionedRescues = await board.findMentionedCasesIn(message: channelMessage)
+        let mentionedRescues = board.findMentionedCasesIn(message: channelMessage)
         for (caseId, rescue) in mentionedRescues {
             let rescueChannel = rescue.channel
             guard await channelMessage.user.isAssignedTo(rescue: rescue) || channelMessage.destination == rescueChannel else {
@@ -266,7 +266,7 @@ class MessageScanner: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: channelMessage.client.currentNick
             ))
-            try? rescue.save()
+            try? rescue.save(nil)
             casesUpdatedForMessage.append(rescue)
         }
     }

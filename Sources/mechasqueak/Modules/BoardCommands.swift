@@ -135,7 +135,7 @@ class BoardCommands: IRCBotModule {
             filterExpansion = parsedExpansion
         }
 
-        let rescues = await board.rescues.filter({ (caseId, rescue) in
+        let rescues = board.rescues.filter({ (caseId, rescue) in
             if filteredPlatforms.count > 0 && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false {
                 return false
             }
@@ -258,7 +258,7 @@ class BoardCommands: IRCBotModule {
          }
         
         do {
-            try await rescue.close(firstLimpet: firstLimpet, paperworkOnly: pwOnly)
+            try await rescue.close(firstLimpet: firstLimpet, paperworkOnly: pwOnly, command: command)
             
             await board.remove(id: caseId)
 
@@ -363,7 +363,7 @@ class BoardCommands: IRCBotModule {
         let reason = command.parameters[1]
 
         do {
-            try await rescue.trash(reason: reason)
+            try await rescue.trash(reason: reason, command: command)
             
             await board.remove(id: caseId)
 
@@ -430,10 +430,10 @@ class BoardCommands: IRCBotModule {
                 return
             }
             
-            lastSignalDate = await board.lastSignalsReceived[PlatformExpansion(platform: commandPlatform, expansion: expansion)]
+            lastSignalDate = board.lastSignalsReceived[PlatformExpansion(platform: commandPlatform, expansion: expansion)]
             platform = commandPlatform
         } else {
-            lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
+            lastSignalDate = board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
         var ircPlatform = platform != nil ? platform.ircRepresentable : ""
         if platform == .PC {
@@ -447,7 +447,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard await board.rescues.first(where: { (caseId, rescue) -> Bool in
+        guard board.rescues.first(where: { (caseId, rescue) -> Bool in
             return rescue.status != .Inactive && (platform == nil || (rescue.platform == platform && rescue.expansion == expansion)) && rescue.unidentifiedRats.count == 0 && rescue.rats.count == 0 &&
                 command.message.user.getRatRepresenting(platform: rescue.platform) != nil
         }) == nil else {
@@ -457,7 +457,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        guard await board.rescues.first(where: { rescue in
+        guard board.rescues.first(where: { rescue in
             return rescue.1.status != .Inactive && (platform == nil || (rescue.1.platform == platform && rescue.1.expansion == expansion))
         }) == nil else {
             if mecha.rescueChannel?.member(named: command.message.user.nickname) == nil {

@@ -273,6 +273,9 @@ struct ProceduralSystem: CustomStringConvertible {
     }
     
     var corrected: ProceduralSystem? {
+        if mecha.sectors.count < 1 {
+          return nil
+        }
         var system = self
         var lastDistance = self.sectorName.levenshtein(mecha.sectors[0].name)
         var lastCorrection = mecha.sectors[0]

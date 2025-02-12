@@ -135,7 +135,7 @@ class BoardQuoteCommands: IRCBotModule {
         }
         try? rescue.save(command)
         
-        let caseId = await board.getId(forRescue: rescue)
+        let caseId = board.getId(forRescue: rescue)
 
         command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
             "clientId": caseId ?? 0,

@@ -25,7 +25,7 @@
 import Foundation
 import JSONAPI
 
-extension Int64: CreatableRawIdType {
+extension Int64: @retroactive CreatableRawIdType {
     public static func unique() -> Int64 {
         return Int64.random(in: 0...9999999999999)
     }

@@ -22,9 +22,9 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import JSONAPI
-import AsyncHTTPClient
 import NIO
 
 enum RescueDescription: ResourceObjectDescription {
@@ -54,6 +54,7 @@ enum RescueDescription: ResourceObjectDescription {
     public struct Relationships: JSONAPI.Relationships {
         public var rats: ToManyRelationship<Rat>
         public var firstLimpet: ToOneRelationship<Rat?>?
+        public var lastEditUser: ToOneRelationship<User>?
     }
 }
 typealias RemoteRescue = JSONEntity<RescueDescription>
@@ -111,7 +112,7 @@ struct JumpCall: Codable {
     let name: String
     let jumps: UInt
     let remark: String?
-    
+
     let isDrilled: Bool
     let hasPermit: Bool?
 }
@@ -123,9 +124,15 @@ struct AssignMeta: Codable {
     let beaconDistance: UInt?
 }
 
-typealias RescueSearchDocument = Document<ManyResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
-typealias RescueGetDocument = Document<SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
-typealias RescueEventDocument = EventDocument<SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>>
+typealias RescueSearchDocument = Document<
+    ManyResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>
+>
+typealias RescueGetDocument = Document<
+    SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>
+>
+typealias RescueEventDocument = EventDocument<
+    SingleResourceBody<RemoteRescue>, Include4<Rat, User, Ship, Epic>
+>
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,
     NoMetadata,
@@ -136,14 +143,14 @@ typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
 >
 
 extension RescueSearchDocument {
-    static func from (data documentData: Data) throws -> RescueSearchDocument {
+    static func from(data documentData: Data) throws -> RescueSearchDocument {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601Full)
 
         return try decoder.decode(RescueSearchDocument.self, from: documentData)
     }
 
-    func assignedRatsFor (rescue: RemoteRescue) -> [Rat] {
+    func assignedRatsFor(rescue: RemoteRescue) -> [Rat] {
         return rescue.relationships.rats.ids.compactMap({ ratId in
             return self.body.includes![Rat.self].first(where: {
                 $0.id.rawValue == ratId.rawValue
@@ -151,7 +158,26 @@ extension RescueSearchDocument {
         })
     }
 
-    func firstLimpetFor (rescue: RemoteRescue) -> Rat? {
+    func lastEditUserFor(rescue: RemoteRescue) -> (User?, Rat?) {
+        guard let lastEditUserId = rescue.relationships.lastEditUser?.id.rawValue else {
+            return (nil, nil)
+        }
+
+        let user = self.body.includes![User.self].first(where: {
+            $0.id.rawValue == lastEditUserId
+        })
+
+        let displayRat =
+            user?.relationships.displayRat?.id.rawValue
+            ?? user?.relationships.rats?.ids.first.rawValue
+        let rat = self.body.includes![Rat.self].first(where: {
+            $0.id.rawValue == displayRat
+        })
+
+        return (user, rat)
+    }
+
+    func firstLimpetFor(rescue: RemoteRescue) -> Rat? {
         guard let firstLimpetId = rescue.relationships.firstLimpet?.id.rawValue else {
             return nil
         }
@@ -161,29 +187,39 @@ extension RescueSearchDocument {
         })
     }
 
-    func convertToLocalRescues () -> [(Int, Rescue)] {
+    func convertToLocalRescues() -> [(Int, Rescue)] {
         guard let rescueList = self.body.data?.primary.values else {
             return []
         }
 
         return rescueList.map({ (apiRescue) -> (Int, Rescue) in
             let rats = self.assignedRatsFor(rescue: apiRescue)
+            let lastEditUser = self.lastEditUserFor(rescue: apiRescue)
             let firstLimpet = self.firstLimpetFor(rescue: apiRescue)
-            return (apiRescue.commandIdentifier, Rescue(fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet, onBoard: board))
+            return (
+                apiRescue.commandIdentifier,
+                Rescue(
+                    fromAPIRescue: apiRescue, withRats: rats, firstLimpet: firstLimpet,
+                    lastEditUser: lastEditUser.0,
+                    onBoard: board)
+            )
         })
     }
 }
 
 extension RemoteRescue {
     var viewLink: URL {
-        return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())")!
+        return URL(
+            string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())")!
     }
-    
+
     var editLink: URL {
-        return URL(string: "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
+        return URL(
+            string:
+                "https://fuelrats.com/paperwork/\(self.id.rawValue.uuidString.lowercased())/edit")!
     }
-    
-    func update () async throws {
+
+    func update(command: IRCBotCommand?) async throws {
         let patchDocument = SingleDocument(
             apiDescription: .none,
             body: .init(resourceObject: self),
@@ -192,24 +228,29 @@ extension RemoteRescue {
             links: .none
         )
 
-        var request = try HTTPClient.Request(apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
+        var request = try HTTPClient.Request(
+            apiPath: "/rescues/\(self.id.rawValue.uuidString.lowercased())", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            request.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+        }
 
         request.body = try .encodable(patchDocument)
-        
-        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
+
+        _ = try await httpClient.execute(
+            request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
     }
 }
 
 extension RescueGetDocument {
-    static func from (data documentData: Data) throws -> RescueGetDocument {
+    static func from(data documentData: Data) throws -> RescueGetDocument {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601Full)
 
         return try decoder.decode(RescueGetDocument.self, from: documentData)
     }
 
-    func assignedRats () -> [Rat] {
+    func assignedRats() -> [Rat] {
         guard let rescue = self.body.data?.primary.value else {
             return []
         }
@@ -220,7 +261,7 @@ extension RescueGetDocument {
         })
     }
 
-    func firstLimpet () -> Rat? {
+    func firstLimpet() -> Rat? {
         guard let rescue = self.body.data?.primary.value else {
             return nil
         }
@@ -232,5 +273,28 @@ extension RescueGetDocument {
         return self.body.includes![Rat.self].first(where: {
             $0.id.rawValue == firstLimpetId
         })
+    }
+
+    func lastEditUser() -> (User?, Rat?) {
+        guard let rescue = self.body.data?.primary.value else {
+            return (nil, nil)
+        }
+
+        guard let lastEditUserId = rescue.relationships.lastEditUser?.id.rawValue else {
+            return (nil, nil)
+        }
+
+        let user = self.body.includes![User.self].first(where: {
+            $0.id.rawValue == lastEditUserId
+        })
+
+        let displayRat =
+            user?.relationships.displayRat?.id.rawValue
+            ?? user?.relationships.rats?.ids.first.rawValue
+
+        let rat = self.body.includes![Rat.self].first(where: {
+            $0.id.rawValue == displayRat
+        })
+        return (user, rat)
     }
 }
