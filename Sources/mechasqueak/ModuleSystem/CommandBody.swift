@@ -28,19 +28,18 @@ enum CommandBody {
     case options([Character])
     case argument(String, String? = nil, example: String? = nil)
     case param(String, String = "", ParameterType = .standard, ParameterNullability = .required)
-    
+
     enum ParameterType {
         case standard
         case continuous
         case multiple
     }
-    
+
     enum ParameterNullability {
         case required
         case optional
     }
 }
-
 
 extension Array where Element == CommandBody {
     var requiredParameters: [CommandBody] {
@@ -51,7 +50,7 @@ extension Array where Element == CommandBody {
             return nullability == .required
         })
     }
-    
+
     var parameters: [CommandBody] {
         return self.filter({
             guard case .param(_, _, _, _) = $0 else {
@@ -60,7 +59,7 @@ extension Array where Element == CommandBody {
             return true
         })
     }
-    
+
     var options: OrderedSet<Character> {
         let optionCase = self.compactMap({ (token: CommandBody) -> [Character]? in
             guard case .options(let options) = token else {
@@ -70,29 +69,36 @@ extension Array where Element == CommandBody {
         })
         return OrderedSet(optionCase.first ?? [])
     }
-    
+
     var arguments: [String: String?] {
-        return self.reduce([:], { (args: [String: String?], token: CommandBody) -> [String: String?] in
-            guard case .argument(let option, let value, _) = token else {
+        return self.reduce(
+            [:],
+            { (args: [String: String?], token: CommandBody) -> [String: String?] in
+                guard case .argument(let option, let value, _) = token else {
+                    return args
+                }
+                var args = args
+                args[option] = value
                 return args
-            }
-            var args = args
-            args[option] = value
-            return args
-        })
+            })
     }
-    
+
     var helpArguments: [(String, String?, String?)] {
-        return self.reduce([(String, String?, String?)](), { (args: [(String, String?, String?)], token: CommandBody) -> [(String, String?, String?)] in
-            guard case .argument(let option, let value, let example) = token else {
+        return self.reduce(
+            [(String, String?, String?)](),
+            {
+                (args: [(String, String?, String?)], token: CommandBody) -> [(
+                    String, String?, String?
+                )] in
+                guard case .argument(let option, let value, let example) = token else {
+                    return args
+                }
+                var args = args
+                args.append((option, value, example))
                 return args
-            }
-            var args = args
-            args.append((option, value, example))
-            return args
-        })
+            })
     }
-    
+
     var paramText: String {
         return parameters.compactMap({ (token: CommandBody) -> String? in
             guard case .param(let description, _, let type, let nullability) = token else {
@@ -104,36 +110,36 @@ extension Array where Element == CommandBody {
                     return "<\(description)>"
                 }
                 return "[\(description)]"
-                
+
             case .continuous:
                 if nullability == .required {
                     return "<\(description)>..."
                 }
                 return "[\(description)]..."
-                
+
             case .multiple:
                 if nullability == .required {
-                    return "...<\(description)>"
+                    return "<\(description)1> [\(description)2]..."
                 }
-                return "...[\(description)]"
+                return "...[\(description)1] [\(description)2]..."
             }
-            
+
         }).joined(separator: " ")
     }
-    
+
     var example: String {
         return parameters.compactMap({ (token: CommandBody) -> String? in
             guard case .param(_, let example, let type, _) = token else {
                 return nil
             }
-            
+
             switch type {
             case .standard:
                 if example.components(separatedBy: " ").count > 1 {
                     return "\"\(example)\""
                 }
                 return example
-                
+
             default:
                 return example
             }
