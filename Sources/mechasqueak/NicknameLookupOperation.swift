@@ -101,7 +101,7 @@ class NicknameLookupManager {
     }
 }
 
-class NicknameLookupOperation: Operation {
+class NicknameLookupOperation: Operation, @unchecked Sendable {
     let user: IRCUser
     var onCompletion: ((NicknameSearchDocument?) -> Void)?
     var onError: ((Error?) -> Void)?

@@ -52,7 +52,7 @@ struct JSONAPIDescriptionMetaData: Meta {
     let apiVersion: String
 }
 
-extension UUID: CreatableRawIdType {
+extension UUID: @retroactive CreatableRawIdType {
     public static func unique() -> UUID {
         return UUID()
     }

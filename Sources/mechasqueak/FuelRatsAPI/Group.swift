@@ -22,11 +22,11 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
+import IRCKit
 import JSONAPI
 import NIO
-import AsyncHTTPClient
-import IRCKit
 
 enum GroupDescription: ResourceObjectDescription {
     public static var jsonType: String { return "groups" }
@@ -96,22 +96,23 @@ enum AccountPermission: String, Codable {
     case RescueRevisionWrite = "rescue-revisions.write"
 
     case TwitterWrite = "twitter.write"
-    
+
     case DispatchRead = "dispatch.read"
     case DispatchWrite = "dispatch.write"
 
     case AnnouncementWrite = "announcements.write"
 
     case UnknownPermission = ""
-    
+
     var groups: [Group] {
         return mecha.groups.filter({ $0.permissions.contains(self) && $0.name != "owner" })
     }
 }
 
 extension AccountPermission {
-    init (from decoder: Decoder) throws {
-        self = try AccountPermission(rawValue: decoder.singleValueContainer().decode(RawValue.self))
+    init(from decoder: Decoder) throws {
+        self =
+            try AccountPermission(rawValue: decoder.singleValueContainer().decode(RawValue.self))
             ?? AccountPermission.UnknownPermission
     }
 }
@@ -138,7 +139,7 @@ extension Group {
             "owner": "Special snowflake",
         ]
     }
-    
+
     var groupColor: [String: IRCColor] {
         return [
             "verified": .Grey,
@@ -154,50 +155,59 @@ extension Group {
             "operations": .Purple,
             "netadmin": .LightBlue,
             "admin": .Purple,
-            "owner": .Purple
+            "owner": .Purple,
         ]
     }
-    
+
     var groupDescription: String {
         return groupNameMap[self.name] ?? self.name
     }
-    
+
     var ircRepresentation: String {
         if let color = groupColor[self.name] {
             return IRCFormat.color(color, groupDescription)
         }
         return groupDescription
     }
-    
-    static func getList () async throws -> GroupSearchDocument {
+
+    static func getList() async throws -> GroupSearchDocument {
         let request = try HTTPClient.Request(apiPath: "/groups", method: .GET)
 
-        return try await httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
+        return try await httpClient.execute(
+            request: request, forDecodable: GroupSearchDocument.self)
     }
 
-    func addUser (id: UUID) async throws {
-        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
-            type: "groups",
-            id: self.id.rawValue
-        )])
+    func addUser(id: UUID) async throws {
+        let relationship = ManyRelationshipBody(data: [
+            ManyRelationshipBody.ManyRelationshipBodyDataItem(
+                type: "groups",
+                id: self.id.rawValue
+            )
+        ])
 
-        var request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
-        request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try .encodable(relationship)
-        
-        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
-    }
-    
-    func removeUser (id: UUID) async throws {
-        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
-            type: "groups",
-            id: self.id.rawValue
-        )])
-
-        var request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try .encodable(relationship)
 
-        _ = try await httpClient.execute(request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
+        _ = try await httpClient.execute(
+            request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
+    }
+
+    func removeUser(id: UUID) async throws {
+        let relationship = ManyRelationshipBody(data: [
+            ManyRelationshipBody.ManyRelationshipBodyDataItem(
+                type: "groups",
+                id: self.id.rawValue
+            )
+        ])
+
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = try .encodable(relationship)
+
+        _ = try await httpClient.execute(
+            request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }
 }

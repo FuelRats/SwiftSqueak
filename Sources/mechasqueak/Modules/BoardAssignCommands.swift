@@ -308,16 +308,6 @@ class BoardAssignCommands: IRCBotModule {
         })
         
         if successfulAssigns.count > 0 || includeExistingAssigns || assigns.count == 0 {
-            let duplicates = successfulAssigns.compactMap({ assign -> AssignmentResult? in
-                switch assign {
-                case .duplicate(_), .unidentifiedDuplicate(_):
-                    return assign
-                    
-                default:
-                    return nil
-                }
-            })
-            
             var names = successfulAssigns.compactMap({ assign -> String? in
                 switch assign {
                 case .assigned(let rat):
