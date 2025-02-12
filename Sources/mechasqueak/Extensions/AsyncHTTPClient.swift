@@ -96,12 +96,12 @@ extension HTTPClient.Request {
         self.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
         if let command = command, let user = command.message.user.associatedAPIData?.user {
-            //self.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+            self.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
         }
     }
 }
 
-extension HTTPClient.Response: Error {}
+extension HTTPClient.Response: @retroactive Error {}
 
 private let sAllowedCharacters: CharacterSet = {
     var allowed = CharacterSet.urlQueryAllowed
