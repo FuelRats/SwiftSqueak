@@ -153,12 +153,27 @@ class ManagementCommands: IRCBotModule {
             ])
     }
 
+    static func generateGroupList() -> String {
+        let groups = mecha.groups.sorted(by: {
+            $0.attributes.priority.value > $1.attributes.priority.value
+        })
+
+        var groupList: [String] = []
+        for group in groups {
+            groupList.append(group.attributes.name.value)
+        }
+        return "Available permission groups: " + groupList.joined(separator: ", ")
+    }
+
     @BotCommand(
         ["addgroup"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Add a permission to a person",
-        permission: .UserWrite
+        permission: .UserWrite,
+        helpExtra: {
+            return generateGroupList()
+        }
     )
     var didReceiveAddGroupCommand = { command in
         var getUserId = UUID(uuidString: command.parameters[0])
@@ -222,7 +237,10 @@ class ManagementCommands: IRCBotModule {
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Remove a permission from a person",
-        permission: .UserWrite
+        permission: .UserWrite,
+        helpExtra: {
+            return generateGroupList()
+        }
     )
     var didReceiveDelGroupCommand = { command in
         var getUserId = UUID(uuidString: command.parameters[0])
