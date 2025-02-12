@@ -109,7 +109,7 @@ class RemoteRescueCommands: IRCBotModule {
     var didReceiveDeleteCommand = { command in
         var ids: [UUID] = []
         var invalidIds: [String] = []
-        
+
         for parameter in command.parameters {
             if let id = UUID(uuidString: parameter) {
                 ids.append(id)
@@ -117,14 +117,16 @@ class RemoteRescueCommands: IRCBotModule {
                 invalidIds.append(parameter)
             }
         }
-        
-        if (invalidIds.count > 0) {
-            command.message.error(key: "rescue.delete.invalid", fromCommand: command, map: [
-                "id": invalidIds.joined(separator: ", ")
-            ])
+
+        if invalidIds.count > 0 {
+            command.message.error(
+                key: "rescue.delete.invalid", fromCommand: command,
+                map: [
+                    "id": invalidIds.joined(separator: ", ")
+                ])
             return
         }
-        
+
         var successDeletes: [UUID] = []
         var failedDeletes: [UUID] = []
         for id in ids {
@@ -144,18 +146,24 @@ class RemoteRescueCommands: IRCBotModule {
                 failedDeletes.append(id)
             }
         }
-        
+
         if failedDeletes.count > 0 {
-            let failedIds = failedDeletes.count == 1 ? failedDeletes.first!.ircRepresentation : failedDeletes.map({ $0.ircRepresentation }).joined(separator: ", ")
+            let failedIds =
+                failedDeletes.count == 1
+                ? failedDeletes.first!.ircRepresentation
+                : failedDeletes.map({ $0.ircRepresentation }).joined(separator: ", ")
             command.message.error(
                 key: "rescue.delete.failure", fromCommand: command,
                 map: [
                     "id": failedIds
                 ])
         }
-        
+
         if successDeletes.count > 0 {
-            let successIds = successDeletes.count == 1 ? successDeletes.first!.ircRepresentation : successDeletes.map({ $0.ircRepresentation }).joined(separator: ", ")
+            let successIds =
+                successDeletes.count == 1
+                ? successDeletes.first!.ircRepresentation
+                : successDeletes.map({ $0.ircRepresentation }).joined(separator: ", ")
             command.message.reply(
                 key: "rescue.delete.success", fromCommand: command,
                 map: [
@@ -229,6 +237,7 @@ class RemoteRescueCommands: IRCBotModule {
                     rescue.attributes.codeRed.value
                     ? "rescue.trashlist.entrycr" : "rescue.trashlist.entry"
 
+                let (lastEditUser, lastEditRat) = results.lastEditUserFor(rescue: rescue)
                 command.message.replyPrivate(
                     key: format, fromCommand: command,
                     map: [
@@ -236,9 +245,12 @@ class RemoteRescueCommands: IRCBotModule {
                         "client": rescue.client ?? "unknown client",
                         "platform": rescue.platform.ircRepresentable,
                         "reason": rescue.notes,
+                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                        "by": lastEditRat?.name ?? "unknown",
                     ])
             }
         } catch {
+            debug("TRASH" + String(describing: error))
             command.message.error(key: "rescue.trashlist.error", fromCommand: command)
         }
     }
@@ -462,12 +474,14 @@ class RemoteRescueCommands: IRCBotModule {
 
             caseId = apiRescue.commandIdentifier
             let rats = result.assignedRats()
+            let (lastEditUser, lastEditRat) = result.lastEditUser()
             let firstLimpet = result.firstLimpet()
 
             rescue = Rescue(
                 fromAPIRescue: apiRescue,
                 withRats: rats,
                 firstLimpet: firstLimpet,
+                lastEditUser: lastEditUser,
                 onBoard: board
             )
         } else {
@@ -483,11 +497,13 @@ class RemoteRescueCommands: IRCBotModule {
 
             caseId = apiRescue.commandIdentifier
             let rats = clientRescues?.assignedRatsFor(rescue: apiRescue) ?? []
+            let (lastEditUser, _) = clientRescues!.lastEditUserFor(rescue: apiRescue)
             let firstLimpet = clientRescues?.firstLimpetFor(rescue: apiRescue)
             rescue = Rescue(
                 fromAPIRescue: apiRescue,
                 withRats: rats,
                 firstLimpet: firstLimpet,
+                lastEditUser: lastEditUser,
                 onBoard: board
             )
         }
@@ -579,12 +595,14 @@ class RemoteRescueCommands: IRCBotModule {
 
         let apiRescue = result.body.data!.primary.value
         let rats = result.assignedRats()
+        let (lastEditUser, lastEditRat) = result.lastEditUser()
         let firstLimpet = result.firstLimpet()
 
         let rescue = Rescue(
             fromAPIRescue: apiRescue,
             withRats: rats,
             firstLimpet: firstLimpet,
+            lastEditUser: lastEditUser,
             onBoard: board
         )
         rescue.outcome = nil
