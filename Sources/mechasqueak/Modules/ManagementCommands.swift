@@ -142,7 +142,7 @@ class ManagementCommands: IRCBotModule {
         let groups = user.associatedAPIData?.body.includes![Group.self].filter({
             groupIds.contains($0.id)
         }).map({
-            $0.attributes.name.value
+            $0.ircRepresentation
         })
 
         command.message.reply(
