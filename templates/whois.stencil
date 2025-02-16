@@ -1,4 +1,8 @@
+{% if not account %}
+{{ nick }} is not logged in.
+{% else %}
 {{ nick }} is logged in as user {{ account }}
+{% endif %}
 {% if group %}
  ({{ group }}).
 {% else %}

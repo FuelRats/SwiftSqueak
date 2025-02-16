@@ -35,7 +35,8 @@ class AccountCommands: IRCBotModule {
     @BotCommand(
         ["whoami"],
         category: .account,
-        description: "Check the Fuel Rats account information the bot is currently associating with your nick",
+        description:
+            "Check the Fuel Rats account information the bot is currently associating with your nick",
         allowedDestinations: .PrivateMessage
     )
     var didReceiveWhoAmICommand = { command in
@@ -47,42 +48,55 @@ class AccountCommands: IRCBotModule {
         }
 
         guard let associatedNickname = user.associatedAPIData else {
-            command.message.reply(key: "whoami.nodata", fromCommand: command, map: [
-                "account": account
-            ])
+            command.message.reply(
+                key: "whoami.nodata", fromCommand: command,
+                map: [
+                    "account": account
+                ])
             return
         }
 
-        guard let apiUser = associatedNickname.body.includes![User.self].first(where: {
-            return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user?.id.rawValue
-        }) else {
-            command.message.reply(key: "whoami.noaccount", fromCommand: command, map: [
-                "account": account
-            ])
+        guard
+            let apiUser = associatedNickname.body.includes![User.self].first(where: {
+                return $0.id.rawValue
+                    == associatedNickname.body.data?.primary.values[0].relationships.user?.id
+                    .rawValue
+            })
+        else {
+            command.message.reply(
+                key: "whoami.noaccount", fromCommand: command,
+                map: [
+                    "account": account
+                ])
             return
         }
 
-        let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
-            if acc == nil || rat.attributes.createdAt.value < acc! {
-                return rat.attributes.createdAt.value
-            }
-            return acc
-        })
+        let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(
+            nil,
+            { (acc: Date?, rat: Rat) -> Date? in
+                if acc == nil || rat.attributes.createdAt.value < acc! {
+                    return rat.attributes.createdAt.value
+                }
+                return acc
+            })
 
         let group = associatedNickname.groups.sorted(by: {
             $0.priority > $1.priority
-            
+
         }).first?.ircRepresentation
-        
-        let output = (try? stencil.renderLine(name: "whois.stencil", context: [
-            "nick": command.message.user.nickname,
-            "account": account,
-            "id": associatedNickname.user?.id.rawValue.ircRepresentation ?? "",
-            "group": group as Any,
-            "displayId": command.options.contains("@"),
-            "joined": joinedDate?.eliteFormattedString ?? "unknown",
-            "rats": associatedNickname.ratsBelongingTo(user: apiUser)
-        ])) ?? ""
+
+        let output =
+            (try? stencil.renderLine(
+                name: "whois.stencil",
+                context: [
+                    "nick": command.message.user.nickname,
+                    "account": account,
+                    "id": associatedNickname.user?.id.rawValue.ircRepresentation ?? "",
+                    "group": group as Any,
+                    "displayId": command.options.contains("@"),
+                    "joined": joinedDate?.eliteFormattedString ?? "unknown",
+                    "rats": associatedNickname.ratsBelongingTo(user: apiUser),
+                ])) ?? ""
         command.message.reply(message: output)
     }
 
@@ -90,7 +104,8 @@ class AccountCommands: IRCBotModule {
         ["whois", "ratid", "who", "id"],
         [.param("nickname", "SpaceDawg"), .options(["@"])],
         category: .account,
-        description: "Check the Fuel Rats account information the bot is associating with someone's nick.",
+        description:
+            "Check the Fuel Rats account information the bot is associating with someone's nick.",
         permission: .RatReadOwn,
         allowedDestinations: .PrivateMessage
     )
@@ -98,62 +113,38 @@ class AccountCommands: IRCBotModule {
         let message = command.message
         let nick = command.parameters[0]
 
-        guard let user = message.client.channels.compactMap({ channel in
+        let user = message.client.channels.compactMap({ channel in
             return channel.member(named: nick)
-        }).first else {
-            command.message.error(key: "whois.notfound", fromCommand: command, map: [
-                "nick": nick
-            ])
+        }).first
+
+        guard let accountData = try? await FuelRatsAPI.getNickname(forIRCAccount: nick) else {
+            command.message.reply(
+                key: "whois.notfound", fromCommand: command,
+                map: [
+                    "nick": nick
+                ])
             return
         }
 
-        guard let account = user.account else {
-            command.message.reply(key: "whois.notloggedin", fromCommand: command, map: [
-                "nick": nick
-            ])
-            return
-        }
-
-        guard let associatedNickname = user.associatedAPIData else {
-            command.message.reply(key: "whois.nodata", fromCommand: command, map: [
-                "nick": nick,
-                "account": account
-            ])
-            return
-        }
-
-        guard let apiUser = associatedNickname.body.includes![User.self].first(where: {
-            return $0.id.rawValue == associatedNickname.body.data?.primary.values[0].relationships.user?.id.rawValue
-        }) else {
-            command.message.reply(key: "whois.noaccount", fromCommand: command, map: [
-                "nick": nick,
-                "account": account
-            ])
-            return
-        }
-
-        let joinedDate = associatedNickname.ratsBelongingTo(user: apiUser).reduce(nil, { (acc: Date?, rat: Rat) -> Date? in
-            if acc == nil || rat.attributes.createdAt.value < acc! {
-                return rat.attributes.createdAt.value
-            }
-            return acc
-        })
-
-        let group = associatedNickname.groups.sorted(by: {
+        let joinedDate = accountData.joinDate
+        
+        let group = accountData.groups.sorted(by: {
             $0.priority > $1.priority
-            
         }).first?.ircRepresentation
-        
-        let output = (try? stencil.renderLine(name: "whois.stencil", context: [
-            "nick": nick,
-            "account": account,
-            "id": associatedNickname.user?.id.rawValue.ircRepresentation ?? "",
-            "group": group as Any,
-            "displayId": command.options.contains("@"),
-            "joined": joinedDate?.eliteFormattedString ?? "unknown",
-            "rats": associatedNickname.ratsBelongingTo(user: apiUser)
-        ])) ?? ""
-        
+
+        let output =
+            (try? stencil.renderLine(
+                name: "whois.stencil",
+                context: [
+                    "nick": nick,
+                    "account": user?.account as Any,
+                    "id": accountData.user?.id.rawValue.ircRepresentation ?? "",
+                    "group": group as Any,
+                    "displayId": command.options.contains("@"),
+                    "joined": joinedDate?.eliteFormattedString ?? "unknown",
+                    "rats": accountData.ratsBelongingTo(user: accountData.user!),
+                ])) ?? ""
+
         command.message.reply(message: output)
     }
 
@@ -161,7 +152,8 @@ class AccountCommands: IRCBotModule {
         ["activerat", "assigncheck", "assigntest"],
         [.param("platform", "PC")],
         category: .account,
-        description: "Check what CMDR name mecha would currently assign to a case based on your nickname",
+        description:
+            "Check what CMDR name mecha would currently assign to a case based on your nickname",
         permission: .RatReadOwn,
         cooldown: .seconds(300)
     )
@@ -175,17 +167,21 @@ class AccountCommands: IRCBotModule {
         }
 
         guard let rat = user.getRatRepresenting(platform: platform) else {
-            command.message.reply(key: "activerat.none", fromCommand: command, map: [
-                "platform": platform.ircRepresentable
-            ])
+            command.message.reply(
+                key: "activerat.none", fromCommand: command,
+                map: [
+                    "platform": platform.ircRepresentable
+                ])
             return
         }
 
-        command.message.reply(key: "activerat.response", fromCommand: command, map: [
-            "platform": platform.ircRepresentable,
-            "id": rat.id.rawValue.ircRepresentation,
-            "name": rat.attributes.name.value
-        ])
+        command.message.reply(
+            key: "activerat.response", fromCommand: command,
+            map: [
+                "platform": platform.ircRepresentable,
+                "id": rat.id.rawValue.ircRepresentation,
+                "name": rat.attributes.name.value,
+            ])
     }
 
     @BotCommand(
@@ -201,18 +197,20 @@ class AccountCommands: IRCBotModule {
             command.message.error(key: "changemail.notloggedin", fromCommand: command)
             return
         }
-        
+
         do {
             try await user.changeEmail(to: command.parameters[0])
         } catch {
             command.message.error(key: "changemail.error", fromCommand: command)
         }
-        
-        command.message.reply(key: "changemail.success", fromCommand: command, map: [
-            "email": command.parameters[0]
-        ])
+
+        command.message.reply(
+            key: "changemail.success", fromCommand: command,
+            map: [
+                "email": command.parameters[0]
+            ])
     }
-    
+
     @BotCommand(
         ["permits"],
         category: .account,
@@ -220,30 +218,36 @@ class AccountCommands: IRCBotModule {
         permission: .UserWriteOwn
     )
     var didReceiveListPermitCommand = { command in
-        if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
-            command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
-                "nick": command.message.user.nickname,
-            ])
+        if command.message.destination.isPrivateMessage == false
+            && configuration.general.drillMode == false
+        {
+            command.message.reply(
+                key: "command.replyprivate", fromCommand: command,
+                map: [
+                    "nick": command.message.user.nickname
+                ])
         }
         guard let currentRat = command.message.user.currentRat else {
             command.message.replyPrivate(key: "permits.norat", fromCommand: command)
             return
         }
-        
+
         let permits = currentRat.attributes.data.value.permits ?? []
-        
+
         guard permits.count > 0 else {
             command.message.replyPrivate(key: "permits.nopermits", fromCommand: command)
             return
         }
-        
-        let heading = lingo.localize("permits.list", locale: "en-GB", interpolations: [
-            "name": currentRat.attributes.name.value
-        ])
-        
+
+        let heading = lingo.localize(
+            "permits.list", locale: "en-GB",
+            interpolations: [
+                "name": currentRat.attributes.name.value
+            ])
+
         command.message.replyPrivate(list: permits, separator: ", ", heading: "\(heading) ")
     }
-    
+
     @BotCommand(
         ["addpermit", "permitadd"],
         [.param("system name", "NLTT 48288", .continuous)],
@@ -258,22 +262,24 @@ class AccountCommands: IRCBotModule {
             command.message.reply(key: "addpermit.norat", fromCommand: command)
             return
         }
-        
+
         do {
             let searchResult = try await SystemsAPI.performSearch(forSystem: systemName)
-            
+
             guard
                 searchResult.data?.count ?? 0 > 0,
                 let system = searchResult.data?[0],
                 system.similarity == 1,
                 system.permitRequired
             else {
-                command.message.error(key: "addpermit.nosystem", fromCommand: command, map: [
-                    "system": systemName
-                ])
+                command.message.error(
+                    key: "addpermit.nosystem", fromCommand: command,
+                    map: [
+                        "system": systemName
+                    ])
                 return
             }
-            
+
             var ratData = currentRat.attributes.data.value
             var permits = ratData.permits ?? []
             let permitName = system.permitName ?? system.name
@@ -281,22 +287,26 @@ class AccountCommands: IRCBotModule {
                 permits.append(permitName)
             }
             ratData.permits = permits
-            currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
-            
+            currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData) })
+
             try await currentRat.update()
             command.message.user.flush()
-            command.message.reply(key: "addpermit.added", fromCommand: command, map: [
-                "name": currentRat.attributes.name.value,
-                "permit": permitName
-            ])
-            
+            command.message.reply(
+                key: "addpermit.added", fromCommand: command,
+                map: [
+                    "name": currentRat.attributes.name.value,
+                    "permit": permitName,
+                ])
+
         } catch {
-            command.message.error(key: "addpermit.searcherror", fromCommand: command, map: [
-                "system": systemName
-            ])
+            command.message.error(
+                key: "addpermit.searcherror", fromCommand: command,
+                map: [
+                    "system": systemName
+                ])
         }
     }
-    
+
     @BotCommand(
         ["delpermit", "permitdel"],
         [.param("permit name", "Pilot's Federation District", .continuous)],
@@ -311,33 +321,38 @@ class AccountCommands: IRCBotModule {
             command.message.reply(key: "delpermit.norat", fromCommand: command)
             return
         }
-        
+
         var ratData = currentRat.attributes.data.value
         var permits = ratData.permits ?? []
-        
-        guard let permitIndex = permits.firstIndex(where: { $0.lowercased() == permitName.lowercased() }) else {
+
+        guard
+            let permitIndex = permits.firstIndex(where: {
+                $0.lowercased() == permitName.lowercased()
+            })
+        else {
             command.message.error(key: "delpermit.nopermit", fromCommand: command)
             return
         }
         permits.remove(at: permitIndex)
-        
+
         ratData.permits = permits
-        currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData)})
-        
+        currentRat = currentRat.tappingAttributes({ $0.data = .init(value: ratData) })
+
         do {
             try await currentRat.update()
-            
+
             command.message.user.flush()
-            command.message.reply(key: "delpermit.removed", fromCommand: command, map: [
-                "name": currentRat.attributes.name.value,
-                "permit": permitName
-            ])
+            command.message.reply(
+                key: "delpermit.removed", fromCommand: command,
+                map: [
+                    "name": currentRat.attributes.name.value,
+                    "permit": permitName,
+                ])
         } catch {
             command.error(error)
         }
     }
-    
-    
+
     @BotCommand(
         ["mymode", "myversion"],
         [.param("game version", "h")],
@@ -351,38 +366,48 @@ class AccountCommands: IRCBotModule {
             command.message.replyPrivate(key: "myexpansion.norat", fromCommand: command)
             return
         }
-        
+
         let oldExpansion = currentRat.attributes.expansion.value
         guard let expansion = GameMode.parsedFromText(text: command.parameters[0]) else {
-            command.message.error(key: "myexpansion.invalid", fromCommand: command, map: [
-                "expansion": command.parameters[0]
-            ])
+            command.message.error(
+                key: "myexpansion.invalid", fromCommand: command,
+                map: [
+                    "expansion": command.parameters[0]
+                ])
             return
         }
         if oldExpansion == expansion {
-            command.message.error(key: "myexpansion.already", fromCommand: command, map: [
-                "expansion": command.parameters[0]
-            ])
+            command.message.error(
+                key: "myexpansion.already", fromCommand: command,
+                map: [
+                    "expansion": command.parameters[0]
+                ])
             return
         }
-        
+
         do {
             try await currentRat.setGameExpansion(expansion)
             command.message.user.flush()
-            command.message.reply(key: "myexpansion.success", fromCommand: command, map: [
-                "name": currentRat.attributes.name.value,
-                "expansion": expansion.englishDescription
-            ])
-            
+            command.message.reply(
+                key: "myexpansion.success", fromCommand: command,
+                map: [
+                    "name": currentRat.attributes.name.value,
+                    "expansion": expansion.englishDescription,
+                ])
+
             for rescue in board.rescues {
-                if let jumpCall = rescue.value.jumpCalls.first(where: { $0.0 == currentRat && rescue.value.expansion == expansion }) {
-                    rescue.value.channel?.send(key: "jumpcall.change.expansion", map: [
-                        "caseId": rescue.key,
-                        "nick": command.message.user.nickname,
-                        "jumps": jumpCall.1,
-                        "oldExpansion": oldExpansion.ircRepresentable,
-                        "newExpansion": expansion.ircRepresentable
-                    ])
+                if let jumpCall = rescue.value.jumpCalls.first(where: {
+                    $0.0 == currentRat && rescue.value.expansion == expansion
+                }) {
+                    rescue.value.channel?.send(
+                        key: "jumpcall.change.expansion",
+                        map: [
+                            "caseId": rescue.key,
+                            "nick": command.message.user.nickname,
+                            "jumps": jumpCall.1,
+                            "oldExpansion": oldExpansion.ircRepresentable,
+                            "newExpansion": expansion.ircRepresentable,
+                        ])
                     break
                 }
             }
@@ -391,24 +416,29 @@ class AccountCommands: IRCBotModule {
             command.error(error)
         }
     }
-    
+
     @BotCommand(
         ["useodyssey"],
         category: nil,
-        description: "DEPRECATED: Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
+        description:
+            "DEPRECATED: Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
         permission: .UserWriteOwn
     )
     var didReceiveUseOdysseyCommand = { command in
         command.message.reply(message: "!useodyssey has been deprecated, use !mymode o")
     }
-    
+
     @BotCommand(
         ["usehorizons"],
         category: nil,
-        description: "DEPRECATED: Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
+        description:
+            "DEPRECATED: Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
         permission: .UserWriteOwn
     )
     var didReceiveUseHorizonsCommand = { command in
-        command.message.reply(message: "!usehorizons has been deprecated, use !mymode h3 or !mymode h4 depending on whether you are using 3.8 or 4.0")
+        command.message.reply(
+            message:
+                "!usehorizons has been deprecated, use !mymode h3 or !mymode h4 depending on whether you are using 3.8 or 4.0"
+        )
     }
 }
