@@ -117,7 +117,10 @@ class AccountCommands: IRCBotModule {
             return channel.member(named: nick)
         }).first
 
-        guard let accountData = try? await FuelRatsAPI.getNickname(forIRCAccount: nick) else {
+        guard
+            let accountData = try? await FuelRatsAPI.getNickname(
+                forIRCAccount: user?.account ?? nick)
+        else {
             command.message.reply(
                 key: "whois.notfound", fromCommand: command,
                 map: [
@@ -127,7 +130,7 @@ class AccountCommands: IRCBotModule {
         }
 
         let joinedDate = accountData.joinDate
-        
+
         let group = accountData.groups.sorted(by: {
             $0.priority > $1.priority
         }).first?.ircRepresentation
