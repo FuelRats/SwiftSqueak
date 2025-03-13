@@ -127,7 +127,7 @@
     "board.caseopened": "Case #%{caseId} opened for %{client} with \"%{message}\".",
     "board.sprep": "Silenced prep warning for case #%{caseId}",
     "board.inject.ignored": "Ignoring inject command with this client name as it was likely accidental input. To override send the same command again within the next 30 seconds.",
-    "board.grab.noclient": "Could not find the client or rat for case %{caseId} in the channel.",
+    "board.grab.noclient": "Could not find %{param} in the channel.",
     "board.grab.nomessage": "Could not find any messages by %{client} in the channel.",
     "board.grab.notcreated": "Could not find an existing case for %{client} and could not create one from the contents of this message.",
     "board.grab.updated": "Updated case #%{clientId} with \"%{text}\".",
