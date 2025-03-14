@@ -133,7 +133,7 @@ class AccountCommands: IRCBotModule {
             command.message.reply(
                 key: "whois.noaccount", fromCommand: command,
                 map: [
-                    "nick": nick
+                    "account": user?.account ?? nick
                 ])
             return
         }
