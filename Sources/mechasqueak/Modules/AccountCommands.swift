@@ -129,6 +129,15 @@ class AccountCommands: IRCBotModule {
             return
         }
 
+        if accountData.user == nil {
+            command.message.reply(
+                key: "whois.noaccount", fromCommand: command,
+                map: [
+                    "nick": nick
+                ])
+            return
+        }
+
         let joinedDate = accountData.joinDate
 
         let group = accountData.groups.sorted(by: {
