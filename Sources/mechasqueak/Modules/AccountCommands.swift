@@ -135,6 +135,11 @@ class AccountCommands: IRCBotModule {
             $0.priority > $1.priority
         }).first?.ircRepresentation
 
+        var rats = []
+        if let user = accountData.user {
+            rats = accountData.ratsBelongingTo(user: user)
+        }
+
         let output =
             (try? stencil.renderLine(
                 name: "whois.stencil",
@@ -145,7 +150,7 @@ class AccountCommands: IRCBotModule {
                     "group": group as Any,
                     "displayId": command.options.contains("@"),
                     "joined": joinedDate?.eliteFormattedString ?? "unknown",
-                    "rats": accountData.ratsBelongingTo(user: accountData.user!),
+                    "rats": rats,
                 ])) ?? ""
 
         command.message.reply(message: output)
