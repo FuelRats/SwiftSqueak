@@ -453,12 +453,12 @@ class SystemsAPI {
                     (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true) && $0.stationState == nil
                 }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
                     .sorted(by: {
-                        (($0.type?.rating ?? 3) < ($1.type?.rating ?? 3) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
+                        (($0.type?.rating ?? 5) < ($1.type?.rating ?? 5) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
                 })
             }
             
             struct Station: Codable {
-                static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Restock"]
+                static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Rearm"]
                 let name: String
                 let type: StationType?
                 let distance: Double?
@@ -467,6 +467,17 @@ class SystemsAPI {
                 let hasOutfitting: Bool
                 let services: [String]
                 let stationState: State?
+                
+                enum CodingKeys: String, CodingKey {
+                    case name
+                    case type
+                    case distance
+                    case hasMarket
+                    case hasShipyard
+                    case hasOutfitting
+                    case services
+                    case stationState = "StationState"
+                }
                 
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -481,8 +492,7 @@ class SystemsAPI {
                         name = String(name.dropFirst("Planetary Construction Site: ".count))
                         stationType = .PlanetaryConstructionSite
                     }
-                    self.name = name
-                    self.type = stationType
+                    self.name = name 
                     
                     self.distance = try container.decodeIfPresent(Double.self, forKey: .distance)
                     self.hasMarket = try container.decode(Bool.self, forKey: .hasMarket)
@@ -490,6 +500,18 @@ class SystemsAPI {
                     self.hasOutfitting = try container.decode(Bool.self, forKey: .hasOutfitting)
                     self.services = try container.decode([String].self, forKey: .services)
                     self.stationState = try container.decodeIfPresent(State.self, forKey: .stationState)
+                    
+                    if self.stationState == .Construction && stationType == nil {
+                        stationType = .SpaceConstructionDepot
+                    }
+                    if stationType == nil && self.name.hasPrefix("System Colonisation Ship") {
+                        stationType = .SystemColonizationShip
+                    }
+                    if stationType == nil {
+                        stationType = .Settlement
+                    }
+                    
+                    self.type = stationType
                 }
                 
                 
@@ -499,6 +521,7 @@ class SystemsAPI {
                     case Abandoned
                     case Damaged
                     case Construction
+                    case UnderRepairs
                 }
                 
                 enum StationType: String, Codable {
@@ -506,6 +529,7 @@ class SystemsAPI {
                     case OcellusStarport = "Ocellus Starport"
                     case OrbisStarport = "Orbis Starport"
                     case SpaceConstructionDepot = "Space Construction Depot"
+                    case SystemColonizationShip = "System Colonization Ship"
                     case Outpost
                     case PlanetaryOutpost = "Planetary Outpost"
                     case PlanetaryPort = "Planetary Port"
@@ -521,15 +545,16 @@ class SystemsAPI {
                         .OcellusStarport: 0,
                         .OrbisStarport: 0,
                         .AsteroidBase: 1,
-                        .SpaceConstructionDepot: 1,
-                        .OrbitalConstructionSite: 1,
-                        .PlanetaryConstructionSite: 2,
+                        .MegaShip: 1,
                         .PlanetaryPort: 2,
-                        .MegaShip: 2,
                         .PlanetaryOutpost: 3,
                         .Settlement: 3,
-                        .FleetCarrier: 4,
-                        .Outpost: 5,
+                        .SpaceConstructionDepot: 4,
+                        .PlanetaryConstructionSite: 4,
+                        .OrbitalConstructionSite: 4,
+                        .SystemColonizationShip: 5,
+                        .FleetCarrier: 5,
+                        .Outpost: 6,
                     ]
                     
                     var rating: UInt {
@@ -544,7 +569,9 @@ class SystemsAPI {
                             StationType.AsteroidBase,
                             StationType.MegaShip,
                             StationType.FleetCarrier,
-                            StationType.SpaceConstructionDepot
+                            StationType.SpaceConstructionDepot,
+                            StationType.SystemColonizationShip,
+                            StationType.OrbitalConstructionSite,
                         ].contains(self)
                     }
                     
@@ -552,6 +579,7 @@ class SystemsAPI {
                         return [
                             StationType.PlanetaryPort,
                             StationType.PlanetaryOutpost,
+                            StationType.PlanetaryConstructionSite,
                             StationType.Settlement
                         ].contains(self)
                     }
@@ -566,7 +594,7 @@ class SystemsAPI {
                 }
                 
                 var allServices: [String] {
-                    var services: [String] = self.services
+                    var services: [String] = self.services.map({ $0.capitalizingFirstLetter() })
                     
                     if self.hasShipyard {
                         services.append("Shipyard")
@@ -588,6 +616,17 @@ class SystemsAPI {
             let name: String?
             let type: String?
         }
+    }
+}
+
+extension String {
+    func capitalizingFirstLetter() -> String {
+        guard let first = self.first else { return self }
+        return first.uppercased() + self.dropFirst()
+    }
+
+    mutating func capitalizeFirstLetter() {
+        self = self.capitalizingFirstLetter()
     }
 }
 
