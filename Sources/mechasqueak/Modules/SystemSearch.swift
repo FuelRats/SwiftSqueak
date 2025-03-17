@@ -269,7 +269,7 @@ class SystemSearch: IRCBotModule {
                 "travelTime": (station.distance ?? 0).distanceToSeconds(destinationGravity: true).timeSpan(maximumUnits: 1),
                 "services": station.allServices,
                 "notableServices": station.notableServices,
-                "stationType": (station.type ?? .FleetCarrier).rawValue,
+                "stationType": station.type?.rawValue as Any,
                 "showAllServices": command.options.contains("s"),
                 "additionalServices": station.services.count - station.notableServices.count
             ]))

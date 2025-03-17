@@ -450,10 +450,10 @@ class SystemsAPI {
             
             func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
                 return self.stations.filter({
-                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type?.isLargeSpaceStation ?? false) && $0.stationState == nil
+                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true) && $0.stationState == nil
                 }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
                     .sorted(by: {
-                        (($0.type ?? .FleetCarrier).rating < ($1.type ?? .FleetCarrier).rating && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
+                        (($0.type?.rating ?? 3) < ($1.type?.rating ?? 3) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
                 })
             }
             
@@ -468,18 +468,44 @@ class SystemsAPI {
                 let services: [String]
                 let stationState: State?
                 
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    
+                    var name = try container.decode(String.self, forKey: .name)
+                    var stationType = try container.decodeIfPresent(StationType.self, forKey: .type)
+                    if stationType == nil && name.hasPrefix("Orbital Construction Site: ") {
+                        name = String(name.dropFirst("Orbital Construction Site: ".count))
+                        stationType = .OrbitalConstructionSite
+                    }
+                    if stationType == nil && name.hasPrefix("Planetary Construction Site: ") {
+                        name = String(name.dropFirst("Planetary Construction Site: ".count))
+                        stationType = .PlanetaryConstructionSite
+                    }
+                    self.name = name
+                    self.type = stationType
+                    
+                    self.distance = try container.decodeIfPresent(Double.self, forKey: .distance)
+                    self.hasMarket = try container.decode(Bool.self, forKey: .hasMarket)
+                    self.hasShipyard = try container.decode(Bool.self, forKey: .hasShipyard)
+                    self.hasOutfitting = try container.decode(Bool.self, forKey: .hasOutfitting)
+                    self.services = try container.decode([String].self, forKey: .services)
+                    self.stationState = try container.decodeIfPresent(State.self, forKey: .stationState)
+                }
+                
                 
                 public enum State: String, Codable {
                     case UnderAttack
                     case Destroyed
                     case Abandoned
                     case Damaged
+                    case Construction
                 }
                 
                 enum StationType: String, Codable {
                     case CoriolisStarport = "Coriolis Starport"
                     case OcellusStarport = "Ocellus Starport"
                     case OrbisStarport = "Orbis Starport"
+                    case SpaceConstructionDepot = "Space Construction Depot"
                     case Outpost
                     case PlanetaryOutpost = "Planetary Outpost"
                     case PlanetaryPort = "Planetary Port"
@@ -487,18 +513,23 @@ class SystemsAPI {
                     case MegaShip = "Mega ship"
                     case FleetCarrier = "Fleet Carrier"
                     case Settlement = "Odyssey Settlement"
+                    case OrbitalConstructionSite = "Orbital Construction Site"
+                    case PlanetaryConstructionSite = "Planetary Construction Site"
                     
                     static let ratings: [StationType: UInt] = [
                         .CoriolisStarport: 0,
                         .OcellusStarport: 0,
                         .OrbisStarport: 0,
                         .AsteroidBase: 1,
+                        .SpaceConstructionDepot: 1,
+                        .OrbitalConstructionSite: 1,
+                        .PlanetaryConstructionSite: 2,
                         .PlanetaryPort: 2,
                         .MegaShip: 2,
                         .PlanetaryOutpost: 3,
-                        .Outpost: 3,
-                        .Settlement: 4,
-                        .FleetCarrier: 5
+                        .Settlement: 3,
+                        .FleetCarrier: 4,
+                        .Outpost: 5,
                     ]
                     
                     var rating: UInt {
@@ -511,7 +542,9 @@ class SystemsAPI {
                             StationType.OcellusStarport,
                             StationType.OrbisStarport,
                             StationType.AsteroidBase,
-                            StationType.MegaShip
+                            StationType.MegaShip,
+                            StationType.FleetCarrier,
+                            StationType.SpaceConstructionDepot
                         ].contains(self)
                     }
                     
@@ -525,7 +558,7 @@ class SystemsAPI {
                 }
                 
                 var hasLargePad: Bool {
-                    return self.type != .Outpost && self.type != .PlanetaryOutpost
+                    return self.type != .Outpost
                 }
                 
                 var notableServices: [String] {
