@@ -180,7 +180,7 @@ class MechaSqueak {
 
             let gitDir = configuration.sourcePath
             let release = shell(
-                "/usr/bin/git", ["tag", "---points-at", "HEAD"], currentDirectory: gitDir)?
+                "/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             if let releaseName = release, releaseName.count > 0 {
                 mecha.reportingChannel?.send(
