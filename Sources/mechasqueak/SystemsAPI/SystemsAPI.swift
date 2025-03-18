@@ -29,6 +29,10 @@ import JSONAPI
 import NIO
 import NIOHTTP1
 
+let maxUsefulDistance = 300000.0
+let minPreferredDistance = 15000.0
+let limitedPenalty = 50.0
+
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
         "IX": "Ix",
@@ -510,17 +514,15 @@ class SystemsAPI {
             }
 
             func preferableStations(requireLargePad: Bool, requireSpace: Bool) -> [Station] {
-                return self.stations.filter({
-                    (requireLargePad == false || $0.hasLargePad)
-                        && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true)
-                        && $0.stationState == nil
-                }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
-                    .sorted(by: {
-                        (($0.type?.rating ?? 5) < ($1.type?.rating ?? 5)
-                            && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000)
-                            || (($0.hasLargePad && $1.hasLargePad == false)
-                                && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
-                    })
+                let stations = self.stations.filter { (requireLargePad == false || $0.hasLargePad)
+                    && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true) && $0.isFunctional }
+                let maxDistance = stations.map { $0.distance ?? 0 }.max() ?? maxUsefulDistance
+                let weightDistance = maxUsefulDistance / maxDistance
+                let weightRanking = minPreferredDistance * weightDistance
+
+                return stations.sorted(by: {
+                    $0.score(weightDistance: weightDistance, weightRanking: weightRanking) < $1.score(weightDistance: weightDistance, weightRanking: weightRanking)
+                })
             }
 
             struct Station: Codable {
@@ -551,14 +553,20 @@ class SystemsAPI {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
 
                     var name = try container.decode(String.self, forKey: .name)
+                    
+                    var stationState = try container.decodeIfPresent(
+                        State.self, forKey: .stationState)
+                    
                     var stationType = try container.decodeIfPresent(StationType.self, forKey: .type)
                     if stationType == nil && name.hasPrefix("Orbital Construction Site: ") {
                         name = String(name.dropFirst("Orbital Construction Site: ".count))
                         stationType = .OrbitalConstructionSite
+                        stationState = .Construction
                     }
                     if stationType == nil && name.hasPrefix("Planetary Construction Site: ") {
                         name = String(name.dropFirst("Planetary Construction Site: ".count))
                         stationType = .PlanetaryConstructionSite
+                        stationState = .Construction
                     }
                     self.name = name
 
@@ -567,20 +575,20 @@ class SystemsAPI {
                     self.hasShipyard = try container.decode(Bool.self, forKey: .hasShipyard)
                     self.hasOutfitting = try container.decode(Bool.self, forKey: .hasOutfitting)
                     self.services = try container.decode([String].self, forKey: .services)
-                    self.stationState = try container.decodeIfPresent(
-                        State.self, forKey: .stationState)
 
-                    if self.stationState == .Construction && stationType == nil {
+                    if stationState == .Construction && stationType == nil {
                         stationType = .SpaceConstructionDepot
                     }
                     if stationType == nil && self.name.hasPrefix("System Colonisation Ship") {
                         stationType = .SystemColonizationShip
+                        stationState = .Construction
                     }
                     if stationType == nil {
                         stationType = .Settlement
                     }
 
                     self.type = stationType
+                    self.stationState = stationState
                 }
 
                 public enum State: String, Codable {
@@ -591,7 +599,24 @@ class SystemsAPI {
                     case Construction
                     case UnderRepairs
                 }
-
+                
+                var isFunctional: Bool {
+                    return self.stationState != .Destroyed && self.stationState != .Abandoned && self.stationState != .UnderAttack
+                }
+                
+                var isLimited: Bool {
+                    return self.stationState == .Damaged || self.stationState == .UnderRepairs || self.stationState == .Construction
+                }
+                
+                var ranking: UInt {
+                    return self.type?.rating ?? 5
+                }
+                
+                func score(weightDistance: Double = 1.0, weightRanking: Double = 0.1) -> Double {
+                    let rankingPenalty = Double(self.ranking) + (self.isLimited ? limitedPenalty : 0)
+                    return (self.distance ?? 0 * weightDistance) + (rankingPenalty * weightRanking)
+                }
+                
                 enum StationType: String, Codable {
                     case CoriolisStarport = "Coriolis Starport"
                     case OcellusStarport = "Ocellus Starport"
