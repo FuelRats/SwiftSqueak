@@ -22,12 +22,12 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
 import AsyncHTTPClient
-import NIOHTTP1
+import Foundation
 import IRCKit
-import NIO
 import JSONAPI
+import NIO
+import NIOHTTP1
 
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
@@ -35,10 +35,12 @@ class SystemsAPI {
         "H": "h",
         "AO": "Ao",
         "EL": "El",
-        "KI": "Ki"
+        "KI": "Ki",
     ]
-    
-    static func performSearch (forSystem systemName: String, quickSearch: Bool = false) async throws -> SearchDocument {
+
+    static func performSearch(forSystem systemName: String, quickSearch: Bool = false) async throws
+        -> SearchDocument
+    {
         var queryItems = [
             "name": systemName
         ]
@@ -46,21 +48,30 @@ class SystemsAPI {
             queryItems["fast"] = "true"
         }
 
-        let request = try HTTPClient.Request(systemApiPath: "/mecha", method: .GET, query: queryItems)
+        let request = try HTTPClient.Request(
+            systemApiPath: "/mecha", method: .GET, query: queryItems)
 
         let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(180))
-        return try await httpClient.execute(request: request, forDecodable: SearchDocument.self, deadline: deadline)
+        return try await httpClient.execute(
+            request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
-    
-    static func performLandmarkCheck (forSystem systemName: String) async throws -> LandmarkDocument {
-        let request = try HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
-            "name": systemName
-        ])
+
+    static func performLandmarkCheck(forSystem systemName: String) async throws -> LandmarkDocument
+    {
+        let request = try HTTPClient.Request(
+            systemApiPath: "/landmark", method: .GET,
+            query: [
+                "name": systemName
+            ])
         return try await httpClient.execute(request: request, forDecodable: LandmarkDocument.self)
     }
-    
-    static func getSystemInfo (forSystem system: SystemsAPI.SearchDocument.SearchResult) async throws -> StarSystem {
-        let (landmarkDocument, systemData) = try await (performLandmarkCheck(forSystem: system.name), getSystemData(forId: system.id64))
+
+    static func getSystemInfo(forSystem system: SystemsAPI.SearchDocument.SearchResult) async throws
+        -> StarSystem
+    {
+        let (landmarkDocument, systemData) = try await (
+            performLandmarkCheck(forSystem: system.name), getSystemData(forId: system.id64)
+        )
         var starSystem = StarSystem(
             name: system.name,
             searchResult: system,
@@ -74,72 +85,102 @@ class SystemsAPI {
         return starSystem
     }
 
-    static func performProceduralCheck (forSystem systemName: String) async throws -> ProceduralCheckDocument {
-        let request = try HTTPClient.Request(systemApiPath: "/procname", method: .GET, query: [
-            "name": systemName
-        ])
+    static func performProceduralCheck(forSystem systemName: String) async throws
+        -> ProceduralCheckDocument
+    {
+        let request = try HTTPClient.Request(
+            systemApiPath: "/procname", method: .GET,
+            query: [
+                "name": systemName
+            ])
 
-        return try await httpClient.execute(request: request, forDecodable: ProceduralCheckDocument.self)
+        return try await httpClient.execute(
+            request: request, forDecodable: ProceduralCheckDocument.self)
     }
-    
-    
-    static func getSystemData (forId id: Int64) async throws -> SystemGetDocument {
-        let request = try HTTPClient.Request(systemApiPath: "/api/systems/\(id)", method: .GET, query: [
-            "include": "stars,planets,stations"
-        ])
-        
+
+    static func getSystemData(forId id: Int64) async throws -> SystemGetDocument {
+        let request = try HTTPClient.Request(
+            systemApiPath: "/api/systems/\(id)", method: .GET,
+            query: [
+                "include": "stars,planets,stations"
+            ])
+
         return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)
     }
-    
-    static func getNearestStations (forSystem systemName: String, limit: Int = 10) async throws -> NearestPopulatedDocument {
-        let request = try HTTPClient.Request(systemApiPath: "/nearest_populated", method: .GET, query: [
-            "name": systemName,
-            "limit": String(limit)
-        ])
 
-        return try await httpClient.execute(request: request, forDecodable: NearestPopulatedDocument.self)
+    static func getNearestStations(forSystem systemName: String, limit: Int = 10) async throws
+        -> NearestPopulatedDocument
+    {
+        let request = try HTTPClient.Request(
+            systemApiPath: "/nearest_populated", method: .GET,
+            query: [
+                "name": systemName,
+                "limit": String(limit),
+            ])
+
+        return try await httpClient.execute(
+            request: request, forDecodable: NearestPopulatedDocument.self)
     }
-    
-    static func getNearestPreferableStation (
+
+    static func getNearestPreferableStation(
         forSystem systemName: String,
         limit: Int = 10,
         largePad: Bool,
         requireSpace: Bool
-    ) async throws -> (SystemsAPI.NearestPopulatedDocument.PopulatedSystem, SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station)? {
+    ) async throws -> (
+        SystemsAPI.NearestPopulatedDocument.PopulatedSystem,
+        SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station
+    )? {
         let response = try await SystemsAPI.getNearestStations(forSystem: systemName, limit: limit)
-        
+
         guard
-            let system = response.preferableSystems(requireLargePad: largePad, requireSpace: requireSpace).first
+            let system = response.preferableSystems(
+                requireLargePad: largePad, requireSpace: requireSpace
+            ).first
         else {
             return nil
         }
-        
-        guard let station = system.preferableStations(requireLargePad: largePad, requireSpace: requireSpace).first else {
+
+        guard
+            let station = system.preferableStations(
+                requireLargePad: largePad, requireSpace: requireSpace
+            ).first
+        else {
             return nil
         }
         return (system, station)
     }
-    
-    static func getNearestSystem (forCoordinates coords: Vector3) async throws -> NearestSystemDocument? {
-        let request = try HTTPClient.Request(systemApiPath: "/nearest_coords", method: .GET, query: [
-            "x": String(coords.x),
-            "y": String(coords.y),
-            "z": String(coords.z)
-        ])
-        
-        return try await httpClient.execute(request: request, forDecodable: NearestSystemDocument.self)
+
+    static func getNearestSystem(forCoordinates coords: Vector3) async throws
+        -> NearestSystemDocument?
+    {
+        let request = try HTTPClient.Request(
+            systemApiPath: "/nearest_coords", method: .GET,
+            query: [
+                "x": String(coords.x),
+                "y": String(coords.y),
+                "z": String(coords.z),
+            ])
+
+        return try await httpClient.execute(
+            request: request, forDecodable: NearestSystemDocument.self)
     }
-    
-    static func performSystemCheck (forSystem systemName: String) async throws -> StarSystem {
+
+    static func performSystemCheck(forSystem systemName: String) async throws -> StarSystem {
         var systemName = systemName
         if let shortNameCorrection = shortNamesCapitalisation[systemName.uppercased()] {
             systemName = shortNameCorrection
         }
-        
-        let (searchResults, proceduralResult) = await (try? performSearch(forSystem: systemName, quickSearch: true), try? performProceduralCheck(forSystem: systemName))
-        let searchResult = searchResults?.data?.filter({ $0.similarity == 1 }).sorted(by: { $0.coords.distance(from: Vector3(0, 0, 0)) < $1.coords.distance(from: Vector3(0, 0, 0)) }).first
+
+        let (searchResults, proceduralResult) = await (
+            try? performSearch(forSystem: systemName, quickSearch: true),
+            try? performProceduralCheck(forSystem: systemName)
+        )
+        let searchResult = searchResults?.data?.filter({ $0.similarity == 1 }).sorted(by: {
+            $0.coords.distance(from: Vector3(0, 0, 0)) < $1.coords.distance(from: Vector3(0, 0, 0))
+        }).first
         let properName = searchResult?.name ?? systemName
-        
+
         var starSystem = StarSystem(
             name: properName,
             searchResult: searchResult,
@@ -149,22 +190,24 @@ class SystemsAPI {
             proceduralCheck: proceduralResult,
             lookupAttempted: true
         )
-        
+
         guard let searchResult = searchResult else {
             return starSystem
         }
-        
-        let (landmarkResults, systemData) = try await (performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64))
+
+        let (landmarkResults, systemData) = try await (
+            performLandmarkCheck(forSystem: properName), getSystemData(forId: searchResult.id64)
+        )
         starSystem.landmarks = landmarkResults.landmarks ?? []
         starSystem.data = systemData
         return starSystem
     }
-    
-    static func getStatistics () async throws -> StatisticsDocument {
+
+    static func getStatistics() async throws -> StatisticsDocument {
         let request = try HTTPClient.Request(systemApiPath: "/api/stats", method: .GET)
 
         let response = try await httpClient.execute(request: request, expecting: 200)
-        
+
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode(
@@ -172,16 +215,20 @@ class SystemsAPI {
             from: Data(buffer: response.body!)
         )
     }
-    
-    static func fetchLandmarkList () async throws -> [LandmarkListDocument.LandmarkListEntry] {
-        let request = try HTTPClient.Request(systemApiPath: "/landmark", method: .GET, query: [
-            "list": "true"
-        ])
 
-        return try await httpClient.execute(request: request, forDecodable: LandmarkListDocument.self).landmarks
+    static func fetchLandmarkList() async throws -> [LandmarkListDocument.LandmarkListEntry] {
+        let request = try HTTPClient.Request(
+            systemApiPath: "/landmark", method: .GET,
+            query: [
+                "list": "true"
+            ])
+
+        return try await httpClient.execute(
+            request: request, forDecodable: LandmarkListDocument.self
+        ).landmarks
     }
-    
-    static func fetchSectorList () async throws -> [StarSector] {
+
+    static func fetchSectorList() async throws -> [StarSector] {
         let request = try HTTPClient.Request(systemApiPath: "/get_ha_regions", method: .GET)
 
         let sectors = try await httpClient.execute(request: request, forDecodable: [String].self)
@@ -196,7 +243,6 @@ class SystemsAPI {
         })
     }
 
-
     struct LandmarkDocument: Codable {
         let meta: Meta
         let landmarks: [LandmarkResult]?
@@ -210,7 +256,7 @@ class SystemsAPI {
             let name: String
             let distance: Double
         }
-        
+
         var first: LandmarkDocument.LandmarkResult? {
             if self.landmarks?.count ?? 0 < 2 {
                 return self.landmarks?.first
@@ -218,39 +264,39 @@ class SystemsAPI {
             return self.landmarks?.first
         }
     }
-    
+
     struct LandmarkListDocument: Decodable {
         let meta: LandmarkListMeta
         let landmarks: [LandmarkListEntry]
-        
+
         struct LandmarkListEntry: Decodable {
             let name: String
             let coordinates: Vector3
             let soi: Double?
-            
+
             enum CodingKeys: String, CodingKey {
                 case name, x, y, z, soi
             }
-            
-            init (name: String, coordinates: Vector3, soi: Double? = nil) {
+
+            init(name: String, coordinates: Vector3, soi: Double? = nil) {
                 self.name = name
                 self.coordinates = coordinates
                 self.soi = soi
             }
-            
-            init (from decoder: Decoder) throws {
+
+            init(from decoder: Decoder) throws {
                 let values = try decoder.container(keyedBy: CodingKeys.self)
                 name = try values.decode(String.self, forKey: .name)
-                
+
                 let x = try values.decode(Double.self, forKey: .x)
                 let y = try values.decode(Double.self, forKey: .y)
                 let z = try values.decode(Double.self, forKey: .z)
                 self.coordinates = Vector3(x, y, z)
-                
+
                 self.soi = try? values.decode(Double.self, forKey: .soi)
             }
         }
-        
+
         struct LandmarkListMeta: Decodable {
             let count: Int
         }
@@ -276,36 +322,42 @@ class SystemsAPI {
         let isPgSystem: Bool
         let isPgSector: Bool
         let sectordata: SectorData
-        
+
         var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
-            var landmarkDistances = mecha.landmarks.map({ ($0, self.sectordata.coords.distance(from: $0.coordinates)) })
+            var landmarkDistances = mecha.landmarks.map({
+                ($0, self.sectordata.coords.distance(from: $0.coordinates))
+            })
             landmarkDistances = landmarkDistances.filter({ $0.0.soi == nil || $0.1 < $0.0.soi! })
             landmarkDistances.sort(by: { $0.1 < $1.1 })
-            
+
             let formatter = NumberFormatter.englishFormatter()
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
-            
-            return (landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!, ceil(landmarkDistances[0].1))
+
+            return (
+                landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!,
+                ceil(landmarkDistances[0].1)
+            )
         }
-        
+
         var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
             let distance = self.sectordata.coords.distance(from: Vector3(0, 0, 0))
-            
+
             let formatter = NumberFormatter.englishFormatter()
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
-            
-            let landmark = LandmarkListDocument.LandmarkListEntry(name: "Sol", coordinates: Vector3(0, 0, 0))
+
+            let landmark = LandmarkListDocument.LandmarkListEntry(
+                name: "Sol", coordinates: Vector3(0, 0, 0))
             return (landmark, formatter.string(from: distance)!, distance)
         }
-        
+
         struct SectorData: Codable {
             let handauthored: Bool
             let uncertainty: Double
             let coords: Vector3
         }
-        
+
         var galacticRegion: GalacticRegion? {
             let coordinates = self.sectordata.coords
             let point = CGPoint(x: coordinates.x, y: coordinates.z)
@@ -368,12 +420,12 @@ class SystemsAPI {
                 return "\"\(self.name)\" [\(self.searchSimilarityText)]"
             }
 
-
-            func correctionRepresentation (index: Int) -> String {
+            func correctionRepresentation(index: Int) -> String {
                 if self.permitRequired {
                     if let permitName = self.permitName {
                         let permitReq = IRCFormat.color(.Orange, "(\(permitName) Permit Required)")
-                        return "(\(IRCFormat.bold(index.description))) \"\(self.name)\" \(permitReq)"
+                        return
+                            "(\(IRCFormat.bold(index.description))) \"\(self.name)\" \(permitReq)"
                     }
                     let permitReq = IRCFormat.color(.Orange, "(Permit Required)")
                     return "(\(IRCFormat.bold(index.description))) \"\(self.name)\" \(permitReq)"
@@ -381,13 +433,15 @@ class SystemsAPI {
                 return "(\(IRCFormat.bold(index.description))) \"\(self.name)\""
             }
 
-            func rateCorrectionFor (system: String) -> Int? {
+            func rateCorrectionFor(system: String) -> Int? {
                 let system = system.lowercased()
                 let correctionName = self.name.lowercased()
 
-
-                let isWithinReasonableEditDistance = (system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters)
-                let originalIsProceduralSystem = ProceduralSystem.proceduralSystemExpression.matches(system)
+                let isWithinReasonableEditDistance =
+                    (system.levenshtein(correctionName) < 2
+                        && correctionName.strippingNonLetters == system.strippingNonLetters)
+                let originalIsProceduralSystem = ProceduralSystem.proceduralSystemExpression
+                    .matches(system)
 
                 if correctionName.strippingNonAlphanumeric == system.strippingNonAlphanumeric {
                     return 0
@@ -397,7 +451,9 @@ class SystemsAPI {
                     return 2
                 }
 
-                if system.levenshtein(correctionName) < 2 && correctionName.strippingNonLetters == system.strippingNonLetters {
+                if system.levenshtein(correctionName) < 2
+                    && correctionName.strippingNonLetters == system.strippingNonLetters
+                {
                     return 3
                 }
 
@@ -408,57 +464,69 @@ class SystemsAPI {
             }
         }
     }
-    
+
     struct NearestSystemDocument: Codable {
         let meta: Meta
         let data: NearestSystem?
-        
+
         struct NearestSystem: Codable {
             let id64: Int64
             let name: String
             let distance: Double
         }
-        
+
         struct Meta: Codable {
             let name: String?
             let type: String?
         }
     }
-    
+
     struct NearestPopulatedDocument: Codable {
         let meta: Meta
         let data: [PopulatedSystem]
-        
-        func preferableSystems (requireLargePad: Bool = false, requireSpace: Bool = false) -> [PopulatedSystem] {
+
+        func preferableSystems(requireLargePad: Bool = false, requireSpace: Bool = false)
+            -> [PopulatedSystem]
+        {
             return self.data.filter({ $0.allegiance != .Thargoid }).sorted(by: {
-                ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad == true
-                 && $1.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).first?.hasLargePad != true)
-                && $1.distance / $0.distance < 10
+                ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace)
+                    .first?.hasLargePad == true
+                    && $1.preferableStations(
+                        requireLargePad: requireLargePad, requireSpace: requireSpace
+                    ).first?.hasLargePad != true)
+                    && $1.distance / $0.distance < 10
             })
         }
-        
+
         struct PopulatedSystem: Codable {
             let distance: Double
             let name: String
             let id64: Int64
             let stations: [Station]
             let allegiance: SystemsAPI.Allegiance?
-            
+
             var hasStationWithLargePad: Bool {
                 return self.stations.contains(where: { $0.hasLargePad })
             }
-            
-            func preferableStations (requireLargePad: Bool, requireSpace: Bool) -> [Station] {
+
+            func preferableStations(requireLargePad: Bool, requireSpace: Bool) -> [Station] {
                 return self.stations.filter({
-                    (requireLargePad == false || $0.hasLargePad) && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true) && $0.stationState == nil
+                    (requireLargePad == false || $0.hasLargePad)
+                        && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true)
+                        && $0.stationState == nil
                 }).sorted(by: { ($0.distance ?? 0) < ($1.distance ?? 0) })
                     .sorted(by: {
-                        (($0.type?.rating ?? 5) < ($1.type?.rating ?? 5) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000) || (($0.hasLargePad && $1.hasLargePad == false) && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
-                })
+                        (($0.type?.rating ?? 5) < ($1.type?.rating ?? 5)
+                            && (($0.distance ?? 0) - ($1.distance ?? 0)) < 25000)
+                            || (($0.hasLargePad && $1.hasLargePad == false)
+                                && (($0.distance ?? 0) - ($1.distance ?? 0)) < 150000)
+                    })
             }
-            
+
             struct Station: Codable {
-                static let notableServices = ["Shipyard", "Outfitting", "Refuel", "Repair", "Rearm"]
+                static let notableServices = [
+                    "Shipyard", "Outfitting", "Refuel", "Repair", "Rearm",
+                ]
                 let name: String
                 let type: StationType?
                 let distance: Double?
@@ -467,7 +535,7 @@ class SystemsAPI {
                 let hasOutfitting: Bool
                 let services: [String]
                 let stationState: State?
-                
+
                 enum CodingKeys: String, CodingKey {
                     case name
                     case type
@@ -478,10 +546,10 @@ class SystemsAPI {
                     case services
                     case stationState = "StationState"
                 }
-                
+
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
-                    
+
                     var name = try container.decode(String.self, forKey: .name)
                     var stationType = try container.decodeIfPresent(StationType.self, forKey: .type)
                     if stationType == nil && name.hasPrefix("Orbital Construction Site: ") {
@@ -492,15 +560,16 @@ class SystemsAPI {
                         name = String(name.dropFirst("Planetary Construction Site: ".count))
                         stationType = .PlanetaryConstructionSite
                     }
-                    self.name = name 
-                    
+                    self.name = name
+
                     self.distance = try container.decodeIfPresent(Double.self, forKey: .distance)
                     self.hasMarket = try container.decode(Bool.self, forKey: .hasMarket)
                     self.hasShipyard = try container.decode(Bool.self, forKey: .hasShipyard)
                     self.hasOutfitting = try container.decode(Bool.self, forKey: .hasOutfitting)
                     self.services = try container.decode([String].self, forKey: .services)
-                    self.stationState = try container.decodeIfPresent(State.self, forKey: .stationState)
-                    
+                    self.stationState = try container.decodeIfPresent(
+                        State.self, forKey: .stationState)
+
                     if self.stationState == .Construction && stationType == nil {
                         stationType = .SpaceConstructionDepot
                     }
@@ -510,11 +579,10 @@ class SystemsAPI {
                     if stationType == nil {
                         stationType = .Settlement
                     }
-                    
+
                     self.type = stationType
                 }
-                
-                
+
                 public enum State: String, Codable {
                     case UnderAttack
                     case Destroyed
@@ -523,7 +591,7 @@ class SystemsAPI {
                     case Construction
                     case UnderRepairs
                 }
-                
+
                 enum StationType: String, Codable {
                     case CoriolisStarport = "Coriolis Starport"
                     case OcellusStarport = "Ocellus Starport"
@@ -539,7 +607,7 @@ class SystemsAPI {
                     case Settlement = "Odyssey Settlement"
                     case OrbitalConstructionSite = "Orbital Construction Site"
                     case PlanetaryConstructionSite = "Planetary Construction Site"
-                    
+
                     static let ratings: [StationType: UInt] = [
                         .CoriolisStarport: 0,
                         .OcellusStarport: 0,
@@ -549,18 +617,18 @@ class SystemsAPI {
                         .PlanetaryPort: 2,
                         .PlanetaryOutpost: 3,
                         .Settlement: 3,
-                        .SpaceConstructionDepot: 4,
+                        .SpaceConstructionDepot: 3,
                         .PlanetaryConstructionSite: 4,
                         .OrbitalConstructionSite: 4,
                         .SystemColonizationShip: 5,
                         .FleetCarrier: 5,
                         .Outpost: 6,
                     ]
-                    
+
                     var rating: UInt {
                         return StationType.ratings[self]!
                     }
-                    
+
                     var isLargeSpaceStation: Bool {
                         return [
                             StationType.CoriolisStarport,
@@ -574,36 +642,36 @@ class SystemsAPI {
                             StationType.OrbitalConstructionSite,
                         ].contains(self)
                     }
-                    
+
                     var isPlanetary: Bool {
                         return [
                             StationType.PlanetaryPort,
                             StationType.PlanetaryOutpost,
                             StationType.PlanetaryConstructionSite,
-                            StationType.Settlement
+                            StationType.Settlement,
                         ].contains(self)
                     }
                 }
-                
+
                 var hasLargePad: Bool {
                     return self.type != .Outpost
                 }
-                
+
                 var notableServices: [String] {
                     return allServices.filter({ Station.notableServices.contains($0) })
                 }
-                
+
                 var allServices: [String] {
                     var services: [String] = self.services.map({ $0.capitalizingFirstLetter() })
-                    
+
                     if self.hasShipyard {
                         services.append("Shipyard")
                     }
-                    
+
                     if self.hasOutfitting {
                         services.append("Outfitting")
                     }
-                    
+
                     if self.hasMarket {
                         services.append("Market")
                     }
@@ -611,7 +679,7 @@ class SystemsAPI {
                 }
             }
         }
-        
+
         struct Meta: Codable {
             let name: String?
             let type: String?
@@ -635,15 +703,18 @@ struct StarSector {
     let hasSector: Bool
 }
 
-fileprivate extension HTTPClient.Request {
-    init (systemApiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+extension HTTPClient.Request {
+    fileprivate init(systemApiPath: String, method: HTTPMethod, query: [String: String?] = [:])
+        throws
+    {
         var url = URLComponents(string: "https://systems.api.fuelrats.com")!
         url.path = systemApiPath
-        
+
         url.queryItems = query.queryItems
-        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+        url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(
+            of: "+", with: "%2B")
         try self.init(url: url.url!, method: method)
-        
+
         self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
     }
 }
