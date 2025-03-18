@@ -68,6 +68,7 @@ struct RescueData: Codable, Equatable {
 
     }
 
+    var systemId: Int64? = nil
     var permit: StarSystem.Permit?
     var landmark: SystemsAPI.LandmarkDocument.LandmarkResult?
     var dispatchers: [UUID]? = []

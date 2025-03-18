@@ -476,6 +476,7 @@ class Rescue {
                 codeRed: .init(value: self.codeRed),
                 data: .init(
                     value: RescueData(
+                        systemId: self.system?.searchResult?.id64,
                         permit: self.system?.permit,
                         landmark: self.system?.landmark,
                         dispatchers: self.dispatchers,
