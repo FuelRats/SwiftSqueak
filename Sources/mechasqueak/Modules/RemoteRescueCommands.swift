@@ -174,6 +174,7 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["deleteall", "cleartrash"],
+        [.param("time ago", "48h", .standard, .optional)],
         category: .rescues,
         description: "Delete all rescues currently in the trashlist",
         permission: .UserWrite
@@ -187,8 +188,22 @@ class RemoteRescueCommands: IRCBotModule {
                 command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
                 return
             }
+            
+            var timeAgo = Date.now
+            if let argument = command.parameters.first {
+                if let parsedTimeAgo = TimeInterval.parse(argument) {
+                    timeAgo = Date.now - parsedTimeAgo
+                } else {
+                    command.message.error(
+                        key: "general.invalid-argument", fromCommand: command,
+                        map: ["argument": argument])
+                    return
+                }
+            }
 
-            for rescue in rescues {
+            for rescue in rescues.filter({
+                $0.createdAt < timeAgo
+            }) {
                 do {
                     try await FuelRatsAPI.deleteRescue(id: rescue.id.rawValue, command: command)
                     command.message.replyPrivate(
