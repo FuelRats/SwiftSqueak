@@ -39,7 +39,7 @@ Station found in "{{ system.name }}".
  (and {{ additionalServices }} other nonessential services)
 {% endif %}
 {% endif %}
-{% if stationType == "Outpost" or stationType == "Planetary Outpost" %}
+{% hasLargePad == false %}
  {{ "Caution:"|bold|color:7 }} No large pad available
 {% endif %}
 .

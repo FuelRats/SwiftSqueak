@@ -271,7 +271,8 @@ class SystemSearch: IRCBotModule {
                 "notableServices": station.notableServices,
                 "stationType": station.type?.rawValue as Any,
                 "showAllServices": command.options.contains("s"),
-                "additionalServices": station.services.count - station.notableServices.count
+                "additionalServices": station.services.count - station.notableServices.count,
+                "hasLargePad": station.hasLargePad
             ]))
         } catch {
             debug(String(describing: error))

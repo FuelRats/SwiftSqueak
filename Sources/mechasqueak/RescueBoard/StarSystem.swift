@@ -152,7 +152,9 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             let bodies = self.data?.body.includes?[SystemsAPI.Body.self] ?? []
             let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
             
-            let allegiance = stations.first?.allegiance
+            let allegiance = (self.data?.body.data?.primary.value.systemAllegiance ?? stations.first(where: {
+                $0.allegiance != nil
+            })?.allegiance)?.rawValue
             
             let government = stations.reduce([:], { (acc: [SystemsAPI.Government: Int], current) in
                 var acc = acc
@@ -167,7 +169,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 return acc
             }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key.ircFormatted
             
-            let economy = stations.reduce([:], { (acc: [String: Int], current) in
+            let economy = stations.reduce([:], { (acc: [SystemsAPI.Economy: Int], current) in
                 var acc = acc
                 guard let currentEcon = current.economy else {
                     return acc
@@ -178,9 +180,9 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                     acc[currentEcon] = 1
                 }
                 return acc
-            }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
+            }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key.rawValue
             
-            let largeStations = stations.filter({ $0.type?.hasLargePad ?? true })
+            let largeStations = stations.filter({ $0.type?.hasLargePad ?? false && $0.type?.isPlanetary == false })
             let outposts = stations.filter({ $0.type == .Outpost })
             let planetary = stations.filter({ $0.type?.isPlanetary ?? false })
             
@@ -211,6 +213,13 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
         return stations.contains(where: {
             $0.stationState != nil
+        })
+    }
+    
+    var hasSecondaryFuelStar: Bool {
+        let stars = self.data?.body.includes?[SystemsAPI.Star.self] ?? []
+        return stars.contains(where: {
+            $0.isScoopable && $0.isMainStar != true
         })
     }
 

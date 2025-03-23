@@ -103,6 +103,14 @@ private func generateEnvironment () -> Environment {
       return nil
     }
     
+    ext.registerFilter("secondaryFuelStar") { (value: Any?) in
+      if let system = value as? StarSystem {
+          return system.hasSecondaryFuelStar
+      }
+
+      return false
+    }
+    
     ext.registerFilter("isUnderAttack") { (value: Any?) in
       if let system = value as? StarSystem {
           return system.isUnderAttack
