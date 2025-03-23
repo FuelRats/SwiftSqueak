@@ -60,7 +60,7 @@ class BoardCommands: IRCBotModule {
         [
             .param("client nick", "SpaceDawg"),
             .argument("pc", example: ""),
-            .options(["o", "h", "l"]),
+            .options(["o", "h", "l", "f"]),
             .argument("xb"),
             .argument("ps"),
             .argument("mode", "game version", example: "h"),
@@ -97,6 +97,8 @@ class BoardCommands: IRCBotModule {
         } else if command.options.contains("l") {
             expansion = .legacy
         }
+        
+        let force = command.options.contains("f")
 
         if expansion != .legacy && platform != .PC {
             platform = .PC
@@ -120,7 +122,7 @@ class BoardCommands: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: command.message.client.currentNick
             ))
-        try? await board.insert(rescue: rescue, fromMessage: command.message, initiated: .insertion)
+        try? await board.insert(rescue: rescue, fromMessage: command.message, initiated: .insertion, force: force)
     }
 
     @BotCommand(

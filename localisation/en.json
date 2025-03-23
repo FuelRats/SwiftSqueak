@@ -407,6 +407,7 @@
     "help.command.addcase.o": "Set the case to use Odyssey game mode",
     "help.command.addcase.h": "Set the case to use Horizons game mode",
     "help.command.addcase.l": "Set the case to use Legacy game mode",
+    "help.command.addcase.f": "Force mecha to add the case even if the client isn't in the channel",
     "help.command.distance.range": "Define the desired ship jump range for the Spansh plot link",
     "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",
     "announcement.pc": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} %{expansion} - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",

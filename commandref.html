@@ -10,7 +10,7 @@
     </p>
     <h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!addcase <span style="color: rgb(122,134,154);"><em>[-ohl] </em>&lt;client nick&gt; <em> [--pc]</em><em> [--xb]</em><em> [--ps]</em><em> [--mode &lt;game version&gt;]</em><em> [--cr]</em><em> [--sys &lt;system&gt;]</em><em> [--cmdr &lt;CMDR name&gt;]</em><em> [--lang &lt;language code&gt;]</em></span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!addcase <span style="color: rgb(122,134,154);"><em>[-ohlf] </em>&lt;client nick&gt; <em> [--pc]</em><em> [--xb]</em><em> [--ps]</em><em> [--mode &lt;game version&gt;]</em><em> [--cr]</em><em> [--sys &lt;system&gt;]</em><em> [--cmdr &lt;CMDR name&gt;]</em><em> [--lang &lt;language code&gt;]</em></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Aliases</strong>: !create
@@ -32,6 +32,8 @@
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-h</strong> Set the case to use Horizons game mode</span>
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-l</strong> Set the case to use Legacy game mode</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-f</strong> Force mecha to add the case even if the client isn't in the channel</span>
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--pc</strong> Set platform to PC</span>
     </p>    <p style="margin-left: 60.0px;">
@@ -768,7 +770,9 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!grab <span style="color: rgb(122,134,154);">&lt;case id/client/assigned rat&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!grab <span style="color: rgb(122,134,154);">&lt;case id/client/assigned rat&gt; <span style="color: rgb(122,134,154);">
+    <em>[nick]</em>
+</span></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Permissions</strong>: Drilled Rat
@@ -786,7 +790,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!grab SpaceDawg</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!grab 1 SpaceDawg</span>
         </span>
       </span>
     </p>
@@ -943,7 +947,9 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!deleteall <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!deleteall <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
+    <em>[time ago]</em>
+</span></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Aliases</strong>: !cleartrash
@@ -967,7 +973,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!deleteall </span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!deleteall 48h</span>
         </span>
       </span>
     </p>
