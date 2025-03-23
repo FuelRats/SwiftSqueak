@@ -383,7 +383,7 @@ struct XboxLive {
             let placement: String
             let activity: Activity?
             let state: TitleState
-            let lastModified: Date
+            let lastModified: Date?
             
             struct Activity: Codable {
                 let richPresence: String
