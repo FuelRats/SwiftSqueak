@@ -262,7 +262,7 @@ class SystemSearch: IRCBotModule {
                 approximatedDistance = formatter.string(from: calculatedDistance)
             }
             
-            command.message.reply(message: try! stencil.renderLine(name: "station.stencil", context: [
+            command.message.reply(message: (try? stencil.renderLine(name: "station.stencil", context: [
                 "system": system,
                 "approximatedDistance": approximatedDistance as Any,
                 "station": station,
@@ -273,7 +273,7 @@ class SystemSearch: IRCBotModule {
                 "showAllServices": command.options.contains("s"),
                 "additionalServices": station.services.count - station.notableServices.count,
                 "hasLargePad": station.hasLargePad
-            ]))
+            ])) ?? "")
         } catch {
             debug(String(describing: error))
             command.error(error)

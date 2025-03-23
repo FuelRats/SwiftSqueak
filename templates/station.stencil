@@ -39,7 +39,7 @@ Station found in "{{ system.name }}".
  (and {{ additionalServices }} other nonessential services)
 {% endif %}
 {% endif %}
-{% hasLargePad == false %}
+{% if hasLargePad == false %}
  {{ "Caution:"|bold|color:7 }} No large pad available
 {% endif %}
 .
