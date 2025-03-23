@@ -224,7 +224,7 @@ class SystemSearch: IRCBotModule {
             var stationResult = try await SystemsAPI.getNearestPreferableStation(
                 forSystem: systemName,
                 limit: 10,
-                largePad: requireLargePad,
+                requireLargePad: requireLargePad,
                 requireSpace: requireSpace
             )
             
@@ -232,7 +232,7 @@ class SystemSearch: IRCBotModule {
                 stationResult = try await SystemsAPI.getNearestPreferableStation(
                     forSystem: systemName,
                     limit: 30,
-                    largePad: requireLargePad,
+                    requireLargePad: requireLargePad,
                     requireSpace: requireSpace
                 )
             }
@@ -241,7 +241,7 @@ class SystemSearch: IRCBotModule {
                 stationResult = try await SystemsAPI.getNearestPreferableStation(
                     forSystem: systemName,
                     limit: 100,
-                    largePad: requireLargePad,
+                    requireLargePad: requireLargePad,
                     requireSpace: requireSpace
                 )
             }

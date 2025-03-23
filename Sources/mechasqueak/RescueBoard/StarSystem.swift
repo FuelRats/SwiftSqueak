@@ -180,7 +180,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 return acc
             }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
             
-            let largeStations = stations.filter({ $0.type?.isLargeSpaceStation ?? true })
+            let largeStations = stations.filter({ $0.type?.hasLargePad ?? true })
             let outposts = stations.filter({ $0.type == .Outpost })
             let planetary = stations.filter({ $0.type?.isPlanetary ?? false })
             

@@ -129,7 +129,7 @@ class SystemsAPI {
     static func getNearestPreferableStation(
         forSystem systemName: String,
         limit: Int = 10,
-        largePad: Bool,
+        requireLargePad: Bool,
         requireSpace: Bool
     ) async throws -> (
         SystemsAPI.NearestPopulatedDocument.PopulatedSystem,
@@ -139,7 +139,7 @@ class SystemsAPI {
 
         guard
             let system = response.preferableSystems(
-                requireLargePad: largePad, requireSpace: requireSpace
+                requireLargePad: requireLargePad, requireSpace: requireSpace
             ).first
         else {
             return nil
@@ -147,7 +147,7 @@ class SystemsAPI {
 
         guard
             let station = system.preferableStations(
-                requireLargePad: largePad, requireSpace: requireSpace
+                requireLargePad: requireLargePad, requireSpace: requireSpace
             ).first
         else {
             return nil
@@ -492,14 +492,7 @@ class SystemsAPI {
         func preferableSystems(requireLargePad: Bool = false, requireSpace: Bool = false)
             -> [PopulatedSystem]
         {
-            return self.data.filter({ $0.allegiance != .Thargoid }).sorted(by: {
-                ($0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace)
-                    .first?.hasLargePad == true
-                    && $1.preferableStations(
-                        requireLargePad: requireLargePad, requireSpace: requireSpace
-                    ).first?.hasLargePad != true)
-                    && $1.distance / $0.distance < 10
-            })
+            return self.data.filter({ $0.allegiance != .Thargoid && $0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace).isEmpty == false })
         }
 
         struct PopulatedSystem: Codable {
@@ -514,8 +507,10 @@ class SystemsAPI {
             }
 
             func preferableStations(requireLargePad: Bool, requireSpace: Bool) -> [Station] {
-                let stations = self.stations.filter { (requireLargePad == false || $0.hasLargePad)
-                    && (requireSpace == false || $0.type?.isLargeSpaceStation ?? true) && $0.isFunctional }
+                let stations = self.stations.filter {
+                    (requireLargePad == false || $0.hasLargePad)
+                    && (requireSpace == false || $0.type?.isPlanetary == false) && $0.isFunctional
+                }
                 let maxDistance = stations.map { $0.distance ?? 0 }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
                 let weightRanking = minPreferredDistance * weightDistance
@@ -637,7 +632,8 @@ class SystemsAPI {
                         "Coriolis": "Coriolis Starport",
                         "Orbis": "Orbis Starport",
                         "Ocellus": "Ocellus Starport",
-                        "SurfaceStation": "Planetary Outpost"
+                        "SurfaceStation": "Planetary Outpost",
+                        "CraterOutpost": "Planetary Outpost"
                     ]
                     
                     init (from decoder: Decoder) throws {
@@ -663,26 +659,28 @@ class SystemsAPI {
                         .MegaShip: 1,
                         .PlanetaryPort: 2,
                         .PlanetaryOutpost: 3,
-                        .Settlement: 3,
                         .SpaceConstructionDepot: 3,
                         .PlanetaryConstructionSite: 4,
                         .OrbitalConstructionSite: 4,
                         .SystemColonizationShip: 5,
                         .FleetCarrier: 5,
                         .Outpost: 6,
+                        .Settlement: 7,
                     ]
 
                     var rating: UInt {
                         return StationType.ratings[self]!
                     }
-
-                    var isLargeSpaceStation: Bool {
+                    
+                    var hasLargePad: Bool {
                         return [
                             StationType.CoriolisStarport,
                             StationType.OcellusStarport,
                             StationType.OrbisStarport,
                             StationType.AsteroidBase,
                             StationType.MegaShip,
+                            StationType.PlanetaryPort,
+                            StationType.PlanetaryOutpost,
                             StationType.FleetCarrier,
                             StationType.SpaceConstructionDepot,
                             StationType.SystemColonizationShip,
@@ -699,9 +697,9 @@ class SystemsAPI {
                         ].contains(self)
                     }
                 }
-
+                
                 var hasLargePad: Bool {
-                    return self.type != .Outpost
+                    return (self.type ?? .Outpost).hasLargePad
                 }
 
                 var notableServices: [String] {
@@ -711,15 +709,15 @@ class SystemsAPI {
                 var allServices: [String] {
                     var services: [String] = self.services.map({ $0.capitalizingFirstLetter() })
 
-                    if self.hasShipyard {
+                    if self.hasShipyard && services.contains("Shipyard") == false {
                         services.append("Shipyard")
                     }
 
-                    if self.hasOutfitting {
+                    if self.hasOutfitting && services.contains("Outfitting") == false {
                         services.append("Outfitting")
                     }
 
-                    if self.hasMarket {
+                    if self.hasMarket && services.contains("Market") == false {
                         services.append("Market")
                     }
                     return services
