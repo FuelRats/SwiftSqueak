@@ -632,6 +632,24 @@ class SystemsAPI {
                     case Settlement = "Odyssey Settlement"
                     case OrbitalConstructionSite = "Orbital Construction Site"
                     case PlanetaryConstructionSite = "Planetary Construction Site"
+                    
+                    static var brokenDataMapping: [String: String] = [
+                        "Coriolis": "Coriolis Starport"
+                    ]
+                    
+                    init (from decoder: Decoder) throws {
+                        let container = try decoder.singleValueContainer()
+                        var stringValue = try container.decode(String.self)
+                        
+                        if let remap = StationType.brokenDataMapping[stringValue] {
+                            stringValue = remap
+                        }
+                        
+                        if let stationType = StationType(rawValue: stringValue) {
+                            self = stationType
+                        }
+                        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid station type \(stringValue)"))
+                    }
 
                     static let ratings: [StationType: UInt] = [
                         .CoriolisStarport: 0,
