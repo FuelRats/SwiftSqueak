@@ -647,8 +647,9 @@ class SystemsAPI {
                         
                         if let stationType = StationType(rawValue: stringValue) {
                             self = stationType
+                        } else {
+                            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid station type \(stringValue)"))
                         }
-                        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid station type \(stringValue)"))
                     }
 
                     static let ratings: [StationType: UInt] = [
