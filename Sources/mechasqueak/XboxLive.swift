@@ -102,7 +102,12 @@ struct XboxLive {
         request.headers.add(name: "Authorization", value: "XBL3.0 x=\(xlConfig.uhs);\(xlConfig.token)")
         request.headers.add(name: "x-xbl-contract-version", value: "2")
         
-        return try await httpClient.execute(request: request, forDecodable: UserPresenceRequest.self)
+        let decoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        decoder.dateDecodingStrategy = .formatted(formatter)
+        return try await httpClient.execute(request: request, forDecodable: UserPresenceRequest.self, withDecoder: decoder)
     }
     
     static func getCommunicationPrivacyState (xuid: String) async throws -> CommunicationPrivacyRequest? {
@@ -231,6 +236,7 @@ struct XboxLive {
             let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
             
             let decoder = JSONDecoder()
+            
             decoder.dateDecodingStrategy = .formatted(.iso8601Full)
             
             return try decoder.decode(XSTSResponse.self, from: result)
