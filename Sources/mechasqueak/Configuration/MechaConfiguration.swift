@@ -102,6 +102,7 @@ struct XboxLiveConfiguration: Codable {
 struct PlayStationNetworkConfiguration: Codable {
     var token: String
     var refreshToken: String
+    var basicAuth: String
 }
 
 struct ChronoConfiguration: Codable {

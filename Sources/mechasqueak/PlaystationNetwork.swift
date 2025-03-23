@@ -50,12 +50,12 @@ struct PlaystationNetwork {
         var request = URLRequest(url: url.url!)
         request.httpMethod = "POST"
         request.addValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.addValue("Basic YWM4ZDE2MWEtZDk2Ni00NzI4LWIwZWEtZmZlYzIyZjY5ZWRjOkRFaXhFcVhYQ2RYZHdqMHY=", forHTTPHeaderField: "Authorization")
+        request.addValue("Basic \(psnConfig.basicAuth)", forHTTPHeaderField: "Authorization")
         request.httpBody = [
             "refresh_token": psnConfig.refreshToken,
             "grant_type": "refresh_token",
             "token_format": "jwt",
-            "scope": "psn:mobile.v1 psn:clientapp"
+            "scope": "psn:mobile.v2.core psn:clientapp"
         ].formUrlEncoded
         
         let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
@@ -105,25 +105,11 @@ struct PlaystationNetwork {
         }
     }
     
-    static func getProfile (name: String) async throws -> Profile? {
-        guard let psnConfig = configuration.psn else {
-            throw URLError(.cannotConnectToHost)
-        }
-        let url = URLComponents(string: "https://us-prof.np.community.playstation.net/userProfile/v1/users/\(name)/profile2")!
-        
-        var request = try HTTPClient.Request(url: url.url!, method: .GET)
-        
-        request.headers.add(name: "Authorization", value: "Bearer \(psnConfig.token)")
-        
-        let resp = try await httpClient.execute(request: request, forDecodable: ProfileResponse.self)
-        return resp.profile
-    }
-    
     static func getUserPresence (accountId: String) async throws -> PresenceResponse? {
         guard let psnConfig = configuration.psn else {
             return nil
         }
-        var url = URLComponents(string: "https://m.np.playstation.net/api/userProfile/v1/internal/users/\(accountId)/basicPresences")!
+        var url = URLComponents(string: "https://m.np.playstation.com/api/userProfile/v1/internal/users/\(accountId)/basicPresences")!
         url.queryItems = [
             "type": "primary"
         ].queryItems
