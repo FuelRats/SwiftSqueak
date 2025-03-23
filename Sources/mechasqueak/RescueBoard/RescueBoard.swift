@@ -308,7 +308,7 @@ actor RescueBoard {
     }
 
     func insert(
-        rescue: Rescue, fromMessage message: IRCPrivateMessage, initiated: RescueInitiationType
+        rescue: Rescue, fromMessage message: IRCPrivateMessage, initiated: RescueInitiationType, force: Bool = false
     ) async throws {
         let clientName = rescue.client?.lowercased()
         let clientNick = rescue.clientNick?.lowercased()
@@ -324,14 +324,16 @@ actor RescueBoard {
             return
         }
 
-        do {
-            try await anticipateClientJoin(
-                name: clientNick ?? clientName ?? "", forRescue: rescue, initiated: initiated)
-        } catch {
-            message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
-            return
-        }
+        if force == false {
+            do {
+                try await anticipateClientJoin(
+                    name: clientNick ?? clientName ?? "", forRescue: rescue, initiated: initiated)
+            } catch {
+                message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
+                return
+            }
 
+        }
         if let lastHostname = rescue.clientLastHostName {
             if let (_, existingRescue) = await self.first(where: {
                 $0.value.clientLastHostName == lastHostname
@@ -472,9 +474,9 @@ actor RescueBoard {
             await rescue.prep(message: message, initiated: initiated)
             return
         }
-
-        try? rescue.save(nil)
+        
         try? await rescue.validateSystem()
+        try? rescue.save(nil)
 
         let signal = try! stencil.renderLine(
             name: "ratsignal.stencil",
