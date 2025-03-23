@@ -636,7 +636,8 @@ class SystemsAPI {
                     static var brokenDataMapping: [String: String] = [
                         "Coriolis": "Coriolis Starport",
                         "Orbis": "Orbis Starport",
-                        "Ocellus": "Ocellus Starport"
+                        "Ocellus": "Ocellus Starport",
+                        "SurfaceStation": "PlanetaryOutpost"
                     ]
                     
                     init (from decoder: Decoder) throws {
