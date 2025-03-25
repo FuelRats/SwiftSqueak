@@ -55,7 +55,7 @@ class SystemsAPI {
         let request = try HTTPClient.Request(
             systemApiPath: "/mecha", method: .GET, query: queryItems)
 
-        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(5) : .seconds(180))
+        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(10) : .seconds(180))
         return try await httpClient.execute(
             request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
