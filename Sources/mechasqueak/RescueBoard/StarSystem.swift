@@ -212,7 +212,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         }
         let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
         return stations.contains(where: {
-            $0.stationState != nil
+            $0.stationState == .UnderAttack
         })
     }
     

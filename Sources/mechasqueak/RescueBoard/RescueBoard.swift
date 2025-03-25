@@ -774,10 +774,7 @@ actor RescueBoard {
                         ])
                 })
 
-                var key = "rescue.pwreminder"
-                if latestNick.hasPermission(permission: .AnnouncementWrite) {
-                    key += ".meme"
-                }
+                var key = "rescue.pwreminder.meme"
 
                 mecha.reportingChannel?.client.sendMessage(
                     toTarget: latestNick.nickname,
