@@ -633,7 +633,8 @@ class SystemsAPI {
                         "Orbis": "Orbis Starport",
                         "Ocellus": "Ocellus Starport",
                         "SurfaceStation": "Planetary Outpost",
-                        "CraterOutpost": "Planetary Outpost"
+                        "CraterOutpost": "Planetary Outpost",
+                        "SpaceConstructionDepot": "Space Construction Depot",
                     ]
                     
                     init (from decoder: Decoder) throws {
