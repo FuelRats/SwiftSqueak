@@ -148,6 +148,8 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 }
             }
             
+            let edsmUrl = try? await generateEDSMLink(name: self.name)
+            
             let stars = self.data?.body.includes?[SystemsAPI.Star.self] ?? []
             let bodies = self.data?.body.includes?[SystemsAPI.Body.self] ?? []
             let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
@@ -201,7 +203,8 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 "allegiance": allegiance as Any,
                 "government": government as Any,
                 "economy": economy as Any,
-                "underAttack": isUnderAttack as Any
+                "underAttack": isUnderAttack as Any,
+                "edsmUrl": edsmUrl?.absoluteString as Any
             ])) ?? ""
         }
     }
@@ -322,6 +325,27 @@ func generateSpanshRoute (from: String, to: String, range: Int = 65) async throw
     
     
     return await URLShortener.attemptShorten(url: url.url!)
+}
+
+func generateEDSMLink (name: String) async throws -> URL {
+    var requestUrl = URLComponents(string: "https://www.edsm.net/api-v1/system")!
+    requestUrl.queryItems = [
+        URLQueryItem(name: "systemName", value: name),
+        URLQueryItem(name: "showId", value: "1")
+    ]
+    
+    var request = try HTTPClient.Request(url: requestUrl.url!)
+    request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+    
+    let response = try await httpClient.execute(request: request, forDecodable: EDSMResponse.self)
+    let edsmUrl = URL(string: "https://www.edsm.net/en/system/id/\(String(response.id))/name/\(response.name)")!
+    return await URLShortener.attemptShorten(url: edsmUrl)
+}
+
+fileprivate struct EDSMResponse: Codable {
+    let name: String
+    let id: Int32
+    let id64: Int64
 }
 
 fileprivate struct SpanshResponse: Codable {

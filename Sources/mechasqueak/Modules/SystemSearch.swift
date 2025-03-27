@@ -78,7 +78,7 @@ class SystemSearch: IRCBotModule {
     }
 
     @BotCommand(
-        ["landmark"],
+        ["landmark", "sysinfo", "edsm"],
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",

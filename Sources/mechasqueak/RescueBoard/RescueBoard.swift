@@ -774,7 +774,7 @@ actor RescueBoard {
                         ])
                 })
 
-                var key = "rescue.pwreminder.meme"
+                let key = "rescue.pwreminder.meme"
 
                 mecha.reportingChannel?.client.sendMessage(
                     toTarget: latestNick.nickname,

@@ -46,6 +46,10 @@
 , {{planetary.count}} planetary base
 {% endif %}
 
+{% if edsmUrl %}
+. {{ "EDSM:"|bold }} {{ edsmUrl }}
+{% endif %}
+
 {% if plotUrl %}
 . {{ "Spansh:"|bold }} {{ plotUrl }}
 {% endif %}
