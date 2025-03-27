@@ -635,6 +635,7 @@ class SystemsAPI {
                         "SurfaceStation": "Planetary Outpost",
                         "CraterOutpost": "Planetary Outpost",
                         "SpaceConstructionDepot": "Space Construction Depot",
+                        "PlanetaryConstructionDepot": "Planetary Construction Depot"
                     ]
                     
                     init (from decoder: Decoder) throws {
