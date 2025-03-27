@@ -617,6 +617,7 @@ class SystemsAPI {
                     case OcellusStarport = "Ocellus Starport"
                     case OrbisStarport = "Orbis Starport"
                     case SpaceConstructionDepot = "Space Construction Depot"
+                    case PlanetaryConstructionDepot = "Planetary Construction Depot"
                     case SystemColonizationShip = "System Colonization Ship"
                     case Outpost
                     case PlanetaryOutpost = "Planetary Outpost"
@@ -668,6 +669,7 @@ class SystemsAPI {
                         .FleetCarrier: 5,
                         .Outpost: 6,
                         .Settlement: 7,
+                        .PlanetaryConstructionDepot: 7
                     ]
 
                     var rating: UInt {
@@ -687,6 +689,7 @@ class SystemsAPI {
                             StationType.SpaceConstructionDepot,
                             StationType.SystemColonizationShip,
                             StationType.OrbitalConstructionSite,
+                            StationType.PlanetaryConstructionDepot
                         ].contains(self)
                     }
 
@@ -696,6 +699,7 @@ class SystemsAPI {
                             StationType.PlanetaryOutpost,
                             StationType.PlanetaryConstructionSite,
                             StationType.Settlement,
+                            StationType.PlanetaryConstructionDepot
                         ].contains(self)
                     }
                 }
