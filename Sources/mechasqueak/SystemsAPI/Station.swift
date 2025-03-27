@@ -165,16 +165,21 @@ extension SystemsAPI {
         case Repair
         case PrivateEnterprise = "Private Enterprise"
         
+        static var brokenNameMapping: [String: String] {
+            [
+                "HighTech": "High Tech",
+                "PrivateEnterprise": "Private Enterprise",
+                "Agri": "Agriculture"
+            ]
+        }
+        
         init (from decoder: Decoder) throws {
             var rawValue = try decoder.singleValueContainer().decode(String.self)
             if rawValue.starts(with: "$") {
                 rawValue.removeFirst(9)
                 rawValue.removeLast()
-                if rawValue == "HighTech" {
-                    rawValue = "High Tech"
-                }
-                if rawValue == "PrivateEnterprise" {
-                    rawValue = "Private Enterprise"
+                if let nameMapping = Economy.brokenNameMapping[rawValue] {
+                    rawValue = nameMapping
                 }
             }
             if let value = Economy(rawValue: rawValue) {
