@@ -376,7 +376,10 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description: "Informs Mecha which PC game version you are using",
         permission: .UserWriteOwn,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        helpExtra: {
+            return "Accepted values: legacy/leg/l, horizons/hor/h, odyssey/ody/o"
+        }
     )
     var didReceiveMyExpansionCommand = { command in
         guard let currentRat = command.message.user.getRatRepresenting(platform: .PC) else {
