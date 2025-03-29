@@ -232,12 +232,16 @@ class HelpCommands: IRCBotModule {
     }
 
     static func sendCommandHelp(helpCommand: IRCBotCommandDeclaration, destination: IRCChannel) {
+        var commandText = helpCommand.commands[0]
+        if let helpLocale = helpCommand.helpLocale {
+            commandText += "-\(helpLocale)"
+        }
         destination.send(
             key: "help.commandtitle",
             map: [
                 "command": helpCommand.usageDescription(command: nil),
                 "example": helpCommand.example.count > 0
-                    ? "(Example: !\(helpCommand.commands[0]) \(helpCommand.example))"
+                ? "(Example: !\(commandText) \(helpCommand.example))"
                     : "",
             ])
         let permissionGroups =

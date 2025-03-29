@@ -42,6 +42,7 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
         _ body: [CommandBody] = [],
         category: HelpCategory?,
         description: String,
+        helpLocale: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: DispatchTimeInterval? = nil,
@@ -60,6 +61,7 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
             helpExtra: helpExtra,
             category: category,
             description: description,
+            helpLocale: helpLocale,
             permission: permission,
             allowedDestinations: allowedDestinations,
             cooldown: TimeInterval(dispatchTimeInterval: cooldown),
@@ -81,6 +83,7 @@ struct IRCBotCommandDeclaration {
     let cooldownOverride: AccountPermission?
     let category: HelpCategory?
     let description: String
+    let helpLocale: String?
     var parameters: [CommandBody]
     let helpExtra: (() -> String)?
 
@@ -96,6 +99,7 @@ struct IRCBotCommandDeclaration {
         helpExtra: (() -> String)? = nil,
         category: HelpCategory?,
         description: String,
+        helpLocale: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: TimeInterval? = nil,
@@ -106,6 +110,7 @@ struct IRCBotCommandDeclaration {
         self.options = options
         self.arguments = arguments
         self.helpArguments = helpArguments
+        self.helpLocale = helpLocale
         self.permission = permission
         self.onCommand = onCommand
         self.allowedDestinations = allowedDestinations
@@ -118,6 +123,9 @@ struct IRCBotCommandDeclaration {
 
     func usageDescription(command: IRCBotCommand?) -> String {
         var usage = "!" + (command?.command ?? self.commands[0])
+        if helpLocale != nil {
+            usage += "-<lang>"
+        }
 
         if self.options.count > 0 {
             usage += " [-\(String(self.options))]"

@@ -146,16 +146,19 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        let quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
+        var quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
+        if rescue.clientLanguage != nil && clientNick == rescue.clientNick, let translation = try? await Translate.translate(lastMessage.message) {
+            quoteMessage += " (Translation: \(translation))"
+        }
 
         rescue.quotes.removeAll(where: {
-            $0.message == "<\(clientUser.nickname)> \(lastMessage.message)"
+            $0.message == quoteMessage
         })
         if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
             rescue.appendQuote(
                 RescueQuote(
                     author: message.user.nickname,
-                    message: "<\(clientUser.nickname)> \(lastMessage.message)",
+                    message: quoteMessage,
                     createdAt: Date(),
                     updatedAt: Date(),
                     lastAuthor: message.user.nickname
@@ -169,7 +172,7 @@ class BoardQuoteCommands: IRCBotModule {
             key: "board.grab.updated", fromCommand: command,
             map: [
                 "clientId": caseId ?? 0,
-                "text": lastMessage.message,
+                "text": quoteMessage,
             ])
     }
 

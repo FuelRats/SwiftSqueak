@@ -140,6 +140,7 @@ class FactCommands: IRCBotModule {
                 command.message.error(key: "addfact.exists", fromCommand: command)
             }
         } catch {
+            debug(String(describing: error))
             command.message.error(key: "addfact.error", fromCommand: command)
             return
         }

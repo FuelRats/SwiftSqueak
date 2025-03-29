@@ -55,6 +55,9 @@ class NicknameLookupManager {
         operation.onCompletion = { apiNick in
             if let result = apiNick, let account = user.account {
                 self.mapping[account] = result
+                if let subscription = result.user?.data.clientTranslateSubscription {
+                    Translate.clientTranslationSubscribers[user.nickname] = subscription
+                }
                 completed?(result)
             }
         }

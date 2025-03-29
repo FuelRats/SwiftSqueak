@@ -129,6 +129,7 @@ class MechaSqueak {
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
             SessionLogger(moduleManager),
+            Translate(moduleManager)
         ]
 
         if configuration.queue != nil {
@@ -260,6 +261,10 @@ class MechaSqueak {
 
     @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
+        if let subscription = Translate.clientTranslationSubscribers[userQuit.raw.sender?.nickname ?? ""] {
+            Translate.clientTranslationSubscribers[userQuit.raw.sender?.nickname ?? ""] = nil
+        }
+        
         try? await Task.sleep(nanoseconds: 2 * 10 ^ 8)  // 200ms
         if let sender = userQuit.raw.sender,
             let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname)
@@ -386,6 +391,11 @@ class MechaSqueak {
     @AsyncEventListener<IRCUserChangedNickNotification>
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
+        
+        if let subscription = Translate.clientTranslationSubscribers[sender.nickname] {
+            Translate.clientTranslationSubscribers[sender.nickname] = nil
+            Translate.clientTranslationSubscribers[nickChange.newNick] = subscription
+        }
 
         if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
             rescue.clientNick = nickChange.newNick
