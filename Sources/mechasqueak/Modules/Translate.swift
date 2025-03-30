@@ -88,7 +88,7 @@ class Translate: IRCBotModule {
         permission: .UserWriteOwn
     )
     var didReceiveTranslateSubscribeCommand = { command in
-        guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "pm")
+        guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")
         else {
             command.message.error(
                 key: "transsub.subtype", fromCommand: command, map: ["type": command.parameters[0]])
