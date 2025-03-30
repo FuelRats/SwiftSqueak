@@ -36,9 +36,13 @@ class TweetCommands: IRCBotModule {
         ["alert", "tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
-        description: "Send a message on Mastodon (@fuelratsalerts@mastodon.localecho.net)",
+        description: "Send a message via Mastodon & BlueSky",
         permission: .TwitterWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpExtra: {
+            return
+                "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
+        }
     )
     var didReceiveTweetCommand = { command in
         let contents = command.parameters[0]
@@ -65,8 +69,10 @@ class TweetCommands: IRCBotModule {
 
         do {
             try await Mastodon.post(message: contents)
+            try await BlueSky.post(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
         } catch {
+            debug(String(describing: error))
             command.message.error(key: "tweet.error", fromCommand: command)
         }
     }
@@ -76,9 +82,13 @@ class TweetCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .utility,
         description:
-            "Notify users that rats are needed on a case via Mastodon (@fuelratsalerts@mastodon.localecho.net)",
+            "Notify users that rats are needed on a case via Mastodon & Bluesky",
         permission: .DispatchRead,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpExtra: {
+            return
+                "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
+        }
     )
     var didReceiveTweetCaseCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -138,6 +148,7 @@ class TweetCommands: IRCBotModule {
 
         do {
             try await Mastodon.post(message: tweet)
+            try await BlueSky.post(message: tweet, link: url.absoluteString)
 
             command.message.reply(
                 key: "tweetcase.success", fromCommand: command,
@@ -154,6 +165,7 @@ class TweetCommands: IRCBotModule {
                 ))
             try? rescue.save(command)
         } catch {
+            debug(String(describing: error))
             command.message.error(
                 key: "tweetcase.failure", fromCommand: command,
                 map: [
