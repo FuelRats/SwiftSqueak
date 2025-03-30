@@ -340,18 +340,21 @@ class SystemsAPI {
     struct ProceduralCheckDocument: Codable {
         let isPgSystem: Bool
         let isPgSector: Bool
-        let sectordata: SectorData
+        let sectordata: SectorData?
 
-        var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
+        var estimatedLandmarkDistance: (LandmarkListDocument.LandmarkListEntry, String, Double)? {
+            guard let sectordata = sectordata else {
+                return nil
+            }
             var landmarkDistances = mecha.landmarks.map({
-                ($0, self.sectordata.coords.distance(from: $0.coordinates))
+                ($0, sectordata.coords.distance(from: $0.coordinates))
             })
             landmarkDistances = landmarkDistances.filter({ $0.0.soi == nil || $0.1 < $0.0.soi! })
             landmarkDistances.sort(by: { $0.1 < $1.1 })
 
             let formatter = NumberFormatter.englishFormatter()
             formatter.usesSignificantDigits = true
-            formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
+            formatter.maximumSignificantDigits = sectordata.uncertainty.significandWidth
 
             return (
                 landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!,
@@ -359,12 +362,15 @@ class SystemsAPI {
             )
         }
 
-        var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double) {
-            let distance = self.sectordata.coords.distance(from: Vector3(0, 0, 0))
+        var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double)? {
+            guard let sectordata = sectordata else {
+                return nil
+            }
+            let distance = sectordata.coords.distance(from: Vector3(0, 0, 0))
 
             let formatter = NumberFormatter.englishFormatter()
             formatter.usesSignificantDigits = true
-            formatter.maximumSignificantDigits = self.sectordata.uncertainty.significandWidth
+            formatter.maximumSignificantDigits = sectordata.uncertainty.significandWidth
 
             let landmark = LandmarkListDocument.LandmarkListEntry(
                 name: "Sol", coordinates: Vector3(0, 0, 0))
@@ -378,7 +384,10 @@ class SystemsAPI {
         }
 
         var galacticRegion: GalacticRegion? {
-            let coordinates = self.sectordata.coords
+            guard let sectordata = self.sectordata else {
+                return nil
+            }
+            let coordinates = sectordata.coords
             let point = CGPoint(x: coordinates.x, y: coordinates.z)
             return regions.first(where: {
                 point.intersects(polygon: $0.coordinates)

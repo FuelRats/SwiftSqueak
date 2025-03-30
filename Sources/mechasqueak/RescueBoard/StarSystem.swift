@@ -142,8 +142,8 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             var plotUrl: URL?
             if self.landmark?.distance ?? 0 > 2500 {
                 plotUrl = try? await generateSpanshRoute(from: "Sol", to: self.name)
-            } else if let procedural = self.proceduralCheck, procedural.estimatedSolDistance.2 > 2500 {
-                if let nearestTarget = try? await SystemsAPI.getNearestSystem(forCoordinates: procedural.sectordata.coords)?.data {
+            } else if let procedural = self.proceduralCheck, let sectordata = procedural.sectordata, procedural.estimatedSolDistance?.2 ?? 0 > 2500 {
+                if let nearestTarget = try? await SystemsAPI.getNearestSystem(forCoordinates: sectordata.coords)?.data {
                     plotUrl = try? await generateSpanshRoute(from: "Sol", to: nearestTarget.name)
                 }
             }
@@ -244,13 +244,13 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     
     var isInvalid: Bool {
         if ProceduralSystem.proceduralSystemExpression.matches(self.name), let procedural = ProceduralSystem(string: self.name) {
-            return (self.proceduralCheck?.isPgSystem == false || (self.proceduralCheck?.isPgSector == false && self.proceduralCheck?.sectordata.handauthored == false)) || !procedural.isValid
+            return (self.proceduralCheck?.isPgSystem == false || (self.proceduralCheck?.isPgSector == false && self.proceduralCheck?.sectordata?.handauthored == false)) || !procedural.isValid
         }
         return self.lookupAttempted && self.landmark == nil
     }
 
     var isConfirmed: Bool {
-        return self.landmark != nil || (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata.handauthored == true))
+        return self.landmark != nil || (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata?.handauthored == true))
     }
     
     
@@ -265,8 +265,10 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             description = "In \(galacticRegion.name) "
         }
         guard let landmark = self.landmark else {
-            if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                let (landmark, distance, _) = procedural.estimatedLandmarkDistance
+            if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata?.handauthored == true) {
+                guard let (landmark, distance, _) = procedural.estimatedLandmarkDistance else {
+                    return nil
+                }
                 description += "~\(distance) LY from \(landmark.name)"
                 return description
             }
@@ -293,7 +295,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
     
     var coordinates: Vector3? {
-        return self.searchResult?.coords ?? self.proceduralCheck?.sectordata.coords
+        return self.searchResult?.coords ?? self.proceduralCheck?.sectordata?.coords
     }
     
     var galacticRegion: GalacticRegion? {

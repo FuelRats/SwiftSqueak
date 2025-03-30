@@ -154,14 +154,14 @@ class SystemSearch: IRCBotModule {
             let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
             var plotDepName = departure.name
             var plotArrName = arrival.name
-            if let proceduralCheck = departure.proceduralCheck {
-                if let nearestKnown = try? await SystemsAPI.getNearestSystem(forCoordinates: proceduralCheck.sectordata.coords)?.data {
+            if let proceduralCheck = departure.proceduralCheck, let sectordata = proceduralCheck.sectordata {
+                if let nearestKnown = try? await SystemsAPI.getNearestSystem(forCoordinates: sectordata.coords)?.data {
                     plotDepName = nearestKnown.name
                 }
             }
             
-            if let proceduralCheck = arrival.proceduralCheck {
-                if let nearestKnown = try? await SystemsAPI.getNearestSystem(forCoordinates: proceduralCheck.sectordata.coords)?.data {
+            if let proceduralCheck = arrival.proceduralCheck, let sectordata = proceduralCheck.sectordata {
+                if let nearestKnown = try? await SystemsAPI.getNearestSystem(forCoordinates: sectordata.coords)?.data {
                     plotArrName = nearestKnown.name
                 }
             }
@@ -210,7 +210,8 @@ class SystemSearch: IRCBotModule {
         var proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
         var nearestSystem: SystemsAPI.NearestSystemDocument.NearestSystem? = nil
         let systemCheck = try? await SystemsAPI.performSystemCheck(forSystem: systemName)
-        if systemCheck?.landmark == nil, let cords = systemCheck?.proceduralCheck?.sectordata.coords {
+        if systemCheck?.landmark == nil, let sectordata = systemCheck?.proceduralCheck?.sectordata {
+            let cords = sectordata.coords
             if let nearestSystemSearch = try? await SystemsAPI.getNearestSystem(forCoordinates: cords)?.data {
                 systemName = nearestSystemSearch.name
                 proceduralCheck = systemCheck?.proceduralCheck
@@ -246,11 +247,11 @@ class SystemSearch: IRCBotModule {
             }
             
             var approximatedDistance: String? = nil
-            if let proc = proceduralCheck, let nearest = nearestSystem {
+            if let proc = proceduralCheck, let nearest = nearestSystem, let sectordata = proc.sectordata {
                 let formatter = NumberFormatter.englishFormatter()
                 formatter.usesSignificantDigits = true
                 // Round of output distance based on uncertainty provided by SystemsAPI
-                formatter.maximumSignificantDigits = proc.sectordata.uncertainty.significandWidth
+                formatter.maximumSignificantDigits = sectordata.uncertainty.significandWidth
                 // Pythagoras strikes again, he won't ever leave me alone
                 let calculatedDistance = (pow(nearest.distance, 2) + pow(system.distance, 2)).squareRoot()
                 approximatedDistance = formatter.string(from: calculatedDistance)
