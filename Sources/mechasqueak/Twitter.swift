@@ -22,30 +22,33 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
-import CryptoSwift
 import AsyncHTTPClient
+import CryptoSwift
+import Foundation
 
 class Twitter {
-    static func tweet (message: String) async throws {
+    static func tweet(message: String) async throws {
         let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
         var request = try HTTPClient.Request(url: url.url!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/json")
 
-        request.body = .data(try! JSONSerialization.data(withJSONObject: [
-            "message": message
-        ], options: []))
-        
+        request.body = .data(
+            try! JSONSerialization.data(
+                withJSONObject: [
+                    "message": message
+                ], options: []))
+
         _ = try await httpClient.execute(request: request, deadline: nil, expecting: 200)
     }
 }
 
-fileprivate extension String {
-    var twitterUrlEncoded: String? {
-        return self.addingPercentEncoding(withAllowedCharacters: CharacterSet(
-            charactersIn: "ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-        ))
+extension String {
+    fileprivate var twitterUrlEncoded: String? {
+        return self.addingPercentEncoding(
+            withAllowedCharacters: CharacterSet(
+                charactersIn: "ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+            ))
     }
 }

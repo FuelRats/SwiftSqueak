@@ -1,18 +1,18 @@
 /*
  Copyright 2021 The Fuel Rats Mischief
- 
+
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
- 
+
  1. Redistributions of source code must retain the above copyright notice,
  this list of conditions and the following disclaimer.
- 
+
  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
  disclaimer in the documentation and/or other materials provided with the distribution.
- 
+
  3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
  products derived from this software without specific prior written permission.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -25,32 +25,32 @@
 import Foundation
 
 public struct Queue<E>: ExpressibleByArrayLiteral {
-    public private(set) var elements: Array<E> = []
+    public private(set) var elements: [E] = []
     public private(set) var maxSize: Int?
-    
-    public init (arrayLiteral elements: E...) {
+
+    public init(arrayLiteral elements: E...) {
         self.elements = elements
     }
-    
-    public init (maxSize: Int?) {
+
+    public init(maxSize: Int?) {
         self.maxSize = maxSize
     }
-    
-    public mutating func push (value: E) {
+
+    public mutating func push(value: E) {
         self.elements.append(value)
         if let maxSize = maxSize, elements.count > maxSize {
             self.elements.removeFirst()
         }
     }
-    
-    public mutating func pop () -> E {
+
+    public mutating func pop() -> E {
         return elements.removeFirst()
     }
-    
+
     public var isEmpty: Bool {
         return elements.isEmpty
     }
-    
+
     public var count: Int {
         return self.elements.count
     }

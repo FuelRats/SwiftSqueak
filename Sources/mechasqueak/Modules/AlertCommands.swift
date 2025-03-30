@@ -52,7 +52,9 @@ class TweetCommands: IRCBotModule {
                     return true
                 }
             }
-            if let clientName = rescue.client, contents.lowercased().contains(clientName.lowercased()) {
+            if let clientName = rescue.client,
+                contents.lowercased().contains(clientName.lowercased())
+            {
                 return true
             }
             return false
@@ -60,7 +62,7 @@ class TweetCommands: IRCBotModule {
             command.message.error(key: "tweet.confidential", fromCommand: command)
             return
         }
-        
+
         do {
             try await Mastodon.post(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
@@ -73,7 +75,8 @@ class TweetCommands: IRCBotModule {
         ["alertcase", "alertc", "tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,
-        description: "Notify users that rats are needed on a case via Mastodon (@fuelratsalerts@mastodon.localecho.net)",
+        description:
+            "Notify users that rats are needed on a case via Mastodon (@fuelratsalerts@mastodon.localecho.net)",
         permission: .DispatchRead,
         allowedDestinations: .Channel
     )
@@ -81,68 +84,81 @@ class TweetCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
-        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick) {
+
+        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick)
+        {
             if user.lastMessage == nil {
-                command.message.reply(message: "!alertc cannot be used on a case before the client has spoken")
+                command.message.reply(
+                    message: "!alertc cannot be used on a case before the client has spoken")
                 return
             }
         }
 
         guard var platform = rescue.platform else {
-            command.message.error(key: "tweetcase.noplatform", fromCommand: command, map: [
-                "caseId": caseId
-            ])
+            command.message.error(
+                key: "tweetcase.noplatform", fromCommand: command,
+                map: [
+                    "caseId": caseId
+                ])
             return
         }
 
         guard let system = rescue.system else {
-            command.message.reply(key: "tweetcase.missingsystem", fromCommand: command, map: [
-                "caseId": caseId
-            ])
+            command.message.reply(
+                key: "tweetcase.missingsystem", fromCommand: command,
+                map: [
+                    "caseId": caseId
+                ])
             return
         }
 
         let shortId = rescue.id.uuidString.suffix(10)
 
         let description = rescue.system?.twitterDescription
-        var format = description != nil  ? "tweetcase.system" : "tweetcase.nosystem"
+        var format = description != nil ? "tweetcase.system" : "tweetcase.nosystem"
         if rescue.codeRed {
             format += "cr"
         }
-        
+
         var platformDescription = String(describing: platform)
         if rescue.platform == .PC {
             platformDescription += " (\(rescue.expansion.englishDescription))"
         }
 
         let url = URL(string: "https://fuelrats.com/paperwork/\(rescue.id)")!
-        let tweet = lingo.localize(format, locale: "en-GB", interpolations: [
-            "platform": platformDescription,
-            "systemDescription": description ?? "",
-            "caseId": caseId,
-            "id": shortId.lowercased(),
-            "link": url.absoluteString
-        ])
-        
+        let tweet = lingo.localize(
+            format, locale: "en-GB",
+            interpolations: [
+                "platform": platformDescription,
+                "systemDescription": description ?? "",
+                "caseId": caseId,
+                "id": shortId.lowercased(),
+                "link": url.absoluteString,
+            ])
+
         do {
             try await Mastodon.post(message: tweet)
-            
-            command.message.reply(key: "tweetcase.success", fromCommand: command, map: [
-                "tweet": tweet
-            ])
-            rescue.appendQuote(RescueQuote(
-                author: command.message.user.nickname,
-                message: "Tweet to @FuelRatAlerts has been posted",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: command.message.user.nickname
-            ))
+
+            command.message.reply(
+                key: "tweetcase.success", fromCommand: command,
+                map: [
+                    "tweet": tweet
+                ])
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.user.nickname,
+                    message: "Tweet to @FuelRatAlerts has been posted",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.user.nickname
+                ))
             try? rescue.save(command)
         } catch {
-            command.message.error(key: "tweetcase.failure", fromCommand: command, map: [
-                "caseId": caseId
-            ])
+            command.message.error(
+                key: "tweetcase.failure", fromCommand: command,
+                map: [
+                    "caseId": caseId
+                ])
         }
     }
 }

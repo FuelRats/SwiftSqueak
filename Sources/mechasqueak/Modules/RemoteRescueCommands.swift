@@ -188,7 +188,7 @@ class RemoteRescueCommands: IRCBotModule {
                 command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
                 return
             }
-            
+
             var timeAgo = Date.now
             if let argument = command.parameters.first {
                 if let parsedTimeAgo = TimeInterval.parse(argument) {

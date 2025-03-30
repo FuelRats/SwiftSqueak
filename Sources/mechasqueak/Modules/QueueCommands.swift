@@ -32,16 +32,16 @@ class QueueCommands: IRCBotModule {
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
-        
+
         Task {
             guard let queueConfig = try? await QueueAPI.getConfig() else {
                 return
             }
-            
+
             QueueCommands.maxClientsCount = queueConfig.maxActiveClients
         }
     }
-    
+
     @BotCommand(
         ["queue"],
         category: .queue,
@@ -53,20 +53,22 @@ class QueueCommands: IRCBotModule {
         guard let queue = try? await QueueAPI.fetchQueue() else {
             return
         }
-        
+
         let queueItems = queue.filter({ $0.inProgress == false && $0.pending == false })
         guard queueItems.count > 0 else {
             command.message.reply(key: "queue.none", fromCommand: command)
             return
         }
-        
+
         let queueCount = queueItems.count
-        
-        command.message.reply(key: "queue.info", fromCommand: command, map: [
-            "count": queueCount
-        ])
+
+        command.message.reply(
+            key: "queue.info", fromCommand: command,
+            map: [
+                "count": queueCount
+            ])
     }
-    
+
     @BotCommand(
         ["queuestats"],
         [.param("start date", "2021-04-01", .standard, .optional)],
@@ -90,18 +92,20 @@ class QueueCommands: IRCBotModule {
         guard let stats = try? await QueueAPI.fetchStatistics(fromDate: date) else {
             return
         }
-        command.message.reply(key: "queuestats.stats", fromCommand: command, map: [
-            "totalClients": stats.totalClients ?? 0,
-            "instantJoin": stats.instantJoin ?? 0,
-            "queuedJoin": stats.queuedJoin ?? 0,
-            "averageQueuetime": stats.averageQueuetimeSpan,
-            "averageRescuetime": stats.averageRescuetimeSpan,
-            "longestQueuetime": stats.longestQueuetimeSpan,
-            "lostQueues": stats.lostQueues ?? 0,
-            "successfulQueues": stats.successfulQueues ?? 0,
-        ])
+        command.message.reply(
+            key: "queuestats.stats", fromCommand: command,
+            map: [
+                "totalClients": stats.totalClients ?? 0,
+                "instantJoin": stats.instantJoin ?? 0,
+                "queuedJoin": stats.queuedJoin ?? 0,
+                "averageQueuetime": stats.averageQueuetimeSpan,
+                "averageRescuetime": stats.averageRescuetimeSpan,
+                "longestQueuetime": stats.longestQueuetimeSpan,
+                "lostQueues": stats.lostQueues ?? 0,
+                "successfulQueues": stats.successfulQueues ?? 0,
+            ])
     }
-    
+
     @BotCommand(
         ["dequeue", "next"],
         category: .queue,
@@ -118,29 +122,35 @@ class QueueCommands: IRCBotModule {
             command.message.error(key: "dequeue.error", fromCommand: command)
         }
     }
-    
+
     @BotCommand(
         ["maxclients", "maxload", "maxcases"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,
-        description: "See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value",
+        description:
+            "See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value",
         permission: .DispatchWrite,
         allowedDestinations: .Channel,
         cooldown: .seconds(60)
     )
     var didReceiveMaxClientsCommand = { command in
         if let queueSizeString = command.param1 {
-            guard let queueSize = Int(queueSizeString), ((5...20).contains(queueSize) || command.message.user.hasPermission(permission: .UserWrite)) else {
+            guard let queueSize = Int(queueSizeString),
+                (5...20).contains(queueSize)
+                    || command.message.user.hasPermission(permission: .UserWrite)
+            else {
                 command.message.error(key: "maxclients.invalid", fromCommand: command)
                 return
             }
-            
+
             do {
                 try await QueueAPI.setMaxActiveClients(queueSize)
                 QueueCommands.maxClientsCount = queueSize
-                command.message.reply(key: "maxclients.set", fromCommand: command, map: [
-                    "count": queueSize
-                ])
+                command.message.reply(
+                    key: "maxclients.set", fromCommand: command,
+                    map: [
+                        "count": queueSize
+                    ])
             } catch {
                 command.error(error)
             }
@@ -148,9 +158,11 @@ class QueueCommands: IRCBotModule {
             do {
                 let config = try await QueueAPI.getConfig()
                 QueueCommands.maxClientsCount = config.maxActiveClients
-                command.message.reply(key: "maxclients.get", fromCommand: command, map: [
-                    "count": config.maxActiveClients
-                ])
+                command.message.reply(
+                    key: "maxclients.get", fromCommand: command,
+                    map: [
+                        "count": config.maxActiveClients
+                    ])
             } catch {
                 command.error(error)
             }

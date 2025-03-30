@@ -241,7 +241,7 @@ class HelpCommands: IRCBotModule {
             map: [
                 "command": helpCommand.usageDescription(command: nil),
                 "example": helpCommand.example.count > 0
-                ? "(Example: !\(commandText) \(helpCommand.example))"
+                    ? "(Example: !\(commandText) \(helpCommand.example))"
                     : "",
             ])
         let permissionGroups =

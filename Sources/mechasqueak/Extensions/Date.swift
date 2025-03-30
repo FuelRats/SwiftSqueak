@@ -25,8 +25,12 @@
 import Foundation
 
 extension Date {
-    func timeAgo (components: [TimeUnit] = [.year, .month, .day, .hour, .minute, .second], maximumUnits: UInt? = nil) -> String {
-        let seconds = Double(Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0)
+    func timeAgo(
+        components: [TimeUnit] = [.year, .month, .day, .hour, .minute, .second],
+        maximumUnits: UInt? = nil
+    ) -> String {
+        let seconds = Double(
+            Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0)
         return seconds.timeSpan(components: components, maximumUnits: maximumUnits)
     }
 
@@ -48,7 +52,7 @@ extension Date {
 }
 
 extension TimeInterval {
-    static func from (string: String) -> TimeInterval? {
+    static func from(string: String) -> TimeInterval? {
         var string = string
 
         if string == "0" {
@@ -62,26 +66,26 @@ extension TimeInterval {
         let seconds = Double(num)
 
         switch suffix {
-            case "s":
-                return seconds
+        case "s":
+            return seconds
 
-            case "m":
-                return seconds * 60
+        case "m":
+            return seconds * 60
 
-            case "h":
-                return seconds * 3600
+        case "h":
+            return seconds * 3600
 
-            case "d":
-                return seconds * 86400
+        case "d":
+            return seconds * 86400
 
-            case "w":
-                return seconds * 604800
+        case "w":
+            return seconds * 604800
 
-            case "y":
-                return seconds * 220903200
+        case "y":
+            return seconds * 220_903_200
 
-            default:
-                return nil
+        default:
+            return nil
         }
     }
 }

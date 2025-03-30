@@ -97,7 +97,7 @@ class BoardCommands: IRCBotModule {
         } else if command.options.contains("l") {
             expansion = .legacy
         }
-        
+
         let force = command.options.contains("f")
 
         if expansion != .legacy && platform != .PC {
@@ -122,7 +122,8 @@ class BoardCommands: IRCBotModule {
                 updatedAt: Date(),
                 lastAuthor: command.message.client.currentNick
             ))
-        try? await board.insert(rescue: rescue, fromMessage: command.message, initiated: .insertion, force: force)
+        try? await board.insert(
+            rescue: rescue, fromMessage: command.message, initiated: .insertion, force: force)
     }
 
     @BotCommand(

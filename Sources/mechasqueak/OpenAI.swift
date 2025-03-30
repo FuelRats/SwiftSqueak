@@ -22,15 +22,17 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import IRCKit
-import AsyncHTTPClient
 
 struct OpenAI {
-    static func request (params: OpenAIRequest) async throws -> OpenAIResponse {
-        var request = try HTTPClient.Request(url: URL(string: "https://api.openai.com/v1/chat/completions")!, method: .POST)
+    static func request(params: OpenAIRequest) async throws -> OpenAIResponse {
+        var request = try HTTPClient.Request(
+            url: URL(string: "https://api.openai.com/v1/chat/completions")!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
+        request.headers.add(
+            name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
         request.headers.add(name: "Content-Type", value: "application/json")
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
@@ -44,7 +46,7 @@ struct OpenAI {
 struct OpenAIMessage: Codable {
     let role: OpenAIRole
     let content: String
-    
+
     enum OpenAIRole: String, Codable {
         case system
         case assistant
@@ -57,8 +59,11 @@ struct OpenAIRequest: Codable {
     let temperature: Double
     let maxTokens: Int?
     let messages: [OpenAIMessage]
-    
-    init (messages: [OpenAIMessage], model: String = "gpt-4o", temperature: Double = 1.0, maxTokens: Int? = nil) {
+
+    init(
+        messages: [OpenAIMessage], model: String = "gpt-4o", temperature: Double = 1.0,
+        maxTokens: Int? = nil
+    ) {
         self.model = model
         self.temperature = temperature
         self.maxTokens = maxTokens
@@ -71,13 +76,13 @@ struct OpenAIResponse: Codable {
     let object: String
     let usage: OpenAIUsage
     let choices: [OpenAIChoice]
-    
+
     struct OpenAIUsage: Codable {
         let promptTokens: Int
         let completionTokens: Int
         let totalTokens: Int
     }
-    
+
     struct OpenAIChoice: Codable {
         let message: OpenAIMessage
         let finishReason: String?

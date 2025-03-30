@@ -22,9 +22,9 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import NIO
-import AsyncHTTPClient
 
 struct QueueParticipant: Codable, Hashable {
     let uuid: UUID
@@ -51,10 +51,10 @@ struct QueueParticipant: Codable, Hashable {
         var o2Status: Bool
         var expansion: GameMode?
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
+
         self.uuid = try container.decode(UUID.self, forKey: .uuid)
         if let arrivalTime = try? container.decode(Date.self, forKey: .arrivalTime) {
             self.arrivalTime = arrivalTime
@@ -63,39 +63,46 @@ struct QueueParticipant: Codable, Hashable {
             if let shortArrivalTime = DateFormatter.iso8601Short.date(from: arrivalTimeString) {
                 self.arrivalTime = shortArrivalTime
             } else {
-                throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "No valid date found"))
+                throw DecodingError.dataCorrupted(
+                    DecodingError.Context(
+                        codingPath: decoder.codingPath, debugDescription: "No valid date found"))
             }
         }
         self.pending = try container.decode(Bool.self, forKey: .pending)
         self.inProgress = try container.decode(Bool.self, forKey: .inProgress)
         self.client = try container.decode(QueueClient.self, forKey: .client)
     }
-    
+
     @discardableResult
-    func setInProgress () async throws -> QueueParticipant {
-        var request = try HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
-        
+    func setInProgress() async throws -> QueueParticipant {
+        var request = try HTTPClient.Request(
+            queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+
         var queueItem = self
         queueItem.inProgress = true
         request.body = try .data(QueueAPI.encoder.encode(queueItem))
 
-        return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+        return try await httpClient.execute(
+            request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
-    
+
     @discardableResult
-    func changeName (name: String) async throws -> QueueParticipant {
-        var request = try HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
-        
+    func changeName(name: String) async throws -> QueueParticipant {
+        var request = try HTTPClient.Request(
+            queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+
         var queueItem = self
         queueItem.client.name = name
         request.body = try .data(QueueAPI.encoder.encode(queueItem))
 
-        return try await httpClient.execute(request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+        return try await httpClient.execute(
+            request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
     }
-    
+
     @discardableResult
-    func delete () async throws -> HTTPClient.Response {
-        let request = try HTTPClient.Request(queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
+    func delete() async throws -> HTTPClient.Response {
+        let request = try HTTPClient.Request(
+            queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
 
         return try await httpClient.execute(request: request, deadline: nil, expecting: 204)
     }

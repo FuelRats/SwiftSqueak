@@ -112,7 +112,9 @@ class SystemsAPI {
         return try await httpClient.execute(request: request, forDecodable: SystemGetDocument.self)
     }
 
-    static func getNearestStations(forSystem systemName: String, limit: Int = 10, legacy: Bool = false) async throws
+    static func getNearestStations(
+        forSystem systemName: String, limit: Int = 10, legacy: Bool = false
+    ) async throws
         -> NearestPopulatedDocument?
     {
         var queryItems = [
@@ -148,7 +150,10 @@ class SystemsAPI {
         SystemsAPI.NearestPopulatedDocument.PopulatedSystem,
         SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station
     )? {
-        guard let response = try await SystemsAPI.getNearestStations(forSystem: systemName, limit: limit, legacy: legacyStations) else {
+        guard
+            let response = try await SystemsAPI.getNearestStations(
+                forSystem: systemName, limit: limit, legacy: legacyStations)
+        else {
             return nil
         }
 
@@ -162,7 +167,8 @@ class SystemsAPI {
 
         guard
             let station = system.preferableStations(
-                requireLargePad: requireLargePad, requireSpace: requireSpace, legacyStations: legacyStations
+                requireLargePad: requireLargePad, requireSpace: requireSpace,
+                legacyStations: legacyStations
             ).first
         else {
             return nil
@@ -513,10 +519,18 @@ class SystemsAPI {
         let meta: Meta
         let data: [PopulatedSystem]
 
-        func preferableSystems(requireLargePad: Bool = false, requireSpace: Bool = false, legacyStations: Bool = false)
+        func preferableSystems(
+            requireLargePad: Bool = false, requireSpace: Bool = false, legacyStations: Bool = false
+        )
             -> [PopulatedSystem]
         {
-            return self.data.filter({ $0.allegiance != .Thargoid && $0.preferableStations(requireLargePad: requireLargePad, requireSpace: requireSpace, legacyStations: legacyStations).isEmpty == false })
+            return self.data.filter({
+                $0.allegiance != .Thargoid
+                    && $0.preferableStations(
+                        requireLargePad: requireLargePad, requireSpace: requireSpace,
+                        legacyStations: legacyStations
+                    ).isEmpty == false
+            })
         }
 
         struct PopulatedSystem: Codable {
@@ -530,17 +544,21 @@ class SystemsAPI {
                 return self.stations.contains(where: { $0.hasLargePad })
             }
 
-            func preferableStations(requireLargePad: Bool, requireSpace: Bool, legacyStations: Bool) -> [Station] {
+            func preferableStations(requireLargePad: Bool, requireSpace: Bool, legacyStations: Bool)
+                -> [Station]
+            {
                 let stations = self.stations.filter {
                     (requireLargePad == false || $0.hasLargePad)
-                    && (requireSpace == false || $0.type?.isPlanetary == false) && $0.isFunctional
+                        && (requireSpace == false || $0.type?.isPlanetary == false)
+                        && $0.isFunctional
                 }
                 let maxDistance = stations.map { $0.distance ?? 0 }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
                 let weightRanking = minPreferredDistance * weightDistance
 
                 return stations.sorted(by: {
-                    $0.score(weightDistance: weightDistance, weightRanking: weightRanking) < $1.score(weightDistance: weightDistance, weightRanking: weightRanking)
+                    $0.score(weightDistance: weightDistance, weightRanking: weightRanking)
+                        < $1.score(weightDistance: weightDistance, weightRanking: weightRanking)
                 })
             }
 
@@ -556,7 +574,7 @@ class SystemsAPI {
                 let hasOutfitting: Bool
                 let services: [String]
                 let stationState: State?
-                
+
                 enum CodingKeys: String, CodingKey {
                     case name
                     case type
@@ -567,15 +585,15 @@ class SystemsAPI {
                     case services
                     case stationState = "StationState"
                 }
-                
+
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
-                    
+
                     var name = try container.decode(String.self, forKey: .name)
-                    
+
                     var stationState = try container.decodeIfPresent(
                         State.self, forKey: .stationState)
-                    
+
                     var stationType = try container.decodeIfPresent(StationType.self, forKey: .type)
                     if stationType == nil && name.hasPrefix("Orbital Construction Site: ") {
                         name = String(name.dropFirst("Orbital Construction Site: ".count))
@@ -588,13 +606,13 @@ class SystemsAPI {
                         stationState = .Construction
                     }
                     self.name = name
-                    
+
                     self.distance = try container.decodeIfPresent(Double.self, forKey: .distance)
                     self.hasMarket = try container.decode(Bool.self, forKey: .hasMarket)
                     self.hasShipyard = try container.decode(Bool.self, forKey: .hasShipyard)
                     self.hasOutfitting = try container.decode(Bool.self, forKey: .hasOutfitting)
                     self.services = try container.decode([String].self, forKey: .services)
-                    
+
                     if stationState == .Construction && stationType == nil {
                         stationType = .SpaceConstructionDepot
                     }
@@ -605,11 +623,11 @@ class SystemsAPI {
                     if stationType == nil {
                         stationType = .Settlement
                     }
-                    
+
                     self.type = stationType
                     self.stationState = stationState
                 }
-                
+
                 public enum State: String, Codable {
                     case UnderAttack
                     case Destroyed
@@ -618,28 +636,33 @@ class SystemsAPI {
                     case Construction
                     case UnderRepairs
                 }
-                
+
                 var isFunctional: Bool {
-                    return self.stationState != .Destroyed && self.stationState != .Abandoned && self.stationState != .UnderAttack
+                    return self.stationState != .Destroyed && self.stationState != .Abandoned
+                        && self.stationState != .UnderAttack
                 }
-                
+
                 var isLimited: Bool {
-                    return self.stationState == .Damaged || self.stationState == .UnderRepairs || self.stationState == .Construction
+                    return self.stationState == .Damaged || self.stationState == .UnderRepairs
+                        || self.stationState == .Construction
                 }
-                
+
                 var ranking: UInt {
                     return self.type?.rating ?? 5
                 }
-                
+
                 var isPlayerStation: Bool {
-                    return self.type?.isPlayerStation == true || self.services.contains("registeringcolonisation") || self.services.contains("colonisationcontribution")
+                    return self.type?.isPlayerStation == true
+                        || self.services.contains("registeringcolonisation")
+                        || self.services.contains("colonisationcontribution")
                 }
-                
+
                 func score(weightDistance: Double = 1.0, weightRanking: Double = 0.1) -> Double {
-                    let rankingPenalty = Double(self.ranking) + (self.isLimited ? limitedPenalty : 0)
+                    let rankingPenalty =
+                        Double(self.ranking) + (self.isLimited ? limitedPenalty : 0)
                     return (self.distance ?? 0 * weightDistance) + (rankingPenalty * weightRanking)
                 }
-                
+
                 enum StationType: String, Codable {
                     case CoriolisStarport = "Coriolis Starport"
                     case OcellusStarport = "Ocellus Starport"
@@ -656,7 +679,7 @@ class SystemsAPI {
                     case Settlement = "Odyssey Settlement"
                     case OrbitalConstructionSite = "Orbital Construction Site"
                     case PlanetaryConstructionSite = "Planetary Construction Site"
-                    
+
                     static var brokenDataMapping: [String: String] = [
                         "Coriolis": "Coriolis Starport",
                         "Orbis": "Orbis Starport",
@@ -664,21 +687,24 @@ class SystemsAPI {
                         "SurfaceStation": "Planetary Outpost",
                         "CraterOutpost": "Planetary Outpost",
                         "SpaceConstructionDepot": "Space Construction Depot",
-                        "PlanetaryConstructionDepot": "Planetary Construction Depot"
+                        "PlanetaryConstructionDepot": "Planetary Construction Depot",
                     ]
-                    
-                    init (from decoder: Decoder) throws {
+
+                    init(from decoder: Decoder) throws {
                         let container = try decoder.singleValueContainer()
                         var stringValue = try container.decode(String.self)
-                        
+
                         if let remap = StationType.brokenDataMapping[stringValue] {
                             stringValue = remap
                         }
-                        
+
                         if let stationType = StationType(rawValue: stringValue) {
                             self = stationType
                         } else {
-                            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid station type \(stringValue)"))
+                            throw DecodingError.dataCorrupted(
+                                DecodingError.Context(
+                                    codingPath: decoder.codingPath,
+                                    debugDescription: "Invalid station type \(stringValue)"))
                         }
                     }
 
@@ -697,13 +723,13 @@ class SystemsAPI {
                         .FleetCarrier: 5,
                         .Outpost: 6,
                         .Settlement: 7,
-                        .PlanetaryConstructionDepot: 7
+                        .PlanetaryConstructionDepot: 7,
                     ]
 
                     var rating: UInt {
                         return StationType.ratings[self]!
                     }
-                    
+
                     var hasLargePad: Bool {
                         return [
                             StationType.CoriolisStarport,
@@ -717,10 +743,10 @@ class SystemsAPI {
                             StationType.SpaceConstructionDepot,
                             StationType.SystemColonizationShip,
                             StationType.OrbitalConstructionSite,
-                            StationType.PlanetaryConstructionDepot
+                            StationType.PlanetaryConstructionDepot,
                         ].contains(self)
                     }
-                    
+
                     var isPlayerStation: Bool {
                         return [
                             StationType.SpaceConstructionDepot,
@@ -728,7 +754,7 @@ class SystemsAPI {
                             StationType.OrbitalConstructionSite,
                             StationType.PlanetaryConstructionSite,
                             StationType.FleetCarrier,
-                            StationType.SystemColonizationShip
+                            StationType.SystemColonizationShip,
                         ].contains(self)
                     }
 
@@ -738,11 +764,11 @@ class SystemsAPI {
                             StationType.PlanetaryOutpost,
                             StationType.PlanetaryConstructionSite,
                             StationType.Settlement,
-                            StationType.PlanetaryConstructionDepot
+                            StationType.PlanetaryConstructionDepot,
                         ].contains(self)
                     }
                 }
-                
+
                 var hasLargePad: Bool {
                     return (self.type ?? .Outpost).hasLargePad
                 }

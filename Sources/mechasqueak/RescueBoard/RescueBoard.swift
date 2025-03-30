@@ -308,7 +308,8 @@ actor RescueBoard {
     }
 
     func insert(
-        rescue: Rescue, fromMessage message: IRCPrivateMessage, initiated: RescueInitiationType, force: Bool = false
+        rescue: Rescue, fromMessage message: IRCPrivateMessage, initiated: RescueInitiationType,
+        force: Bool = false
     ) async throws {
         let clientName = rescue.client?.lowercased()
         let clientNick = rescue.clientNick?.lowercased()
@@ -474,7 +475,7 @@ actor RescueBoard {
             await rescue.prep(message: message, initiated: initiated)
             return
         }
-        
+
         try? await rescue.validateSystem()
         try? rescue.save(nil)
 

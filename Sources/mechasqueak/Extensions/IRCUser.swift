@@ -32,7 +32,7 @@ extension IRCUser {
         }
         return MechaSqueak.accounts.mapping[account]
     }
-    
+
     var settings: UserDataObject? {
         return self.associatedAPIData?.user?.attributes.data.value
     }
@@ -47,49 +47,50 @@ extension IRCUser {
             }) || $0.value.unidentifiedRats.contains(self.nickname)
         })
     }
-    
+
     var platform: GamePlatform? {
         let nickname = self.nickname.lowercased()
-        
+
         if nickname.hasSuffix("[pc]") {
             return .PC
         }
-        
+
         if nickname.hasSuffix("[xb]") || nickname.hasSuffix("[xb1]") {
             return .Xbox
         }
-        
+
         if nickname.contains("[ps]") || nickname.contains("[ps4]]") || nickname.contains("[ps5]") {
             return .PS
         }
-        
+
         return nil
     }
-    
+
     var currentRat: Rat? {
         guard let apiData = self.associatedAPIData, let user = apiData.user else {
             return nil
         }
-        
-        
+
         var rats = apiData.ratsBelongingTo(user: user)
         if let platform = self.platform {
             rats = rats.filter({
                 $0.attributes.platform.value == platform
             })
         }
-        
+
         var nickname = self.nickname.lowercased()
-        nickname = nickname.replacingOccurrences(of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
+        nickname = nickname.replacingOccurrences(
+            of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
 
         rats.sort(by: {
-            nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased())
+            nickname.levenshtein($0.attributes.name.value.lowercased())
+                < nickname.levenshtein($1.attributes.name.value.lowercased())
         })
 
         return rats.first
     }
-    
-    func flush () {
+
+    func flush() {
         if let mapping = MechaSqueak.accounts.mapping.first(where: {
             $0.key == self.account
         }) {
@@ -98,7 +99,7 @@ extension IRCUser {
         MechaSqueak.accounts.lookupIfNotExists(user: self)
     }
 
-    func hasPermission (permission: AccountPermission) -> Bool {
+    func hasPermission(permission: AccountPermission) -> Bool {
         guard let permissions = self.associatedAPIData?.permissions else {
             return self.hostPermissions().contains(permission)
         }
@@ -106,7 +107,7 @@ extension IRCUser {
         return permissions.contains(permission)
     }
 
-    func getRatRepresenting (platform: GamePlatform?) -> Rat? {
+    func getRatRepresenting(platform: GamePlatform?) -> Rat? {
         guard let apiData = self.associatedAPIData, let user = apiData.user else {
             return nil
         }
@@ -117,17 +118,21 @@ extension IRCUser {
         })
 
         var nickname = self.nickname.lowercased()
-        nickname = nickname.replacingOccurrences(of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
+        nickname = nickname.replacingOccurrences(
+            of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
 
         rats.sort(by: {
-            nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased())
+            nickname.levenshtein($0.attributes.name.value.lowercased())
+                < nickname.levenshtein($1.attributes.name.value.lowercased())
         })
 
         return rats.first
     }
 
     func isAssignedTo(rescue: Rescue) async -> Bool {
-        guard let user = self.associatedAPIData?.user, let rats = self.associatedAPIData?.ratsBelongingTo(user: user) else {
+        guard let user = self.associatedAPIData?.user,
+            let rats = self.associatedAPIData?.ratsBelongingTo(user: user)
+        else {
             return false
         }
         let rescueRats = rescue.rats
@@ -136,15 +141,16 @@ extension IRCUser {
         })
     }
 
-    func isAssociatedWith (rescue: Rescue) async -> Bool {
+    func isAssociatedWith(rescue: Rescue) async -> Bool {
         let clientNick = rescue.clientNick
         return await isAssignedTo(rescue: rescue) || clientNick == self.nickname
     }
 
-    func hostPermissions () -> [AccountPermission] {
+    func hostPermissions() -> [AccountPermission] {
         if self.hostmask.hasSuffix("i.see.all")
             || self.hostmask.hasSuffix("netadmin.fuelrats.com")
-            || self.hostmask.hasSuffix("admin.fuelrats.com") {
+            || self.hostmask.hasSuffix("admin.fuelrats.com")
+        {
             return [
                 .UserRead,
                 .UserReadOwn,
@@ -161,11 +167,13 @@ extension IRCUser {
                 .TwitterWrite,
                 .DispatchRead,
                 .DispatchWrite,
-                .AnnouncementWrite
+                .AnnouncementWrite,
             ]
         }
 
-        if self.hostmask.hasSuffix("overseer.fuelrats.com") || self.hostmask.hasSuffix("techrat.fuelrats.com") {
+        if self.hostmask.hasSuffix("overseer.fuelrats.com")
+            || self.hostmask.hasSuffix("techrat.fuelrats.com")
+        {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
@@ -180,10 +188,10 @@ extension IRCUser {
                 .TwitterWrite,
                 .DispatchRead,
                 .DispatchWrite,
-                .AnnouncementWrite
+                .AnnouncementWrite,
             ]
         }
-        
+
         if self.hostmask.hasSuffix("trainer.fuelrats.com") {
             return [
                 .UserReadOwn,
@@ -196,7 +204,7 @@ extension IRCUser {
                 .DispatchRead,
                 .DispatchWrite,
                 .TwitterWrite,
-                .AnnouncementWrite
+                .AnnouncementWrite,
             ]
         }
 
@@ -211,7 +219,7 @@ extension IRCUser {
                 .RescueWriteOwn,
                 .DispatchRead,
                 .DispatchWrite,
-                .TwitterWrite
+                .TwitterWrite,
             ]
         }
 
@@ -221,7 +229,7 @@ extension IRCUser {
                 .UserWriteOwn,
                 .RatReadOwn,
                 .RatWriteOwn,
-                .RescueReadOwn
+                .RescueReadOwn,
             ]
         }
 

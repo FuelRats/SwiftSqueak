@@ -39,7 +39,7 @@ enum UserDescription: ResourceObjectDescription {
             case createdAt
             case updatedAt
         }
-        
+
         public var data: Attribute<UserDataObject>
         public let email: Attribute<String>?
         public let status: Attribute<UserStatus>
@@ -74,16 +74,18 @@ extension User {
 
     @discardableResult
     static func update(user: User) async throws -> UserGetDocument {
-        let patchRequestDocument = SingleDocument(apiDescription: .none, body: .init(resourceObject: user), includes: .none, meta: .none, links: .none)
+        let patchRequestDocument = SingleDocument(
+            apiDescription: .none, body: .init(resourceObject: user), includes: .none, meta: .none,
+            links: .none)
         var request = try HTTPClient.Request(
             apiPath: "/users/\(user.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
-        
+
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         let body = try! encoder.encode(patchRequestDocument)
         debug(String(data: body, encoding: .utf8)!)
-        
+
         request.body = .data(body)
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
@@ -93,7 +95,8 @@ extension User {
     func suspend(date: Date) async throws -> UserGetDocument {
         let updatedUser = self.tappingAttributes({
             $0.suspended = .init(value: date)
-        }).sparse(with: [UserDescription.Attributes.CodingKeys.suspended]).resourceObject.replacingRelationships({ _ in
+        }).sparse(with: [UserDescription.Attributes.CodingKeys.suspended]).resourceObject
+            .replacingRelationships({ _ in
                 return UserDescription.Relationships(
                     rats: nil,
                     displayRat: nil,
@@ -104,7 +107,7 @@ extension User {
                     nicknames: nil,
                     avatar: nil
                 )
-        })
+            })
         return try await User.update(user: updatedUser)
     }
 
@@ -126,23 +129,24 @@ extension User {
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
-    
+
     @discardableResult
     func updateUserData(dataObject: UserDataObject) async throws -> UserGetDocument {
         let updatedUser = self.tappingAttributes {
             $0.data = .init(value: dataObject)
-        }.sparse(with: [UserDescription.Attributes.CodingKeys.data]).resourceObject.replacingRelationships({ _ in
-            return UserDescription.Relationships(
-                rats: nil,
-                displayRat: nil,
-                groups: nil,
-                clients: nil,
-                epics: nil,
-                decals: nil,
-                nicknames: nil,
-                avatar: nil
-            )
-    })
+        }.sparse(with: [UserDescription.Attributes.CodingKeys.data]).resourceObject
+            .replacingRelationships({ _ in
+                return UserDescription.Relationships(
+                    rats: nil,
+                    displayRat: nil,
+                    groups: nil,
+                    clients: nil,
+                    epics: nil,
+                    decals: nil,
+                    nicknames: nil,
+                    avatar: nil
+                )
+            })
         return try await User.update(user: updatedUser)
     }
 }

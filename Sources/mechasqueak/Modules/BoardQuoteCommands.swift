@@ -147,7 +147,9 @@ class BoardQuoteCommands: IRCBotModule {
         }
 
         var quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
-        if rescue.clientLanguage != nil && clientNick == rescue.clientNick, let translation = try? await Translate.translate(lastMessage.message) {
+        if rescue.clientLanguage != nil && clientNick == rescue.clientNick,
+            let translation = try? await Translate.translate(lastMessage.message)
+        {
             quoteMessage += " (Translation: \(translation))"
         }
 

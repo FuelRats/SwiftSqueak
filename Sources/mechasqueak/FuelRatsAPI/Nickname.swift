@@ -55,7 +55,7 @@ typealias NicknameSearchDocument = Document<
 >
 
 extension NicknameSearchDocument {
-    static func from (data documentData: Data) throws -> NicknameSearchDocument {
+    static func from(data documentData: Data) throws -> NicknameSearchDocument {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601Full)
 
@@ -70,14 +70,14 @@ extension NicknameSearchDocument {
         })
     }
 
-    func ratsBelongingTo (user: User) -> [Rat] {
+    func ratsBelongingTo(user: User) -> [Rat] {
         return user.relationships.rats?.ids.compactMap({ ratId in
             return self.body.includes![Rat.self].first(where: {
                 $0.id.rawValue == ratId.rawValue
             })
         }) ?? []
     }
-    
+
     var groups: [Group] {
         let groupIds = self.user?.relationships.groups?.ids ?? []
 
@@ -96,12 +96,14 @@ extension NicknameSearchDocument {
         guard let user = self.user else {
             return nil
         }
-        return self.ratsBelongingTo(user: user).reduce(nil, { (currentDate: Date?, rat: Rat) -> Date? in
-            if currentDate == nil || rat.attributes.createdAt.value < currentDate! {
-                return rat.attributes.createdAt.value
-            }
-            return currentDate
-        })
+        return self.ratsBelongingTo(user: user).reduce(
+            nil,
+            { (currentDate: Date?, rat: Rat) -> Date? in
+                if currentDate == nil || rat.attributes.createdAt.value < currentDate! {
+                    return rat.attributes.createdAt.value
+                }
+                return currentDate
+            })
     }
 }
 typealias NicknameGetDocument = Document<
@@ -110,7 +112,7 @@ typealias NicknameGetDocument = Document<
 >
 
 extension NicknameGetDocument {
-    static func from (data documentData: Data) throws -> NicknameGetDocument {
+    static func from(data documentData: Data) throws -> NicknameGetDocument {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601Full)
 

@@ -31,7 +31,7 @@ protocol AnyRange {
 }
 
 extension AnyRange {
-    func contains (_ value: Bound) -> Bool {
+    func contains(_ value: Bound) -> Bool {
         if let lower = self.lower, let upper = self.upper, value >= lower, value <= upper {
             return true
         } else if let lower = self.lower, self.upper == nil, value >= lower {
@@ -88,11 +88,11 @@ extension UInt: AnyRange {
     var lower: UInt? {
         return self
     }
-    
+
     var upper: UInt? {
         return self
     }
-    
+
     typealias Bound = UInt
 }
 
@@ -100,10 +100,10 @@ extension Int: AnyRange {
     var lower: Int? {
         return self
     }
-    
+
     var upper: Int? {
         return self
     }
-    
+
     typealias Bound = Int
 }

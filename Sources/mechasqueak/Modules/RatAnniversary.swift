@@ -35,35 +35,43 @@ class RatAnniversary: IRCBotModule {
 
     @EventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
-        guard channelMessage.raw.messageTags["batch"] == nil && channelMessage.destination == mecha.reportingChannel else {
+        guard
+            channelMessage.raw.messageTags["batch"] == nil
+                && channelMessage.destination == mecha.reportingChannel
+        else {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
 
-        if
-            let apiData = channelMessage.user.associatedAPIData,
+        if let apiData = channelMessage.user.associatedAPIData,
             let apiUser = apiData.user,
             let joinDate = apiData.joinDate
         {
             guard birthdayAnnounced.contains(apiUser.id.rawValue) == false else {
                 return
             }
-            let joinComponents = Calendar.current.dateComponents([.day, .month, .year], from: joinDate)
-            let todayComponents = Calendar.current.dateComponents([.day, .month, .year, .hour], from: Date())
+            let joinComponents = Calendar.current.dateComponents(
+                [.day, .month, .year], from: joinDate)
+            let todayComponents = Calendar.current.dateComponents(
+                [.day, .month, .year, .hour], from: Date())
             guard todayComponents.hour! > 4 else {
                 return
             }
             let years = todayComponents.year! - joinComponents.year!
 
-            if joinComponents.day! == todayComponents.day! && joinComponents.month! == todayComponents.month!, years > 0 {
+            if joinComponents.day! == todayComponents.day!
+                && joinComponents.month! == todayComponents.month!, years > 0
+            {
                 var key = "birthday"
                 if channelMessage.user.account == "TobyCharles" {
                     key += ".toby"
                 }
-                mecha.reportingChannel?.send(key: key, map: [
-                    "name": channelMessage.user.nickname,
-                    "years": years
-                ])
+                mecha.reportingChannel?.send(
+                    key: key,
+                    map: [
+                        "name": channelMessage.user.nickname,
+                        "years": years,
+                    ])
                 birthdayAnnounced.insert(apiUser.id.rawValue)
             }
         }

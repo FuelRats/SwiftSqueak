@@ -25,7 +25,7 @@
 import Foundation
 
 extension NumberFormatter {
-    static func englishFormatter () -> NumberFormatter {
+    static func englishFormatter() -> NumberFormatter {
         let numberFormatter = NumberFormatter()
         numberFormatter.numberStyle = .decimal
         numberFormatter.thousandSeparator = ","
@@ -36,15 +36,15 @@ extension NumberFormatter {
         return numberFormatter
     }
 
-    func string (from number: Int) -> String? {
+    func string(from number: Int) -> String? {
         return self.string(from: NSNumber(value: number))
     }
 
-    func string (from number: Int64) -> String? {
+    func string(from number: Int64) -> String? {
         return self.string(from: NSNumber(value: number))
     }
 
-    func string (from number: Double) -> String? {
+    func string(from number: Double) -> String? {
         return self.string(from: NSNumber(value: number))
     }
 }
@@ -57,31 +57,34 @@ extension Int {
 
 extension Double {
     var clean: String {
-       return String(format: "%.0f", floor(self))
+        return String(format: "%.0f", floor(self))
     }
-    
+
     var eliteDistance: String {
         let formatter = NumberFormatter.englishFormatter()
         formatter.maximumFractionDigits = 2
-        
-        let lightYears = self / 60/60/24/365.25
+
+        let lightYears = self / 60 / 60 / 24 / 365.25
         var formattedDistance = (formatter.string(from: self) ?? "\(self)") + "ls"
         let scientificFormatter = NumberFormatter()
         scientificFormatter.numberStyle = .scientific
         scientificFormatter.positiveFormat = "0.###E+0"
         scientificFormatter.exponentSymbol = "E"
 
-        if self > 3.1*pow(10, 13) {
-            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
-        } else if self > 3.6*pow(10, 6) {
-            formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
+        if self > 3.1 * pow(10, 13) {
+            formattedDistance =
+                "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
+        } else if self > 3.6 * pow(10, 6) {
+            formattedDistance = (formatter.string(from: lightYears) ?? "\(lightYears)") + "ly"
         } else if self < 1 {
             formattedDistance = "\(scientificFormatter.string(from: self) ?? "\(self)")ls"
         }
         return formattedDistance
     }
-    
-    func timeSpan (components: [TimeUnit] = [.year, .day, .hour, .minute, .second], maximumUnits: UInt? = nil) -> String {
+
+    func timeSpan(
+        components: [TimeUnit] = [.year, .day, .hour, .minute, .second], maximumUnits: UInt? = nil
+    ) -> String {
         var value = self
         let components = components.sorted(by: { $0.rawValue > $1.rawValue })
         var values: [TimeUnit: Double] = [:]
@@ -92,18 +95,20 @@ extension Double {
                 value = value.truncatingRemainder(dividingBy: component.rawValue)
             }
         }
-        
+
         let formatter = NumberFormatter.englishFormatter()
         formatter.maximumFractionDigits = 0
-        
+
         var result = ""
         var index = 0
-        for (_, item) in values.enumerated().sorted(by: { $0.element.key.rawValue > $1.element.key.rawValue }) {
+        for (_, item) in values.enumerated().sorted(by: {
+            $0.element.key.rawValue > $1.element.key.rawValue
+        }) {
             let (unit, value) = item
             if let maximumUnits = maximumUnits, index >= maximumUnits {
                 break
             }
-            
+
             let description = value == 1 ? String(describing: unit) : "\(String(describing: unit))s"
             if index != 0 && (index + 1 == values.count || index + 1 >= (maximumUnits ?? .max)) {
                 result += ", and "
@@ -115,17 +120,17 @@ extension Double {
         }
         return result
     }
-    
-    func distanceToSeconds (destinationGravity: Bool = false) -> Double {
+
+    func distanceToSeconds(destinationGravity: Bool = false) -> Double {
         var distance = self
         if destinationGravity {
             distance = distance / 2
         }
-        
+
         var seconds = 0.0
         if distance < 100000 {
             seconds = 8.9034 * pow(distance, 0.3292)
-        } else if distance < 1907087 {
+        } else if distance < 1_907_087 {
             // -8*(10 ** -23) * (x ** 4) + 4*(10 ** -16) * (x ** 3) - 8*(10 ** -10) * (x ** 2) + 0.0014 * x + 264.79
             let part1 = -8 * pow(10, -23) * pow(distance, 4)
             let part2 = 4 * pow(10, -16) * pow(distance, 3) - 8 * pow(10, -10) * pow(distance, 2)
@@ -134,7 +139,7 @@ extension Double {
         } else {
             seconds = (distance - 5265389.609) / 2001 + 3412
         }
-        
+
         if seconds < 0 {
             return 0
         }
@@ -144,8 +149,8 @@ extension Double {
         }
         return seconds
     }
-    
-    func distanceToSecondsOld (destinationGravity: Bool = false) -> Double {
+
+    func distanceToSecondsOld(destinationGravity: Bool = false) -> Double {
         var distance = self
         if destinationGravity {
             distance = distance / 2
@@ -153,19 +158,18 @@ extension Double {
 
         var seconds = 0.0
         if distance < 448865 {
-            seconds = 4.4708*pow(distance, 0.3899)
-        } else if distance > 4300000 {
+            seconds = 4.4708 * pow(distance, 0.3899)
+        } else if distance > 4_300_000 {
             seconds = (distance - 5100000.0) / 2001 + 3420
-        }
-        else {
+        } else {
             /*
                 Thank you to RadLock for creating the original equation.
              */
-           let part1 = 33.7+1.87*pow(10 as Double, -3)*Double(distance)
-           let part2 = -8.86*pow(10 as Double, -10) * pow(Double(distance), 2)
-           let part3 = 2.37*pow(10 as Double, -16) * pow(Double(distance), 3)
-           let part4 = -2.21*pow(10 as Double, -23) * pow(Double(distance), 4)
-           seconds = part1 + part2 + part3 + part4
+            let part1 = 33.7 + 1.87 * pow(10 as Double, -3) * Double(distance)
+            let part2 = -8.86 * pow(10 as Double, -10) * pow(Double(distance), 2)
+            let part3 = 2.37 * pow(10 as Double, -16) * pow(Double(distance), 3)
+            let part4 = -2.21 * pow(10 as Double, -23) * pow(Double(distance), 4)
+            seconds = part1 + part2 + part3 + part4
         }
 
         if seconds < 0 {

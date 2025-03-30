@@ -25,7 +25,7 @@
 import Foundation
 
 extension Notification {
-    func post () {
+    func post() {
         DispatchQueue.main.async {
             NotificationCenter.default.post(self)
         }
