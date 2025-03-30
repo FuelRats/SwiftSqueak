@@ -38,7 +38,8 @@ class Translate: IRCBotModule {
         [.param("message", "Help is on the way!", .continuous)],
         category: .utility,
         description: "Translate a message to another language",
-        helpLocale: "fr"
+        helpLocale: "fr",
+        cooldown: .seconds(30)
     )
     var didReceiveTranslateCommand = { command in
         do {
@@ -56,7 +57,7 @@ class Translate: IRCBotModule {
         ["tcase", "tc"],
         [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous)],
         category: .utility,
-        description: "Translate a message to another language"
+        description: "Translates a message to the client's language and makes Mecha reply to them with the translated messages"
     )
     var didReceiveTranslateCaseCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -85,7 +86,8 @@ class Translate: IRCBotModule {
         category: .utility,
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
-        permission: .UserWriteOwn
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateSubscribeCommand = { command in
         guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")
@@ -116,7 +118,8 @@ class Translate: IRCBotModule {
         category: .utility,
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
-        permission: .UserWriteOwn
+        permission: .UserWriteOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateUnsubscribeCommand = { command in
         guard let user = command.message.user.associatedAPIData?.user else {
