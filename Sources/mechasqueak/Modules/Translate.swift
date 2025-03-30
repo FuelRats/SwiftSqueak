@@ -49,6 +49,7 @@ class Translate: IRCBotModule {
             command.message.error(key: "translate.locale", fromCommand: command, map: [
                 "locale": command.locale.identifier
             ])
+            return
         }
         do {
             if let translation = try await Translate.translate(
@@ -79,6 +80,7 @@ class Translate: IRCBotModule {
             command.message.error(key: "translate.locale", fromCommand: command, map: [
                 "locale": locale.identifier
             ])
+            return
         }
         let target = rescue.clientNick ?? rescue.client ?? ""
 
