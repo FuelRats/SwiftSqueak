@@ -154,8 +154,9 @@ class Translate: IRCBotModule {
             messages: [prompt, message], model: "gpt-4o", temperature: 0.2, maxTokens: nil)
         let result = try await OpenAI.request(params: request)
         let translation = result.choices.first?.message.content
-        if translation?.trimmingCharacters(in: .whitespacesAndNewlines).count == 0
-            || translation == "no translation"
+        let translationStripped = translation?.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: .punctuationCharacters).lowercased()
+        if translationStripped?.count == 0
+            || translationStripped == "no translation"
         {
             return nil
         }
