@@ -321,6 +321,7 @@
     "delpermit.norat": "Unable to remove permit as I could not determine your current CMDR",
     "delpermit.nopermit": "No permit by that name is currently added to your CMDR",
     "delpermit.removed": "Removed %{permit} Permit from CMDR %{name}",
+    "translate.locale": "%{locale} is not a valid locale identifier, consult https://llm-translate.com/Supported%20languages/gpt-4o/",
     "transsub.nouser": "I was unable to subscribe you to client translations as you do not appear to be logged in",
     "transsub.subtype": "%{type} is not a valid subscription type, use 'pm' to recieve private messages, use 'notice' to recieve notices",
     "transsub.subbed": "You have been subscribed to client translations",

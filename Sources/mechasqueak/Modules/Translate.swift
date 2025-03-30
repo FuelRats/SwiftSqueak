@@ -39,9 +39,17 @@ class Translate: IRCBotModule {
         category: .utility,
         description: "Translate a message to another language",
         helpLocale: "fr",
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        helpExtra: {
+            return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+        }
     )
     var didReceiveTranslateCommand = { command in
+        if command.locale.englishDescription == "unknown locale" {
+            command.message.error(key: "translate.locale", fromCommand: command, map: [
+                "locale": command.locale.identifier
+            ])
+        }
         do {
             if let translation = try await Translate.translate(
                 command.parameters[0], locale: command.locale)
@@ -67,6 +75,11 @@ class Translate: IRCBotModule {
         if command.locale.languageCode != "en" {
             locale = command.locale
         }
+        if locale.englishDescription == "unknown locale" {
+            command.message.error(key: "translate.locale", fromCommand: command, map: [
+                "locale": locale.identifier
+            ])
+        }
         let target = rescue.clientNick ?? rescue.client ?? ""
 
         do {
@@ -87,7 +100,10 @@ class Translate: IRCBotModule {
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
         permission: .UserWriteOwn,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        helpExtra: {
+            "Follow this guide to change how notices appear in HexChat https://hexchat.readthedocs.io/en/latest/tips.html#how-to-make-notices-show-up-in-a-consistent-location"
+        }
     )
     var didReceiveTranslateSubscribeCommand = { command in
         guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")
