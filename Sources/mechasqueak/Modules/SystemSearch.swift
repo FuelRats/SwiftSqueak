@@ -192,7 +192,7 @@ class SystemSearch: IRCBotModule {
     
     @BotCommand(
         ["station", "stations"],
-        [.param("reference system / case id / client name", "Sagittarius A*", .continuous), .options(["p", "l"])],
+        [.param("reference system / case id / client name", "Sagittarius A*", .continuous), .options(["p",  "l"]), .argument("legacy")],
         category: .utility,
         description: "Get the nearest station to a system, use a system name, case ID, or client name",
         cooldown: .seconds(30)
@@ -201,6 +201,7 @@ class SystemSearch: IRCBotModule {
         var systemName = command.param1!
         let requireLargePad = command.options.contains("l")
         let requireSpace = !(command.options.contains("p"))
+        let legacyStations = command.arguments["legacy"] != nil
         
         if let (_, rescue) = await board.findRescue(withCaseIdentifier: systemName, includingRecentlyClosed: true) {
             systemName = rescue.system?.name ?? ""
@@ -225,24 +226,17 @@ class SystemSearch: IRCBotModule {
                 forSystem: systemName,
                 limit: 10,
                 requireLargePad: requireLargePad,
-                requireSpace: requireSpace
+                requireSpace: requireSpace,
+                legacyStations: legacyStations
             )
             
             if stationResult == nil {
                 stationResult = try await SystemsAPI.getNearestPreferableStation(
                     forSystem: systemName,
-                    limit: 30,
+                    limit: 1000,
                     requireLargePad: requireLargePad,
-                    requireSpace: requireSpace
-                )
-            }
-            
-            if stationResult == nil {
-                stationResult = try await SystemsAPI.getNearestPreferableStation(
-                    forSystem: systemName,
-                    limit: 100,
-                    requireLargePad: requireLargePad,
-                    requireSpace: requireSpace
+                    requireSpace: requireSpace,
+                    legacyStations: legacyStations
                 )
             }
             

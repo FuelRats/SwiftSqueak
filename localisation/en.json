@@ -394,6 +394,7 @@
     "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
     "help.command.station.l": "Require the station to have a size L (large) landing pad",
     "help.command.station.p": "Include planetary outposts in results",
+    "help.command.station.legacy": "Do not include stations created after the player colonization update",
     "help.command.quiet.pc": "Show the last time there was a case on PC (Horizons)",
     "help.command.quiet.xb": "Show the last time there was a case on Xbox",
     "help.command.quiet.ps": "Show the last time there was a case on PS4/PS5",
