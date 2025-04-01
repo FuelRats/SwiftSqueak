@@ -66,7 +66,8 @@ class Translate: IRCBotModule {
         ["tcase", "tc"],
         [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous)],
         category: .utility,
-        description: "Translates a message to the client's language and makes Mecha reply to them with the translated messages"
+        description: "Translates a message to the client's language and replies to the client in the rescue channel as you",
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateCaseCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -88,7 +89,65 @@ class Translate: IRCBotModule {
             if let translation = try await Translate.translate(
                 command.parameters[1], locale: locale)
             {
-                command.message.destination.send(message: "\(target): \(translation)")
+                let destination = rescue.channel ?? mecha.rescueChannel
+                command.message.client.send("MSGAS", parameters: [
+                    command.message.raw.sender?.nickname ?? "",
+                    destination?.name ?? "",
+                    "\(target): \(translation)"
+                ])
+            }
+        } catch {
+            command.error(error)
+        }
+    }
+    
+    @BotCommand(
+        ["translateme", "tme"],
+        [.param("channel", "#fuelrats"), .param("language code", "fr"), .param("message", "Help is on the way!", .continuous)],
+        category: .utility,
+        description: "Translate a message to another language and sends the message to a channel as you",
+        allowedDestinations: .PrivateMessage,
+        cooldown: .seconds(30),
+        helpExtra: {
+            return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+        }
+    )
+    var didReceiveTranslateMeCommand = { command in
+        var channelName = command.parameters[0]
+        var locale = Locale(identifier: command.parameters[1])
+        var message = command.parameters[2]
+        
+        guard let channel = command.message.client.channels.first(where: {
+            return $0.name.lowercased() == channelName.lowercased()
+        }) else {
+            command.message.error(key: "translate.destination", fromCommand: command, map: [
+                "channel": channelName,
+            ])
+            return
+        }
+        guard channel.member(fromSender: command.message.raw.sender!) != nil else {
+            command.message.error(key: "translate.destination", fromCommand: command, map: [
+                "channel": channelName,
+            ])
+            return
+        }
+        
+        if locale.englishDescription == "unknown locale" {
+            command.message.error(key: "translate.locale", fromCommand: command, map: [
+                "locale": locale.identifier
+            ])
+            return
+        }
+        
+        do {
+            if let translation = try await Translate.translate(
+                message, locale: locale)
+            {
+                command.message.client.send("MSGAS", parameters: [
+                    command.message.raw.sender?.nickname ?? "",
+                    channel.name,
+                    translation
+                ])
             }
         } catch {
             command.error(error)
@@ -200,7 +259,11 @@ class Translate: IRCBotModule {
             for (subscriber, subType) in Translate.clientTranslationSubscribers {
                 switch subType {
                 case .Notice:
-                    channelMessage.client.sendNotice(toTarget: subscriber, contents: contents)
+                    channelMessage.client.send("CNOTICE", parameters: [
+                        subscriber,
+                        channelMessage.destination.name,
+                        contents
+                    ])
 
                 case .PrivateMessage:
                     channelMessage.client.sendMessage(toTarget: subscriber, contents: contents)
