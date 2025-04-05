@@ -549,7 +549,7 @@ class SystemsAPI {
             {
                 let stations = self.stations.filter {
                     (requireLargePad == false || $0.hasLargePad)
-                    && (legacyStations == false || $0.type?.isPlayerStation == true)
+                    && (legacyStations == false || $0.type?.isPlayerStation == false)
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
                 }
