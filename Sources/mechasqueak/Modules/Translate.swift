@@ -70,7 +70,13 @@ class Translate: IRCBotModule {
         allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateCaseCommand = { command in
-        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await board.findRescue(
+            withCaseIdentifier: command.parameters[0], includingRecentlyClosed: true) else {
+            command.message.error(
+                key: "board.casenotfound", fromCommand: command,
+                map: [
+                    "caseIdentifier": command.parameters[0]
+            ])
             return
         }
         var locale = rescue.clientLanguage ?? command.locale
@@ -246,11 +252,11 @@ class Translate: IRCBotModule {
             // Do not interpret commands from playback of old messages
             return
         }
-        guard let rescue = await board.findRescue(withCaseIdentifier: channelMessage.user.nickname)
-        else {
+        guard let (caseId, rescue) = await board.findRescue(
+            withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true) else {
             return
         }
-        guard rescue.1.clientLanguage?.languageCode != "en" else {
+        guard rescue.clientLanguage?.languageCode != "en" else {
             return
         }
 
