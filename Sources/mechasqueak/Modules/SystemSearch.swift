@@ -238,12 +238,15 @@ class SystemSearch: IRCBotModule {
         var systemName = command.param1!
         let requireLargePad = command.options.contains("l")
         let requireSpace = !(command.options.contains("p"))
-        let legacyStations = command.arguments["legacy"] != nil
+        var legacyStations = command.arguments["legacy"] != nil
 
         if let (_, rescue) = await board.findRescue(
             withCaseIdentifier: systemName, includingRecentlyClosed: true)
         {
             systemName = rescue.system?.name ?? ""
+            if rescue.platform == .Xbox || rescue.platform == .PS {
+                legacyStations = true
+            }
         }
 
         var proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
