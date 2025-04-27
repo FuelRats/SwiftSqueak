@@ -166,7 +166,7 @@ class MessageScanner: IRCBotModule {
             let containsCarrierPhrase = carrierPhrases.contains(where: {
                 channelMessage.message.lowercased().contains($0)
             })
-            let boardSynced = board.isSynced
+            let boardSynced = await board.isSynced
 
             if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user
             {
@@ -273,7 +273,7 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        let mentionedRescues = board.findMentionedCasesIn(message: channelMessage)
+        let mentionedRescues = await board.findMentionedCasesIn(message: channelMessage)
         for (caseId, rescue) in mentionedRescues {
             let rescueChannel = rescue.channel
             guard

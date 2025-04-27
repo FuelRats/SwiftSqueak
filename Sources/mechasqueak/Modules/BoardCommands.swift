@@ -159,7 +159,7 @@ class BoardCommands: IRCBotModule {
             filterExpansion = parsedExpansion
         }
 
-        let rescues = board.rescues.filter({ (caseId, rescue) in
+        let rescues = await board.rescues.filter({ (caseId, rescue) in
             if filteredPlatforms.count > 0
                 && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false
             {
@@ -534,11 +534,11 @@ class BoardCommands: IRCBotModule {
             }
 
             lastSignalDate =
-                board.lastSignalsReceived[
+            await board.lastSignalsReceived[
                     PlatformExpansion(platform: commandPlatform, expansion: expansion)]
             platform = commandPlatform
         } else {
-            lastSignalDate = board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
+            lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
         }
         var ircPlatform = platform != nil ? platform.ircRepresentable : ""
         if platform == .PC {
@@ -555,7 +555,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard
-            board.rescues.first(where: { (caseId, rescue) -> Bool in
+            await board.rescues.first(where: { (caseId, rescue) -> Bool in
                 return rescue.status != .Inactive
                     && (platform == nil
                         || (rescue.platform == platform && rescue.expansion == expansion))
@@ -572,7 +572,7 @@ class BoardCommands: IRCBotModule {
         }
 
         guard
-            board.rescues.first(where: { rescue in
+            await board.rescues.first(where: { rescue in
                 return rescue.1.status != .Inactive
                     && (platform == nil
                         || (rescue.1.platform == platform && rescue.1.expansion == expansion))

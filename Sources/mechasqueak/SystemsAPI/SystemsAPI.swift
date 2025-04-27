@@ -55,7 +55,7 @@ class SystemsAPI {
         let request = try HTTPClient.Request(
             systemApiPath: "/mecha", method: .GET, query: queryItems)
 
-        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(10) : .seconds(180))
+        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(15) : .seconds(180))
         return try await httpClient.execute(
             request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
@@ -525,12 +525,20 @@ class SystemsAPI {
             -> [PopulatedSystem]
         {
             return self.data.filter({
+                hasPermit(system: $0) == false &&
                 $0.allegiance != .Thargoid
                     && $0.preferableStations(
                         requireLargePad: requireLargePad, requireSpace: requireSpace,
                         legacyStations: legacyStations
                     ).isEmpty == false
             })
+        }
+        
+        func hasPermit(system: PopulatedSystem) -> Bool {
+            for sys in self.meta.permSystems {
+                debug("\(sys.id64)")
+            }
+            return self.meta.permSystems.contains(where: { $0.id64 == system.id64 }) ?? false
         }
 
         struct PopulatedSystem: Codable {
@@ -799,8 +807,20 @@ class SystemsAPI {
         }
 
         struct Meta: Codable {
+            enum CodingKeys: String, CodingKey {
+                case name = "name"
+                case type = "type"
+                case permSystems = "perm_systems"
+            }
+            
             let name: String?
             let type: String?
+            let permSystems: [PermitSystem]
+            
+            struct PermitSystem: Codable {
+                let id64: Int64
+                let name: String?
+            }
         }
     }
 }

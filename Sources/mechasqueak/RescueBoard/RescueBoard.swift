@@ -1048,7 +1048,7 @@ actor RescueBoard {
         }
 
         if remoteRescue.attributes.status.value == .Closed {
-            if let (caseId, rescue) = board.rescues.first(where: {
+            if let (caseId, rescue) = await board.rescues.first(where: {
                 $0.1.id == remoteRescue.id.rawValue
             }) {
                 await board.remove(id: caseId)
@@ -1080,7 +1080,7 @@ actor RescueBoard {
             return
         }
 
-        if let (caseId, rescue) = board.rescues.first(where: { $0.1.id == rescueId }) {
+        if let (caseId, rescue) = await board.rescues.first(where: { $0.1.id == rescueId }) {
             await board.remove(id: caseId)
             mecha.reportingChannel?.send(
                 key: "board.remotedeletion",

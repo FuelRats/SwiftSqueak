@@ -415,7 +415,7 @@ class AccountCommands: IRCBotModule {
                     "expansion": expansion.englishDescription,
                 ])
 
-            for rescue in board.rescues {
+            for rescue in await board.rescues {
                 if let jumpCall = rescue.value.jumpCalls.first(where: {
                     $0.0 == currentRat && rescue.value.expansion == expansion
                 }) {

@@ -72,7 +72,7 @@ class GeneralCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var needsRatsCommand = { command in
-        let needsRats = board.rescues.filter({ (_, rescue) in
+        let needsRats = await board.rescues.filter({ (_, rescue) in
             guard rescue.system != nil && rescue.status == .Open else {
                 return false
             }

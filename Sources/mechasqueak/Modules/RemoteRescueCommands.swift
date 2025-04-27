@@ -130,7 +130,7 @@ class RemoteRescueCommands: IRCBotModule {
         var successDeletes: [UUID] = []
         var failedDeletes: [UUID] = []
         for id in ids {
-            if let (boardId, boardRescue) = board.rescues.first(where: { $0.value.id == id }) {
+            if let (boardId, boardRescue) = await board.rescues.first(where: { $0.value.id == id }) {
                 command.message.reply(
                     key: "rescue.delete.active", fromCommand: command,
                     map: [
@@ -465,7 +465,7 @@ class RemoteRescueCommands: IRCBotModule {
         var rescue: Rescue? = nil
         var caseId = 0
         if let id = UUID(uuidString: command.parameters[0]) {
-            if let (existingId, existingRescue) = board.rescues.first(where: {
+            if let (existingId, existingRescue) = await board.rescues.first(where: {
                 $0.value.id == id
             }) {
                 command.message.error(
@@ -554,7 +554,7 @@ class RemoteRescueCommands: IRCBotModule {
     )
     var didReceiveUncloseCommand = { command in
         guard let caseNumber = Int(command.parameters[0]),
-            let closedRescue = board.recentlyClosed[caseNumber]
+            let closedRescue = await board.recentlyClosed[caseNumber]
         else {
             command.message.error(
                 key: "board.casenotfound", fromCommand: command,
@@ -564,7 +564,7 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        if let existingRescue = board.rescues.first(where: {
+        if let existingRescue = await board.rescues.first(where: {
             $0.value.id == closedRescue.id
         }) {
             command.message.error(
@@ -577,7 +577,7 @@ class RemoteRescueCommands: IRCBotModule {
         }
 
         guard configuration.general.drillMode == false else {
-            guard let rescue = board.recentlyClosed[caseNumber] else {
+            guard let rescue = await board.recentlyClosed[caseNumber] else {
                 command.message.error(
                     key: "rescue.reopen.error", fromCommand: command,
                     map: [
