@@ -121,14 +121,16 @@ extension Double {
         return result
     }
 
-    func distanceToSeconds(destinationGravity: Bool = false) -> Double {
+    func distanceToSeconds(destinationGravity: Bool = false, sco: Double? = nil) -> Double {
         var distance = self
         if destinationGravity {
             distance = distance / 2
         }
 
         var seconds = 0.0
-        if distance < 100000 {
+        if let sco = sco {
+           seconds = timeToTravel(lightSeconds: distance, maxSpeed: sco) ?? 0
+        } else if distance < 100000 {
             seconds = 8.9034 * pow(distance, 0.3292)
         } else if distance < 1_907_087 {
             // -8*(10 ** -23) * (x ** 4) + 4*(10 ** -16) * (x ** 3) - 8*(10 ** -10) * (x ** 2) + 0.0014 * x + 264.79
@@ -149,38 +151,52 @@ extension Double {
         }
         return seconds
     }
+}
 
-    func distanceToSecondsOld(destinationGravity: Bool = false) -> Double {
-        var distance = self
-        if destinationGravity {
-            distance = distance / 2
-        }
+import Foundation
 
-        var seconds = 0.0
-        if distance < 448865 {
-            seconds = 4.4708 * pow(distance, 0.3899)
-        } else if distance > 4_300_000 {
-            seconds = (distance - 5100000.0) / 2001 + 3420
-        } else {
-            /*
-                Thank you to RadLock for creating the original equation.
-             */
-            let part1 = 33.7 + 1.87 * pow(10 as Double, -3) * Double(distance)
-            let part2 = -8.86 * pow(10 as Double, -10) * pow(Double(distance), 2)
-            let part3 = 2.37 * pow(10 as Double, -16) * pow(Double(distance), 3)
-            let part4 = -2.21 * pow(10 as Double, -23) * pow(Double(distance), 4)
-            seconds = part1 + part2 + part3 + part4
-        }
+// Logistic curve parameters (fitted to Elite Dangerous supercruise data)
+let accelerationRate = 0.244343173        // Controls curve steepness
+let accelerationMidpoint = 24.3043969     // Time at which acceleration is half max
+let verticalOffset = -90.9763924          // Y-axis shift
 
-        if seconds < 0 {
-            return 0
-        }
+// Speed function returns speed in light-seconds per second
+func supercruiseSpeed(at time: Double, maxSpeed: Double) -> Double {
+    return maxSpeed / (1.0 + exp(-accelerationRate * (time - accelerationMidpoint))) + verticalOffset
+}
 
-        if destinationGravity {
-            seconds = seconds * 2
-        }
-        return seconds
+// Numerically integrate speed to get distance in light-seconds
+func distanceTravelled(upTo time: Double, steps: Int = 1000, maxSpeed: Double) -> Double {
+    let dt = time / Double(steps)
+    var distance = 0.0
+
+    for i in 0..<steps {
+        let t1 = Double(i) * dt
+        let t2 = Double(i + 1) * dt
+        let v1 = supercruiseSpeed(at: t1, maxSpeed: maxSpeed)
+        let v2 = supercruiseSpeed(at: t2, maxSpeed: maxSpeed)
+        distance += 0.5 * (v1 + v2) * dt
     }
+
+    return distance  // Already in light-seconds
+}
+
+// Find time (in seconds) to travel given distance (in light-seconds)
+func timeToTravel(lightSeconds targetDistance: Double, tolerance: Double = 1e-6, maxSearchTime: Double = 400_000, maxSpeed: Double) -> Double? {
+    var low = 0.0
+    var high = maxSearchTime
+
+    while high - low > tolerance {
+        let mid = (low + high) / 2.0
+        let d = distanceTravelled(upTo: mid, maxSpeed: maxSpeed)
+        if d < targetDistance {
+            low = mid
+        } else {
+            high = mid
+        }
+    }
+
+    return (low + high) / 2.0
 }
 
 enum TimeUnit: Double {

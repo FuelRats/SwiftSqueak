@@ -50,6 +50,7 @@
     "sctime.unknownunit": "How the heck am I supposed to know what \"%{unit}\" means? Use a real unit",
     "sctime.uniterror": "Unable to understand the distance unit provided to the command.",
     "sctime.response": "The estimated super cruise travel time for %{distance} is %{time} (%{timeGravity} if in a gravity well). Stipulations: https://t.fuelr.at/sctimes",
+    "sctime.sco": "Calculate using supercruise overcharge boost, provide the maximum cruise speed you are able to maintain, this command assumes you are using a ship like the Mandalay that can maintain its SCO top speed without overheating",
     "board.xboxprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's Xbox Live privacy settings may prevent them from joining a team https://t.fuelr.at/xbtrouble (#%{caseId}, %{client})",
     "board.psnprivacy": "\u0002\u000304WARNING:\u0003\u0002 This client's PSN privacy settings may prevent them from joining a team https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",
     "board.psplusmissing": "\u0002\u000304WARNING:\u0003\u0002 This client does not have PS+ on their account and may not be able to join open play https://t.fuelr.at/pstrouble (#%{caseId}, %{client})",

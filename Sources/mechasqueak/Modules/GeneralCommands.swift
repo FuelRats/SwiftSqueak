@@ -146,7 +146,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["sctime", "sccalc", "traveltime"],
-        [.param("distance", "2500ls", .continuous)],
+        [.param("distance", "2500ls", .continuous), .argument("sco", "max speed", example: "7000")],
         category: .utility,
         description: "Calculate supercruise travel time.",
         permission: nil,
@@ -179,6 +179,14 @@ class GeneralCommands: IRCBotModule {
                     "unit": unit.trimmingCharacters(in: .whitespaces)
                 ])
             return
+        }
+        
+        var sco: Double? = nil
+        if let scoStr = command.arguments["sco"] ?? "" {
+            guard let speed = Double(scoStr) else {
+                return
+            }
+            sco = speed
         }
         distanceString.removeLast(unit.key.count)
         var factor = unit.value
@@ -214,8 +222,8 @@ class GeneralCommands: IRCBotModule {
         distance = distance * factor
         let displayDistance = distance
 
-        var seconds = distance.distanceToSeconds(destinationGravity: false)
-        var secondsGravity = distance.distanceToSeconds(destinationGravity: true)
+        var seconds = distance.distanceToSeconds(destinationGravity: false, sco: sco)
+        var secondsGravity = distance.distanceToSeconds(destinationGravity: true, sco: sco)
 
         command.message.reply(
             key: "sctime.response", fromCommand: command,
