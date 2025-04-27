@@ -698,6 +698,7 @@ class SystemsAPI {
                         "SpaceConstructionDepot": "Space Construction Depot",
                         "PlanetaryConstructionDepot": "Planetary Construction Depot",
                         "AsteroidBase": "Asteroid base",
+                        "OnFootSettlement": "Odyssey Settlement",
                     ]
 
                     init(from decoder: Decoder) throws {
