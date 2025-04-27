@@ -182,8 +182,8 @@ class GeneralCommands: IRCBotModule {
         }
         
         var sco: Double? = nil
-        if let scoStr = command.arguments["sco"] ?? "" {
-            guard let speed = Double(scoStr) else {
+        if let scoStr = command.arguments["sco"] {
+            guard let speed = Double(scoStr ?? "") else {
                 return
             }
             sco = speed
