@@ -535,10 +535,11 @@ class SystemsAPI {
         }
         
         func hasPermit(system: PopulatedSystem) -> Bool {
-            for sys in self.meta.permSystems {
+            let permSystems =  self.meta.permSystems ?? []
+            for sys in permSystems {
                 debug("\(sys.id64)")
             }
-            return self.meta.permSystems.contains(where: { $0.id64 == system.id64 }) ?? false
+            return permSystems.contains(where: { $0.id64 == system.id64 })
         }
 
         struct PopulatedSystem: Codable {
@@ -811,12 +812,12 @@ class SystemsAPI {
             enum CodingKeys: String, CodingKey {
                 case name = "name"
                 case type = "type"
-                case permSystems = "perm_systems"
+                case permSystems = "permSystems"
             }
             
             let name: String?
             let type: String?
-            let permSystems: [PermitSystem]
+            let permSystems: [PermitSystem]?
             
             struct PermitSystem: Codable {
                 let id64: Int64

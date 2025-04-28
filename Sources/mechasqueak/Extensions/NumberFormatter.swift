@@ -178,7 +178,7 @@ func distanceTravelled(upTo time: Double, steps: Int = 1000, maxSpeed: Double) -
         distance += 0.5 * (v1 + v2) * dt
     }
 
-    return distance  // Already in light-seconds
+    return distance
 }
 
 // Find time (in seconds) to travel given distance (in light-seconds)
