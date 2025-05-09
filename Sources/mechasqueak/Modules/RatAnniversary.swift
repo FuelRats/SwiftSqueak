@@ -28,6 +28,7 @@ import IRCKit
 class RatAnniversary: IRCBotModule {
     var name: String = "Rat Anniversary"
     static var birthdayAnnounced = Set<UUID>()
+    static var fuelRatsAnniversaryAnnounced = false
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -42,6 +43,18 @@ class RatAnniversary: IRCBotModule {
             // Do not interpret commands from playback of old messages or in secret channels
             return
         }
+        
+        let todayComponents = Calendar.current.dateComponents(
+            [.day, .month, .year, .hour], from: Date()
+        )
+        if todayComponents.month == 7 && todayComponents.day == 2 && fuelRatsAnniversaryAnnounced == false {
+            mecha.reportingChannel?.send(
+                key: "fuelratsanniversary",
+                map: [
+                    "years": todayComponents.year ?? 0 - 2017,
+            ])
+        }
+        
 
         if let apiData = channelMessage.user.associatedAPIData,
             let apiUser = apiData.user,
@@ -52,8 +65,6 @@ class RatAnniversary: IRCBotModule {
             }
             let joinComponents = Calendar.current.dateComponents(
                 [.day, .month, .year], from: joinDate)
-            let todayComponents = Calendar.current.dateComponents(
-                [.day, .month, .year, .hour], from: Date())
             guard todayComponents.hour! > 4 else {
                 return
             }

@@ -301,6 +301,7 @@
     "flush.nouser": "Cleared local cache for %{name} but I was unable to fetch a new copy as no online user for them could be found.",
     "flush.response": "Cleared local cache for %{name} and fetching new copy..",
     "birthday": "\u0002Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈\u0002",
+    "fuelratsanniversary": "\u0002Alert: Today is the %{years} year anniversary of the Fuel Rats Mischief! 🎆🥳💥\u0002",
     "birthday.toby": "\u0002Alert: Today is %{name}'s %{years} year rat anniversary! 🎂🎉🎈I hereby declare today no bulli Toby day\u0002",
     "needsrats.none": "There does not appear to be any cases that require rats to call jumps right now.",
     "needsrats.case": "Case \u0002#%{caseId}\u0002 (%{client}) in %{systemInfo} (%{platform})",
