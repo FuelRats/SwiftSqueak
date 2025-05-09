@@ -39,15 +39,6 @@ class HelpCommands: IRCBotModule {
         description: "View help for MechaSqueak."
     )
     var didReceiveHelpCommand = { command in
-        if command.message.destination.isPrivateMessage == false
-            && configuration.general.drillMode == false
-        {
-            command.message.reply(
-                key: "command.replyprivate", fromCommand: command,
-                map: [
-                    "nick": command.message.user.nickname
-                ])
-        }
         let message = command.message
         guard command.parameters.count > 0 else {
             message.replyPrivate(key: "help.howto", fromCommand: command)
@@ -138,14 +129,32 @@ class HelpCommands: IRCBotModule {
             return
         }
 
-        let commandText = String(command.parameters[0].dropFirst()).lowercased()
+        var lexer = Lexer(body: command.parameters.joined(separator: " "))
+        var tokens = (try? lexer.lex()) ?? []
+        tokens = tokens.filter({
+            if case .Delimiter = $0 {
+                return false
+            }
+            return true
+        })
+
+        guard tokens.count > 0, case let .Command(commandToken) = tokens[0] else {
+            message.error(
+                key: "help.categoryerror", fromCommand: command,
+                map: [
+                    "category": command.parameters[0]
+                ])
+            return
+        }
+        let commandText = commandToken.identifier
+        let languageCode = commandToken.languageCode
         guard
             let helpCommand = MechaSqueak.commands.first(where: {
                 $0.commands.contains(commandText)
             })
         else {
             if let fact = try? await Fact.get(
-                name: commandText, forLocale: Locale(identifier: "en"))
+                name: commandText, forLocale: Locale(identifier: languageCode ?? "en"))
             {
                 command.message.replyPrivate(
                     key: "anyfact.info", fromCommand: command,
