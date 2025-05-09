@@ -41,15 +41,6 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .DispatchRead
     )
     var didReceiveRecentlyClosedCommand = { command in
-        if command.message.destination.isPrivateMessage == false
-            && configuration.general.drillMode == false
-        {
-            command.message.reply(
-                key: "command.replyprivate", fromCommand: command,
-                map: [
-                    "nick": command.message.user.nickname
-                ])
-        }
         var closeCount = 3
         if command.parameters.count > 0 {
             guard let count = Int(command.parameters[0]) else {
@@ -328,15 +319,6 @@ class RemoteRescueCommands: IRCBotModule {
         allowedDestinations: .PrivateMessage
     )
     var didReceiveUnfiledListCommand = { command in
-        if command.message.destination.isPrivateMessage == false
-            && configuration.general.drillMode == false
-        {
-            command.message.reply(
-                key: "command.replyprivate", fromCommand: command,
-                map: [
-                    "nick": command.message.user.nickname
-                ])
-        }
         do {
             let results = try await FuelRatsAPI.getUnfiledRescues()
 
@@ -402,15 +384,6 @@ class RemoteRescueCommands: IRCBotModule {
                 return
             }
 
-            if command.message.destination.isPrivateMessage == false
-                && configuration.general.drillMode == false
-            {
-                command.message.reply(
-                    key: "command.replyprivate", fromCommand: command,
-                    map: [
-                        "nick": command.message.user.nickname
-                    ])
-            }
 
             command.message.replyPrivate(
                 key: "rescue.quoteid.title", fromCommand: command,
@@ -657,15 +630,6 @@ class RemoteRescueCommands: IRCBotModule {
             }
 
             if command.has(argument: "all") {
-                if command.message.destination.isPrivateMessage == false
-                    && configuration.general.drillMode == false
-                {
-                    command.message.reply(
-                        key: "command.replyprivate", fromCommand: command,
-                        map: [
-                            "nick": command.message.user.nickname
-                        ])
-                }
                 command.message.replyPrivate(
                     key: "rescue.clientpw.heading", fromCommand: command,
                     map: [

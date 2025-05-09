@@ -45,9 +45,6 @@ extension IRCPrivateMessage {
             self.reply(message: message)
             return
         }
-        if self.user.settings?.preferredPrivateMethod == .Notice {
-            self.client.sendNotice(toTarget: self.user.nickname, contents: message)
-        }
         var tags: [String: String?] = [:]
         if let msgid = self.raw.messageTags["msgid"] {
             tags["+draft/reply"] = msgid
@@ -55,8 +52,11 @@ extension IRCPrivateMessage {
         if self.destination.isPrivateMessage == false {
             tags["+draft/channel-context"] = self.destination.name
         }
-        self.client.sendMessage(
-            toTarget: self.user.nickname, contents: message, additionalTags: tags)
+        self.client.send("CNOTICE", parameters: [
+            self.user.nickname,
+            self.destination.name,
+            message
+        ], tags: tags)
     }
 
     func replyPrivate(key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {

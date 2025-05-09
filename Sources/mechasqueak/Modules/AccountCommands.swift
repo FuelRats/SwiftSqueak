@@ -235,15 +235,6 @@ class AccountCommands: IRCBotModule {
         permission: .UserWriteOwn
     )
     var didReceiveListPermitCommand = { command in
-        if command.message.destination.isPrivateMessage == false
-            && configuration.general.drillMode == false
-        {
-            command.message.reply(
-                key: "command.replyprivate", fromCommand: command,
-                map: [
-                    "nick": command.message.user.nickname
-                ])
-        }
         guard let currentRat = command.message.user.currentRat else {
             command.message.replyPrivate(key: "permits.norat", fromCommand: command)
             return
