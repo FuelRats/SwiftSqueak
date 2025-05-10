@@ -114,9 +114,9 @@ class BoardQuoteCommands: IRCBotModule {
             return
         }
 
-        let clientNick = isClient ? rescue.clientNick ?? clientParam : clientParam
+        var clientNick = isClient ? rescue.clientNick ?? clientParam : clientParam
         if command.parameters.count > 1 {
-            rescue.clientNick = command.parameters[1]
+            clientNick = command.parameters[1]
         }
 
         guard let clientUser = message.destination.member(named: clientNick) else {
