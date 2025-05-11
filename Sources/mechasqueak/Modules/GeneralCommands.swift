@@ -37,8 +37,8 @@ class GeneralCommands: IRCBotModule {
         "banana": 5.9 * pow(10, -10),
         "bananas": 5.9 * pow(10, -10),
         "smoot": 5.67 * pow(10, -9),
-        "smoots":  5.67 * pow(10, -9),
-        "snickers": 6.471 * pow(10, -10)
+        "smoots": 5.67 * pow(10, -9),
+        "snickers": 6.471 * pow(10, -10),
     ]
 
     static let SIprefixes: [String: Double] = [
@@ -56,14 +56,13 @@ class GeneralCommands: IRCBotModule {
         "P": pow(10, 15),
         "E": pow(10, 18),
         "Z": pow(10, 21),
-        "Y": pow(10, 24)
+        "Y": pow(10, 24),
     ]
     var name: String = "GeneralCommands"
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }
-
 
     @BotCommand(
         ["needsrats", "needrats", "nr"],
@@ -78,9 +77,11 @@ class GeneralCommands: IRCBotModule {
                 return false
             }
             if rescue.codeRed {
-                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls.count < 1
+                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 1
+                    && rescue.jumpCalls.count < 1
             }
-            return rescue.rats.count < 1 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls.count < 1
+            return rescue.rats.count < 1 && rescue.unidentifiedRats.count < 1
+                && rescue.jumpCalls.count < 1
         })
 
         guard needsRats.count > 0 else {
@@ -95,17 +96,21 @@ class GeneralCommands: IRCBotModule {
                 format += "cr"
             }
 
-            return lingo.localize(format, locale: "en-GB", interpolations: [
-                "caseId": caseId,
-                "client": rescue.client ?? "?",
-                "platform": rescue.platformExpansion,
-                "systemInfo": rescue.system.description
-            ])
+            return lingo.localize(
+                format, locale: "en-GB",
+                interpolations: [
+                    "caseId": caseId,
+                    "client": rescue.client ?? "?",
+                    "platform": rescue.platformExpansion,
+                    "systemInfo": rescue.system.description,
+                ])
         })
 
-        command.message.reply(key: "needsrats.message", fromCommand: command, map: [
-            "cases": formattedCases.joined(separator: ", ")
-        ])
+        command.message.reply(
+            key: "needsrats.message", fromCommand: command,
+            map: [
+                "cases": formattedCases.joined(separator: ", ")
+            ])
     }
 
     @BotCommand(
@@ -118,7 +123,7 @@ class GeneralCommands: IRCBotModule {
     var didReceiveSystemStatisticsCommand = { command in
         do {
             let results = try await SystemsAPI.getStatistics()
-            
+
             let result = results.data[0]
             guard let date = Double(result.id) else {
                 return
@@ -126,12 +131,14 @@ class GeneralCommands: IRCBotModule {
 
             let numberFormatter = NumberFormatter.englishFormatter()
 
-            command.message.reply(key: "sysstats.message", fromCommand: command, map: [
-                "date": Date(timeIntervalSince1970: date).timeAgo(maximumUnits: 1),
-                "systems": numberFormatter.string(from: result.attributes.syscount)!,
-                "stars": numberFormatter.string(from: result.attributes.starcount)!,
-                "bodies": numberFormatter.string(from: result.attributes.bodycount)!
-            ])
+            command.message.reply(
+                key: "sysstats.message", fromCommand: command,
+                map: [
+                    "date": Date(timeIntervalSince1970: date).timeAgo(maximumUnits: 1),
+                    "systems": numberFormatter.string(from: result.attributes.syscount)!,
+                    "stars": numberFormatter.string(from: result.attributes.starcount)!,
+                    "bodies": numberFormatter.string(from: result.attributes.bodycount)!,
+                ])
         } catch {
             command.message.error(key: "sysstats.error", fromCommand: command)
         }
@@ -139,7 +146,7 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["sctime", "sccalc", "traveltime"],
-        [.options(["g"]), .param("distance", "2500ls", .continuous)],
+        [.param("distance", "2500ls", .continuous), .argument("sco", "max speed", example: "7000")],
         category: .utility,
         description: "Calculate supercruise travel time.",
         permission: nil,
@@ -147,13 +154,17 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveTravelTimeCommand = { command in
         var params = command.parameters
-        var destinationGravity = command.options.contains("g")
 
         var distanceString = params.joined(separator: " ").trimmingCharacters(in: .whitespaces)
-        guard let unit = factors.first(where: {
-            distanceString.lowercased().hasSuffix($0.key)
-        }) else {
-            guard var unit = distanceString.components(separatedBy: CharacterSet.letters.inverted).last, unit.count > 0 else {
+        guard
+            let unit = factors.first(where: {
+                distanceString.lowercased().hasSuffix($0.key)
+            })
+        else {
+            guard
+                var unit = distanceString.components(separatedBy: CharacterSet.letters.inverted)
+                    .last, unit.count > 0
+            else {
                 command.message.reply(key: "sctime.uniterror", fromCommand: command)
                 return
             }
@@ -162,10 +173,20 @@ class GeneralCommands: IRCBotModule {
                 unit.removeLast()
             }
 
-            command.message.reply(key: "sctime.unknownunit", fromCommand: command, map: [
-                "unit": unit.trimmingCharacters(in: .whitespaces)
-            ])
+            command.message.reply(
+                key: "sctime.unknownunit", fromCommand: command,
+                map: [
+                    "unit": unit.trimmingCharacters(in: .whitespaces)
+                ])
             return
+        }
+        
+        var sco: Double? = nil
+        if let scoStr = command.arguments["sco"] {
+            guard let speed = Double(scoStr ?? "") else {
+                return
+            }
+            sco = speed
         }
         distanceString.removeLast(unit.key.count)
         var factor = unit.value
@@ -177,20 +198,23 @@ class GeneralCommands: IRCBotModule {
             }
         }
 
-        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".,")).inverted
+        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".,"))
+            .inverted
 
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
-        
+
         let numberParser = NumberFormatter()
         numberParser.locale = Locale(identifier: "en-GB")
         numberParser.numberStyle = .decimal
-        
+
         if distanceString.contains(",") && distanceString.contains(".") == false {
             numberParser.decimalSeparator = ","
         }
-        
-        guard var number = numberParser.number(from: distanceString), var distance = Double(exactly: number) else {
+
+        guard var number = numberParser.number(from: distanceString),
+            var distance = Double(exactly: number)
+        else {
             command.message.reply(key: "sctime.error", fromCommand: command)
             return
         }
@@ -198,12 +222,16 @@ class GeneralCommands: IRCBotModule {
         distance = distance * factor
         let displayDistance = distance
 
-        var seconds = distance.distanceToSeconds(destinationGravity: destinationGravity)
+        var seconds = distance.distanceToSeconds(destinationGravity: false, sco: sco)
+        var secondsGravity = distance.distanceToSeconds(destinationGravity: true, sco: sco)
 
-        command.message.reply(key: "sctime.response", fromCommand: command, map: [
-            "distance": displayDistance.eliteDistance,
-            "time": seconds.timeSpan(maximumUnits: 2)
-        ])
+        command.message.reply(
+            key: "sctime.response", fromCommand: command,
+            map: [
+                "distance": displayDistance.eliteDistance,
+                "time": seconds.timeSpan(maximumUnits: 2),
+                "timeGravity": secondsGravity.timeSpan(maximumUnits: 2),
+            ])
     }
 
     @BotCommand(
@@ -217,14 +245,18 @@ class GeneralCommands: IRCBotModule {
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
 
         let gitDir = configuration.sourcePath
-        let version = shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        command.message.reply(key: replyKey, fromCommand: command, map: [
-            "version": "3 (Update \(version))",
-            "uptime": mecha.startupTime.timeAgo(maximumUnits: 2),
-            "startup": mecha.startupTime.description
-        ])
+        let version =
+            shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        command.message.reply(
+            key: replyKey, fromCommand: command,
+            map: [
+                "version": "3 (Update \(version))",
+                "uptime": mecha.startupTime.timeAgo(maximumUnits: 2),
+                "startup": mecha.startupTime.description,
+            ])
     }
-    
+
     @BotCommand(
         ["gametime", "utc"],
         category: .utility,
@@ -236,16 +268,18 @@ class GeneralCommands: IRCBotModule {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
         timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        
+
         let time = timeFormatter.string(from: Date())
         let date = Date().eliteFormattedString
 
-        command.message.reply(key: "gametime", fromCommand: command, map: [
-            "date": date,
-            "time": time
-        ])
+        command.message.reply(
+            key: "gametime", fromCommand: command,
+            map: [
+                "date": date,
+                "time": time,
+            ])
     }
-    
+
     @BotCommand(
         ["timezone", "tz"],
         [.param("time in timezone", "3pm EST in CET", .continuous)],
@@ -259,39 +293,57 @@ class GeneralCommands: IRCBotModule {
             return
         }
         var components = command.param1?.components(separatedBy: " ") ?? []
-        guard components.count > 2, let index = components.firstIndex(of: "in") ?? components.firstIndex(of: "to") else {
-            command.message.reply(message: "Error: Could not understand the request, usage: !timezone <time> in <timezone>. e.g !timezone 3pm EST in CET")
+        guard components.count > 2,
+            let index = components.firstIndex(of: "in") ?? components.firstIndex(of: "to")
+        else {
+            command.message.reply(
+                message:
+                    "Error: Could not understand the request, usage: !timezone <time> in <timezone>. e.g !timezone 3pm EST in CET"
+            )
             return
         }
-        let timeZoneIdentifier = components[components.index(after: index)..<components.endIndex].joined(separator: " ")
+        let timeZoneIdentifier = components[components.index(after: index)..<components.endIndex]
+            .joined(separator: " ")
         components = Array(components[components.startIndex..<index])
         let timeInput = components.joined(separator: " ")
         var offsetTimeZone: TimeZone?
         if var tzOffset = Double(timeZoneIdentifier) {
             offsetTimeZone = TimeZone(secondsFromGMT: Int(tzOffset * 60 * 60))
         }
-        guard let timeZone: TimeZone = offsetTimeZone ?? TimeZone(abbreviation: timeZoneIdentifier.uppercased()) ?? TimeZone(identifier: timeZoneIdentifier) ?? timeZoneAbbreviations[timeZoneIdentifier.uppercased()] else {
+        guard
+            let timeZone: TimeZone = offsetTimeZone ?? TimeZone(
+                abbreviation: timeZoneIdentifier.uppercased()) ?? TimeZone(
+                    identifier: timeZoneIdentifier)
+                ?? timeZoneAbbreviations[timeZoneIdentifier.uppercased()]
+        else {
             command.message.reply(message: "Error: Could not interpret time zone")
             return
         }
-        
-        let output = shell(chrono.nodePath, [
-            chrono.file,
-            timeInput
-        ])
-        guard let interpretedDate = DateFormatter.iso8601Full.date(from: output?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "") else {
+
+        let output = shell(
+            chrono.nodePath,
+            [
+                chrono.file,
+                timeInput,
+            ])
+        guard
+            let interpretedDate = DateFormatter.iso8601Full.date(
+                from: output?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
+        else {
             command.message.reply(message: "Error: Could not interpret date/time value")
             return
         }
-        
+
         let outputFormatter = DateFormatter()
         outputFormatter.timeZone = timeZone
         outputFormatter.dateFormat = "EEEE, MMMM d, yyyy 'at' HH:mm"
-        
-        let tzName = timeZone.localizedName(for: .standard, locale: Locale.current) ?? timeZone.description
-        command.message.reply(message: "\(outputFormatter.string(from: interpretedDate)) in \(tzName)")
+
+        let tzName =
+            timeZone.localizedName(for: .standard, locale: Locale.current) ?? timeZone.description
+        command.message.reply(
+            message: "\(outputFormatter.string(from: interpretedDate)) in \(tzName)")
     }
-    
+
     @BotCommand(
         ["roll"],
         [.param("dices", "2d8")],
@@ -301,18 +353,21 @@ class GeneralCommands: IRCBotModule {
         cooldown: .seconds(90)
     )
     var didReceiveDiceRollCommand = { command in
-        guard let diceParam = "(?<num>[0-9]{1})?d(?<value>[0-9]{1,3})(\\+(?<add>[0-9]{1,4}))?".r!.findFirst(in: command.parameters[0]) else {
+        guard
+            let diceParam = "(?<num>[0-9]{1})?d(?<value>[0-9]{1,3})(\\+(?<add>[0-9]{1,4}))?".r!
+                .findFirst(in: command.parameters[0])
+        else {
             return
         }
-        
+
         let diceValue = Int(diceParam.group(at: 2) ?? "") ?? 20
         let diceNum = Int(diceParam.group(at: 1) ?? "1") ?? 1
         let add = Int(diceParam.group(at: 4) ?? "0") ?? 0
-        
+
         guard diceValue > 1 && diceNum > 0 else {
             return
         }
-        
+
         var value = 0
         for roll in 1...diceNum {
             value += Int.random(in: 1...diceValue)
@@ -344,7 +399,7 @@ class GeneralCommands: IRCBotModule {
             .param("client nick", "SpaceDawg"),
             .param("PC/XB/PS", "PC"),
             .param("system", "NLTT 48288", .continuous),
-            .argument("mode", "game version", example: "h")
+            .argument("mode", "game version", example: "h"),
         ],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",
@@ -378,41 +433,45 @@ class GeneralCommands: IRCBotModule {
             }
             expansion = parsedExpansion
         }
-        
+
         var key = "announcement"
         if platform == .PC {
             key += ".pc"
         }
-        
+
         var locale = Locale(identifier: "en")
         if let langCode = command.argumentValue(for: "lang") {
             locale = Locale(identifier: langCode)
         }
 
-        command.message.reply(key: "announce.success", fromCommand: command, map: [
-            "channel": channel,
-            "client": clientName,
-            "system": system,
-            "platform": platform.ircRepresentable,
-            "expansion": expansion.englishDescription,
-            "crStatus": crStatus
-        ])
+        command.message.reply(
+            key: "announce.success", fromCommand: command,
+            map: [
+                "channel": channel,
+                "client": clientName,
+                "system": system,
+                "platform": platform.ircRepresentable,
+                "expansion": expansion.englishDescription,
+                "crStatus": crStatus,
+            ])
 
-        let announcement = lingo.localize(key, locale: "en-GB", interpolations: [
-            "client": clientName,
-            "system": system,
-            "platform": platform.rawValue.uppercased(),
-            "expansion": expansion.announcerDescription,
-            "crStatus": crStatus,
-            "nick": clientNick,
-            "language": locale.englishDescription,
-            "langCode": locale.identifier
-        ])
+        let announcement = lingo.localize(
+            key, locale: "en-GB",
+            interpolations: [
+                "client": clientName,
+                "system": system,
+                "platform": platform.rawValue.uppercased(),
+                "expansion": expansion.announcerDescription,
+                "crStatus": crStatus,
+                "nick": clientNick,
+                "language": locale.englishDescription,
+                "langCode": locale.identifier,
+            ])
 
-
-        command.message.client.sendMessage(toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
+        command.message.client.sendMessage(
+            toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
     }
-    
+
     @BotCommand(
         ["xbl", "gamertag"],
         [.param("case id/gamertag", "SpaceDawg", .continuous)],
@@ -423,10 +482,12 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveXboxLiveCommand = { command in
         var gamertag = command.parameters[0]
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: gamertag, includingRecentlyClosed: true), rescue.platform == .Xbox {
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: gamertag, includingRecentlyClosed: true), rescue.platform == .Xbox
+        {
             gamertag = rescue.client ?? gamertag
         }
-        
+
         let profileLookup = await XboxLive.performLookup(gamertag: gamertag)
         guard case let .found(profile) = profileLookup else {
             if case .notFound = profileLookup {
@@ -436,20 +497,32 @@ class GeneralCommands: IRCBotModule {
             command.message.error(key: "xbl.error", fromCommand: command)
             return
         }
-        
-        let privacy = profile.privacy.isAllowed ? IRCFormat.color(.LightGreen, "OK") : IRCFormat.color(.LightRed, "Communication Blocked")
-        
+
+        let privacy =
+            profile.privacy.isAllowed
+            ? IRCFormat.color(.LightGreen, "OK")
+            : IRCFormat.color(.LightRed, "Communication Blocked")
+
         guard let currentActivity = profileLookup.currentActivity else {
             if profile.presence.state == .Online {
-                command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(privacy)")
+                command.message.reply(
+                    message:
+                        "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(privacy)"
+                )
             } else {
-                command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(privacy)")
+                command.message.reply(
+                    message:
+                        "\(gamertag) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(privacy)"
+                )
             }
             return
         }
-        command.message.reply(message: "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(privacy)")
+        command.message.reply(
+            message:
+                "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(privacy)"
+        )
     }
-    
+
     @BotCommand(
         ["psn"],
         [.param("case id/username", "SpaceDawg", .continuous)],
@@ -460,10 +533,12 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceivePSNCommand = { command in
         var username = command.parameters[0]
-        if let (_, rescue) = await board.findRescue(withCaseIdentifier: username, includingRecentlyClosed: true), rescue.platform == .PS {
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: username, includingRecentlyClosed: true), rescue.platform == .PS
+        {
             username = rescue.client ?? username
         }
-        
+
         let (profileLookup, presence) = await PSN.performLookup(name: username)
         guard case let .found(profile) = profileLookup else {
             if case .notFound = profileLookup {
@@ -473,20 +548,29 @@ class GeneralCommands: IRCBotModule {
             command.message.error(key: "psn.error", fromCommand: command)
             return
         }
-        
+
         guard let presence = presence else {
-            command.message.reply(message: "\(profile.onlineId) \(IRCFormat.color(.LightGrey, "(Offline)")) \(profile.psPlusStatus). Privacy Settings: \(IRCFormat.color(.LightRed, "Communication Blocked"))")
+            command.message.reply(
+                message:
+                    "\(profile.onlineId) \(IRCFormat.color(.LightGrey, "(Offline)")) \(profile.psPlusStatus). Privacy Settings: \(IRCFormat.color(.LightRed, "Communication Blocked"))"
+            )
             return
         }
-        
+
         guard let currentActivity = presence.currentActivity else {
-            command.message.reply(message: "\(profile.onlineId) \(presence.status) \(profile.psPlusStatus). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+            command.message.reply(
+                message:
+                    "\(profile.onlineId) \(presence.status) \(profile.psPlusStatus). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))"
+            )
             return
         }
-        
-        command.message.reply(message: "\(profile.onlineId) \(presence.status) \(profile.psPlusStatus) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))")
+
+        command.message.reply(
+            message:
+                "\(profile.onlineId) \(presence.status) \(profile.psPlusStatus) playing \(currentActivity). Privacy Settings: \(IRCFormat.color(.LightGreen, "OK"))"
+        )
     }
-    
+
     @BotCommand(
         ["meow"],
         category: nil,
@@ -496,20 +580,21 @@ class GeneralCommands: IRCBotModule {
         guard command.message.user.account == "Calomiriel[PC]" else {
             return
         }
-        command.message.client.sendActionMessage(toChannel: command.message.destination, contents: "meows")
+        command.message.client.sendActionMessage(
+            toChannel: command.message.destination, contents: "meows")
     }
 }
 
-func shell (_ command: String, arguments: [String] = []) -> String? {
+func shell(_ command: String, arguments: [String] = []) -> String? {
     let task = Process()
     let pipe = Pipe()
-    
+
     task.standardOutput = pipe
     task.standardError = pipe
     task.arguments = arguments
     task.launchPath = command
     task.launch()
-    
+
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
     return String(data: data, encoding: .utf8)
 }
@@ -713,7 +798,5 @@ let timeZoneAbbreviations: [String: TimeZone] = [
     "YAKT": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
     "YAPT": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
     "YEKST": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
-    "YEKT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!
+    "YEKT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
 ]
-
-

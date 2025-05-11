@@ -103,6 +103,14 @@ private func generateEnvironment () -> Environment {
       return nil
     }
     
+    ext.registerFilter("secondaryFuelStar") { (value: Any?) in
+      if let system = value as? StarSystem {
+          return system.hasSecondaryFuelStar
+      }
+
+      return false
+    }
+    
     ext.registerFilter("isUnderAttack") { (value: Any?) in
       if let system = value as? StarSystem {
           return system.isUnderAttack
@@ -131,16 +139,21 @@ private func generateEnvironment () -> Environment {
     
     ext.registerFilter("proceduralInfo") { (value: Any?) in
       if let system = value as? StarSystem {
-        if let procedural = system.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-            let (landmark, distanceString, _) = procedural.estimatedLandmarkDistance
+          if let procedural = system.proceduralCheck, let sectordata = procedural.sectordata, procedural.isPgSystem == true && (procedural.isPgSector == true || procedural.sectordata?.handauthored == true) {
+                guard let (landmark, distanceString, _) = procedural.estimatedLandmarkDistance else {
+                      return nil
+                }
             
-            guard regions.count == 0 || procedural.galacticRegion != nil else {
+                guard regions.count == 0 || procedural.galacticRegion != nil else {
+                    return nil
+                }
+              guard let estimatedSolDistance = procedural.estimatedSolDistance else {
+                  return nil
+              }
+              guard (1000...80000).contains(estimatedSolDistance.2) else {
                 return nil
             }
-            guard (1000...80000).contains(procedural.estimatedSolDistance.2) else {
-                return nil
-            }
-            let cardinal = CardinalDirection(bearing: procedural.sectordata.coords.bearing(from: landmark.coordinates))
+            let cardinal = CardinalDirection(bearing: sectordata.coords.bearing(from: landmark.coordinates))
             return "Unconfirmed ~\(distanceString) LY \"\(cardinal.rawValue)\" of \(landmark.name)"
         }
         

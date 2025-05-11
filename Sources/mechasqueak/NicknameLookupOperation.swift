@@ -30,7 +30,7 @@ class NicknameLookupManager {
     let queue = OperationQueue()
     var mapping: [String: NicknameSearchDocument] = [:]
 
-    init () {
+    init() {
         self.queue.maxConcurrentOperationCount = 5
     }
 
@@ -40,21 +40,24 @@ class NicknameLookupManager {
         }
     }
 
-    func lookup (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
+    func lookup(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
         guard user.account != nil else {
             return
         }
-        
+
         guard hasExistingFetchOperation(user: user) == false else {
             debug("Ignoring fetch for \(user.nickname) due to existing fetch operation")
             return
         }
-        
+
         let operation = NicknameLookupOperation(user: user)
 
         operation.onCompletion = { apiNick in
             if let result = apiNick, let account = user.account {
                 self.mapping[account] = result
+                if let subscription = result.user?.data.clientTranslateSubscription {
+                    Translate.clientTranslationSubscribers[user.nickname] = subscription
+                }
                 completed?(result)
             }
         }
@@ -66,7 +69,7 @@ class NicknameLookupManager {
         debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount))")
     }
 
-    func lookupIfNotExists (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
+    func lookupIfNotExists(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
         guard let account = user.account, self.mapping[account] == nil else {
             return
         }
@@ -74,24 +77,24 @@ class NicknameLookupManager {
         lookup(user: user)
     }
 
-    func hasExistingFetchOperation (user: IRCUser) -> Bool {
+    func hasExistingFetchOperation(user: IRCUser) -> Bool {
         return self.queue.operations.contains(where: {
             $0.name == user.account
         })
     }
-    
+
     @EventListener<RatSocketUserUpdatedNotification>
     var onRemoteUserUpdate = { userUpdateEvent in
         guard let userId = UUID(uuidString: userUpdateEvent.resourceIdentifier ?? "") else {
             return
         }
-        
+
         let users = mecha.reportingChannel?.members ?? []
         for user in users.filter({ $0.associatedAPIData?.user?.id.rawValue == userId }) {
             MechaSqueak.accounts.lookup(user: user)
         }
     }
-    
+
     @EventListener<IRCChannelUserModeChangeNotification>
     var onUserModeChange = { userModeChange in
         guard userModeChange.channel == mecha.rescueChannel else {
@@ -101,7 +104,7 @@ class NicknameLookupManager {
     }
 }
 
-class NicknameLookupOperation: Operation {
+class NicknameLookupOperation: Operation, @unchecked Sendable {
     let user: IRCUser
     var onCompletion: ((NicknameSearchDocument?) -> Void)?
     var onError: ((Error?) -> Void)?
@@ -134,13 +137,13 @@ class NicknameLookupOperation: Operation {
         }
     }
 
-    init (user: IRCUser) {
+    init(user: IRCUser) {
         self.user = user
         super.init()
         self.name = user.account
     }
 
-    override func start () {
+    override func start() {
         debug("Starting fetch operation for \(user.nickname)")
         guard isCancelled == false else {
             debug("Fetch operation was cancelled")

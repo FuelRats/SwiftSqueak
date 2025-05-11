@@ -31,19 +31,21 @@ class BoardPlatformCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    static func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand) async {
+    static func platformChangeCommand(platform: GamePlatform, command: IRCBotCommand) async {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         rescue.platform = platform
         try? rescue.save(command)
-        
-        command.message.reply(key: "board.platformset", fromCommand: command, map: [
-            "platform": rescue.platform.ircRepresentable,
-            "caseId": caseId,
-            "client": rescue.clientDescription
-        ])
+
+        command.message.reply(
+            key: "board.platformset", fromCommand: command,
+            map: [
+                "platform": rescue.platform.ircRepresentable,
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+            ])
     }
 
     @BotCommand(

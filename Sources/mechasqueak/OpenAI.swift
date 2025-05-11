@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Fuel Rats Mischief
+ Copyright 2025 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -23,24 +23,69 @@
  */
 
 import AsyncHTTPClient
-import CryptoSwift
 import Foundation
-import NIO
+import IRCKit
 
-class Rodentbin {
-    static func upload(contents: String) async throws -> Rodentbin.Response {
+struct OpenAI {
+    static func request(params: OpenAIRequest) async throws -> OpenAIResponse {
         var request = try HTTPClient.Request(
-            url: "https://paste.fuelrats.com/documents", method: .POST)
+            url: URL(string: "https://api.openai.com/v1/chat/completions")!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(
+            name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
         request.headers.add(name: "Content-Type", value: "application/json")
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(params)
+        request.body = .data(data)
 
-        request.body = .data(contents.data(using: .utf8)!)
+        return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
+    }
+}
 
-        return try await httpClient.execute(
-            request: request, forDecodable: Response.self, deadline: .now() + .seconds(2))
+struct OpenAIMessage: Codable {
+    let role: OpenAIRole
+    let content: String
+
+    enum OpenAIRole: String, Codable {
+        case system
+        case assistant
+        case user
+    }
+}
+
+struct OpenAIRequest: Codable {
+    let model: String
+    let temperature: Double
+    let maxTokens: Int?
+    let messages: [OpenAIMessage]
+
+    init(
+        messages: [OpenAIMessage], model: String = "gpt-4o", temperature: Double = 1.0,
+        maxTokens: Int? = nil
+    ) {
+        self.model = model
+        self.temperature = temperature
+        self.maxTokens = maxTokens
+        self.messages = messages
+    }
+}
+
+struct OpenAIResponse: Codable {
+    let id: String
+    let object: String
+    let usage: OpenAIUsage
+    let choices: [OpenAIChoice]
+
+    struct OpenAIUsage: Codable {
+        let promptTokens: Int
+        let completionTokens: Int
+        let totalTokens: Int
     }
 
-    struct Response: Codable {
-        let key: String
+    struct OpenAIChoice: Codable {
+        let message: OpenAIMessage
+        let finishReason: String?
+        let index: Int
     }
 }

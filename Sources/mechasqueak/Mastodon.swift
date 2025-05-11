@@ -22,12 +22,12 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
 import AsyncHTTPClient
+import Foundation
 
 class Mastodon {
     @discardableResult
-    static func post (message: String) async throws -> MastodonResponse {
+    static func post(message: String) async throws -> MastodonResponse {
         guard let token = configuration.mastodon?.token else {
             throw MastodonErrors.missingConfiguration
         }
@@ -38,7 +38,7 @@ class Mastodon {
         request.headers.add(name: "Idempotency-Key", value: UUID().uuidString)
         request.headers.add(name: "Authorization", value: "Bearer \(token)")
         request.headers.add(name: "Content-Type", value: "application/json")
-        
+
         let status = MastodonStatus(status: message, language: "en")
         request.body = try .encodable(status)
 

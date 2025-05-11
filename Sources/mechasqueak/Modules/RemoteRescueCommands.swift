@@ -22,9 +22,9 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import IRCKit
-import AsyncHTTPClient
 
 class RemoteRescueCommands: IRCBotModule {
     var name: String = "Remote Rescue Commands"
@@ -41,24 +41,23 @@ class RemoteRescueCommands: IRCBotModule {
         permission: .DispatchRead
     )
     var didReceiveRecentlyClosedCommand = { command in
-        if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
-            command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
-                "nick": command.message.user.nickname,
-            ])
-        }
         var closeCount = 3
         if command.parameters.count > 0 {
             guard let count = Int(command.parameters[0]) else {
-                command.message.error(key: "rescue.closed.invalid", fromCommand: command, map: [
-                    "count": command.parameters[0]
-                ])
+                command.message.error(
+                    key: "rescue.closed.invalid", fromCommand: command,
+                    map: [
+                        "count": command.parameters[0]
+                    ])
                 return
             }
 
             guard count <= 10 && count > 0 else {
-                command.message.error(key: "rescue.closed.invalid", fromCommand: command, map: [
-                    "count": count
-                ])
+                command.message.error(
+                    key: "rescue.closed.invalid", fromCommand: command,
+                    map: [
+                        "count": count
+                    ])
                 return
             }
             closeCount = count
@@ -67,18 +66,22 @@ class RemoteRescueCommands: IRCBotModule {
         do {
             let results = try await FuelRatsAPI.getRecentlyClosedRescues(count: closeCount)
             let rescueList = results.body.data!.primary.values.enumerated().map({ (index, rescue) in
-                return lingo.localize("rescue.closed.entry", locale: command.locale.short, interpolations: [
-                    "index": index,
-                    "client": rescue.client ?? "unknown client",
-                    "platform": rescue.platform.ircRepresentable,
-                    "system": rescue.system ?? "unknown system",
-                    "id": rescue.id.rawValue.ircRepresentation
-                ])
+                return lingo.localize(
+                    "rescue.closed.entry", locale: command.locale.short,
+                    interpolations: [
+                        "index": index,
+                        "client": rescue.client ?? "unknown client",
+                        "platform": rescue.platform.ircRepresentable,
+                        "system": rescue.system ?? "unknown system",
+                        "id": rescue.id.rawValue.ircRepresentation,
+                    ])
             })
 
-            command.message.replyPrivate(key: "rescue.closed.list", fromCommand: command, map: [
-                "count": closeCount
-            ])
+            command.message.replyPrivate(
+                key: "rescue.closed.list", fromCommand: command,
+                map: [
+                    "count": closeCount
+                ])
 
             command.message.replyPrivate(list: rescueList, separator: " - ")
         } catch {
@@ -88,38 +91,81 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["delete"],
-        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
+        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718", .multiple)],
         category: .rescues,
-        description: "Delete a rescue by UUID, cannot be used on a rescue that is currently on the board.",
+        description:
+            "Delete rescues by UUID, cannot be used on any rescue that is currently on the board.",
         permission: .RescueWrite
     )
     var didReceiveDeleteCommand = { command in
-        guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.error(key: "rescue.delete.invalid", fromCommand: command, map: [
-                "id": command.parameters[0]
-            ])
+        var ids: [UUID] = []
+        var invalidIds: [String] = []
+
+        for parameter in command.parameters {
+            if let id = UUID(uuidString: parameter) {
+                ids.append(id)
+            } else {
+                invalidIds.append(parameter)
+            }
+        }
+
+        if invalidIds.count > 0 {
+            command.message.error(
+                key: "rescue.delete.invalid", fromCommand: command,
+                map: [
+                    "id": invalidIds.joined(separator: ", ")
+                ])
             return
         }
 
-        if let (boardId, boardRescue) = await board.rescues.first(where: { $0.value.id == id }) {
-            command.message.reply(key: "rescue.delete.active", fromCommand: command, map: [
-                "id": boardRescue.id.ircRepresentation,
-                "caseId": boardId
-            ])
-            return
+        var successDeletes: [UUID] = []
+        var failedDeletes: [UUID] = []
+        for id in ids {
+            if let (boardId, boardRescue) = await board.rescues.first(where: { $0.value.id == id }) {
+                command.message.reply(
+                    key: "rescue.delete.active", fromCommand: command,
+                    map: [
+                        "id": boardRescue.id.ircRepresentation,
+                        "caseId": boardId,
+                    ])
+                continue
+            }
+            do {
+                try await FuelRatsAPI.deleteRescue(id: id, command: command)
+                successDeletes.append(id)
+            } catch {
+                failedDeletes.append(id)
+            }
         }
-        
-        do {
-            try await FuelRatsAPI.deleteRescue(id: id)
-        } catch {
-            command.message.reply(key: "rescue.delete.failure", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
+
+        if failedDeletes.count > 0 {
+            let failedIds =
+                failedDeletes.count == 1
+                ? failedDeletes.first!.ircRepresentation
+                : failedDeletes.map({ $0.ircRepresentation }).joined(separator: ", ")
+            command.message.error(
+                key: "rescue.delete.failure", fromCommand: command,
+                map: [
+                    "id": failedIds
+                ])
+        }
+
+        if successDeletes.count > 0 {
+            let successIds =
+                successDeletes.count == 1
+                ? successDeletes.first!.ircRepresentation
+                : successDeletes.map({ $0.ircRepresentation }).joined(separator: ", ")
+            command.message.reply(
+                key: "rescue.delete.success", fromCommand: command,
+                map: [
+                    "id": successIds
+                ])
         }
     }
 
     @BotCommand(
         ["deleteall", "cleartrash"],
+        [.param("time ago", "48h", .standard, .optional)],
         category: .rescues,
         description: "Delete all rescues currently in the trashlist",
         permission: .UserWrite
@@ -127,23 +173,41 @@ class RemoteRescueCommands: IRCBotModule {
     var didReceiveDeleteAllCommand = { command in
         do {
             let results = try await FuelRatsAPI.getRescuesInTrash()
-            
+
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
                 return
             }
 
-            for rescue in rescues {
+            var timeAgo = Date.now
+            if let argument = command.parameters.first {
+                if let parsedTimeAgo = TimeInterval.parse(argument) {
+                    timeAgo = Date.now - parsedTimeAgo
+                } else {
+                    command.message.error(
+                        key: "general.invalid-argument", fromCommand: command,
+                        map: ["argument": argument])
+                    return
+                }
+            }
+
+            for rescue in rescues.filter({
+                $0.createdAt < timeAgo
+            }) {
                 do {
-                    try await FuelRatsAPI.deleteRescue(id: rescue.id.rawValue)
-                    command.message.replyPrivate(key: "rescue.delete.success", fromCommand: command, map: [
-                        "id": rescue.id.rawValue.ircRepresentation
-                    ])
+                    try await FuelRatsAPI.deleteRescue(id: rescue.id.rawValue, command: command)
+                    command.message.replyPrivate(
+                        key: "rescue.delete.success", fromCommand: command,
+                        map: [
+                            "id": rescue.id.rawValue.ircRepresentation
+                        ])
                 } catch {
-                    command.message.error(key: "rescue.delete.failure", fromCommand: command, map: [
-                        "id": rescue.id.rawValue.ircRepresentation
-                    ])
+                    command.message.error(
+                        key: "rescue.delete.failure", fromCommand: command,
+                        map: [
+                            "id": rescue.id.rawValue.ircRepresentation
+                        ])
                 }
             }
         } catch {
@@ -154,34 +218,45 @@ class RemoteRescueCommands: IRCBotModule {
     @BotCommand(
         ["trashlist", "mdlist", "purgelist", "listtrash"],
         category: .rescues,
-        description: "Shows all the rescues that have been added to the trash list but not yet deleted",
+        description:
+            "Shows all the rescues that have been added to the trash list but not yet deleted",
         permission: .DispatchRead
     )
     var didReceiveListTrashcommand = { command in
         do {
             let results = try await FuelRatsAPI.getRescuesInTrash()
-            
+
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.replyPrivate(key: "rescue.trashlist.empty", fromCommand: command)
                 return
             }
 
-            command.message.replyPrivate(key: "rescue.trashlist.list", fromCommand: command, map: [
-                "count": rescues.count
-            ])
+            command.message.replyPrivate(
+                key: "rescue.trashlist.list", fromCommand: command,
+                map: [
+                    "count": rescues.count
+                ])
 
             for rescue in rescues {
-                let format = rescue.attributes.codeRed.value ? "rescue.trashlist.entrycr" : "rescue.trashlist.entry"
+                let format =
+                    rescue.attributes.codeRed.value
+                    ? "rescue.trashlist.entrycr" : "rescue.trashlist.entry"
 
-                command.message.replyPrivate(key: format, fromCommand: command, map: [
-                    "id": rescue.id.rawValue.ircRepresentation,
-                    "client": rescue.client ?? "unknown client",
-                    "platform": rescue.platform.ircRepresentable,
-                    "reason": rescue.notes
-                ])
+                let (lastEditUser, lastEditRat) = results.lastEditUserFor(rescue: rescue)
+                command.message.replyPrivate(
+                    key: format, fromCommand: command,
+                    map: [
+                        "id": rescue.id.rawValue.ircRepresentation,
+                        "client": rescue.client ?? "unknown client",
+                        "platform": rescue.platform.ircRepresentable,
+                        "reason": rescue.notes,
+                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                        "by": lastEditRat?.name ?? "unknown",
+                    ])
             }
         } catch {
+            debug("TRASH" + String(describing: error))
             command.message.error(key: "rescue.trashlist.error", fromCommand: command)
         }
     }
@@ -195,36 +270,44 @@ class RemoteRescueCommands: IRCBotModule {
     )
     var didReceiveRestoreTrashCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.error(key: "rescue.restore.invalid", fromCommand: command, map: [
-                "id": command.parameters[0]
-            ])
+            command.message.error(
+                key: "rescue.restore.invalid", fromCommand: command,
+                map: [
+                    "id": command.parameters[0]
+                ])
             return
         }
 
         do {
             guard let result = try await FuelRatsAPI.getRescue(id: id) else {
-                command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
+                command.message.error(
+                    key: "rescue.restore.error", fromCommand: command,
+                    map: [
+                        "id": id.ircRepresentation
+                    ])
                 return
             }
-            
+
             var rescue = result.body.data!.primary.value
 
             guard rescue.outcome == .Purge else {
-                command.message.error(key: "rescue.restore.nottrash", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
+                command.message.error(
+                    key: "rescue.restore.nottrash", fromCommand: command,
+                    map: [
+                        "id": id.ircRepresentation
+                    ])
                 return
             }
 
             rescue = rescue.tappingAttributes({ $0.outcome = .init(value: nil) })
 
-            try await rescue.update()
+            try await rescue.update(command: command)
         } catch {
-            command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
+            command.message.error(
+                key: "rescue.restore.error", fromCommand: command,
+                map: [
+                    "id": id.ircRepresentation
+                ])
         }
     }
 
@@ -236,37 +319,37 @@ class RemoteRescueCommands: IRCBotModule {
         allowedDestinations: .PrivateMessage
     )
     var didReceiveUnfiledListCommand = { command in
-        if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
-            command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
-                "nick": command.message.user.nickname,
-            ])
-        }
         do {
             let results = try await FuelRatsAPI.getUnfiledRescues()
-            
+
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
                 command.message.replyPrivate(key: "rescue.unfiled.empty", fromCommand: command)
                 return
             }
 
-            command.message.replyPrivate(key: "rescue.unfiled.list", fromCommand: command, map: [
-                "count": rescues.count
-            ])
+            command.message.replyPrivate(
+                key: "rescue.unfiled.list", fromCommand: command,
+                map: [
+                    "count": rescues.count
+                ])
 
             for rescue in rescues {
                 let firstLimpet = results.body.includes![Rat.self].first(where: {
                     $0.id.rawValue == rescue.relationships.firstLimpet?.id?.rawValue
                 })
 
-                command.message.replyPrivate(key: "rescue.unfiled.entry", fromCommand: command, map: [
-                    "client": rescue.client ?? "unknown client",
-                    "system": rescue.system ?? "unknown system",
-                    "platform": rescue.platform.ircRepresentable,
-                    "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
-                    "link": "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit",
-                    "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1)
-                ])
+                command.message.replyPrivate(
+                    key: "rescue.unfiled.entry", fromCommand: command,
+                    map: [
+                        "client": rescue.client ?? "unknown client",
+                        "system": rescue.system ?? "unknown system",
+                        "platform": rescue.platform.ircRepresentable,
+                        "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
+                        "link":
+                            "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit",
+                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                    ])
             }
         } catch {
             command.message.error(key: "rescue.unfiled.error", fromCommand: command)
@@ -282,47 +365,53 @@ class RemoteRescueCommands: IRCBotModule {
     )
     var didReceiveQuoteRemoteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.error(key: "rescue.quoteid.invalid", fromCommand: command, map: [
-                "id": command.parameters[0]
-            ])
+            command.message.error(
+                key: "rescue.quoteid.invalid", fromCommand: command,
+                map: [
+                    "id": command.parameters[0]
+                ])
             return
         }
-        
+
         do {
-            guard let rescue = try await FuelRatsAPI.getRescue(id: id)?.body.data?.primary.value else {
-                command.message.error(key: "rescue.quoteid.error", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
+            guard let rescue = try await FuelRatsAPI.getRescue(id: id)?.body.data?.primary.value
+            else {
+                command.message.error(
+                    key: "rescue.quoteid.error", fromCommand: command,
+                    map: [
+                        "id": id.ircRepresentation
+                    ])
                 return
             }
-            
-            if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
-                command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
-                    "nick": command.message.user.nickname,
-                ])
-            }
 
-            command.message.replyPrivate(key: "rescue.quoteid.title", fromCommand: command, map: [
-                "client": rescue.client ?? "unknown client",
-                "system": rescue.system ?? "unknown system",
-                "platform": rescue.platform.ircRepresentable,
-                "created": rescue.createdAt.ircRepresentable,
-                "updated": rescue.updatedAt.ircRepresentable,
-                "id": rescue.id.rawValue.ircRepresentation
-            ])
+
+            command.message.replyPrivate(
+                key: "rescue.quoteid.title", fromCommand: command,
+                map: [
+                    "client": rescue.client ?? "unknown client",
+                    "system": rescue.system ?? "unknown system",
+                    "platform": rescue.platform.ircRepresentable,
+                    "created": rescue.createdAt.ircRepresentable,
+                    "updated": rescue.updatedAt.ircRepresentable,
+                    "id": rescue.id.rawValue.ircRepresentation,
+                ])
 
             for (index, quote) in rescue.quotes.enumerated() {
-                command.message.replyPrivate(key: "rescue.quoteid.quote", fromCommand: command, map: [
-                    "index": index,
-                    "author": quote.lastAuthor,
-                    "time": quote.updatedAt,
-                    "message": quote.message
-                ])
+                command.message.replyPrivate(
+                    key: "rescue.quoteid.quote", fromCommand: command,
+                    map: [
+                        "index": index,
+                        "author": quote.lastAuthor,
+                        "time": quote.updatedAt,
+                        "message": quote.message,
+                    ])
             }
         } catch {
-            command.message.error(key: "rescue.quoteid.error", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
+            command.message.error(
+                key: "rescue.quoteid.error", fromCommand: command,
+                map: [
+                    "id": id.ircRepresentation
+                ])
         }
     }
 
@@ -340,66 +429,78 @@ class RemoteRescueCommands: IRCBotModule {
             await IRCBotModuleManager.handleIncomingCommand(ircBotCommand: correctedCommand)
             return
         }
-        
+
         guard configuration.general.drillMode == false else {
             command.message.error(key: "rescue.reopen.drillmode", fromCommand: command)
             return
         }
-        
+
         var rescue: Rescue? = nil
         var caseId = 0
         if let id = UUID(uuidString: command.parameters[0]) {
             if let (existingId, existingRescue) = await board.rescues.first(where: {
                 $0.value.id == id
             }) {
-                command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
-                    "id": id,
-                    "caseId": existingId
-                ])
+                command.message.error(
+                    key: "rescue.reopen.exists", fromCommand: command,
+                    map: [
+                        "id": id,
+                        "caseId": existingId,
+                    ])
                 return
             }
-            
+
             guard let result = try? await FuelRatsAPI.getRescue(id: id) else {
-                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
+                command.message.error(
+                    key: "rescue.reopen.error", fromCommand: command,
+                    map: [
+                        "id": id.ircRepresentation
+                    ])
                 return
             }
             let apiRescue = result.body.data!.primary.value
-            
+
             caseId = apiRescue.commandIdentifier
             let rats = result.assignedRats()
+            let (lastEditUser, lastEditRat) = result.lastEditUser()
             let firstLimpet = result.firstLimpet()
-            
+
             rescue = Rescue(
                 fromAPIRescue: apiRescue,
                 withRats: rats,
                 firstLimpet: firstLimpet,
+                lastEditUser: lastEditUser,
                 onBoard: board
             )
         } else {
             let clientRescues = try? await FuelRatsAPI.getRescues(forClient: command.parameters[0])
             guard let apiRescue = clientRescues?.body.data?.primary.values.first else {
-                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                    "id": command.parameters[0]
-                ])
+                command.message.error(
+                    key: "rescue.reopen.error", fromCommand: command,
+                    map: [
+                        "id": command.parameters[0]
+                    ])
                 return
             }
-            
+
             caseId = apiRescue.commandIdentifier
             let rats = clientRescues?.assignedRatsFor(rescue: apiRescue) ?? []
+            let (lastEditUser, _) = clientRescues!.lastEditUserFor(rescue: apiRescue)
             let firstLimpet = clientRescues?.firstLimpetFor(rescue: apiRescue)
             rescue = Rescue(
                 fromAPIRescue: apiRescue,
                 withRats: rats,
                 firstLimpet: firstLimpet,
+                lastEditUser: lastEditUser,
                 onBoard: board
             )
         }
         guard let rescue = rescue else {
-            command.message.error(key: "rescue.reopen.invalid", fromCommand: command, map: [
-                "id": command.parameters[0]
-            ])
+            command.message.error(
+                key: "rescue.reopen.invalid", fromCommand: command,
+                map: [
+                    "id": command.parameters[0]
+                ])
             return
         }
 
@@ -407,84 +508,104 @@ class RemoteRescueCommands: IRCBotModule {
         rescue.status = .Open
         let newCaseId = await board.insert(rescue: rescue, preferringIdentifier: caseId)
         try? rescue.save(command)
-        
-        command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
-            "id": rescue.id.ircRepresentation,
-            "caseId": newCaseId
-        ])
+
+        command.message.reply(
+            key: "rescue.reopen.opened", fromCommand: command,
+            map: [
+                "id": rescue.id.ircRepresentation,
+                "caseId": newCaseId,
+            ])
     }
 
     @BotCommand(
         ["unclose"],
         [.param("recently closed case number", "5")],
         category: .rescues,
-        description: "Add a previously closed case back onto the board by its previous case number.",
+        description:
+            "Add a previously closed case back onto the board by its previous case number.",
         permission: .DispatchWrite
     )
     var didReceiveUncloseCommand = { command in
-        guard let caseNumber = Int(command.parameters[0]), let closedRescue = await board.recentlyClosed[caseNumber] else {
-            command.message.error(key: "board.casenotfound", fromCommand: command, map: [
-                "caseIdentifier": command.parameters[0]
-            ])
+        guard let caseNumber = Int(command.parameters[0]),
+            let closedRescue = await board.recentlyClosed[caseNumber]
+        else {
+            command.message.error(
+                key: "board.casenotfound", fromCommand: command,
+                map: [
+                    "caseIdentifier": command.parameters[0]
+                ])
             return
         }
 
         if let existingRescue = await board.rescues.first(where: {
             $0.value.id == closedRescue.id
         }) {
-            command.message.error(key: "rescue.reopen.exists", fromCommand: command, map: [
-                "id": closedRescue.id,
-                "caseId": existingRescue.key
-            ])
+            command.message.error(
+                key: "rescue.reopen.exists", fromCommand: command,
+                map: [
+                    "id": closedRescue.id,
+                    "caseId": existingRescue.key,
+                ])
             return
         }
-        
+
         guard configuration.general.drillMode == false else {
             guard let rescue = await board.recentlyClosed[caseNumber] else {
-                command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                    "id": caseNumber
-                ])
+                command.message.error(
+                    key: "rescue.reopen.error", fromCommand: command,
+                    map: [
+                        "id": caseNumber
+                    ])
                 return
             }
-            
+
             rescue.outcome = nil
             rescue.status = .Open
-            
+
             let caseId = await board.insert(rescue: rescue, preferringIdentifier: caseNumber)
-            command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
-                "id": rescue.id.ircRepresentation,
-                "caseId": caseId
-            ])
+            command.message.reply(
+                key: "rescue.reopen.opened", fromCommand: command,
+                map: [
+                    "id": rescue.id.ircRepresentation,
+                    "caseId": caseId,
+                ])
             return
         }
 
         guard let result = try? await FuelRatsAPI.getRescue(id: closedRescue.id) else {
-            command.message.error(key: "rescue.reopen.error", fromCommand: command, map: [
-                "id": closedRescue.id
-            ])
+            command.message.error(
+                key: "rescue.reopen.error", fromCommand: command,
+                map: [
+                    "id": closedRescue.id
+                ])
             return
         }
-        
+
         let apiRescue = result.body.data!.primary.value
         let rats = result.assignedRats()
+        let (lastEditUser, lastEditRat) = result.lastEditUser()
         let firstLimpet = result.firstLimpet()
-        
+
         let rescue = Rescue(
             fromAPIRescue: apiRescue,
             withRats: rats,
             firstLimpet: firstLimpet,
+            lastEditUser: lastEditUser,
             onBoard: board
         )
         rescue.outcome = nil
         rescue.status = .Open
         rescue.uploaded = true
-        
-        let caseID = await board.insert(rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
+
+        let caseID = await board.insert(
+            rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
         try? rescue.save(command)
-        command.message.reply(key: "rescue.reopen.opened", fromCommand: command, map: [
-            "id": closedRescue.id.ircRepresentation,
-            "caseId": caseID
-        ])
+        command.message.reply(
+            key: "rescue.reopen.opened", fromCommand: command,
+            map: [
+                "id": closedRescue.id.ircRepresentation,
+                "caseId": caseID,
+            ])
     }
 
     @BotCommand(
@@ -497,83 +618,102 @@ class RemoteRescueCommands: IRCBotModule {
     var didReceiveClientPaperworkCommand = { command in
         do {
             let results = try await FuelRatsAPI.getRescues(forClient: command.parameters[0])
-            
+
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
-                command.message.error(key: "rescue.clientpw.error", fromCommand: command, map: [
-                    "client": command.parameters[0]
-                ])
+                command.message.error(
+                    key: "rescue.clientpw.error", fromCommand: command,
+                    map: [
+                        "client": command.parameters[0]
+                    ])
                 return
             }
 
             if command.has(argument: "all") {
-                if command.message.destination.isPrivateMessage == false && configuration.general.drillMode == false {
-                    command.message.reply(key: "command.replyprivate", fromCommand: command, map: [
-                        "nick": command.message.user.nickname,
+                command.message.replyPrivate(
+                    key: "rescue.clientpw.heading", fromCommand: command,
+                    map: [
+                        "client": command.parameters[0]
                     ])
-                }
-                command.message.replyPrivate(key: "rescue.clientpw.heading", fromCommand: command, map: [
-                    "client": command.parameters[0]
-                ])
                 for (index, rescue) in rescues.enumerated() {
-                    let url = "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
-                    command.message.replyPrivate(key: "rescue.clientpw.entry", fromCommand: command, map: [
-                        "index": index,
-                        "system": rescue.attributes.system.value ?? "?",
-                        "created": rescue.attributes.createdAt.value.ircRepresentable,
-                        "link": url
-                    ])
+                    let url =
+                        "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
+                    command.message.replyPrivate(
+                        key: "rescue.clientpw.entry", fromCommand: command,
+                        map: [
+                            "index": index,
+                            "system": rescue.attributes.system.value ?? "?",
+                            "created": rescue.attributes.createdAt.value.ircRepresentable,
+                            "link": url,
+                        ])
                 }
                 return
             }
 
             let rescue = rescues[0]
 
-            let shortUrl = await URLShortener.attemptShorten(url: URL(string: "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit")!)
-            command.message.reply(key: "rescue.clientpw.response", fromCommand: command, map: [
-                "client": rescue.attributes.client.value ?? "unknown client",
-                "created": rescue.attributes.createdAt.value.ircRepresentable,
-                "link": shortUrl
-            ])
+            let shortUrl = await URLShortener.attemptShorten(
+                url: URL(
+                    string:
+                        "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit"
+                )!)
+            command.message.reply(
+                key: "rescue.clientpw.response", fromCommand: command,
+                map: [
+                    "client": rescue.attributes.client.value ?? "unknown client",
+                    "created": rescue.attributes.createdAt.value.ircRepresentable,
+                    "link": shortUrl,
+                ])
         } catch {
             command.error(error)
         }
     }
-    
+
     @BotCommand(
         ["renameid"],
-        [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"), .param("client name", "SpaceDawg", .continuous)],
+        [
+            .param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"),
+            .param("client name", "SpaceDawg", .continuous),
+        ],
         category: .rescues,
         description: "Change the client name of a closed case",
         permission: .RescueWrite
     )
     var didReceiveRenameIDCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {
-            command.message.error(key: "rescue.restore.invalid", fromCommand: command, map: [
-                "id": command.parameters[0]
-            ])
+            command.message.error(
+                key: "rescue.restore.invalid", fromCommand: command,
+                map: [
+                    "id": command.parameters[0]
+                ])
             return
         }
 
         do {
             guard let result = try await FuelRatsAPI.getRescue(id: id) else {
-                command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                    "id": id.ircRepresentation
-                ])
+                command.message.error(
+                    key: "rescue.restore.error", fromCommand: command,
+                    map: [
+                        "id": id.ircRepresentation
+                    ])
                 return
             }
             var rescue = result.body.data!.primary.value
 
             rescue = rescue.tappingAttributes({ $0.client = .init(value: command.parameters[1]) })
-            try await rescue.update()
-            
-            command.message.reply(key: "rescue.renameid.renamed", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
+            try await rescue.update(command: command)
+
+            command.message.reply(
+                key: "rescue.renameid.renamed", fromCommand: command,
+                map: [
+                    "id": id.ircRepresentation
+                ])
         } catch {
-            command.message.error(key: "rescue.restore.error", fromCommand: command, map: [
-                "id": id.ircRepresentation
-            ])
+            command.message.error(
+                key: "rescue.restore.error", fromCommand: command,
+                map: [
+                    "id": id.ircRepresentation
+                ])
         }
     }
 }

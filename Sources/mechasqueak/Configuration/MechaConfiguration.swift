@@ -38,6 +38,7 @@ struct MechaConfiguration: Codable {
     var psn: PlayStationNetworkConfiguration?
     let chrono: ChronoConfiguration?
     let mastodon: MastodonConfiguration?
+    let bluesky: BlueSkyConfiguration?
     let openAIToken: String?
     
     func save () throws {
@@ -102,6 +103,7 @@ struct XboxLiveConfiguration: Codable {
 struct PlayStationNetworkConfiguration: Codable {
     var token: String
     var refreshToken: String
+    var basicAuth: String
 }
 
 struct ChronoConfiguration: Codable {
@@ -111,4 +113,9 @@ struct ChronoConfiguration: Codable {
 
 struct MastodonConfiguration: Codable {
     let token: String
+}
+
+struct BlueSkyConfiguration: Codable {
+    let handle: String
+    let appPassword: String
 }

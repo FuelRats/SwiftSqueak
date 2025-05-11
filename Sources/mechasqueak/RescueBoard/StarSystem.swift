@@ -22,15 +22,15 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import IRCKit
-import AsyncHTTPClient
 
 struct StarSystem: CustomStringConvertible, Codable, Equatable {
     static func == (lhs: StarSystem, rhs: StarSystem) -> Bool {
         return lhs.name == rhs.name
     }
-    
+
     var name: String {
         didSet {
             name = name.prefix(64).uppercased()
@@ -49,7 +49,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     var lookupAttempted: Bool = false
     var jumpCallWarned: Bool = false
 
-    init (
+    init(
         name: String,
         manuallyCorrected: Bool = false,
         searchResult: SystemsAPI.SearchDocument.SearchResult? = nil,
@@ -76,7 +76,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         self.lookupAttempted = lookupAttempted
     }
 
-    mutating func merge (_ starSystem: StarSystem) {
+    mutating func merge(_ starSystem: StarSystem) {
         self.name = starSystem.name
         self.searchResult = starSystem.searchResult
         self.permit = starSystem.permit
@@ -86,16 +86,20 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         self.data = starSystem.data
         self.lookupAttempted = starSystem.lookupAttempted
     }
-    
-    func getBody (byName bodyName: String) -> SystemsAPI.Body? {
-        return self.data?.body.includes?[SystemsAPI.Body.self].first(where: { $0.name == "\($0.systemName) \(bodyName)" || $0.name == bodyName })
+
+    func getBody(byName bodyName: String) -> SystemsAPI.Body? {
+        return self.data?.body.includes?[SystemsAPI.Body.self].first(where: {
+            $0.name == "\($0.systemName) \(bodyName)" || $0.name == bodyName
+        })
     }
-    
-    func getStar (byName starName: String) -> SystemsAPI.Star? {
-        return self.data?.body.includes?[SystemsAPI.Star.self].first(where: { $0.name == "\($0.systemName) \(starName)" || $0.name == starName })
+
+    func getStar(byName starName: String) -> SystemsAPI.Star? {
+        return self.data?.body.includes?[SystemsAPI.Star.self].first(where: {
+            $0.name == "\($0.systemName) \(starName)" || $0.name == starName
+        })
     }
-    
-    func systemBodyDescription (forBody body: String) -> String {
+
+    func systemBodyDescription(forBody body: String) -> String {
         if let systemStar = self.getStar(byName: body) {
             if let starClass = systemStar.spectralClass {
                 return "\(body) (\(starClass) \(systemStar.description))"
@@ -117,100 +121,134 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             return "(Permit Required)"
         }
 
-        init? (fromSearchResult result: SystemsAPI.SearchDocument.SearchResult?) {
+        init?(fromSearchResult result: SystemsAPI.SearchDocument.SearchResult?) {
             guard let result = result, result.permitRequired else {
                 return nil
             }
             self.name = result.permitName
         }
     }
-    
+
     var landmarkDescription: String? {
         return self.description
     }
 
     var description: String {
-        return (try? stencil.renderLine(name: "starsystem.stencil", context: [
-            "system": self,
-            "landmark": self.landmark as Any,
-            "invalid": self.isInvalid
-        ])) ?? ""
+        return
+            (try? stencil.renderLine(
+                name: "starsystem.stencil",
+                context: [
+                    "system": self,
+                    "landmark": self.landmark as Any,
+                    "invalid": self.isInvalid,
+                ])) ?? ""
     }
-    
+
     var info: String {
         get async {
             var plotUrl: URL?
             if self.landmark?.distance ?? 0 > 2500 {
                 plotUrl = try? await generateSpanshRoute(from: "Sol", to: self.name)
-            } else if let procedural = self.proceduralCheck, procedural.estimatedSolDistance.2 > 2500 {
-                if let nearestTarget = try? await SystemsAPI.getNearestSystem(forCoordinates: procedural.sectordata.coords)?.data {
+            } else if let procedural = self.proceduralCheck, let sectordata = procedural.sectordata,
+                procedural.estimatedSolDistance?.2 ?? 0 > 2500
+            {
+                if let nearestTarget = try? await SystemsAPI.getNearestSystem(
+                    forCoordinates: sectordata.coords)?.data
+                {
                     plotUrl = try? await generateSpanshRoute(from: "Sol", to: nearestTarget.name)
                 }
             }
-            
+
+            let edsmUrl = try? await generateEDSMLink(name: self.name)
+
             let stars = self.data?.body.includes?[SystemsAPI.Star.self] ?? []
             let bodies = self.data?.body.includes?[SystemsAPI.Body.self] ?? []
             let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
-            
-            let allegiance = stations.first?.allegiance
-            
-            let government = stations.reduce([:], { (acc: [SystemsAPI.Government: Int], current) in
-                var acc = acc
-                guard let currentGov = current.government else {
+
+            let allegiance =
+                (self.data?.body.data?.primary.value.systemAllegiance
+                ?? stations.first(where: {
+                    $0.allegiance != nil
+                })?.allegiance)?.rawValue
+
+            let government = stations.reduce(
+                [:],
+                { (acc: [SystemsAPI.Government: Int], current) in
+                    var acc = acc
+                    guard let currentGov = current.government else {
+                        return acc
+                    }
+                    if let value = acc[currentGov] {
+                        acc[currentGov] = value + 1
+                    } else {
+                        acc[currentGov] = 1
+                    }
                     return acc
                 }
-                if let value = acc[currentGov] {
-                    acc[currentGov] = value + 1
-                } else {
-                    acc[currentGov] = 1
-                }
-                return acc
-            }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key.ircFormatted
-            
-            let economy = stations.reduce([:], { (acc: [String: Int], current) in
-                var acc = acc
-                guard let currentEcon = current.economy else {
+            ).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
+                .ircFormatted
+
+            let economy = stations.reduce(
+                [:],
+                { (acc: [SystemsAPI.Economy: Int], current) in
+                    var acc = acc
+                    guard let currentEcon = current.economy else {
+                        return acc
+                    }
+                    if let value = acc[currentEcon] {
+                        acc[currentEcon] = value + 1
+                    } else {
+                        acc[currentEcon] = 1
+                    }
                     return acc
                 }
-                if let value = acc[currentEcon] {
-                    acc[currentEcon] = value + 1
-                } else {
-                    acc[currentEcon] = 1
-                }
-                return acc
-            }).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
-            
-            let largeStations = stations.filter({ $0.type?.isLargeSpaceStation ?? true })
+            ).enumerated().sorted(by: { $0.element.value > $1.element.value }).first?.element.key
+                .rawValue
+
+            let largeStations = stations.filter({
+                $0.type?.hasLargePad ?? false && $0.type?.isPlanetary == false
+            })
             let outposts = stations.filter({ $0.type == .Outpost })
             let planetary = stations.filter({ $0.type?.isPlanetary ?? false })
-            
-            return (try? stencil.renderLine(name: "systeminfo.stencil", context: [
-                "system": self,
-                "landmark": self.landmark as Any,
-                "region": self.galacticRegion as Any,
-                "invalid": self.isInvalid,
-                "plotUrl": plotUrl?.absoluteString as Any,
-                "stations": stations,
-                "largeStations": largeStations,
-                "planetary": planetary,
-                "outposts": outposts,
-                "stars": stars,
-                "bodies": bodies,
-                "allegiance": allegiance as Any,
-                "government": government as Any,
-                "economy": economy as Any,
-                "underAttack": isUnderAttack as Any
-            ])) ?? ""
+
+            return
+                (try? stencil.renderLine(
+                    name: "systeminfo.stencil",
+                    context: [
+                        "system": self,
+                        "landmark": self.landmark as Any,
+                        "region": self.galacticRegion as Any,
+                        "invalid": self.isInvalid,
+                        "plotUrl": plotUrl?.absoluteString as Any,
+                        "stations": stations,
+                        "largeStations": largeStations,
+                        "planetary": planetary,
+                        "outposts": outposts,
+                        "stars": stars,
+                        "bodies": bodies,
+                        "allegiance": allegiance as Any,
+                        "government": government as Any,
+                        "economy": economy as Any,
+                        "underAttack": isUnderAttack as Any,
+                        "edsmUrl": edsmUrl?.absoluteString as Any,
+                    ])) ?? ""
         }
     }
-    
+
     var isUnderAttack: Bool {
         if self.data?.body.data?.primary.value.attributes.systemAllegiance.value == .Thargoid {
             return true
         }
         let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
         return stations.contains(where: {
-            $0.stationState != nil
+            $0.stationState == .UnderAttack
+        })
+    }
+
+    var hasSecondaryFuelStar: Bool {
+        let stars = self.data?.body.includes?[SystemsAPI.Star.self] ?? []
+        return stars.contains(where: {
+            $0.isScoopable && $0.isMainStar != true
         })
     }
 
@@ -222,29 +260,40 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         if self.name.hasSuffix("SECTOR") && self.name.components(separatedBy: " ").count < 4 {
             return true
         }
-        
-        if ProceduralSystem.proceduralEndPattern.matches(self.name.components(separatedBy: CharacterSet.alphanumerics.inverted).joined()) {
+
+        if ProceduralSystem.proceduralEndPattern.matches(
+            self.name.components(separatedBy: CharacterSet.alphanumerics.inverted).joined())
+        {
             return true
         }
 
         return mecha.sectors.contains(where: { $0.name == self.name })
     }
-    
+
     var isInvalid: Bool {
-        if ProceduralSystem.proceduralSystemExpression.matches(self.name), let procedural = ProceduralSystem(string: self.name) {
-            return (self.proceduralCheck?.isPgSystem == false || (self.proceduralCheck?.isPgSector == false && self.proceduralCheck?.sectordata.handauthored == false)) || !procedural.isValid
+        if ProceduralSystem.proceduralSystemExpression.matches(self.name),
+            let procedural = ProceduralSystem(string: self.name)
+        {
+            return
+                (self.proceduralCheck?.isPgSystem == false
+                || (self.proceduralCheck?.isPgSector == false
+                    && self.proceduralCheck?.sectordata?.handauthored == false))
+                || !procedural.isValid
         }
         return self.lookupAttempted && self.landmark == nil
     }
 
     var isConfirmed: Bool {
-        return self.landmark != nil || (self.proceduralCheck?.isPgSystem == true && (self.proceduralCheck?.isPgSector == true || self.proceduralCheck?.sectordata.handauthored == true))
+        return self.landmark != nil
+            || (self.proceduralCheck?.isPgSystem == true
+                && (self.proceduralCheck?.isPgSector == true
+                    || self.proceduralCheck?.sectordata?.handauthored == true))
     }
-    
-    
+
     var landmark: SystemsAPI.LandmarkDocument.LandmarkResult? {
         let systemName = self.name.uppercased()
-        return self.landmarks.first(where: { $0.name.uppercased() != systemName }) ?? self.landmarks.first
+        return self.landmarks.first(where: { $0.name.uppercased() != systemName })
+            ?? self.landmarks.first
     }
 
     var twitterDescription: String? {
@@ -253,8 +302,13 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             description = "In \(galacticRegion.name) "
         }
         guard let landmark = self.landmark else {
-            if let procedural = self.proceduralCheck, procedural.isPgSystem == true && (procedural.isPgSector || procedural.sectordata.handauthored) {
-                let (landmark, distance, _) = procedural.estimatedLandmarkDistance
+            if let procedural = self.proceduralCheck,
+                procedural.isPgSystem == true
+                    && (procedural.isPgSector || procedural.sectordata?.handauthored == true)
+            {
+                guard let (landmark, distance, _) = procedural.estimatedLandmarkDistance else {
+                    return nil
+                }
                 description += "~\(distance) LY from \(landmark.name)"
                 return description
             }
@@ -269,7 +323,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         } else {
             description += "~\(ceil(landmark.distance / 1000))kLY from \(landmark.name)"
         }
-        
+
         if let permit = self.permit {
             if let permitName = permit.name {
                 description += " (REQUIRES \(permitName.uppercased()) PERMIT)"
@@ -279,11 +333,11 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         }
         return description
     }
-    
+
     var coordinates: Vector3? {
-        return self.searchResult?.coords ?? self.proceduralCheck?.sectordata.coords
+        return self.searchResult?.coords ?? self.proceduralCheck?.sectordata?.coords
     }
-    
+
     var galacticRegion: GalacticRegion? {
         guard let coordinates = self.coordinates else {
             return nil
@@ -293,29 +347,52 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             point.intersects(polygon: $0.coordinates)
         })
     }
- }
+}
 
-func generateSpanshRoute (from: String, to: String, range: Int = 65) async throws -> URL {
-    var request = try HTTPClient.Request(url: URL(string: "https://spansh.co.uk/api/route")!, method: .POST)
-    
+func generateSpanshRoute(from: String, to: String, range: Int = 65) async throws -> URL {
+    var request = try HTTPClient.Request(
+        url: URL(string: "https://spansh.co.uk/api/route")!, method: .POST)
+
     let requestBody: [String: String?] = [
         "efficiency": "60",
         "range": String(range),
         "from": from,
-        "to": to
+        "to": to,
     ]
     request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-    request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded; charset=utf-8")
+    request.headers.add(
+        name: "Content-Type", value: "application/x-www-form-urlencoded; charset=utf-8")
     request.body = try .formUrlEncoded(requestBody)
     let response = try await httpClient.execute(request: request, forDecodable: SpanshResponse.self)
     var url = URLComponents(string: "https://www.spansh.co.uk/plotter/results/\(response.job)")!
     url.queryItems = requestBody.queryItems
-    
-    
+
     return await URLShortener.attemptShorten(url: url.url!)
 }
 
-fileprivate struct SpanshResponse: Codable {
+func generateEDSMLink(name: String) async throws -> URL {
+    var requestUrl = URLComponents(string: "https://www.edsm.net/api-v1/system")!
+    requestUrl.queryItems = [
+        URLQueryItem(name: "systemName", value: name),
+        URLQueryItem(name: "showId", value: "1"),
+    ]
+
+    var request = try HTTPClient.Request(url: requestUrl.url!)
+    request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+
+    let response = try await httpClient.execute(request: request, forDecodable: EDSMResponse.self)
+    let edsmUrl = URL(
+        string: "https://www.edsm.net/en/system/id/\(String(response.id))/name/\(response.name)")!
+    return await URLShortener.attemptShorten(url: edsmUrl)
+}
+
+private struct EDSMResponse: Codable {
+    let name: String
+    let id: Int32
+    let id64: Int64
+}
+
+private struct SpanshResponse: Codable {
     let job: String
     let status: String
 }
@@ -336,7 +413,7 @@ extension Optional where Wrapped == StarSystem {
     }
 }
 
-func loadRegions () -> [GalacticRegion] {
+func loadRegions() -> [GalacticRegion] {
     let regionPath = URL(
         fileURLWithPath: configuration.sourcePath.path
     ).appendingPathComponent("regions.json")
@@ -351,7 +428,7 @@ func loadRegions () -> [GalacticRegion] {
 
 let regions = loadRegions()
 
-func loadNamedBodies () -> [String: String] {
+func loadNamedBodies() -> [String: String] {
     let namedBodyPath = URL(
         fileURLWithPath: configuration.sourcePath.path
     ).appendingPathComponent("namedbodies.json")
@@ -370,15 +447,17 @@ struct GalacticRegion: Decodable {
     let id: Int
     let name: String
     let coordinates: [CGPoint]
-    
+
     enum CodingKeys: String, CodingKey {
         case id, name, coordinates
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(Int.self, forKey: .id)
         self.name = try container.decode(String.self, forKey: .name)
-        self.coordinates = try container.decode([[Double]].self, forKey: .coordinates).map({ CGPoint(x: $0[0], y: $0[2]) })
+        self.coordinates = try container.decode([[Double]].self, forKey: .coordinates).map({
+            CGPoint(x: $0[0], y: $0[2])
+        })
     }
 }

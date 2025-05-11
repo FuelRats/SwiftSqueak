@@ -1,3 +1,4 @@
+import AsyncHTTPClient
 /*
  Copyright 2020 The Fuel Rats Mischief
 
@@ -23,14 +24,23 @@
  */
 import Foundation
 import JSONAPI
-import AsyncHTTPClient
 import NIO
 
 enum UserDescription: ResourceObjectDescription {
     public static var jsonType: String { return "users" }
 
-    public struct Attributes: JSONAPI.Attributes {
-        public let data: Attribute<UserDataObject>
+    public struct Attributes: JSONAPI.SparsableAttributes {
+        public enum CodingKeys: String, JSONAPI.SparsableCodingKey {
+            case data
+            case email
+            case status
+            case suspended
+            case stripeId
+            case createdAt
+            case updatedAt
+        }
+
+        public var data: Attribute<UserDataObject>
         public let email: Attribute<String>?
         public let status: Attribute<UserStatus>
         public var suspended: Attribute<Date>?
@@ -51,55 +61,93 @@ enum UserDescription: ResourceObjectDescription {
     }
 }
 typealias User = JSONEntity<UserDescription>
-typealias UserGetDocument = Document<SingleResourceBody<User>, Include8<Rat, Ship, Epic, Nickname, Client, Decal, Group, AvatarImage>>
+typealias UserGetDocument = Document<
+    SingleResourceBody<User>, Include8<Rat, Ship, Epic, Nickname, Client, Decal, Group, AvatarImage>
+>
 
 extension User {
-    static func get (id: UUID) async throws -> UserGetDocument {
+    static func get(id: UUID) async throws -> UserGetDocument {
         let request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
-    
-    @discardableResult
-    func update (attributes: [String: Any]) async throws -> UserGetDocument {
-        let body: [String: Any] = [
-            "data": [
-                "type": "users",
-                "id": self.id.rawValue.uuidString,
-                "attributes": attributes
-            ]
-        ]
 
-        var request = try HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)", method: .PATCH)
+    @discardableResult
+    static func update(user: User) async throws -> UserGetDocument {
+        let patchRequestDocument = SingleDocument(
+            apiDescription: .none, body: .init(resourceObject: user), includes: .none, meta: .none,
+            links: .none)
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(user.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
+
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let body = try! encoder.encode(patchRequestDocument)
+        debug(String(data: body, encoding: .utf8)!)
+
+        request.body = .data(body)
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
-    
+
     @discardableResult
-    func suspend (date: Date) async throws -> UserGetDocument {
-        return try await self.update(attributes: [
-            "suspended": DateFormatter.iso8601Full.string(from: date)
-        ])
+    func suspend(date: Date) async throws -> UserGetDocument {
+        let updatedUser = self.tappingAttributes({
+            $0.suspended = .init(value: date)
+        }).sparse(with: [UserDescription.Attributes.CodingKeys.suspended]).resourceObject
+            .replacingRelationships({ _ in
+                return UserDescription.Relationships(
+                    rats: nil,
+                    displayRat: nil,
+                    groups: nil,
+                    clients: nil,
+                    epics: nil,
+                    decals: nil,
+                    nicknames: nil,
+                    avatar: nil
+                )
+            })
+        return try await User.update(user: updatedUser)
     }
-    
+
     @discardableResult
-    func changeEmail (to email: String) async throws -> UserGetDocument {
+    func changeEmail(to email: String) async throws -> UserGetDocument {
         let body: [String: Any] = [
             "data": [
                 "type": "email-changes",
                 "id": self.id.rawValue.uuidString,
                 "attributes": [
                     "email": email
-                ]
+                ],
             ]
         ]
-        var request = try HTTPClient.Request(apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+
+    @discardableResult
+    func updateUserData(dataObject: UserDataObject) async throws -> UserGetDocument {
+        let updatedUser = self.tappingAttributes {
+            $0.data = .init(value: dataObject)
+        }.sparse(with: [UserDescription.Attributes.CodingKeys.data]).resourceObject
+            .replacingRelationships({ _ in
+                return UserDescription.Relationships(
+                    rats: nil,
+                    displayRat: nil,
+                    groups: nil,
+                    clients: nil,
+                    epics: nil,
+                    decals: nil,
+                    nicknames: nil,
+                    avatar: nil
+                )
+            })
+        return try await User.update(user: updatedUser)
     }
 }
 
@@ -112,6 +160,7 @@ enum UserStatus: String, Codable {
 
 struct UserDataObject: Codable, Equatable {
     var preferredPrivateMethod: MessagingMethod? = .Privmsg
+    var clientTranslateSubscription: ClientTranslateSubscription? = nil
 }
 
 enum MessagingMethod: String, Codable {

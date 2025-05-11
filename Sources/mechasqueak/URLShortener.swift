@@ -22,18 +22,19 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
 import AsyncHTTPClient
+import Foundation
 import NIO
 
 class URLShortener {
-    static func shorten (url: URL, keyword: String? = nil) async throws -> ShortURLResponse {
-        var requestUrl = URLComponents(url: configuration.shortener.url, resolvingAgainstBaseURL: false)!
+    static func shorten(url: URL, keyword: String? = nil) async throws -> ShortURLResponse {
+        var requestUrl = URLComponents(
+            url: configuration.shortener.url, resolvingAgainstBaseURL: false)!
         requestUrl.queryItems = [
             URLQueryItem(name: "action", value: "shorturl"),
             URLQueryItem(name: "format", value: "json"),
             URLQueryItem(name: "url", value: url.absoluteString),
-            URLQueryItem(name: "signature", value: configuration.shortener.signature)
+            URLQueryItem(name: "signature", value: configuration.shortener.signature),
         ]
 
         if let keyword = keyword {
@@ -45,8 +46,8 @@ class URLShortener {
 
         return try await httpClient.execute(request: request, forDecodable: ShortURLResponse.self)
     }
-    
-    static func attemptShorten (url: URL) async -> URL {
+
+    static func attemptShorten(url: URL) async -> URL {
         do {
             return try await shorten(url: url).shorturl
         } catch {

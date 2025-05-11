@@ -37,7 +37,7 @@ extension HTTPClient {
     
     func execute <T: AnyRange> (
         request: Request,
-        deadline: NIODeadline? = nil,
+        deadline: NIODeadline? = .now() + .seconds(5),
         expecting statusCode: T
     ) async throws -> HTTPClient.Response where T.Bound == Int {
         try await withCheckedThrowingContinuation({ continuation in
@@ -60,7 +60,7 @@ extension HTTPClient {
     func execute<D> (
         request: Request,
         forDecodable decodable: D.Type,
-        deadline: NIODeadline? = nil,
+        deadline: NIODeadline? = .now() + .seconds(5),
         withDecoder decoder: JSONDecoder = defaultJsonDecoder
     ) async throws -> D where D: Decodable {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
@@ -84,7 +84,7 @@ extension HTTPClient {
 }
 
 extension HTTPClient.Request {
-    init (apiPath: String, method: HTTPMethod, query: [String: String?] = [:]) throws {
+    init (apiPath: String, method: HTTPMethod, command: IRCBotCommand? = nil, query: [String: String?] = [:]) throws {
         var url = URLComponents(string: "\(configuration.api.url)")!
         url.path = apiPath
         
@@ -95,10 +95,13 @@ extension HTTPClient.Request {
         self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         self.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            self.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
+        }
     }
 }
 
-extension HTTPClient.Response: Error {}
+extension HTTPClient.Response: @retroactive Error {}
 
 private let sAllowedCharacters: CharacterSet = {
     var allowed = CharacterSet.urlQueryAllowed

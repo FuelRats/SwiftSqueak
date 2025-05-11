@@ -18,10 +18,10 @@
  */
 
 import Foundation
-import NIO
-import SQLKit
-import PostgresKit
 import IRCKit
+import NIO
+import PostgresKit
+import SQLKit
 
 let sqlConfiguration = PostgresConfiguration(
     hostname: configuration.database.host,
@@ -36,11 +36,12 @@ let pools = EventLoopGroupConnectionPool(
 )
 let sql = pools.database(logger: Logger(label: "SQL")).sql()
 
-
 struct Fact: Codable, Hashable {
-    static let platformFacts = ["wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team"]
+    static let platformFacts = [
+        "wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team",
+    ]
     private static var cache = [String: Fact]()
-    
+
     var id: String
     var fact: String
     var createdAt: Date
@@ -52,51 +53,55 @@ struct Fact: Codable, Hashable {
     var cacheIdentifier: String {
         return "\(self.fact.lowercased())-\(self.language)"
     }
-    
-    public static func get (name: String, forLocale locale: Locale) async throws -> Fact? {
+
+    public static func get(name: String, forLocale locale: Locale) async throws -> Fact? {
         let factName = name.lowercased()
         let localeString = locale.short
-        
+
         if let cachedFact = cache["\(factName)-\(localeString)"] {
             return cachedFact
         } else {
             return try await withCheckedThrowingContinuation({ continuation in
                 sql.select().column("*")
                     .from("facts")
-                    .join("factmessages", method: .inner, on: "facts.id=factmessages.fact and factmessages.language='\(localeString)'")
+                    .join(
+                        "factmessages", method: .inner,
+                        on: "facts.id=factmessages.fact and factmessages.language='\(localeString)'"
+                    )
                     .where("alias", .equal, factName)
                     .first().whenComplete({ result in
                         switch result {
-                            case .failure(let error):
-                                continuation.resume(throwing: error)
-                                
-                            case .success(let row):
-                                guard let row = row else {
-                                    continuation.resume(returning: nil)
-                                    return
-                                }
-                                
-                                let fact = try? row.decode(model: Fact.self)
-                                if let cacheFact = fact {
-                                    cache["\(factName)-\(localeString)"] = cacheFact
-                                }
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
+
+                        case .success(let row):
+                            guard let row = row else {
+                                continuation.resume(returning: nil)
+                                return
+                            }
+
+                            let fact = try? row.decode(model: Fact.self)
+                            if let cacheFact = fact {
+                                cache["\(factName)-\(localeString)"] = cacheFact
+                            }
                             continuation.resume(returning: fact)
                         }
                     })
             })
-            
+
         }
-        
+
     }
-    
-    public static func getWithFallback (name: String, forLocale locale: Locale) async throws -> Fact? {
+
+    public static func getWithFallback(name: String, forLocale locale: Locale) async throws -> Fact?
+    {
         if let fact = try await Fact.get(name: name, forLocale: locale) {
             return fact
         }
-        
+
         return try await Fact.get(name: name, forLocale: Locale(identifier: "en"))
     }
-    
+
     public static func getAllFacts() async throws -> [Fact] {
         return try await withCheckedThrowingContinuation({ continuation in
             sql.select().column("*")
@@ -106,7 +111,7 @@ struct Fact: Codable, Hashable {
                     switch result {
                     case .failure(let error):
                         continuation.resume(throwing: error)
-                    
+
                     case .success(let rows):
                         let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
                         for fact in facts {
@@ -117,11 +122,14 @@ struct Fact: Codable, Hashable {
                 })
         })
     }
-    
-    public static func create (name: String, author: String, message: String, forLocale locale: Locale = Locale(identifier: "en")) -> EventLoopFuture<Fact> {
+
+    public static func create(
+        name: String, author: String, message: String,
+        forLocale locale: Locale = Locale(identifier: "en")
+    ) -> EventLoopFuture<Fact> {
         let createDate = Date()
         let localeString = locale.short
-        
+
         return pools.withConnection({ conn -> EventLoopFuture<Fact> in
             let sql = conn.sql()
             let queries = conn.simpleQuery("BEGIN").flatMap({ _ in
@@ -132,7 +140,10 @@ struct Fact: Codable, Hashable {
             }).flatMap({
                 return sql.insert(into: "factmessages")
                     .columns("fact", "language", "message", "author", "createdAt", "updatedAt")
-                    .values(SQLBind(name), SQLBind(localeString), SQLBind(message), SQLBind(author), SQLBind(createDate), SQLBind(createDate))
+                    .values(
+                        SQLBind(name), SQLBind(localeString), SQLBind(message), SQLBind(author),
+                        SQLBind(createDate), SQLBind(createDate)
+                    )
                     .run()
             }).flatMap({
                 return conn.simpleQuery("COMMIT")
@@ -147,50 +158,65 @@ struct Fact: Codable, Hashable {
                     author: author
                 )
             })
-            
+
             queries.whenFailure({ _ in
                 _ = conn.simpleQuery("ROLLBACK")
             })
-            
+
             return queries
         })
     }
-    
-    public static func create (name: String, author: String, message: String, forLocale locale: Locale = Locale(identifier: "en")) async throws -> Fact {
+
+    public static func create(
+        name: String, author: String, message: String,
+        forLocale locale: Locale = Locale(identifier: "en")
+    ) async throws -> Fact {
         return try await withCheckedThrowingContinuation({ continuation in
-            Fact.create(name: name, author: author, message: message, forLocale: locale).whenComplete { result in
-                switch result {
-                case .failure(let error):
-                    continuation.resume(throwing: error)
-                    
-                case .success(let fact):
-                    continuation.resume(returning: fact)
+            Fact.create(name: name, author: author, message: message, forLocale: locale)
+                .whenComplete { result in
+                    switch result {
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+
+                    case .success(let fact):
+                        continuation.resume(returning: fact)
+                    }
                 }
-            }
         })
     }
-    
-    public static func create (alias: String, forName name: String) async throws {
+
+    public static func create(alias: String, forName name: String) async throws {
         let createDate = Date()
         return try await sql.insert(into: "facts")
             .columns("id", "alias", "createdAt", "updatedAt")
             .values(SQLBind(name), SQLBind(alias), SQLBind(createDate), SQLBind(createDate))
             .run().asContinuation()
     }
-    
-    public static func create (message: String, forName name: String, inLocale locale: Locale, withAuthor author: String) async throws {
+
+    public static func create(
+        message: String, forName name: String, inLocale locale: Locale, withAuthor author: String
+    ) async throws {
         let createDate = Date()
         let localeString = locale.short
-        
+
         return try await sql.insert(into: "factmessages")
             .columns("fact", "language", "message", "author", "createdAt", "updatedAt")
-            .values(SQLBind(name), SQLBind(localeString), SQLBind(message), SQLBind(author), SQLBind(createDate), SQLBind(createDate))
+            .values(
+                SQLBind(name), SQLBind(localeString), SQLBind(message), SQLBind(author),
+                SQLBind(createDate), SQLBind(createDate)
+            )
             .run().asContinuation()
     }
-    
-    public static func update (locale: Locale, forFact fact: String, withMessage message: String, fromAuthor author: String) async throws {
+
+    public static func update(
+        locale: Locale, forFact fact: String, withMessage message: String, fromAuthor author: String
+    ) async throws {
         let updateDate = Date()
-        cache.removeValue(forKey: "\(fact)-\(locale.short)")
+
+        let aliases = try await GroupedFact.get(name: fact)
+        for alias in aliases?.aliases ?? [] {
+            cache.removeValue(forKey: "\(alias)-\(locale.short)")
+        }
         return try await sql.update("factmessages")
             .set("message", to: message)
             .set("author", to: author)
@@ -199,16 +225,16 @@ struct Fact: Codable, Hashable {
             .where("language", .equal, SQLBind(locale.short))
             .run().asContinuation()
     }
-    
-    public static func delete (locale: Locale, forFact fact: String) async throws {
+
+    public static func delete(locale: Locale, forFact fact: String) async throws {
         cache.removeValue(forKey: "\(fact)-\(locale.short)")
         return try await sql.delete(from: "factmessages")
             .where("fact", .equal, SQLBind(fact))
             .where("language", .equal, SQLBind(locale.short))
             .run().asContinuation()
     }
-    
-    public static func drop (name: String) async throws {
+
+    public static func drop(name: String) async throws {
         for item in cache.filter({ $0.key.starts(with: "\(name)-") }) {
             cache.removeValue(forKey: item.key)
         }
@@ -216,8 +242,8 @@ struct Fact: Codable, Hashable {
             .where("id", .equal, SQLBind(name))
             .run().asContinuation()
     }
-    
-    public static func delete (alias: String) async throws {
+
+    public static func delete(alias: String) async throws {
         for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {
             cache.removeValue(forKey: item.key)
         }
@@ -231,83 +257,85 @@ struct GroupedFact: Codable {
     let cannonicalName: String
     var messages: [String: Fact]
     var aliases: [String]
-    
+
     var isPlatformFact: Bool {
         return Fact.platformFacts.contains(where: { cannonicalName.hasSuffix($0) })
     }
-    
+
     var platform: GamePlatform? {
         guard self.isPlatformFact else {
             return nil
         }
-        
+
         switch self.cannonicalName {
-            case let str where str.starts(with: "pc"):
-                return .PC
-                
-            case let str where str.starts(with: "x"):
-                return .Xbox
-                
-            case let str where str.starts(with: "ps"):
-                return .PS
-                
-            default:
-                return nil
+        case let str where str.starts(with: "pc"):
+            return .PC
+
+        case let str where str.starts(with: "x"):
+            return .Xbox
+
+        case let str where str.starts(with: "ps"):
+            return .PS
+
+        default:
+            return nil
         }
     }
-    
+
     var platformLessIdentifier: String? {
         guard let platform = self.platform else {
             return nil
         }
-        
+
         switch platform {
-            case .PC, .PS:
-                return String(self.cannonicalName.dropFirst(2))
-                
-            case .Xbox:
-                return String(self.cannonicalName.dropFirst(1))
+        case .PC, .PS:
+            return String(self.cannonicalName.dropFirst(2))
+
+        case .Xbox:
+            return String(self.cannonicalName.dropFirst(1))
         }
     }
-    
-    static func get (name: String) async throws -> GroupedFact? {
+
+    static func get(name: String) async throws -> GroupedFact? {
         let facts = try await sql.select().columns([
-                SQLColumn("id", table: "aliases"),
-                SQLAlias(SQLColumn("alias", table: "aliases"), as: SQLIdentifier("fact")),
-                SQLColumn("createdAt", table: "factmessages"),
-                SQLColumn("updatedAt", table: "factmessages"),
-                SQLColumn("language", table: "factmessages"),
-                SQLColumn("author", table: "factmessages"),
-                SQLColumn("message", table: "factmessages")
-            ])
-            .from("facts")
-            .join(
-                SQLAlias(SQLIdentifier("facts"), as: SQLIdentifier("aliases")),
-                method: SQLJoinMethod.left,
-                on: SQLColumn("id", table: "facts"), .equal, SQLColumn("id", table: "aliases")
-            )
-            .join("factmessages", method: .left, on: "facts.id=factmessages.fact")
-            .where(SQLColumn("alias", table: "facts"), .equal, SQLBind(name))
-            .all(decoding: Fact.self).asContinuation()
+            SQLColumn("id", table: "aliases"),
+            SQLAlias(SQLColumn("alias", table: "aliases"), as: SQLIdentifier("fact")),
+            SQLColumn("createdAt", table: "factmessages"),
+            SQLColumn("updatedAt", table: "factmessages"),
+            SQLColumn("language", table: "factmessages"),
+            SQLColumn("author", table: "factmessages"),
+            SQLColumn("message", table: "factmessages"),
+        ])
+        .from("facts")
+        .join(
+            SQLAlias(SQLIdentifier("facts"), as: SQLIdentifier("aliases")),
+            method: SQLJoinMethod.left,
+            on: SQLColumn("id", table: "facts"), .equal, SQLColumn("id", table: "aliases")
+        )
+        .join("factmessages", method: .left, on: "facts.id=factmessages.fact")
+        .where(SQLColumn("alias", table: "facts"), .equal, SQLBind(name))
+        .all(decoding: Fact.self).asContinuation()
         return facts.grouped.values.first
     }
 }
 
 extension Array where Element == GroupedFact {
     var platformGrouped: [String: [GroupedFact]] {
-        return self.reduce([String: [GroupedFact]](), { groups, group in
-            var groups = groups
-            guard let platformLessIdentifier = group.platformLessIdentifier else {
+        return self.reduce(
+            [String: [GroupedFact]](),
+            { groups, group in
+                var groups = groups
+                guard let platformLessIdentifier = group.platformLessIdentifier else {
+                    return groups
+                }
+                if groups[platformLessIdentifier] == nil {
+                    groups[platformLessIdentifier] = []
+                }
+                groups[platformLessIdentifier]?.append(group)
                 return groups
-            }
-            if groups[platformLessIdentifier] == nil {
-                groups[platformLessIdentifier] = []
-            }
-            groups[platformLessIdentifier]?.append(group)
-            return groups
-        })
+            })
     }
-    
+
     var platformFactDescription: String {
         let platforms = self.compactMap({ $0.platform?.factPrefix })
         let platformPrefix = IRCFormat.color(.Grey, "(\(platforms.joined(separator: "|")))")
@@ -317,22 +345,24 @@ extension Array where Element == GroupedFact {
 
 extension Array where Element == Fact {
     var grouped: [String: GroupedFact] {
-        return self.reduce([String: GroupedFact](), { facts, fact in
-            var facts = facts
-            if var entry = facts[fact.id] {
-                if entry.aliases.contains(fact.fact) == false {
-                    entry.aliases.append(fact.fact)
+        return self.reduce(
+            [String: GroupedFact](),
+            { facts, fact in
+                var facts = facts
+                if var entry = facts[fact.id] {
+                    if entry.aliases.contains(fact.fact) == false {
+                        entry.aliases.append(fact.fact)
+                    }
+                    entry.messages[fact.language] = fact
+                    facts[fact.id] = entry
+                } else {
+                    facts[fact.id] = GroupedFact(
+                        cannonicalName: fact.id,
+                        messages: [fact.language: fact],
+                        aliases: [fact.fact]
+                    )
                 }
-                entry.messages[fact.language] = fact
-                facts[fact.id] = entry
-            } else {
-                facts[fact.id] = GroupedFact(
-                    cannonicalName: fact.id,
-                    messages: [fact.language: fact],
-                    aliases: [fact.fact]
-                )
-            }
-            return facts
-        })
+                return facts
+            })
     }
 }

@@ -9,28 +9,31 @@ import Foundation
 import NIO
 
 extension EventLoopFuture {
-    func and<SecondValue, ThirdValue>(_ future2: EventLoopFuture<SecondValue>, _ future3: EventLoopFuture<ThirdValue>) -> EventLoopFuture<(Value, SecondValue, ThirdValue)> {
-        let combinedFuture = self.eventLoop.next().makePromise(of: (Value, SecondValue, ThirdValue).self)
+    func and<SecondValue, ThirdValue>(
+        _ future2: EventLoopFuture<SecondValue>, _ future3: EventLoopFuture<ThirdValue>
+    ) -> EventLoopFuture<(Value, SecondValue, ThirdValue)> {
+        let combinedFuture = self.eventLoop.next().makePromise(
+            of: (Value, SecondValue, ThirdValue).self)
         self.and(future2).and(future3).whenComplete({ result in
             switch result {
-                case .success(let value):
-                    combinedFuture.succeed((value.0.0, value.0.1, value.1))
+            case .success(let value):
+                combinedFuture.succeed((value.0.0, value.0.1, value.1))
 
-                case .failure(let error):
-                    combinedFuture.fail(error)
+            case .failure(let error):
+                combinedFuture.fail(error)
             }
         })
 
         return combinedFuture.futureResult
     }
-    
+
     func asContinuation() async throws -> Value {
         return try await withCheckedThrowingContinuation({ continuation in
             self.whenComplete({ result in
                 switch result {
                 case .failure(let error):
                     continuation.resume(throwing: error)
-                    
+
                 case .success(let value):
                     continuation.resume(returning: value)
                 }

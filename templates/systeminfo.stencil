@@ -3,9 +3,18 @@
  {{system.bodies.count}} stellar bodies
 {% endif %}
 
+{% if allegiance %}
+ {{ "Allegiance:"|bold }} {{ allegiance }}.
+{% endif %}
+
+{% if govenment %}
+ {{ "Government"|bold }} {{ government }}.
+{% endif %}
+
 {% if economy %}
  {{ "Economy:"|bold }} {{ economy }}.
 {% endif %}
+
 
 {% if stars.count > 1 %}
  {{stars.count}} stars
@@ -20,9 +29,9 @@
 {% endif %}
 
 {% if largeStations.count > 1 %}
-, {{largeStations.count}} starports
+, {{largeStations.count}} large stations
 {% elif largeStations.count > 0 %}
-, {{largeStations.count}} starport
+, {{largeStations.count}} large stations
 {% endif %}
 
 {% if outposts.count > 1 %}
@@ -35,6 +44,10 @@
 , {{planetary.count}} planetary bases
 {% elif planetary.count > 0 %}
 , {{planetary.count}} planetary base
+{% endif %}
+
+{% if edsmUrl %}
+. {{ "EDSM:"|bold }} {{ edsmUrl }}
 {% endif %}
 
 {% if plotUrl %}

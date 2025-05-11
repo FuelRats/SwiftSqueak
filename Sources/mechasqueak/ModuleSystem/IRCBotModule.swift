@@ -35,17 +35,19 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
 
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
-    
-    init (
+
+    init(
         wrappedValue value: @escaping BotCommandFunction,
         _ commands: [String],
         _ body: [CommandBody] = [],
         category: HelpCategory?,
         description: String,
+        helpLocale: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: DispatchTimeInterval? = nil,
-        cooldownOverride: AccountPermission? = .RescueWrite
+        cooldownOverride: AccountPermission? = .RescueWrite,
+        helpExtra: (() -> String)? = nil
     ) {
         self.wrappedValue = value
 
@@ -56,8 +58,10 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
             options: body.options,
             arguments: body.arguments,
             helpArguments: body.helpArguments,
+            helpExtra: helpExtra,
             category: category,
             description: description,
+            helpLocale: helpLocale,
             permission: permission,
             allowedDestinations: allowedDestinations,
             cooldown: TimeInterval(dispatchTimeInterval: cooldown),
@@ -79,19 +83,23 @@ struct IRCBotCommandDeclaration {
     let cooldownOverride: AccountPermission?
     let category: HelpCategory?
     let description: String
+    let helpLocale: String?
     var parameters: [CommandBody]
+    let helpExtra: (() -> String)?
 
     var onCommand: BotCommandFunction?
 
-    init (
+    init(
         commands: [String],
         onCommand: BotCommandFunction? = nil,
         parameters: [CommandBody],
         options: OrderedSet<Character> = [],
         arguments: [String: String?] = [:],
         helpArguments: [(String, String?, String?)] = [],
+        helpExtra: (() -> String)? = nil,
         category: HelpCategory?,
         description: String,
+        helpLocale: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: TimeInterval? = nil,
@@ -102,6 +110,7 @@ struct IRCBotCommandDeclaration {
         self.options = options
         self.arguments = arguments
         self.helpArguments = helpArguments
+        self.helpLocale = helpLocale
         self.permission = permission
         self.onCommand = onCommand
         self.allowedDestinations = allowedDestinations
@@ -109,17 +118,21 @@ struct IRCBotCommandDeclaration {
         self.description = description
         self.cooldown = cooldown
         self.cooldownOverride = cooldownOverride
+        self.helpExtra = helpExtra
     }
 
-    func usageDescription (command: IRCBotCommand?) -> String {
+    func usageDescription(command: IRCBotCommand?) -> String {
         var usage = "!" + (command?.command ?? self.commands[0])
+        if helpLocale != nil {
+            usage += "-<lang>"
+        }
 
         if self.options.count > 0 {
             usage += " [-\(String(self.options))]"
         }
 
         usage += " \(paramText)"
-        
+
         for (argument, valueDesc, _) in helpArguments {
             if let valueDesc = valueDesc {
                 usage += " [--\(argument) <\(valueDesc)>]"
@@ -130,17 +143,18 @@ struct IRCBotCommandDeclaration {
         return usage
     }
 
-    func exampleDescription (command: IRCBotCommand?) -> String {
+    func exampleDescription(command: IRCBotCommand?) -> String {
         return "!\(command?.command ?? self.commands[0]) \(self.example)"
     }
 
     var isDispatchingCommand: Bool {
-        return self.category == .board && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
+        return self.category == .board
+            && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
     }
-    
+
     var example: String {
         var example = self.parameters.example
-        
+
         for argument in helpArguments {
             let (name, argValue, _) = argument
             if let exampleText = argument.2 {
@@ -153,15 +167,15 @@ struct IRCBotCommandDeclaration {
         }
         return example
     }
-    
+
     var paramText: String {
         return self.parameters.paramText
     }
-    
+
     var minimumParameters: Int {
         return self.parameters.requiredParameters.count
     }
-    
+
     var maximumParameters: Int? {
         if case .param(_, _, let type, _) = parameters.last {
             if type == .multiple {
@@ -170,7 +184,7 @@ struct IRCBotCommandDeclaration {
         }
         return self.parameters.count
     }
-    
+
     var lastParameterIsContinous: Bool {
         if case .param(_, _, let type, _) = parameters.last {
             if type == .continuous {
@@ -181,15 +195,14 @@ struct IRCBotCommandDeclaration {
     }
 }
 
-
-
 @propertyWrapper struct EventListener<T: NotificationDescriptor> {
     var wrappedValue: (T.Payload) -> Void
     let token: NotificationToken
 
-    init (wrappedValue value: @escaping (T.Payload) -> Void) {
+    init(wrappedValue value: @escaping (T.Payload) -> Void) {
         self.wrappedValue = value
-        self.token = NotificationCenter.default.addObserver(descriptor: T(), using: self.wrappedValue)
+        self.token = NotificationCenter.default.addObserver(
+            descriptor: T(), using: self.wrappedValue)
     }
 }
 
@@ -197,8 +210,9 @@ struct IRCBotCommandDeclaration {
     var wrappedValue: (T.Payload) async -> Void
     let token: NotificationToken
 
-    init (wrappedValue value: @escaping (T.Payload) async -> Void) {
+    init(wrappedValue value: @escaping (T.Payload) async -> Void) {
         self.wrappedValue = value
-        self.token = NotificationCenter.default.addAsyncObserver(descriptor: T(), using: self.wrappedValue)
+        self.token = NotificationCenter.default.addAsyncObserver(
+            descriptor: T(), using: self.wrappedValue)
     }
 }

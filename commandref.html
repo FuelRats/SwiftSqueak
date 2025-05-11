@@ -10,7 +10,7 @@
     </p>
     <h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!addcase <span style="color: rgb(122,134,154);">&lt;client nick&gt; <em> [--pc]</em><em> [--xb]</em><em> [--ps]</em><em> [--mode &lt;game version&gt;]</em><em> [--cr]</em><em> [--sys &lt;system&gt;]</em><em> [--cmdr &lt;CMDR name&gt;]</em><em> [--lang &lt;language code&gt;]</em></span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!addcase <span style="color: rgb(122,134,154);"><em>[-ohlf] </em>&lt;client nick&gt; <em> [--pc]</em><em> [--xb]</em><em> [--ps]</em><em> [--mode &lt;game version&gt;]</em><em> [--cr]</em><em> [--sys &lt;system&gt;]</em><em> [--cmdr &lt;CMDR name&gt;]</em><em> [--lang &lt;language code&gt;]</em></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Aliases</strong>: !create
@@ -26,6 +26,14 @@
       <span style="color: rgb(0,0,0);text-decoration: none;">Create a new rescue case and add it to the board</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;">Options:</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-o</strong> Set the case to use Odyssey game mode</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-h</strong> Set the case to use Horizons game mode</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-l</strong> Set the case to use Legacy game mode</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-f</strong> Force mecha to add the case even if the client isn't in the channel</span>
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--pc</strong> Set platform to PC</span>
     </p>    <p style="margin-left: 60.0px;">
@@ -762,7 +770,9 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!grab <span style="color: rgb(122,134,154);">&lt;case id/client/assigned rat&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!grab <span style="color: rgb(122,134,154);">&lt;case id/client/assigned rat&gt; <span style="color: rgb(122,134,154);">
+    <em>[nick]</em>
+</span></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Permissions</strong>: Drilled Rat
@@ -780,7 +790,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!grab SpaceDawg</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!grab 1 SpaceDawg</span>
         </span>
       </span>
     </p>
@@ -860,7 +870,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -913,14 +923,14 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!delete <span style="color: rgb(122,134,154);">&lt;rescue uuid&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!delete <span style="color: rgb(122,134,154);">&lt;rescue uuid 1&gt; &lt;rescue uuid 2&gt; &lt;rescue uuid 3&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Delete a rescue by UUID, cannot be used on a rescue that is currently on the board.</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;">Delete rescues by UUID, cannot be used on any rescue that is currently on the board.</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -937,7 +947,9 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!deleteall <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!deleteall <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
+    <em>[time ago]</em>
+</span></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Aliases</strong>: !cleartrash
@@ -946,7 +958,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -961,7 +973,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!deleteall </span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!deleteall 48h</span>
         </span>
       </span>
     </p>
@@ -1006,7 +1018,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1084,7 +1096,7 @@
     <span style="text-decoration: none;">!reopen <span style="color: rgb(122,134,154);">&lt;rescue uuid/client name&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1140,7 +1152,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1168,7 +1180,7 @@
     <span style="text-decoration: none;">!renameid <span style="color: rgb(122,134,154);">&lt;rescue uuid&gt; &lt;client name...&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1198,7 +1210,119 @@
         </span>
       </strong>
     </p>
-    
+    <h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!queue <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Permissions</strong>: Drilled Rat
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Get current information on the queue</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!queue </span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!queuestats <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
+    <em>[start date]</em>
+</span></span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Permissions</strong>: Drilled Rat
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Get statistics from the queueing system</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!queuestats 2021-04-01</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!dequeue <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !next
+        </span>
+      </span>
+    </p>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Permissions</strong>: Drilled Rat
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Manually move the next client from the queue into the rescue channel</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!dequeue </span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!maxclients <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
+    <em>[number of clients]</em>
+</span></span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !maxload !maxcases
+        </span>
+      </span>
+    </p>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Permissions</strong>: Drilled Rat
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!maxclients 10</span>
+        </span>
+      </span>
+    </p>
+      <br/>
     <br/>    <h2>
       <span style="color: rgb(0,0,0);">Facts</span>
     </h2>
@@ -1242,7 +1366,7 @@
     <span style="text-decoration: none;">!addfact <span style="color: rgb(122,134,154);">&lt;fact-language&gt; &lt;fact message...&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1266,7 +1390,7 @@
     <span style="text-decoration: none;">!setfact <span style="color: rgb(122,134,154);">&lt;fact-language&gt; &lt;fact message...&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1290,7 +1414,7 @@
     <span style="text-decoration: none;">!delfact <span style="color: rgb(122,134,154);">&lt;fact-language&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1320,7 +1444,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1344,7 +1468,7 @@
     <span style="text-decoration: none;">!delalias <span style="color: rgb(122,134,154);">&lt;alias&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1368,7 +1492,7 @@
     <span style="text-decoration: none;">!anyfact <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);"><em>[targets 1]</em> <em>[targets 2]</em> <em>[targets 3]</em> </span><em> [--info]</em><em> [--locales]</em></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1460,7 +1584,7 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!sctime <span style="color: rgb(122,134,154);"><em>[-g] </em>&lt;distance...&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!sctime <span style="color: rgb(122,134,154);">&lt;distance...&gt; <em> [--sco &lt;max speed&gt;]</em></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Aliases</strong>: !sccalc !traveltime
@@ -1473,7 +1597,7 @@
 </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;">Options:</span>
     </p>    <p style="margin-left: 60.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-g</strong> Calculate going from one gravitational body to another, rather than towards deep space</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--sco &lt;max speed&gt;</strong> help.command.sctime.sco</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -1484,7 +1608,7 @@
     <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
-          <span style="color: rgb(0,0,0);text-decoration: none;">!sctime 2500ls</span>
+          <span style="color: rgb(0,0,0);text-decoration: none;">!sctime 2500ls --sco 7000</span>
         </span>
       </span>
     </p>
@@ -1583,7 +1707,7 @@
     <span style="text-decoration: none;">!announce <span style="color: rgb(122,134,154);">&lt;channel&gt; &lt;client name&gt; &lt;client nick&gt; &lt;PC/XB/PS&gt; &lt;system...&gt; <em> [--cr]</em><em> [--lang &lt;language code&gt;]</em><em> [--mode &lt;game version&gt;]</em></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Trainer, Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Trainer, Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1672,7 +1796,13 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!landmark <span style="color: rgb(122,134,154);">&lt;system name...&gt; </span></span></span></h3>    <p style="margin-left: 30.0px;">
+    <span style="text-decoration: none;">!landmark <span style="color: rgb(122,134,154);">&lt;system name...&gt; </span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !sysinfo !edsm
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;">Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
@@ -1718,7 +1848,7 @@
     </p>
       <br/><h3>
 <span style="color: rgb(0,0,0);text-decoration: none;">
-    <span style="text-decoration: none;">!station <span style="color: rgb(122,134,154);"><em>[-pl] </em>&lt;reference system / case id / client name...&gt; </span></span></span></h3>    <p>
+    <span style="text-decoration: none;">!station <span style="color: rgb(122,134,154);"><em>[-pl] </em>&lt;reference system / case id / client name...&gt; <em> [--legacy]</em></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
           <strong>Aliases</strong>: !stations
@@ -1732,6 +1862,8 @@
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-p</strong> Include planetary outposts in results</span>
     </p>    <p style="margin-left: 60.0px;">
       <span style="color: rgb(0,0,0);text-decoration: none;"><strong>-l</strong> Require the station to have a size L (large) landing pad</span>
+    </p>    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;"><strong>--legacy</strong> Do not include stations created after the player colonization update</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -1823,11 +1955,11 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Drilled Dispatch, Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Drilled Dispatch, Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Send a message on Twitter (@FuelRatAlerts) and Mastodon (@fuelratsalerts@mastodon.localecho.net)</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;">Send a message via Mastodon & BlueSky</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -1857,7 +1989,7 @@
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
-      <span style="color: rgb(0,0,0);text-decoration: none;">Notify users that rats are needed on a case via Twitter (@FuelRatAlerts) and Mastodon (@fuelratsalerts@mastodon.localecho.net)</span>
+      <span style="color: rgb(0,0,0);text-decoration: none;">Notify users that rats are needed on a case via Mastodon & Bluesky</span>
     </p>    <p style="margin-left: 30.0px;">
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
@@ -1883,7 +2015,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1913,7 +2045,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1937,7 +2069,7 @@
     <span style="text-decoration: none;">!startlogs <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Trainer, Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Trainer, Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1967,7 +2099,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Trainer, Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Trainer, Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -1983,6 +2115,142 @@
       <span style="color: rgb(0,0,0);">
         <span style="text-decoration: none;">
           <span style="color: rgb(0,0,0);text-decoration: none;">!savelogs </span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!translate <span style="color: rgb(122,134,154);">&lt;message...&gt; </span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !t
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Translate a message to another language</span>
+    </p><p style="margin-left: 30.0px;">
+  <span style="color: rgb(0,0,0);text-decoration: none;">The original message language is inferred, append -<code> after the command to set the target language. e.g !translate-fr</span>
+</p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!translate Help is on the way!</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!tcase <span style="color: rgb(122,134,154);">&lt;case id/client&gt; &lt;message...&gt; </span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !tc
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Translates a message to the client's language and replies to the client in the rescue channel as you</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!tcase 4 Help is on the way!</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!translateme <span style="color: rgb(122,134,154);">&lt;channel&gt; &lt;language code&gt; &lt;message...&gt; </span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !tme
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Translate a message to another language and sends the message to a channel as you</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!translateme #fuelrats fr Help is on the way!</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!transsub <span style="color: rgb(122,134,154);"><span style="color: rgb(122,134,154);">
+    <em>[message type]</em>
+</span></span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !tsub
+        </span>
+      </span>
+    </p>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Permissions</strong>: Verified
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Subscribe to automatic translations of client messages by either private message, or notice</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!transsub notice</span>
+        </span>
+      </span>
+    </p>
+      <br/><h3>
+<span style="color: rgb(0,0,0);text-decoration: none;">
+    <span style="text-decoration: none;">!transunsub <span style="color: rgb(122,134,154);"></span></span></span></h3>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Aliases</strong>: !tunsub
+        </span>
+      </span>
+    </p>    <p>
+      <span style="color: rgb(0,0,0);text-decoration: none;">
+        <span style="text-decoration: none;">
+          <strong>Permissions</strong>: Verified
+        </span>
+      </span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);text-decoration: none;">Subscribe to automatic translations of client messages by either private message, or notice</span>
+    </p>    <p style="margin-left: 30.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">Example:</span>
+        </span>
+      </span>
+    </p>
+    <p style="margin-left: 60.0px;">
+      <span style="color: rgb(0,0,0);">
+        <span style="text-decoration: none;">
+          <span style="color: rgb(0,0,0);text-decoration: none;">!transunsub </span>
         </span>
       </span>
     </p>
@@ -2296,7 +2564,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -2322,7 +2590,7 @@
 </span></span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -2352,7 +2620,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Overseer, Tech rat, Moderator, Operations team, Network moderator, Network administrator
+          <strong>Permissions</strong>: Overseer, Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -2382,7 +2650,7 @@
     </p>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -2406,7 +2674,7 @@
     <span style="text-decoration: none;">!addgroup <span style="color: rgb(122,134,154);">&lt;nickname/user id&gt; &lt;permission group&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -2430,7 +2698,7 @@
     <span style="text-decoration: none;">!delgroup <span style="color: rgb(122,134,154);">&lt;nickname/user id&gt; &lt;permission group&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">
@@ -2454,7 +2722,7 @@
     <span style="text-decoration: none;">!suspend <span style="color: rgb(122,134,154);">&lt;nickname/user id&gt; &lt;timespan&gt; </span></span></span></h3>    <p>
       <span style="color: rgb(0,0,0);text-decoration: none;">
         <span style="text-decoration: none;">
-          <strong>Permissions</strong>: Tech rat, Moderator, Network moderator, Network administrator
+          <strong>Permissions</strong>: Tech rat, Operations team, Moderator, Network administrator, Network moderator
         </span>
       </span>
     </p>    <p style="margin-left: 30.0px;">

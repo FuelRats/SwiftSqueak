@@ -33,9 +33,13 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
-        [.param("case id/client", "4"), .param("message", "client left irc", .continuous, .optional)],
+        [
+            .param("case id/client", "4"),
+            .param("message", "client left irc", .continuous, .optional),
+        ],
         category: .board,
-        description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
+        description:
+            "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -62,29 +66,35 @@ class BoardAttributeCommands: IRCBotModule {
         var message = ""
         if command.parameters.count > 1 {
             message = command.parameters[1]
-            rescue.quotes.append(RescueQuote(
-                author: command.message.user.nickname,
-                message: "(Set \(status)) \(message)",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: command.message.user.nickname
-            ))
+            rescue.quotes.append(
+                RescueQuote(
+                    author: command.message.user.nickname,
+                    message: "(Set \(status)) \(message)",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.user.nickname
+                ))
         }
         try? rescue.save(command)
 
         let key = command.parameters.count > 1 ? "board.toggleactive" : "board.toggleactivemsg"
 
-        command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
-            "status": status,
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "message": message
-        ])
+        command.message.reply(
+            key: "board.toggleactive", fromCommand: command,
+            map: [
+                "status": status,
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "message": message,
+            ])
     }
 
     @BotCommand(
         ["system", "sys", "loc", "location"],
-        [.options(["f"]), .param("case id/client", "4"), .param("system name", "NLTT 48288", .continuous)],
+        [
+            .options(["f"]), .param("case id/client", "4"),
+            .param("system name", "NLTT 48288", .continuous),
+        ],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
         permission: .DispatchWrite,
@@ -97,14 +107,18 @@ class BoardAttributeCommands: IRCBotModule {
 
         var systemName = command.parameters[1].uppercased()
         if systemName == rescue.system?.name {
-            command.message.error(key: "board.syschange.nochange", fromCommand: command, map: [
-                "caseId": caseId
-            ])
+            command.message.error(
+                key: "board.syschange.nochange", fromCommand: command,
+                map: [
+                    "caseId": caseId
+                ])
             return
         }
-        
+
         var key = "board.syschange"
-        if let correction = ProceduralSystem.correct(system: systemName), command.forceOverride == false && configuration.general.drillMode == false {
+        if let correction = ProceduralSystem.correct(system: systemName),
+            command.forceOverride == false && configuration.general.drillMode == false
+        {
             key += ".autocorrect"
             systemName = correction
         }
@@ -123,36 +137,46 @@ class BoardAttributeCommands: IRCBotModule {
                 manuallyCorrected: true
             )
         }
-        
+
         if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
-            command.message.reply(message: lingo.localize("board.systemattack", locale: "en", interpolations: [
-                "system": system.name
-            ]))
-            rescue.appendQuote(RescueQuote(
-                author: command.message.client.currentNick,
-                message: "CAUTION: \(system.name) is currently under attack by Thargoids",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: command.message.client.currentNick)
+            command.message.reply(
+                message: lingo.localize(
+                    "board.systemattack", locale: "en",
+                    interpolations: [
+                        "system": system.name
+                    ]))
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick)
             )
         }
         try? rescue.save(command)
-        
-        if let distance = rescue.system?.landmark?.distance, distance > 2500, let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName) {
-            command.message.reply(key: key + ".spansh", fromCommand: command, map: [
+
+        if let distance = rescue.system?.landmark?.distance, distance > 2500,
+            let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName)
+        {
+            command.message.reply(
+                key: key + ".spansh", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "systemInfo": rescue.system.description,
+                    "plotUrl": plotUrl.absoluteString,
+                ])
+            return
+        }
+
+        command.message.reply(
+            key: key, fromCommand: command,
+            map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
                 "systemInfo": rescue.system.description,
-                "plotUrl": plotUrl.absoluteString
             ])
-            return
-        }
-        
-        command.message.reply(key: key, fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "systemInfo": rescue.system.description
-        ])
     }
 
     @BotCommand(
@@ -167,58 +191,70 @@ class BoardAttributeCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+
         let oldClient = rescue.clientDescription
         let client = command.parameters[1]
-        
+
         if let existingCase = await board.rescues.first(where: {
             $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
-            command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.key,
-                "client": client
-            ])
+            command.message.error(
+                key: "board.clientchange.exists", fromCommand: command,
+                map: [
+                    "caseId": existingCase.key,
+                    "client": client,
+                ])
             return
         }
 
-
         rescue.client = client
         if configuration.queue != nil {
-            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == oldClient })?.changeName(name: client)
+            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == oldClient })?
+                .changeName(name: client)
         }
-        
+
         if rescue.platform == .Xbox {
             rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
-            
-            if case let .found(xboxProfile) = rescue.xboxProfile, xboxProfile.privacy.isAllowed == false {
-                command.message.reply(message: lingo.localize("board.xboxprivacy", locale: "en", interpolations: [
-                    "caseId": caseId,
-                    "client": rescue.clientDescription
-                ]))
+
+            if case let .found(xboxProfile) = rescue.xboxProfile,
+                xboxProfile.privacy.isAllowed == false
+            {
+                command.message.reply(
+                    message: lingo.localize(
+                        "board.xboxprivacy", locale: "en",
+                        interpolations: [
+                            "caseId": caseId,
+                            "client": rescue.clientDescription,
+                        ]))
             }
         }
-        
+
         if rescue.platform == .PS {
             rescue.psnProfile = await PSN.performLookup(name: client)
-            
+
             if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
-                command.message.reply(message: lingo.localize("board.psplusmissing", locale: "en", interpolations: [
-                    "caseId": caseId,
-                    "client": rescue.clientDescription
-                ]))
+                command.message.reply(
+                    message: lingo.localize(
+                        "board.psplusmissing", locale: "en",
+                        interpolations: [
+                            "caseId": caseId,
+                            "client": rescue.clientDescription,
+                        ]))
             }
         }
-        
+
         var clientName = rescue.clientDescription
         if let onlineStatus = rescue.onlineStatus {
             clientName += " \(onlineStatus)"
         }
-        command.message.reply(key: "board.clientchange", fromCommand: command, map: [
-            "caseId": caseId,
-            "oldClient": oldClient,
-            "client": clientName
-        ])
-        
+        command.message.reply(
+            key: "board.clientchange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "oldClient": oldClient,
+                "client": clientName,
+            ])
+
         try? rescue.save(command)
     }
 
@@ -239,20 +275,23 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.clientNick = nick
         try? rescue.save(command)
 
-        command.message.reply(key: "board.nickchange", fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "nick": nick
-        ])
-
+        command.message.reply(
+            key: "board.nickchange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "nick": nick,
+            ])
 
         if let existingCase = await board.rescues.first(where: {
             $0.1.clientNick?.lowercased() == nick.lowercased() && $0.1.id != rescue.id
         }) {
-            command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.key,
-                "nick": nick
-            ])
+            command.message.error(
+                key: "board.nickchange.exists", fromCommand: command,
+                map: [
+                    "caseId": existingCase.key,
+                    "nick": nick,
+                ])
         }
     }
 
@@ -271,20 +310,24 @@ class BoardAttributeCommands: IRCBotModule {
 
         let newLanguage = Locale(identifier: command.parameters[1])
         guard newLanguage.isValid else {
-            command.message.error(key: "board.languagechange.error", fromCommand: command, map: [
-                "language": command.parameters[1]
-            ])
+            command.message.error(
+                key: "board.languagechange.error", fromCommand: command,
+                map: [
+                    "language": command.parameters[1]
+                ])
             return
         }
 
         rescue.clientLanguage = newLanguage
         try? rescue.save(command)
 
-        command.message.reply(key: "board.languagechange", fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
-        ])
+        command.message.reply(
+            key: "board.languagechange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))",
+            ])
 
     }
 
@@ -303,25 +346,32 @@ class BoardAttributeCommands: IRCBotModule {
 
         if rescue.codeRed == true {
             rescue.codeRed = false
-            command.message.reply(key: "board.codered.no", fromCommand: command, map: [
-                "caseId": caseId,
-                "client": rescue.clientDescription
-            ])
+            command.message.reply(
+                key: "board.codered.no", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                ])
         } else {
             rescue.codeRed = true
-            command.message.reply(key: "board.codered.active", fromCommand: command, map: [
-                "caseId": caseId,
-                "client": rescue.clientDescription
-            ])
+            command.message.reply(
+                key: "board.codered.active", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                ])
 
             if rescue.rats.count > 0 {
                 let rats = rescue.rats.map({
-                    $0.currentNick(inIRCChannel: command.message.destination) ?? $0.attributes.name.value
+                    $0.currentNick(inIRCChannel: command.message.destination)
+                        ?? $0.attributes.name.value
                 }).joined(separator: ", ")
 
-                command.message.reply(key: "board.codered.attention", fromCommand: command, map: [
-                    "rats": rats
-                ])
+                command.message.reply(
+                    key: "board.codered.attention", fromCommand: command,
+                    map: [
+                        "rats": rats
+                    ])
             }
         }
         try? rescue.save(command)
@@ -331,7 +381,8 @@ class BoardAttributeCommands: IRCBotModule {
         ["title", "operation"],
         [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continuous)],
         category: .board,
-        description: "Set the operations title of this rescue, used to give a unique name to special rescues",
+        description:
+            "Set the operations title of this rescue, used to give a unique name to special rescues",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -344,12 +395,14 @@ class BoardAttributeCommands: IRCBotModule {
         rescue.title = title
         try? rescue.save(command)
 
-        command.message.reply(key: "board.title.set", fromCommand: command, map: [
-            "caseId": caseId,
-            "title": title
-        ])
+        command.message.reply(
+            key: "board.title.set", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "title": title,
+            ])
     }
-    
+
     @BotCommand(
         ["mode"],
         [.param("case id/client", "4"), .param("game version", "3h / 4h / o")],
@@ -362,14 +415,16 @@ class BoardAttributeCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+
         guard let expansion = GameMode.parsedFromText(text: command.parameters[1]) else {
-            command.message.error(key: "board.expansion.invalid", fromCommand: command, map: [
-                "expansion": command.parameters[1]
-            ])
+            command.message.error(
+                key: "board.expansion.invalid", fromCommand: command,
+                map: [
+                    "expansion": command.parameters[1]
+                ])
             return
         }
-        
+
         if expansion != .legacy && rescue.platform != .PC {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
@@ -377,14 +432,16 @@ class BoardAttributeCommands: IRCBotModule {
 
         rescue.expansion = expansion
         try? rescue.save(command)
-        
-        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "expansion": expansion.ircRepresentable
-        ])
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable,
+            ])
     }
-    
+
     @BotCommand(
         ["legacy", "leg", "horizons3", "h3"],
         [.param("case id/client", "4")],
@@ -392,23 +449,25 @@ class BoardAttributeCommands: IRCBotModule {
         description: "Changes a PC case to use legacy mode",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
-        )
+    )
     var didReceiveHorizons3Command = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+
         let expansion: GameMode = .legacy
         rescue.expansion = expansion
         try? rescue.save(command)
-        
-        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "expansion": expansion.ircRepresentable
-        ])
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable,
+            ])
     }
-    
+
     @BotCommand(
         ["horizons", "hor", "h", "live", "horizons4", "h4"],
         [.param("case id/client", "4")],
@@ -416,12 +475,12 @@ class BoardAttributeCommands: IRCBotModule {
         description: "Changes a PC case to use the live Horizons expansion",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
-        )
+    )
     var didReceiveHorizons4Command = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+
         if rescue.platform != .PC {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
@@ -429,14 +488,16 @@ class BoardAttributeCommands: IRCBotModule {
         let expansion: GameMode = .horizons
         rescue.expansion = expansion
         try? rescue.save(command)
-        
-        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "expansion": expansion.ircRepresentable
-        ])
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable,
+            ])
     }
-    
+
     @BotCommand(
         ["odyssey", "ody", "o"],
         [.param("case id/client", "4")],
@@ -444,12 +505,12 @@ class BoardAttributeCommands: IRCBotModule {
         description: "Changes a PC case to use the Odyssey expansion",
         permission: .DispatchWrite,
         allowedDestinations: .Channel
-        )
+    )
     var didReceiveOdysseyCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+
         if rescue.platform != .PC {
             command.message.error(key: "board.expansion.platform", fromCommand: command)
             return
@@ -457,11 +518,13 @@ class BoardAttributeCommands: IRCBotModule {
         let expansion: GameMode = .odyssey
         rescue.expansion = expansion
         try? rescue.save(command)
-        
-        command.message.reply(key: "board.expansion.success", fromCommand: command, map: [
-            "caseId": caseId,
-            "client": rescue.clientDescription,
-            "expansion": expansion.ircRepresentable
-        ])
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable,
+            ])
     }
 }

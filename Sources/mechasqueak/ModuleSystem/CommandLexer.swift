@@ -23,10 +23,11 @@
  */
 
 import Foundation
-import Regex
 import IRCKit
+import Regex
 
-private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)".r!
+private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)"
+    .r!
 
 extension String {
     var strippingIRCFormatting: String {
@@ -43,8 +44,8 @@ struct IRCBotCommand {
     var arguments: [String: String?]
     var locale: Locale
     let message: IRCPrivateMessage
-    
-    init? (from text: String, inMessage privateMessage: IRCPrivateMessage) {
+
+    init?(from text: String, inMessage privateMessage: IRCPrivateMessage) {
         self.id = UUID()
         let message = text.strippingIRCFormatting.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -65,39 +66,43 @@ struct IRCBotCommand {
             self.message = privateMessage
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
-            
+
             let commandDefinition = MechaSqueak.commands.first(where: {
                 $0.commands.contains(commandToken.identifier)
             })
-            
+
             var arguments = [String: String?]()
             var options = OrderedSet<Character>()
             var parameters = [String]()
             var parameterQuoted = [Bool]()
-            
+
             var tokenIndex = 0
             while tokenIndex < tokens.count {
                 let currentToken = tokens[tokenIndex]
-                
+
                 switch currentToken {
                 case .Argument(let argumentName):
-                    guard let argumentDefinition = commandDefinition?.arguments[argumentName], argumentDefinition != nil else {
+                    guard let argumentDefinition = commandDefinition?.arguments[argumentName],
+                        argumentDefinition != nil
+                    else {
                         arguments.updateValue(nil, forKey: argumentName)
                         break
                     }
                     var params: [String] = []
-                    while tokenIndex + 1 < tokens.count, case .Parameter(let param, _) = tokens[tokenIndex + 1] {
+                    while tokenIndex + 1 < tokens.count,
+                        case .Parameter(let param, _) = tokens[tokenIndex + 1]
+                    {
                         params.append(param)
                         tokenIndex += 1
                     }
                     arguments.updateValue(params.joined(separator: " "), forKey: argumentName)
                 case .Option(let optionName):
                     options.append(optionName)
-                    
+
                 case .Parameter(let param, let quoted):
                     parameters.append(param)
                     parameterQuoted.append(quoted)
-                    
+
                 default:
                     break
                 }
@@ -118,12 +123,12 @@ struct IRCBotCommand {
         }
     }
 
-    init? (from channelMessage: IRCPrivateMessage) {
+    init?(from channelMessage: IRCPrivateMessage) {
         let message = channelMessage.message
         self.init(from: message, inMessage: channelMessage)
     }
 
-    init? (
+    init?(
         from channelMessage: IRCPrivateMessage,
         withIdentifier identifier: String,
         usage usageMessage: String,
@@ -137,56 +142,68 @@ struct IRCBotCommand {
         }
 
         if let maxParameters = maxParameters, self.parameters.count > maxParameters {
-            channelMessage.reply(message: "Command was given too many parameters, usage: \(usageMessage)")
+            channelMessage.reply(
+                message: "Command was given too many parameters, usage: \(usageMessage)")
             return nil
         }
 
         if self.parameters.count < minParameters {
-            channelMessage.reply(message: "Command was given too few parameters, usage: \(usageMessage)")
+            channelMessage.reply(
+                message: "Command was given too few parameters, usage: \(usageMessage)")
             return nil
         }
     }
-    
-    func has (argument: String) -> Bool {
+
+    func has(argument: String) -> Bool {
         return self.arguments.keys.contains(argument.lowercased())
     }
-    
-    func argumentValue (for arg: String) -> String? {
+
+    func argumentValue(for arg: String) -> String? {
         return self.arguments[arg] ?? nil
     }
-    
+
     var isRepeatInvocation: Bool {
-        let previousIncoation = IRCBotModuleManager.commandHistory.elements.reversed().first(where: {
-            $0.id != self.id && $0.command == self.command && $0.parameters == self.parameters && $0.message.user.nickname == self.message.user.nickname
-        })
-        return previousIncoation != nil && Date().timeIntervalSince(previousIncoation!.message.raw.time) < 30
+        let previousIncoation = IRCBotModuleManager.commandHistory.elements.reversed().first(
+            where: {
+                $0.id != self.id && $0.command == self.command && $0.parameters == self.parameters
+                    && $0.message.user.nickname == self.message.user.nickname
+            })
+        return previousIncoation != nil
+            && Date().timeIntervalSince(previousIncoation!.message.raw.time) < 30
     }
-    
+
     var forceOverride: Bool {
-        return self.options.contains("f") || self.arguments.keys.contains("force") || self.isRepeatInvocation
+        return self.options.contains("f") || self.arguments.keys.contains("force")
+            || self.isRepeatInvocation
     }
-    
+
     var param1: String? {
         self.parameters[safe: 0]
     }
-    
+
     var param2: (String?, String?) {
         return (self.parameters[safe: 0], self.parameters[safe: 1])
     }
-    
+
     var param3: (String?, String?, String?) {
         return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2])
     }
-    
+
     var param4: (String?, String?, String?, String?) {
-        return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2], self.parameters[safe: 3])
+        return (
+            self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2],
+            self.parameters[safe: 3]
+        )
     }
-    
+
     var param5: (String?, String?, String?, String?, String?) {
-        return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2], self.parameters[safe: 3], self.parameters[safe: 4])
+        return (
+            self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2],
+            self.parameters[safe: 3], self.parameters[safe: 4]
+        )
     }
-    
-    func error (_ error: Error) {
+
+    func error(_ error: Error) {
         debug(String(describing: error))
         self.message.error(key: "genericerror", fromCommand: self)
     }
@@ -226,44 +243,46 @@ struct Lexer {
         self.current = body.startIndex
     }
 
-    private mutating func nextToken () throws -> Token? {
+    private mutating func nextToken() throws -> Token? {
         guard let current = self.peek() else { return nil }
-        
+
         let next = self.peek(aheadBy: 1)
         let isIdentifier = current.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
         let nextIsIdentifier = next?.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
 
-        switch  (state, current, isIdentifier, next, nextIsIdentifier) {
-            case (.Command,      "!",    _,   _, true): return try lexCommand()
-            case (.Parameters,   " ",    _,   _,    _): return delimit()
-            case (.Parameters,   "-",    _, "-",    _): return try lexArgument()
-            case (.Parameters,   "-",    _,   _, true): do {
+        switch (state, current, isIdentifier, next, nextIsIdentifier) {
+        case (.Command, "!", _, _, true): return try lexCommand()
+        case (.Parameters, " ", _, _, _): return delimit()
+        case (.Parameters, "-", _, "-", _): return try lexArgument()
+        case (.Parameters, "-", _, _, true):
+            do {
                 state = .ParsingOptions
                 return delimit()
             }
-            case (.ParsingOptions, _,  true,  _,    _): return lexOption()
-            case (.ParsingOptions, _, false,  _,    _): do {
+        case (.ParsingOptions, _, true, _, _): return lexOption()
+        case (.ParsingOptions, _, false, _, _):
+            do {
                 state = .Parameters
                 return delimit()
             }
-            case (.Parameters,     _,     _,  _,    _): return try lexParameter()
-            case (.Command,        _,     _,  _,    _): throw LexerError.noCommand
+        case (.Parameters, _, _, _, _): return try lexParameter()
+        case (.Command, _, _, _, _): throw LexerError.noCommand
         }
     }
 
-    mutating func lex () throws -> [Token] {
+    mutating func lex() throws -> [Token] {
         while let next = try self.nextToken() {
             tokens.append(next)
             offset += 1
         }
         return tokens
     }
-    private mutating func delimit () -> Token {
+    private mutating func delimit() -> Token {
         pop()
         return .Delimiter
     }
 
-    private mutating func lexCommand () throws -> Token {
+    private mutating func lexCommand() throws -> Token {
         let commandString = readWhile({ $0.isWhitespace == false })
         guard let command = CommandToken(fromString: commandString) else {
             throw LexerError.noCommand
@@ -272,7 +291,7 @@ struct Lexer {
         return Token.Command(command)
     }
 
-    private mutating func lexArgument () throws -> Token {
+    private mutating func lexArgument() throws -> Token {
         _ = readWhile({ $0 == "-" })
         if peek()?.isWhitespace != false {
             throw LexerError.invalidOption
@@ -280,13 +299,13 @@ struct Lexer {
         return Token.Argument(readWhile({ $0.isWhitespace == false }).lowercased())
     }
 
-    private mutating func lexOption () -> Token {
+    private mutating func lexOption() -> Token {
         let option = peek()
         pop()
         return Token.Option(option!)
     }
 
-    private mutating func lexParameter () throws -> Token {
+    private mutating func lexParameter() throws -> Token {
         if peek() == "`" {
             pop()
             let arg = readWhile({ $0 != "`" })
@@ -316,7 +335,6 @@ struct Lexer {
         defer { current = body.index(after: current) }
         return body[current]
     }
-
 
     mutating func readWhile(_ check: (Character) -> Bool) -> String {
         return String(readSliceWhile(pop: true, check))
@@ -368,11 +386,12 @@ struct CommandToken {
     let identifier: String
     let languageCode: String?
 
-    init? (fromString token: String) {
+    init?(fromString token: String) {
         let match = CommandToken.regex.findFirst(in: token)!
         guard
             let declaration = match.group(at: 1),
-            let identifier = match.group(at: 2)?.lowercased() else {
+            let identifier = match.group(at: 2)?.lowercased()
+        else {
             return nil
         }
 

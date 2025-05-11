@@ -7,7 +7,11 @@ Station found in "{{ system.name }}".
 {% endif %}
  {{ station.name|bold }}
  {% filter italic %}
+{% if stationType %}
 ({{ stationType }}),
+{% else %}
+(Unknown station type),
+{% endif %}
 {% endfilter %}
  {{ station.distance|round|eliteDistance }}
 {% if station.distance > 1000 %}
@@ -35,7 +39,7 @@ Station found in "{{ system.name }}".
  (and {{ additionalServices }} other nonessential services)
 {% endif %}
 {% endif %}
-{% if stationType == "Outpost" or stationType == "Planetary Outpost" %}
+{% if hasLargePad == false %}
  {{ "Caution:"|bold|color:7 }} No large pad available
 {% endif %}
 .

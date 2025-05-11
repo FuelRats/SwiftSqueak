@@ -26,7 +26,7 @@ import Foundation
 import IRCKit
 
 extension IRCChannel {
-    func send (key: String, map: [String: Any] = [:]) {
+    func send(key: String, map: [String: Any] = [:]) {
         self.send(message: lingo.localize(key, locale: "en-GB", interpolations: map))
     }
 }

@@ -23,29 +23,35 @@
  */
 
 import Foundation
-import CryptoSwift
-import AsyncHTTPClient
 
-class Twitter {
-    static func tweet (message: String) async throws {
-        let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
-        var request = try HTTPClient.Request(url: url.url!, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-        request.headers.add(name: "Content-Type", value: "application/json")
+extension TimeInterval {
+    static func parse(_ input: String) -> TimeInterval? {
+        var total: TimeInterval = 0
+        var numberBuffer = ""
 
-        request.body = .data(try! JSONSerialization.data(withJSONObject: [
-            "message": message
-        ], options: []))
-        
-        _ = try await httpClient.execute(request: request, deadline: nil, expecting: 200)
-    }
-}
+        let unitMultipliers: [Character: TimeInterval] = [
+            "s": 1,
+            "m": 60,
+            "h": 3600,
+            "d": 86400,
+            "w": 604800,
+        ]
 
-fileprivate extension String {
-    var twitterUrlEncoded: String? {
-        return self.addingPercentEncoding(withAllowedCharacters: CharacterSet(
-            charactersIn: "ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-        ))
+        for char in input {
+            if char.isNumber {
+                numberBuffer.append(char)
+            } else if let multiplier = unitMultipliers[char], let number = Double(numberBuffer) {
+                total += number * multiplier
+                numberBuffer = ""
+            } else {
+                return nil
+            }
+        }
+
+        if !numberBuffer.isEmpty {
+            return nil
+        }
+
+        return total
     }
 }
