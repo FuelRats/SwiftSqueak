@@ -134,10 +134,10 @@ extension SystemsAPI.Star {
             return "Red sub-giant"
 
         case (.O, _, _):
-            return "Blue-white star"
+            return "Blue star"
 
         case (.B, _, _):
-            return "Blue star"
+            return "Blue-white star"
 
         case (.A, _, _):
             return "White star"
