@@ -4,6 +4,9 @@ disabled_rules:
     - trailing_whitespace
 line_length: 120
 file_length: 1000
+large_tuple:
+    warning: 3
+    error: 5
 function_parameter_count:
     warning: 10
     error: 15
