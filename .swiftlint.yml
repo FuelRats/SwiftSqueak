@@ -1,19 +1,31 @@
 included:
     - Sources
 disabled_rules:
-    - force_cast
-    - force_try
-    - cyclomatic_complexity
-    - function_body_length
-    - large_tuple
-    - file_length
-    - type_body_length
-    - nesting
+    - trailing_whitespace
+line_length: 120
+file_length: 1000
+function_parameter_count:
+    warning: 10
+    error: 15
+function_body_length:
+    warning: 100
+    error: 200
+cyclomatic_complexity:
+    warning: 15
+    error: 30
+    ignores_case_statements: true
 identifier_name:
     min_length: 2
     allowed_symbols: ["_"]
     validates_start_with_lowercase: false
 switch_case_alignment:
     indented_cases: true
-
+type_body_length:
+    warning: 500
+    error: 1000
+nesting:
+    type_level:
+        warning: 3
+    function_level:
+        warning: 3
 
