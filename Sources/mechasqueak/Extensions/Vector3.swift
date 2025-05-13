@@ -32,8 +32,7 @@ extension Array {
 }
 
 struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable,
-    ExpressibleByFloatLiteral, ExpressibleByArrayLiteral
-{
+    ExpressibleByFloatLiteral, ExpressibleByArrayLiteral {
     var x: Double
     var y: Double
     var z: Double
