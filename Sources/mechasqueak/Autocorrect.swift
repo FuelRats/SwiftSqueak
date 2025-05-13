@@ -34,16 +34,14 @@ func autocorrect(system: StarSystem) -> StarSystem {
         system.clientProvidedBody = systemName
         system.automaticallyCorrected = true
     } else if let procedural = ProceduralSystem(string: systemName),
-        let correction = ProceduralSystem.correct(system: systemName)
-    {
+        let correction = ProceduralSystem.correct(system: systemName) {
         system.name = correction
         if let body = procedural.systemBody {
             system.clientProvidedBody = body
         }
         system.automaticallyCorrected = true
     } else if let systemBodiesMatches = ProceduralSystem.systemBodyPattern.findFirst(
-        in: system.name)
-    {
+        in: system.name) {
         system.name.removeLast(systemBodiesMatches.matched.count)
         let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
         system.clientProvidedBody = body
@@ -51,8 +49,7 @@ func autocorrect(system: StarSystem) -> StarSystem {
     }
 
     if let handauthoredCorrection = HandauthoredCorrection.correct(systemName: system.name),
-        handauthoredCorrection != systemName
-    {
+        handauthoredCorrection != systemName {
         system.name = handauthoredCorrection
         system.automaticallyCorrected = true
     }
@@ -70,7 +67,7 @@ struct ProceduralSystem: CustomStringConvertible {
         "4": "A",
         "5": "S",
         "8": "B",
-        "0": "O",
+        "0": "O"
     ]
     private static let letterSubstitutions: [Character: Character] = [
         "L": "1",
@@ -79,7 +76,7 @@ struct ProceduralSystem: CustomStringConvertible {
         "B": "8",
         "D": "0",
         "O": "0",
-        "A": "4",
+        "A": "4"
     ]
 
     var sectorName: String
@@ -90,7 +87,7 @@ struct ProceduralSystem: CustomStringConvertible {
     var massCategory: Character
     var cubePosition: String
     var systemId: String?
-    var systemBody: String? = nil
+    var systemBody: String?
 
     struct CubeID: CustomStringConvertible {
         var part1: Character
@@ -110,14 +107,13 @@ struct ProceduralSystem: CustomStringConvertible {
         guard components.count > 2 && components[0].contains("-") == false else {
             return nil
         }
-        var proceduralStart: String.Index? = nil
+        var proceduralStart: String.Index?
         if let sectorComponent = components.first(where: {
             $0.count > 3 && $0.lowercased().levenshtein("sector") <= 2
         }) {
             let sectorRange = systemName.range(of: sectorComponent)!
             if sectorRange.lowerBound > systemName.startIndex
-                && sectorRange.upperBound < systemName.endIndex
-            {
+                && sectorRange.upperBound < systemName.endIndex {
                 hasSectorSuffix = true
                 proceduralStart = systemName.index(before: sectorRange.lowerBound)
                 systemName.removeSubrange(sectorRange)
@@ -156,8 +152,7 @@ struct ProceduralSystem: CustomStringConvertible {
         while (procedural.components(separatedBy: " ").count < 2
             || sectorName.components(separatedBy: " ").last?.count == 3)
             && sectorName.components(separatedBy: " ").count > 1
-            && procedural.components(separatedBy: " ").first?.contains("-") == false
-        {
+            && procedural.components(separatedBy: " ").first?.contains("-") == false {
             proceduralStart =
                 systemName.range(
                     of: " ", options: .backwards, range: systemName.startIndex..<proceduralStart)!
@@ -216,8 +211,7 @@ struct ProceduralSystem: CustomStringConvertible {
         while proceduralComponents.count > 0 {
             while let first = proceduralComponents[0].first,
                 first.isNumber
-                    || (systemId.count == 0 && ProceduralSystem.letterSubstitutions[first] != nil)
-            {
+                    || (systemId.count == 0 && ProceduralSystem.letterSubstitutions[first] != nil) {
                 systemId += String(first)
                 proceduralComponents[0].removeFirst()
             }
@@ -255,8 +249,7 @@ struct ProceduralSystem: CustomStringConvertible {
     }
 
     static func correct(system: String) -> String? {
-        if let procedural = ProceduralSystem(string: system), let correction = procedural.corrected
-        {
+        if let procedural = ProceduralSystem(string: system), let correction = procedural.corrected {
             if correction.description != system {
                 let correctionName = correction.description
                 if correctionName != system {
@@ -289,14 +282,12 @@ struct ProceduralSystem: CustomStringConvertible {
 
     var isValid: Bool {
         if self.hasSectorSuffix
-            && mecha.sectors.contains(where: { $0.name == self.sectorName }) == false
-        {
+            && mecha.sectors.contains(where: { $0.name == self.sectorName }) == false {
             return false
         }
 
         if self.cubeId.part1.isLetter == false || self.cubeId.part2.isLetter == false
-            || self.cubeId.suffix.isLetter == false
-        {
+            || self.cubeId.suffix.isLetter == false {
             return false
         }
 
@@ -308,8 +299,7 @@ struct ProceduralSystem: CustomStringConvertible {
             return false
         }
         if let systemId = self.systemId,
-            systemId.rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) != nil
-        {
+            systemId.rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) != nil {
             return false
         }
         return true
@@ -378,10 +368,9 @@ struct HandauthoredCorrection {
 
     static func correct(systemName: String) -> String? {
         if let numberedSectorMatch = "(LTT|NLTT|HIP|LHS|LFT|HR|LAWD)(?:\\D)?(\\d+)".r!.findFirst(
-            in: systemName)
-        {
+            in: systemName) {
             return
-                "\(numberedSectorMatch.group(at:1)!.uppercased()) \(numberedSectorMatch.group(at: 2)!)"
+                "\(numberedSectorMatch.group(at: 1)!.uppercased()) \(numberedSectorMatch.group(at: 2)!)"
         } else if let wiseMatch = "WISE(?:\\D)?([0-9]+)\\D([0-9]+)".r!.findFirst(in: systemName) {
             return "WISE \(wiseMatch.group(at: 1)!)+\(wiseMatch.group(at: 2)!)"
         } else if let lpMatch = "LP(?:\\D)?(\\d+)\\D(\\d+)".r?.findFirst(in: systemName) {
