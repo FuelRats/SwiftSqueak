@@ -26,6 +26,7 @@ import AsyncHTTPClient
 import Foundation
 import IRCKit
 import NIO
+import HTMLKit
 
 class ManagementCommands: IRCBotModule {
     var name: String = "ManagementCommands"
@@ -164,6 +165,28 @@ class ManagementCommands: IRCBotModule {
         }
         return "Available permission groups: " + groupList.joined(separator: ", ")
     }
+    
+    static func generateGroupListView () -> Content {
+        HTMLKit.Group {
+            H5 {
+                "Available permission groups:"
+            }
+            let groups = mecha.groups.sorted(by: {
+                $0.attributes.priority.value > $1.attributes.priority.value
+            })
+            UnorderedList {
+                for group in groups {
+                    ListItem {
+                        Code {
+                            group.attributes.name.value
+                        }
+                        Span { " " }
+                        CommandPermissionGroupView(group: group)
+                    }
+                }
+            }
+        }
+    }
 
     @BotCommand(
         ["addgroup"],
@@ -173,7 +196,8 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite,
         helpExtra: {
             return generateGroupList()
-        }
+        },
+        helpView: generateGroupListView
     )
     var didReceiveAddGroupCommand = { command in
         var getUserId = UUID(uuidString: command.parameters[0])
@@ -240,7 +264,8 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite,
         helpExtra: {
             return generateGroupList()
-        }
+        },
+        helpView: generateGroupListView
     )
     var didReceiveDelGroupCommand = { command in
         var getUserId = UUID(uuidString: command.parameters[0])

@@ -71,10 +71,10 @@ extension Double {
         scientificFormatter.positiveFormat = "0.###E+0"
         scientificFormatter.exponentSymbol = "E"
 
-        if self > 3.1 * pow(10, 13) {
+        if self > 3.1 * Double.pow(10, 13) {
             formattedDistance =
                 "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
-        } else if self > 3.6 * pow(10, 6) {
+        } else if self > 3.6 * Double.pow(10, 6) {
             formattedDistance = (formatter.string(from: lightYears) ?? "\(lightYears)") + "ly"
         } else if self < 1 {
             formattedDistance = "\(scientificFormatter.string(from: self) ?? "\(self)")ls"
@@ -131,11 +131,11 @@ extension Double {
         if let sco = sco {
            seconds = timeToTravel(lightSeconds: distance, maxSpeed: sco) ?? 0
         } else if distance < 100000 {
-            seconds = 8.9034 * pow(distance, 0.3292)
+            seconds = 8.9034 * Double.pow(distance, 0.3292)
         } else if distance < 1_907_087 {
             // -8*(10 ** -23) * (x ** 4) + 4*(10 ** -16) * (x ** 3) - 8*(10 ** -10) * (x ** 2) + 0.0014 * x + 264.79
-            let part1 = -8 * pow(10, -23) * pow(distance, 4)
-            let part2 = 4 * pow(10, -16) * pow(distance, 3) - 8 * pow(10, -10) * pow(distance, 2)
+            let part1 = -8 * Double.pow(10, -23) * Double.pow(distance, 4)
+            let part2 = 4 * Double.pow(10, -16) * Double.pow(distance, 3) - 8 * Double.pow(10, -10) * Double.pow(distance, 2)
             let part3 = 0.0014 * distance + 264.79
             seconds = part1 + part2 + part3
         } else {

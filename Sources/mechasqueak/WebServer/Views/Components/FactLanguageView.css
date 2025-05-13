@@ -1,0 +1,28 @@
+.fact-languages {
+    margin-left: auto;
+}
+
+.fact-language {
+    background-color: #6a6666;
+    
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.2em 0.6em;
+    margin-right: 0.4em;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: white;
+    border-radius: 4px;
+    font-family: system-ui, sans-serif;
+}
+
+.fact-language.active {
+    background-color: #505050;
+    cursor: default;
+    color: white;
+}
+
+.fact-language pre {
+    margin: 0;
+}

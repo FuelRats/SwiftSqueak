@@ -239,6 +239,38 @@ class HelpCommands: IRCBotModule {
         sendCommandHelp(helpCommand: helpCommand, destination: destination)
         command.message.reply(message: "Help message for \"!\(commandText)\" sent")
     }
+    
+    @BotCommand(
+        ["searchhelp"],
+        [.param("search term", "find previous paperwork for client", .continuous)],
+        category: nil,
+        description: "Search help for a command",
+        permission: .AnnouncementWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveSearchHelpCommand = { command in
+        let search = command.parameters[0]
+        let results = try? await searchCommands(query: search, on: mecha.sqliteDatabase!)
+        if results == nil || results?.isEmpty == true {
+            command.message.replyPrivate(
+                key: "help.notfound", fromCommand: command)
+            return
+        }
+        for result in results ?? [] {
+            guard let helpCommand = MechaSqueak.commands.first(where: {
+                $0.commands[0].lowercased() == result.name
+            }) else {
+                continue
+            }
+            command.message.replyPrivate(
+                key: "help.commandlist", fromCommand: command,
+                map: [
+                    "command": "!" + helpCommand.commands[0],
+                    "params": helpCommand.paramText,
+                    "description": helpCommand.description,
+                ])
+        }
+    }
 
     static func sendCommandHelp(helpCommand: IRCBotCommandDeclaration, destination: IRCChannel) {
         var commandText = helpCommand.commands[0]

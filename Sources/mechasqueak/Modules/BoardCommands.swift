@@ -25,6 +25,7 @@
 import Foundation
 import IRCKit
 import Regex
+import HTMLKit
 
 class BoardCommands: IRCBotModule {
     var name: String = "Rescue Board"
@@ -80,7 +81,7 @@ class BoardCommands: IRCBotModule {
         let codeRed = command.has(argument: "cr")
         let starSystem = command.argumentValue(for: "sys")
         let cmdrName = command.argumentValue(for: "cmdr")
-        var locale: Locale? = nil
+        var locale: Foundation.Locale? = nil
         if let lang = command.argumentValue(for: "lang") {
             locale = Locale(identifier: lang)
         }
@@ -240,7 +241,15 @@ class BoardCommands: IRCBotModule {
         description:
             "Closes a case and posts the paperwork link. Optional parameter takes the nick of the person that got first limpet (fuel+).",
         permission: .DispatchWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpView: {
+            HTMLKit.Group {
+                Anchor("Consult this page")
+                    .reference("https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182")
+                    .target(.blank)
+                " to see when cases should be closed and when they should be deleted"
+            }
+        }
     )
     var didReceiveCloseCommand = { command in
         let message = command.message
@@ -409,7 +418,15 @@ class BoardCommands: IRCBotModule {
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
         permission: .DispatchWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpView: {
+            HTMLKit.Group {
+                Anchor("Consult this page")
+                    .reference("https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182")
+                    .target(.blank)
+                " to see when cases should be deleted"
+            }
+        }
     )
     var didReceiveTrashCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {

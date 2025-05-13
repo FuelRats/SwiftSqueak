@@ -37,6 +37,7 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description:
             "Check the Fuel Rats account information the bot is currently associating with your nick",
+        tags: ["user", "info"],
         allowedDestinations: .PrivateMessage
     )
     var didReceiveWhoAmICommand = { command in
@@ -106,6 +107,7 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description:
             "Check the Fuel Rats account information the bot is associating with someone's nick.",
+        tags: ["user", "info"],
         permission: .RatReadOwn,
         allowedDestinations: .PrivateMessage
     )
@@ -366,6 +368,7 @@ class AccountCommands: IRCBotModule {
         [.param("game version", "h")],
         category: .account,
         description: "Informs Mecha which PC game version you are using",
+        tags: ["change", "game mode", "mode", "horizons", "odyssey", "legacy"],
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage,
         helpExtra: {

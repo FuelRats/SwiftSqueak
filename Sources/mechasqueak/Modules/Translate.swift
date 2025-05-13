@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import HTMLKit
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
@@ -42,6 +43,15 @@ class Translate: IRCBotModule {
         cooldown: .seconds(30),
         helpExtra: {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
+                    .target(.blank)
+                " for a list of valid language codes"
+            }
         }
     )
     var didReceiveTranslateCommand = { command in
@@ -116,6 +126,15 @@ class Translate: IRCBotModule {
         cooldown: .seconds(30),
         helpExtra: {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
+                    .target(.blank)
+                " for a list of valid language codes"
+            }
         }
     )
     var didReceiveTranslateMeCommand = { command in
@@ -170,6 +189,15 @@ class Translate: IRCBotModule {
         allowedDestinations: .PrivateMessage,
         helpExtra: {
             "Follow this guide to change how notices appear in HexChat https://hexchat.readthedocs.io/en/latest/tips.html#how-to-make-notices-show-up-in-a-consistent-location"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "Follow "
+                Anchor("this guide")
+                    .reference("https://hexchat.readthedocs.io/en/latest/tips.html#how-to-make-notices-show-up-in-a-consistent-location")
+                    .target(.blank)
+                " to change how notices appear in HexChat"
+            }
         }
     )
     var didReceiveTranslateSubscribeCommand = { command in
@@ -217,7 +245,7 @@ class Translate: IRCBotModule {
         command.message.reply(key: "transsub.unsubbed", fromCommand: command)
     }
 
-    static func translate(_ text: String, locale: Locale? = nil) async throws -> String? {
+    static func translate(_ text: String, locale: Foundation.Locale? = nil) async throws -> String? {
         var prompt = OpenAIMessage(
             role: .system,
             content:

@@ -1,0 +1,36 @@
+
+.facts-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.facts-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.fact-search {
+    width: 380px;
+}
+
+@media (max-width: 899px) {
+    .fact-search {
+        width: 100%;
+    }
+}
+
+
+@media (min-width: 900px) {
+    .facts-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .fact-search {
+        padding-top: 0.5em;
+    }
+}

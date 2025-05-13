@@ -23,7 +23,7 @@
  */
 
 import Foundation
-import IRCKit
+@preconcurrency import IRCKit
 import NIO
 import Regex
 
@@ -48,7 +48,10 @@ actor RescueBoard {
     nonisolated func startUpRoutines() {
         if configuration.general.drillMode == false {
             loop.next().scheduleRepeatedTask(
-                initialDelay: .minutes(15), delay: .minutes(15), self.checkElapsedPaperwork)
+                initialDelay: .minutes(15), delay: .minutes(15), { @Sendable task in
+                    self.checkElapsedPaperwork(task: task)
+                }
+            )
         }
 
         Task {
@@ -419,16 +422,23 @@ actor RescueBoard {
         if rescue.codeRed == false && configuration.general.drillMode == false
             && initiated != .insertion
         {
+            let rescueId = rescue.id
             self.prepTimers[rescue.id] = loop.next().scheduleTask(
-                in: .seconds(180),
-                {
-                    if rescue.codeRed == false || rescue.status == .Inactive {
-                        message.reply(
-                            message: lingo.localize(
-                                "board.notprepped", locale: "en-GB",
-                                interpolations: [
-                                    "caseId": identifier
-                                ]))
+                in: .seconds(180), { @Sendable in
+                    Task {
+                        guard let (_, rescue) = await self.rescues.first(where: { $0.value.id == rescueId }) else {
+                            return
+                        }
+                        if rescue.codeRed == false || rescue.status == .Inactive {
+                            message.reply(
+                                message: lingo.localize(
+                                    "board.notprepped", locale: "en-GB",
+                                    interpolations: [
+                                        "caseId": identifier
+                                    ]
+                                )
+                            )
+                        }
                     }
                 })
         }

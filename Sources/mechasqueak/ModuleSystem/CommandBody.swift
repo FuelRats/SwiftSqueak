@@ -29,7 +29,7 @@ enum CommandBody {
     case argument(String, String? = nil, example: String? = nil)
     case param(String, String = "", ParameterType = .standard, ParameterNullability = .required)
 
-    enum ParameterType {
+    enum ParameterType: String {
         case standard
         case continuous
         case multiple

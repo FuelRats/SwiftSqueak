@@ -28,6 +28,7 @@ import Foundation
 import IRCKit
 import Lingo
 import NIO
+import SQLKit
 
 Backtrace.install()
 
@@ -37,7 +38,7 @@ try "\(processId)".write(
     encoding: .utf8)
 
 let httpClient = HTTPClient(
-    eventLoopGroupProvider: .createNew,
+    eventLoopGroupProvider: .singleton,
     configuration: .init(
         redirectConfiguration: .none,
         timeout: .init(connect: .seconds(5), read: .seconds(180))
@@ -87,6 +88,8 @@ class MechaSqueak {
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
     static var lastDeltaMessageTime: Date? = nil
     let ratSocket: RatSocket?
+    var webServer: WebServer? = nil
+    var sqliteDatabase: SQLDatabase? = nil
 
     init() {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -137,13 +140,26 @@ class MechaSqueak {
         }
 
         ratSocket = RatSocket()
+        
 
         Task {
+            if let webServerConfiguration = configuration.webServer {
+                do {
+                    self.webServer = try await WebServer(configuration: webServerConfiguration)
+                    try await self.webServer?.start()
+                } catch {
+                    print("Failed to start web server: \(error)")
+                }
+            }
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
             self.sectors = try await SystemsAPI.fetchSectorList()
             self.groups = try await Group.getList().body.data?.primary.values ?? []
-
-            ReferenceGenerator.generate(inPath: configuration.sourcePath)
+            if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
+                self.sqliteDatabase = database
+                for command in MechaSqueak.commands {
+                    try await insertCommand(command, on: database)
+                }
+            }
         }
     }
 

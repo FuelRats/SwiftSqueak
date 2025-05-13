@@ -193,6 +193,18 @@ enum GamePlatform: String, Codable, CaseIterable {
             return nil
         }
     }
+    
+    var fontAwesomeClass: String {
+        switch self {
+        case .PC:
+            "fa-steam"
+        case .Xbox:
+            "fa-xbox"
+        case .PS:
+            "fa-playstation"
+
+        }
+    }
 }
 
 enum GameMode: String, Codable, CaseIterable {

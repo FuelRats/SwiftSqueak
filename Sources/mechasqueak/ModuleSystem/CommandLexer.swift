@@ -209,6 +209,8 @@ struct IRCBotCommand {
     }
 }
 
+extension IRCBotCommand: @unchecked Sendable {}
+
 enum Token {
     case Command(CommandToken)
     case Delimiter

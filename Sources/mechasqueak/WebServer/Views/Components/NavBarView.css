@@ -1,0 +1,41 @@
+:root {
+    --navbar-border: #ddd;
+    --navbar-padding: 1rem 2rem;
+    --navbar-gap: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --navbar-border: #3a3a3c;
+    }
+}
+
+.navbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: var(--primary-bg);
+    border-bottom: 1px solid var(--navbar-border);
+    padding: var(--navbar-padding);
+    font-weight: 500;
+    gap: var(--navbar-gap);
+}
+
+.navbar a {
+    text-decoration: none;
+    color: var(--link-color);
+    cursor: pointer;
+    transition: var(--link-transition);
+}
+
+.navbar a:hover {
+    color: var(--link-hover);
+}
+
+.navbar a:active {
+    color: var(--link-active);
+}
+
+.navbar .nav-right {
+    margin-left: auto;
+}

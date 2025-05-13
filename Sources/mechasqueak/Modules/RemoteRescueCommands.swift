@@ -613,6 +613,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.argument("all"), .param("client name", "SpaceDawg", .continuous)],
         category: .rescues,
         description: "Get paperwork link for a previous client by name.",
+        tags: ["last", "client", "previous", "paperwork"],
         permission: .RescueWrite
     )
     var didReceiveClientPaperworkCommand = { command in

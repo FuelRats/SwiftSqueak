@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import HTMLKit
 
 enum AllowedCommandDestination {
     case Channel
@@ -42,12 +43,14 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
         _ body: [CommandBody] = [],
         category: HelpCategory?,
         description: String,
+        tags: [String] = [],
         helpLocale: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: DispatchTimeInterval? = nil,
         cooldownOverride: AccountPermission? = .RescueWrite,
-        helpExtra: (() -> String)? = nil
+        helpExtra: (() -> String)? = nil,
+        helpView: (() -> Content)? = nil,
     ) {
         self.wrappedValue = value
 
@@ -59,8 +62,10 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
             arguments: body.arguments,
             helpArguments: body.helpArguments,
             helpExtra: helpExtra,
+            helpView: helpView,
             category: category,
             description: description,
+            tags: tags,
             helpLocale: helpLocale,
             permission: permission,
             allowedDestinations: allowedDestinations,
@@ -83,9 +88,11 @@ struct IRCBotCommandDeclaration {
     let cooldownOverride: AccountPermission?
     let category: HelpCategory?
     let description: String
+    let tags: [String]
     let helpLocale: String?
     var parameters: [CommandBody]
     let helpExtra: (() -> String)?
+    let helpView: (() -> Content)?
 
     var onCommand: BotCommandFunction?
 
@@ -97,8 +104,10 @@ struct IRCBotCommandDeclaration {
         arguments: [String: String?] = [:],
         helpArguments: [(String, String?, String?)] = [],
         helpExtra: (() -> String)? = nil,
+        helpView: (() -> Content)? = nil,
         category: HelpCategory?,
         description: String,
+        tags: [String] = [],
         helpLocale: String? = nil,
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
@@ -116,9 +125,11 @@ struct IRCBotCommandDeclaration {
         self.allowedDestinations = allowedDestinations
         self.category = category
         self.description = description
+        self.tags = tags
         self.cooldown = cooldown
         self.cooldownOverride = cooldownOverride
         self.helpExtra = helpExtra
+        self.helpView = helpView
     }
 
     func usageDescription(command: IRCBotCommand?) -> String {

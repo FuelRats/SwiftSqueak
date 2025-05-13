@@ -408,6 +408,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("game version", "3h / 4h / o")],
         category: .board,
         description: "Changes the PC expansion of a case",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -447,6 +448,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Changes a PC case to use legacy mode",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -473,6 +475,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Changes a PC case to use the live Horizons expansion",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -503,6 +506,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Changes a PC case to use the Odyssey expansion",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )

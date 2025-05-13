@@ -265,8 +265,8 @@
     "anyfact.locales": "%{fact} is available in the following languages: %{locales}",
     "anyfact.info": "!%{fact} (%{language} translation). Created %{created}. Updated %{updated}. Last updated by %{author}.",
     "facts.list": {
-        "one": "Listing %{count} fact for %{language} locale: %{facts}",
-        "other": "Listing %{count} facts for %{language} locale: %{facts}",
+        "one": "\u0002%{category}\u0002 (%{count} %{language} fact): %{facts}",
+        "other": "\u0002%{category}\u0002 (%{count} %{language} facts): %{facts}",
     },
     "facts.list.platform": {
         "one": "There is also %{count} platform specific fact: %{facts}",
@@ -349,6 +349,7 @@
     "help.categoryerror": "%{category} is not in the categories list. To list all categories, do !help. To see help for a specific command, add a ! before the command.",
     "help.categorylist": "Showing commands in the %{category} category. To see see more information about the command, do !help !command (e.g !help !assign).",
     "help.commandlist": "\u0002%{command}\u0002 %{params} - %{description}",
+    "help.notfound": "No results were found for your search",
     "help.commandtitle": "\u0002%{command}\u0002 %{example}",
     "help.commandaliases": "Aliases: %{aliases}",
     "help.commanderror": "!%{command} is not a known command",

@@ -31,7 +31,15 @@ class FactCommands: IRCBotModule {
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
     private var prepFacts = [
-        "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit",
+        "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit"
+    ]
+    public static var factCategoryNames: [String: String] = [
+        "irc": "IRC info",
+        "dispatch": "Dispatching",
+        "rescue": "Rescue information",
+        "info": "About us",
+        "rat": "Ratting",
+        "": "Other"
     ]
 
     static func parseFromParameter(param: String) -> (String, Locale) {
@@ -48,10 +56,10 @@ class FactCommands: IRCBotModule {
         description: "View the list of facts"
     )
     var didReceiveFactListCommand = { command in
-        guard var allFacts = try? await Fact.getAllFacts() else {
-            return
-        }
         if command.has(argument: "locales") {
+            guard var allFacts = try? await Fact.getAllFacts() else {
+                return
+            }
             let languages = allFacts.reduce(
                 Set<String>(),
                 { languages, fact in
@@ -70,24 +78,38 @@ class FactCommands: IRCBotModule {
                 ])
             return
         }
+        
+        guard var allFacts = try? await Fact.getAllFacts() else {
+            return
+        }
+        
+        let factCategories = (try? await Fact.getFactsGroupedByCategory()) ?? []
+        
+        for category in factCategories {
+            var facts = category.facts
+            let categoryName = factCategoryNames[category.key] ?? category.key.firstCapitalized
+            
+            let filterLanguage = String(command.locale.identifier.prefix(2))
+            if filterLanguage != "en" {
+                facts = facts.filter({ $0.messages[filterLanguage] != nil })
+            }
+
+            command.message.replyPrivate(
+                key: "facts.list", fromCommand: command,
+                map: [
+                    "category": categoryName,
+                    "language": command.locale.englishDescription,
+                    "count": facts.count,
+                    "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", "),
+                ]
+            )
+        }
+        
         var facts = Array(allFacts.grouped.values).sorted(by: {
             $0.cannonicalName < $1.cannonicalName
         })
-        let filterLanguage = String(command.locale.identifier.prefix(2))
-        if filterLanguage != "en" {
-            facts = facts.filter({ $0.messages[filterLanguage] != nil })
-        }
-
+        
         var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
-        facts = facts.filter({ $0.isPlatformFact == false })
-
-        command.message.replyPrivate(
-            key: "facts.list", fromCommand: command,
-            map: [
-                "language": command.locale.englishDescription,
-                "count": facts.count,
-                "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", "),
-            ])
 
         if platformFacts.count > 0 {
             command.message.replyPrivate(
@@ -96,7 +118,8 @@ class FactCommands: IRCBotModule {
                     "count": platformFacts.count,
                     "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(
                         separator: ", "),
-                ])
+                ]
+            )
         }
     }
 
@@ -105,6 +128,7 @@ class FactCommands: IRCBotModule {
         [
             .param("fact-language", "pcquit-en"),
             .param("fact message", "Get out it's gonna blow!", .continuous),
+            .argument("category", "info")
         ],
         category: .facts,
         description: "Add a new fact or a new language onto an existing fact",
@@ -123,31 +147,29 @@ class FactCommands: IRCBotModule {
                 ])
             return
         }
+        let category = command.arguments["category"] ?? nil
         let author = command.message.user.nickname
 
         do {
             let fact = try await GroupedFact.get(name: factCommand.command)
 
             if fact == nil {
-                Fact.create(
-                    name: factCommand.command, author: author, message: message,
-                    forLocale: factCommand.locale
-                ).whenComplete({ result in
-                    switch result {
-                    case .failure(_):
-                        command.message.error(key: "addfact.error", fromCommand: command)
-
-                    case .success(let fact):
-                        command.message.reply(
-                            key: "addfact.new", fromCommand: command,
-                            map: [
-                                "fact": factCommand.command,
-                                "language": factCommand.locale.englishDescription,
-                                "locale": factCommand.locale.short,
-                                "message": message.excerpt(maxLength: 350),
-                            ])
-                    }
-                })
+                do {
+                    let result = try await Fact.create(
+                        name: factCommand.command, author: author, message: message, category: category,
+                        forLocale: factCommand.locale
+                    )
+                    command.message.reply(
+                        key: "addfact.new", fromCommand: command,
+                        map: [
+                            "fact": factCommand.command,
+                            "language": factCommand.locale.englishDescription,
+                            "locale": factCommand.locale.short,
+                            "message": message.excerpt(maxLength: 350),
+                        ])
+                } catch {
+                    command.message.error(key: "addfact.error", fromCommand: command)
+                }
             } else if let fact = fact, fact.messages[factCommand.locale.short] == nil {
                 try await Fact.create(
                     message: message, forName: factCommand.command, inLocale: factCommand.locale,

@@ -48,7 +48,8 @@ class SystemSearch: IRCBotModule {
                 key: "systemsearch.long", fromCommand: command,
                 map: [
                     "system": system
-                ])
+                ]
+            )
         }
         do {
             let searchResults = try await SystemsAPI.performSearch(forSystem: system)
@@ -244,7 +245,7 @@ class SystemSearch: IRCBotModule {
             withCaseIdentifier: systemName, includingRecentlyClosed: true)
         {
             systemName = rescue.system?.name ?? ""
-            if rescue.platform == .Xbox || rescue.platform == .PS {
+            if rescue.platform == .Xbox || rescue.platform == .PS || rescue.expansion == .legacy {
                 legacyStations = true
             }
         }
