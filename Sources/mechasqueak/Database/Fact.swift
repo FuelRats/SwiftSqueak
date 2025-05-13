@@ -96,8 +96,7 @@ struct Fact: Codable, Hashable {
 
     }
 
-    public static func getWithFallback(name: String, forLocale locale: Locale) async throws -> Fact?
-    {
+    public static func getWithFallback(name: String, forLocale locale: Locale) async throws -> Fact? {
         if let fact = try await Fact.get(name: name, forLocale: locale) {
             return fact
         }
@@ -158,7 +157,6 @@ struct Fact: Codable, Hashable {
             .all()
         return rows.compactMap { try? $0.decode(model: Fact.self) }
     }
-
 
     public static func create(
         name: String, author: String, message: String, category: String? = nil,
@@ -348,7 +346,7 @@ struct GroupedFact: Codable {
             SQLColumn("updatedAt", table: "factmessages"),
             SQLColumn("language", table: "factmessages"),
             SQLColumn("author", table: "factmessages"),
-            SQLColumn("message", table: "factmessages"),
+            SQLColumn("message", table: "factmessages")
         ])
         .from("facts")
         .join(
