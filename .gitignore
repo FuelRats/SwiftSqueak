@@ -139,3 +139,6 @@ xcuserdata
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,xcode,swiftpackagemanager,swift
 config.json
+commands.sqlite
+mechasqueak.pid
+Public/css/*
