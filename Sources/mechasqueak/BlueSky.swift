@@ -28,20 +28,20 @@ import AsyncHTTPClient
 struct BlueSky {
     static func auth(config: BlueSkyConfiguration) async throws -> BlueSkyAuthResponse {
         let requestUrl = URL(string: "https://bsky.social/xrpc/com.atproto.server.createSession")!
-        
+
         var request = try HTTPClient.Request(url: requestUrl, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Content-Type", value: "application/json")
         let body = BlueSkyAuthRequest(identifier: config.handle, password: config.appPassword)
         request.body = try .encodable(body)
-        
+
         return try await httpClient.execute(request: request, forDecodable: BlueSkyAuthResponse.self)
     }
-    
+
     @discardableResult
     static func post(message: String, link: String? = nil) async throws -> BlueSkyPostResponse {
         guard let config = configuration.bluesky else { throw BlueSkyErrors.missingConfiguration }
-        
+
         let auth = try await auth(config: config)
         var facets: [BlueSkyPost.Record.Facet] = []
         if let link = link {
@@ -63,15 +63,15 @@ struct BlueSky {
                 facets: facets
             )
         )
-        
+
         let requestUrl = URL(string: "https://bsky.social/xrpc/com.atproto.repo.createRecord")!
-        
+
         var request = try HTTPClient.Request(url: requestUrl, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.headers.add(name: "Authorization", value: "Bearer \(auth.accessJwt)")
         request.body = try .encodable(post)
-        
+
         return try await httpClient.execute(request: request, forDecodable: BlueSkyPostResponse.self)
     }
 }
@@ -143,4 +143,3 @@ struct BlueSkyPostResponse: Codable {
 enum BlueSkyErrors: Error {
     case missingConfiguration
 }
-
