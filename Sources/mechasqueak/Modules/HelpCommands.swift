@@ -240,7 +240,7 @@ class HelpCommands: IRCBotModule {
     }
     
     @BotCommand(
-        ["searchhelp"],
+        ["searchhelp", "helpsearch"],
         [.param("search term", "find previous paperwork for client", .continuous)],
         category: nil,
         description: "Search help for a command",
