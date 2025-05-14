@@ -11,12 +11,12 @@ struct FactView: View {
         Article {
             H3 {
                 Div {
-                    "!" + fact.cannonicalName
-                    ShareAnchorView(value: fact.cannonicalName.lowercased())
+                    "!" + fact.canonicalName
+                    ShareAnchorView(value: fact.canonicalName.lowercased())
                     for (localeString, _) in fact.messages.sorted(by: { $0.key < $1.key }) {
                         let locale = Locale(identifier: localeString)
                         let isActive = localeString == defaultLocale.identifier
-                        FactLanguageView(identifier: fact.cannonicalName, locale: locale, isActive: isActive)
+                        FactLanguageView(identifier: fact.canonicalName, locale: locale, isActive: isActive)
                     }
                 }
                 .class("fact-header")
@@ -33,7 +33,7 @@ struct FactView: View {
                 FactMessageView(fact: defaultFact)
             }
         }
-        .id(fact.cannonicalName.lowercased())
+        .id(fact.canonicalName.lowercased())
         .class("fact")
     }
 }

@@ -56,10 +56,10 @@ extension FactCategory: TOCItem {
 
 extension GroupedFact: TOCSubItem {
     var title: String {
-        return "!\(self.cannonicalName)"
+        return "!\(self.canonicalName)"
     }
     
     var reference: String {
-        return self.cannonicalName
+        return self.canonicalName
     }
 }

@@ -100,13 +100,13 @@ class FactCommands: IRCBotModule {
                     "category": categoryName,
                     "language": command.locale.englishDescription,
                     "count": facts.count,
-                    "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", ")
+                    "facts": facts.map({ "!\($0.canonicalName)" }).joined(separator: ", ")
                 ]
             )
         }
         
         var facts = Array(allFacts.grouped.values).sorted(by: {
-            $0.cannonicalName < $1.cannonicalName
+            $0.canonicalName < $1.canonicalName
         })
         
         var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
@@ -272,11 +272,11 @@ class FactCommands: IRCBotModule {
             }
 
             if fact.messages.count == 1 {
-                try await Fact.drop(name: fact.cannonicalName)
+                try await Fact.drop(name: fact.canonicalName)
                 command.message.reply(
                     key: "delfact.dropped", fromCommand: command,
                     map: [
-                        "fact": fact.cannonicalName
+                        "fact": fact.canonicalName
                     ])
             } else {
                 try await Fact.delete(locale: factCommand.locale, forFact: factCommand.command)
@@ -286,7 +286,7 @@ class FactCommands: IRCBotModule {
                     map: [
                         "locale": factCommand.locale.short,
                         "language": factCommand.locale.englishDescription,
-                        "fact": fact.cannonicalName
+                        "fact": fact.canonicalName
                     ])
             }
         } catch {
@@ -334,12 +334,12 @@ class FactCommands: IRCBotModule {
                 return
             }
 
-            try await Fact.create(alias: alias, forName: fact.cannonicalName)
+            try await Fact.create(alias: alias, forName: fact.canonicalName)
             command.message.reply(
                 key: "aliasfact.added", fromCommand: command,
                 map: [
                     "alias": alias,
-                    "fact": fact.cannonicalName
+                    "fact": fact.canonicalName
                 ])
         } catch {
             command.message.error(key: "addfact.error", fromCommand: command)
@@ -368,7 +368,7 @@ class FactCommands: IRCBotModule {
                 return
             }
 
-            guard alias != fact.cannonicalName else {
+            guard alias != fact.canonicalName else {
                 command.message.error(
                     key: "delalias.protected", fromCommand: command,
                     map: [
@@ -382,7 +382,7 @@ class FactCommands: IRCBotModule {
                 key: "delalias.deleted", fromCommand: command,
                 map: [
                     "alias": alias,
-                    "fact": fact.cannonicalName
+                    "fact": fact.canonicalName
                 ])
         } catch {
             command.message.error(key: "addfact.error", fromCommand: command)
@@ -558,7 +558,7 @@ class FactCommands: IRCBotModule {
             command.message.replyPrivate(
                 key: "anyfact.locales", fromCommand: command,
                 map: [
-                    "fact": fact.cannonicalName,
+                    "fact": fact.canonicalName,
                     "locales": locales
                 ])
         }

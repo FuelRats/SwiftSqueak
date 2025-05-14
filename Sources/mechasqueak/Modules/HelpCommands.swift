@@ -101,7 +101,7 @@ class HelpCommands: IRCBotModule {
                 }
 
                 var groupedFacts = Array(facts.grouped.values).sorted(by: {
-                    $0.cannonicalName < $1.cannonicalName
+                    $0.canonicalName < $1.canonicalName
                 })
 
                 var platformFacts = groupedFacts.filter({ $0.isPlatformFact }).platformGrouped
@@ -112,7 +112,7 @@ class HelpCommands: IRCBotModule {
                     map: [
                         "language": command.locale.englishDescription,
                         "count": groupedFacts.count,
-                        "facts": groupedFacts.map({ "!\($0.cannonicalName)" }).joined(
+                        "facts": groupedFacts.map({ "!\($0.canonicalName)" }).joined(
                             separator: ", ")
                     ])
 

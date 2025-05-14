@@ -33,7 +33,7 @@ struct Routes: RouteCollection {
         routes.get("facts") { req in
             let facts = (try? await Fact.getFactsGroupedByCategory()) ?? []
             let allFacts = Array((try? await Fact.getAllFacts()) ?? []).grouped.values.sorted(by: {
-                $0.cannonicalName < $1.cannonicalName
+                $0.canonicalName < $1.canonicalName
             })
             
             let platformFacts = allFacts.filter({ $0.isPlatformFact }).platformGrouped
@@ -77,7 +77,7 @@ struct Routes: RouteCollection {
             let locale = (try? req.query.get(String.self, at: "locale")) ?? ""
             
             let allFacts = Array((try? await Fact.getAllFacts()) ?? []).grouped.values.sorted(by: {
-                $0.cannonicalName < $1.cannonicalName
+                $0.canonicalName < $1.canonicalName
             })
             let platformFacts = allFacts.filter({ $0.isPlatformFact }).platformGrouped
             guard let fact = platformFacts[name] else {

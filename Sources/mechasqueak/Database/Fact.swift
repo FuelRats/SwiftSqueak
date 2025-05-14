@@ -139,7 +139,7 @@ struct Fact: Codable, Hashable {
         }
         
         let groupedFacts = Array(allFacts.grouped.values).sorted(by: {
-            $0.cannonicalName < $1.cannonicalName
+            $0.canonicalName < $1.canonicalName
         }).filter({ $0.isPlatformFact == false })
         let items = Dictionary(grouping: groupedFacts, by: { $0.category ?? "" }).sorted(by: { $0.key < $1.key })
         return items.map({ FactCategory(key: $0.key, facts: $0.value) })
@@ -299,13 +299,13 @@ struct FactCategory: Codable {
 }
 
 struct GroupedFact: Codable {
-    let cannonicalName: String
+    let canonicalName: String
     var messages: [String: Fact]
     var aliases: [String]
     var category: String?
 
     var isPlatformFact: Bool {
-        return Fact.platformFacts.contains(where: { cannonicalName.hasSuffix($0) })
+        return Fact.platformFacts.contains(where: { canonicalName.hasSuffix($0) })
     }
 
     var platform: GamePlatform? {
@@ -313,7 +313,7 @@ struct GroupedFact: Codable {
             return nil
         }
 
-        switch self.cannonicalName {
+        switch self.canonicalName {
             case let str where str.starts(with: "pc"):
                 return .PC
 
@@ -335,10 +335,10 @@ struct GroupedFact: Codable {
 
         switch platform {
             case .PC, .PS:
-                return String(self.cannonicalName.dropFirst(2))
+                return String(self.canonicalName.dropFirst(2))
 
             case .Xbox:
-                return String(self.cannonicalName.dropFirst(1))
+                return String(self.canonicalName.dropFirst(1))
         }
     }
 
@@ -408,7 +408,7 @@ extension Array where Element == Fact {
                     facts[fact.id] = entry
                 } else {
                     facts[fact.id] = GroupedFact(
-                        cannonicalName: fact.id,
+                        canonicalName: fact.id,
                         messages: [fact.language: fact],
                         aliases: [fact.fact],
                         category: fact.category
