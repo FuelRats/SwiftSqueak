@@ -53,6 +53,7 @@ class BoardPlatformCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to Xbox.",
+        tags: ["XB1"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -77,6 +78,7 @@ class BoardPlatformCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PS4.",
+        tags: ["playstation", "play", "station"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )

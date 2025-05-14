@@ -39,6 +39,7 @@ class ManagementCommands: IRCBotModule {
         ["flushnames", "clearnames", "flushall", "invalidateall"],
         category: .management,
         description: "Invalidate the bots cache of API user data and fetch it again for all users.",
+        tags: ["nick", "user", "nickserv", "flush"],
         permission: .UserWrite
     )
     var didReceiveFlushAllCommand = { command in
@@ -64,7 +65,7 @@ class ManagementCommands: IRCBotModule {
         ["relaunch"],
         [.param("update link", "https://fuelrats.com/", .standard, .optional)],
         category: .management,
-        description: "Invalidate the bots cache of API user data and fetch it again for all users.",
+        description: "Restarts MechaSqueak",
         permission: .UserWrite
     )
     var didReceiveRebootCommand = { command in
@@ -90,6 +91,7 @@ class ManagementCommands: IRCBotModule {
         [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Invalidate a single name in the cache and fetch it again.",
+        tags: ["nick", "user", "nickserv"],
         permission: .RescueWrite
     )
     var didReceiveFlushCommand = { command in
@@ -118,10 +120,11 @@ class ManagementCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["groups", "permissions"],
+        ["groups", "permissions", "roles"],
         [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Lists the permissions of a specific person",
+        tags: ["group", "permission", "role"],
         permission: .UserRead
     )
     var didReceivePermissionsCommand = { command in
@@ -189,10 +192,11 @@ class ManagementCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["addgroup"],
+        ["addgroup", "addrole"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Add a permission to a person",
+        tags: ["group", "permission", "role"],
         permission: .UserWrite,
         helpExtra: {
             return generateGroupList()
@@ -257,10 +261,11 @@ class ManagementCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["delgroup"],
+        ["delgroup", "delreole"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Remove a permission from a person",
+        tags: ["group", "permission", "role", "delete"],
         permission: .UserWrite,
         helpExtra: {
             return generateGroupList()
@@ -319,6 +324,7 @@ class ManagementCommands: IRCBotModule {
         [.param("nickname/user id", "SpaceDawg"), .param("timespan", "7d")],
         category: .management,
         description: "Suspend a user account, accepts IRC style timespans (0 for indefinite).",
+        tags: ["ban"],
         permission: .UserWrite
     )
     var didReceiveSuspendCommand = { command in
@@ -369,6 +375,7 @@ class ManagementCommands: IRCBotModule {
         [.param("destination", "#ratchat"), .param("message", "squeak!", .continuous)],
         category: .utility,
         description: "Make the bot send an IRC message somewhere.",
+        tags: ["message"],
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
@@ -390,6 +397,7 @@ class ManagementCommands: IRCBotModule {
         ],
         category: .utility,
         description: "Make the bot send an IRC action (/me) somewhere.",
+        tags: ["/me"],
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in

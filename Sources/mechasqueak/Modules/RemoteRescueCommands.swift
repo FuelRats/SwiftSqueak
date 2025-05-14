@@ -38,6 +38,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("number of cases", "10", .standard, .optional)],
         category: .rescues,
         description: "Shows recently closed cases.",
+        tags: ["rescue"],
         permission: .DispatchRead
     )
     var didReceiveRecentlyClosedCommand = { command in
@@ -266,6 +267,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Restore a case from the trash list.",
+        tags: ["reopen", "re-open", "open", "rescue"],
         permission: .RescueWrite
     )
     var didReceiveRestoreTrashCommand = { command in
@@ -361,6 +363,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Show all information about a case by UUID",
+        tags: ["rescue", "info", "information", "quotes"],
         permission: .DispatchRead
     )
     var didReceiveQuoteRemoteCommand = { command in
@@ -419,6 +422,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("rescue uuid/client name", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Add a previously closed case back onto the board",
+        tags: ["re-open", "rescue"],
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
@@ -522,6 +526,7 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description:
             "Add a previously closed case back onto the board by its previous case number.",
+        tags: ["reopen", "rescue"],
         permission: .DispatchWrite
     )
     var didReceiveUncloseCommand = { command in
@@ -677,6 +682,7 @@ class RemoteRescueCommands: IRCBotModule {
         ],
         category: .rescues,
         description: "Change the client name of a closed case",
+        tags: ["rename", "change"],
         permission: .RescueWrite
     )
     var didReceiveRenameIDCommand = { command in

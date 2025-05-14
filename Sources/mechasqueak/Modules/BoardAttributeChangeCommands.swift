@@ -97,6 +97,7 @@ class BoardAttributeCommands: IRCBotModule {
         ],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
+        tags: ["edsm", "spansh", "eddb"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -297,6 +298,7 @@ class BoardAttributeCommands: IRCBotModule {
         [.param("case id/client", "4"), .param("language code", "de")],
         category: .board,
         description: "Change the language of the client of this rescue.",
+        tags: ["locale"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )

@@ -88,6 +88,7 @@ class BoardAssignCommands: IRCBotModule {
         category: .board,
         description:
             "Add rats to the rescue and instruct the client to add them as friends, also posts !fr",
+        tags: ["go", "assign"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )

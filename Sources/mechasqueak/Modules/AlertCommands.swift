@@ -38,6 +38,7 @@ class TweetCommands: IRCBotModule {
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
         description: "Send a message via Mastodon & BlueSky",
+        tags: ["twitter", "bluesky", "blue sky", "mastodon", "notification", "notify"],
         permission: .TwitterWrite,
         allowedDestinations: .Channel,
         helpExtra: {
@@ -83,6 +84,7 @@ class TweetCommands: IRCBotModule {
         category: .utility,
         description:
             "Notify users that rats are needed on a case via Mastodon & Bluesky",
+        tags: ["twitter", "bluesky", "blue sky", "mastodon", "notification", "notify"],
         permission: .DispatchRead,
         allowedDestinations: .Channel,
         helpExtra: {

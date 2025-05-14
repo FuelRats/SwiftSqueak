@@ -36,7 +36,8 @@ class HelpCommands: IRCBotModule {
         ["help"],
         [.param("category/command", "!assign", .continuous, .optional)],
         category: nil,
-        description: "View help for MechaSqueak."
+        description: "View help for MechaSqueak.",
+        tags: ["support", "commands"],
     )
     var didReceiveHelpCommand = { command in
         let message = command.message
@@ -199,6 +200,7 @@ class HelpCommands: IRCBotModule {
         [.param("nick", "SpaceDawg"), .param("command", "!assign", .continuous)],
         category: nil,
         description: "Send help information about a MechaSqueak command to another user",
+        tags: ["support", "commands"],
         permission: .AnnouncementWrite,
         allowedDestinations: .Channel
     )
@@ -244,6 +246,7 @@ class HelpCommands: IRCBotModule {
         [.param("search term", "find previous paperwork for client", .continuous)],
         category: nil,
         description: "Search help for a command",
+        tags: ["support", "command"],
         permission: .AnnouncementWrite,
         allowedDestinations: .Channel
     )

@@ -68,6 +68,7 @@ class GeneralCommands: IRCBotModule {
         ["needsrats", "needrats", "nr"],
         category: .utility,
         description: "Get a list of cases that currently require rats to call jumps",
+        tags: ["needs", "needed", "unassigned"],
         permission: .DispatchRead,
         cooldown: .seconds(300)
     )
@@ -117,6 +118,7 @@ class GeneralCommands: IRCBotModule {
         ["sysstats", "syscount", "systems"],
         category: .utility,
         description: "See statistics about the systems API.",
+        tags: ["stats", "system", "count"],
         permission: nil,
         cooldown: .seconds(300)
     )
@@ -149,6 +151,7 @@ class GeneralCommands: IRCBotModule {
         [.param("distance", "2500ls", .continuous), .argument("sco", "max speed", example: "7000")],
         category: .utility,
         description: "Calculate supercruise travel time.",
+        tags: ["super", "cruise", "time", "calc", "calculator", "calculate"],
         permission: nil,
         cooldown: .seconds(30)
     )
@@ -236,6 +239,7 @@ class GeneralCommands: IRCBotModule {
         ["version", "uptime"],
         category: .utility,
         description: "See version information about the bot.",
+        tags: ["info"],
         permission: nil,
         cooldown: .seconds(120)
     )
@@ -259,6 +263,7 @@ class GeneralCommands: IRCBotModule {
         ["gametime", "utc"],
         category: .utility,
         description: "See the current time in game time / UTC",
+        tags: ["game", "GMT"],
         permission: nil,
         cooldown: .seconds(300)
     )
@@ -283,6 +288,7 @@ class GeneralCommands: IRCBotModule {
         [.param("time in timezone", "3pm EST in CET", .continuous)],
         category: .utility,
         description: "Convert a time to another timezone",
+        tags: ["time", "zone", "zones", "calculate", "conversion"],
         permission: nil,
         cooldown: .seconds(300)
     )
@@ -344,10 +350,11 @@ class GeneralCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["roll"],
+        ["roll", "dice"],
         [.param("dices", "2d8")],
         category: .utility,
         description: "Roll a dice",
+        tags: ["D&D"],
         permission: nil,
         cooldown: .seconds(90)
     )
@@ -402,6 +409,7 @@ class GeneralCommands: IRCBotModule {
         ],
         category: .utility,
         description: "Create a rescue announcement in a drill channel",
+        tags: ["training", "drill", "ratmamma"],
         permission: .AnnouncementWrite
     )
     var didReceiveAnnounceCommand = { command in
@@ -476,6 +484,7 @@ class GeneralCommands: IRCBotModule {
         [.param("case id/gamertag", "SpaceDawg", .continuous)],
         category: .utility,
         description: "See information about an xbox gamertag",
+        tags: ["xbox", "live", "gamer", "tag"],
         permission: nil,
         cooldown: .seconds(30)
     )
@@ -527,6 +536,7 @@ class GeneralCommands: IRCBotModule {
         [.param("case id/username", "SpaceDawg", .continuous)],
         category: .utility,
         description: "See information about a playstation user",
+        tags: ["playstation", "play", "station", "plus", "PS+"],
         permission: nil,
         cooldown: .seconds(30)
     )

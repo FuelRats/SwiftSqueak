@@ -49,6 +49,7 @@ class BoardCommands: IRCBotModule {
         category: .rescues,
         description:
             "Force MechaSqueak to perform a synchronization of data between itself and the rescue server.",
+        tags: ["refresh", "board", "force"],
         permission: .RescueWrite,
         allowedDestinations: .Channel
     )
@@ -234,6 +235,7 @@ class BoardCommands: IRCBotModule {
         ],
         category: .board,
         description: "Closes a case and posts the paperwork link",
+        tags: ["rescue"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel,
         helpView: {
@@ -644,6 +646,7 @@ class BoardCommands: IRCBotModule {
         category: .board,
         description:
             "Correct the system of a case to one of the options provided by the system correction search.",
+        tags: ["autocorrect", "auto", "correct"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -711,6 +714,7 @@ class BoardCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Silences the prep warning on a case",
+        tags: ["silence", "stop", "prep"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )

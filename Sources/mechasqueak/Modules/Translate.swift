@@ -39,6 +39,7 @@ class Translate: IRCBotModule {
         [.param("message", "Help is on the way!", .continuous)],
         category: .utility,
         description: "Translate a message to another language",
+        tags: ["google", "deepl"],
         helpLocale: "fr",
         cooldown: .seconds(30),
         helpExtra: {
@@ -76,6 +77,7 @@ class Translate: IRCBotModule {
         [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous)],
         category: .utility,
         description: "Translates a message to the client's language and replies in the rescue channel as you",
+        tags: ["google", "deepl", "client", "rescue"],
         allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateCaseCommand = { command in
@@ -124,6 +126,7 @@ class Translate: IRCBotModule {
         ],
         category: .utility,
         description: "Translate a message to another language and sends the message to a channel as you",
+        tags: ["google", "deepl"],
         allowedDestinations: .PrivateMessage,
         cooldown: .seconds(30),
         helpExtra: {
@@ -186,6 +189,7 @@ class Translate: IRCBotModule {
         category: .utility,
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
+        tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage,
         helpExtra: {
@@ -234,6 +238,7 @@ class Translate: IRCBotModule {
         category: .utility,
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
+        tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage
     )

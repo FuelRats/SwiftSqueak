@@ -96,6 +96,7 @@ class BoardQuoteCommands: IRCBotModule {
         category: .board,
         description:
             "Grab the last message by the client or assigned rat and add it to an existing rescue",
+        tags: ["previous", "msg"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -257,8 +258,12 @@ class BoardQuoteCommands: IRCBotModule {
         ],
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
+        tags: ["substitute", "edit", "delete", "remove"],
         permission: .DispatchWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpExtra: {
+            "If no text is provided, the entry is deleted"
+        }
     )
     var didReceiveSubstituteCommand = { command in
         let message = command.message

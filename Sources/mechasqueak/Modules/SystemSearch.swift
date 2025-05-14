@@ -38,6 +38,7 @@ class SystemSearch: IRCBotModule {
         [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a system in the galaxy database.",
+        tags: ["edsm", "eddb", "systems"],
         cooldown: .seconds(30)
     )
     var didReceiveSystemSearchCommand = { command in
@@ -88,6 +89,7 @@ class SystemSearch: IRCBotModule {
         category: .utility,
         description:
             "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
+        tags: ["edsm", "eddb", "systems", "spansh", "neutron"],
         cooldown: .seconds(15)
     )
     var didReceiveLandmarkCommand = { command in
@@ -142,6 +144,7 @@ class SystemSearch: IRCBotModule {
         ],
         category: .utility,
         description: "Calculate the distance between two star systems",
+        tags: ["edsm", "eddb", "systems", "spansh", "neutron"],
         cooldown: .seconds(30)
     )
     var didReceiveDistanceCommand = { command in
@@ -228,6 +231,7 @@ class SystemSearch: IRCBotModule {
         category: .utility,
         description:
             "Get the nearest station to a system, use a system name, case ID, or client name",
+        tags: ["edsm", "eddb", "systems"],
         cooldown: .seconds(30)
     )
     var didReceiveStationCommand = { command in

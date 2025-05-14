@@ -224,6 +224,7 @@ class FactCommands: IRCBotModule {
         ],
         category: .facts,
         description: "Update an existing fact",
+        tags: ["add", "set", "create"],
         permission: .UserWrite
     )
     var didReceiveFactSetCommand = { command in
@@ -270,6 +271,7 @@ class FactCommands: IRCBotModule {
         [.param("fact-language", "pcquit-en")],
         category: .facts,
         description: "Delete a fact or an alias",
+        tags: ["delete", "remove"],
         permission: .UserWrite
     )
     var didReceiveFactDelCommand = { command in
@@ -373,6 +375,7 @@ class FactCommands: IRCBotModule {
         [.param("alias", "ircguides")],
         category: .facts,
         description: "Delete an existing alias",
+        tags: ["delete", "remove"],
         permission: .UserWrite
     )
     var didReceiveDeleteAliasCommand = { command in

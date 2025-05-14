@@ -38,6 +38,7 @@ class SessionLogger: IRCBotModule {
         ["startlogs"],
         category: .utility,
         description: "Start a new logging session in this channel",
+        tags: ["drill", "training", "logs"],
         permission: .AnnouncementWrite,
         allowedDestinations: .Channel
     )
@@ -59,6 +60,7 @@ class SessionLogger: IRCBotModule {
         category: .utility,
         description:
             "Save logs from a drill or training session, use after the session has completed",
+        tags: ["drill", "training", "logs"],
         permission: .AnnouncementWrite,
         allowedDestinations: .Channel
     )
