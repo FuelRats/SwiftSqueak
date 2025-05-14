@@ -445,7 +445,10 @@ class FactCommands: IRCBotModule {
     private func handleFactCommandWithTargets(_ command: inout IRCBotCommand, message: IRCPrivateMessage) async {
         let targets = await resolveTargets(for: command)
 
-        if command.locale.identifier == "auto" || command.locale.identifier == "a", targets.count > 0, let firstRescue = targets[0].1 {
+        if
+            command.locale.identifier == "auto" || command.locale.identifier == "a",
+            targets.count > 0,
+            let firstRescue = targets[0].1 {
             command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en")
         }
 
