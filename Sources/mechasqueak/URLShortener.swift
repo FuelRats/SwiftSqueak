@@ -34,7 +34,7 @@ class URLShortener {
             URLQueryItem(name: "action", value: "shorturl"),
             URLQueryItem(name: "format", value: "json"),
             URLQueryItem(name: "url", value: url.absoluteString),
-            URLQueryItem(name: "signature", value: configuration.shortener.signature),
+            URLQueryItem(name: "signature", value: configuration.shortener.signature)
         ]
 
         if let keyword = keyword {

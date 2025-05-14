@@ -44,7 +44,7 @@ class BoardPlatformCommands: IRCBotModule {
             map: [
                 "platform": rescue.platform.ircRepresentable,
                 "caseId": caseId,
-                "client": rescue.clientDescription,
+                "client": rescue.clientDescription
             ])
     }
 

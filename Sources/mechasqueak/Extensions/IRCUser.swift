@@ -149,8 +149,7 @@ extension IRCUser {
     func hostPermissions() -> [AccountPermission] {
         if self.hostmask.hasSuffix("i.see.all")
             || self.hostmask.hasSuffix("netadmin.fuelrats.com")
-            || self.hostmask.hasSuffix("admin.fuelrats.com")
-        {
+            || self.hostmask.hasSuffix("admin.fuelrats.com") {
             return [
                 .UserRead,
                 .UserReadOwn,
@@ -167,13 +166,12 @@ extension IRCUser {
                 .TwitterWrite,
                 .DispatchRead,
                 .DispatchWrite,
-                .AnnouncementWrite,
+                .AnnouncementWrite
             ]
         }
 
         if self.hostmask.hasSuffix("overseer.fuelrats.com")
-            || self.hostmask.hasSuffix("techrat.fuelrats.com")
-        {
+            || self.hostmask.hasSuffix("techrat.fuelrats.com") {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
@@ -188,7 +186,7 @@ extension IRCUser {
                 .TwitterWrite,
                 .DispatchRead,
                 .DispatchWrite,
-                .AnnouncementWrite,
+                .AnnouncementWrite
             ]
         }
 
@@ -204,7 +202,7 @@ extension IRCUser {
                 .DispatchRead,
                 .DispatchWrite,
                 .TwitterWrite,
-                .AnnouncementWrite,
+                .AnnouncementWrite
             ]
         }
 
@@ -219,7 +217,7 @@ extension IRCUser {
                 .RescueWriteOwn,
                 .DispatchRead,
                 .DispatchWrite,
-                .TwitterWrite,
+                .TwitterWrite
             ]
         }
 
@@ -229,7 +227,7 @@ extension IRCUser {
                 .UserWriteOwn,
                 .RatReadOwn,
                 .RatWriteOwn,
-                .RescueReadOwn,
+                .RescueReadOwn
             ]
         }
 

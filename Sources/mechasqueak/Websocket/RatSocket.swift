@@ -56,7 +56,7 @@ class RatSocket {
             to: URL(string: "\(configuration.api.websocket!)")!,
             headers: HTTPHeaders([
                 ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
-                ("x-bearer", configuration.api.token),
+                ("x-bearer", configuration.api.token)
             ]), on: loop
         ) { ws in
             self.socket = ws
@@ -64,11 +64,11 @@ class RatSocket {
             ws.onText(self.websocketDidReceiveMessage)
             ws.onClose.whenComplete { result in
                 switch result {
-                case .failure(let error):
-                    self.websocketDidDisconnect(error: error)
+                    case .failure(let error):
+                        self.websocketDidDisconnect(error: error)
 
-                case .success(_):
-                    self.websocketDidConnect()
+                    case .success:
+                        self.websocketDidConnect()
                 }
             }
         }
@@ -114,25 +114,25 @@ class RatSocket {
 
         if let ratSocketEvent = RatSocketEventType(rawValue: initialField) {
             switch ratSocketEvent {
-            case .connection:
-                connectedAndAuthenticated = true
-                debug("Received welcome from Websocket connection")
+                case .connection:
+                    connectedAndAuthenticated = true
+                    debug("Received welcome from Websocket connection")
 
-            //                case .rescueCreated:
-            //                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
-            //
-            //                case .rescueUpdated:
-            //                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
-            //
-            //                case .rescueDeleted:
-            //                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
-            //
-            case .userUpdated:
-                RatSocket.getEventAndPost(
-                    notification: RatSocketUserUpdatedNotification.self, from: data)
+                //                case .rescueCreated:
+                //                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
+                //
+                //                case .rescueUpdated:
+                //                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
+                //
+                //                case .rescueDeleted:
+                //                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
+                //
+                case .userUpdated:
+                    RatSocket.getEventAndPost(
+                        notification: RatSocketUserUpdatedNotification.self, from: data)
 
-            default:
-                break
+                default:
+                    break
             }
         }
     }

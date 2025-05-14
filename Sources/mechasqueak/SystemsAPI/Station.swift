@@ -159,17 +159,17 @@ extension SystemsAPI {
 
         var ircFormatted: String {
             switch self {
-            case .Anarchy:
-                return IRCFormat.color(.LightRed, self.rawValue)
+                case .Anarchy:
+                    return IRCFormat.color(.LightRed, self.rawValue)
 
-            case .Communism, .Dictatorship, .Feudal, .Prison, .Theocracy, .PrisonColony:
-                return IRCFormat.color(.Yellow, self.rawValue)
+                case .Communism, .Dictatorship, .Feudal, .Prison, .Theocracy, .PrisonColony:
+                    return IRCFormat.color(.Yellow, self.rawValue)
 
-            case .Confederacy, .Cooperative, .Democracy, .Patronage:
-                return IRCFormat.color(.LightGreen, self.rawValue)
+                case .Confederacy, .Cooperative, .Democracy, .Patronage:
+                    return IRCFormat.color(.LightGreen, self.rawValue)
 
-            default:
-                return IRCFormat.color(.LightGrey, self.rawValue)
+                default:
+                    return IRCFormat.color(.LightGrey, self.rawValue)
             }
         }
     }
@@ -194,7 +194,7 @@ extension SystemsAPI {
             [
                 "HighTech": "High Tech",
                 "PrivateEnterprise": "Private Enterprise",
-                "Agri": "Agriculture",
+                "Agri": "Agriculture"
             ]
         }
 

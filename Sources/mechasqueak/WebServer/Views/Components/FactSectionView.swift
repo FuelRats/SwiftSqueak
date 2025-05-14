@@ -26,7 +26,7 @@ struct FactSectionView: View {
 }
 
 struct PlatformFactSectionView: View {
-    let facts: [String : [GroupedFact]]
+    let facts: [String: [GroupedFact]]
 
     var body: Content {
         Div {

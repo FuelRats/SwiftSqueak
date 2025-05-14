@@ -54,7 +54,7 @@ class BoardQuoteCommands: IRCBotModule {
                     "expansion": rescue.platform == .PC ? rescue.expansion.ircRepresentable : "",
                     "system": rescue.system as Any,
                     "landmark": rescue.system?.landmark as Any,
-                    "status": rescue.status.rawValue,
+                    "status": rescue.status.rawValue
                 ])) ?? ""
         command.message.replyPrivate(message: output)
 
@@ -62,7 +62,7 @@ class BoardQuoteCommands: IRCBotModule {
             key: "board.quote.dates", fromCommand: command,
             map: [
                 "created": rescue.createdAt.ircRepresentable,
-                "updated": rescue.updatedAt.ircRepresentable,
+                "updated": rescue.updatedAt.ircRepresentable
             ])
 
         if rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 {
@@ -82,7 +82,7 @@ class BoardQuoteCommands: IRCBotModule {
                     "index": index,
                     "author": quote.lastAuthor,
                     "time": "\(quote.updatedAt.timeAgo(maximumUnits: 1)) ago",
-                    "message": quote.message,
+                    "message": quote.message
                 ])
         }
     }
@@ -91,7 +91,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["grab"],
         [
             .param("case id/client/assigned rat", "1"),
-            .param("nick", "SpaceDawg", .standard, .optional),
+            .param("nick", "SpaceDawg", .standard, .optional)
         ],
         category: .board,
         description:
@@ -103,14 +103,14 @@ class BoardQuoteCommands: IRCBotModule {
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var getRescue: Rescue? = await command.message.destination.member(named: clientParam)?
-            .getAssignedRescue()?.1
+        var getRescue = await command.message.destination.member(named: clientParam)?
+            .getAssignedRescue()
         var isClient = false
         if getRescue == nil {
             isClient = true
-            (_, getRescue) = await BoardCommands.assertGetRescueId(command: command) ?? (nil, nil)
+            getRescue = await BoardCommands.assertGetRescueId(command: command) ?? nil
         }
-        guard let rescue = getRescue else {
+        guard let (caseId, rescue) = getRescue else {
             return
         }
 
@@ -139,8 +139,7 @@ class BoardQuoteCommands: IRCBotModule {
 
         var quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
         if rescue.clientLanguage != nil && clientNick == rescue.clientNick,
-            let translation = try? await Translate.translate(lastMessage.message)
-        {
+            let translation = try? await Translate.translate(lastMessage.message) {
             quoteMessage += " (Translation: \(translation))"
         }
 
@@ -159,13 +158,11 @@ class BoardQuoteCommands: IRCBotModule {
         }
         try? rescue.save(command)
 
-        let caseId = await board.getId(forRescue: rescue)
-
         command.message.reply(
             key: "board.grab.updated", fromCommand: command,
             map: [
-                "clientId": caseId ?? 0,
-                "text": quoteMessage,
+                "clientId": caseId,
+                "text": quoteMessage
             ])
     }
 
@@ -173,7 +170,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["inject"],
         [
             .options(["f"]), .param("case id/client", "4"),
-            .param("text", "NLTT 48288 PC CR", .continuous),
+            .param("text", "NLTT 48288 PC CR", .continuous)
         ],
         category: .board,
         description:
@@ -247,7 +244,7 @@ class BoardQuoteCommands: IRCBotModule {
                 key: "board.grab.updated", fromCommand: command,
                 map: [
                     "clientId": caseId ?? 0,
-                    "text": injectMessage,
+                    "text": injectMessage
                 ])
         }
     }
@@ -256,7 +253,7 @@ class BoardQuoteCommands: IRCBotModule {
         ["sub"],
         [
             .param("case id/client", "4"), .param("line number", "1"),
-            .param("new text", "Client is in EZ", .continuous, .optional),
+            .param("new text", "Client is in EZ", .continuous, .optional)
         ],
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
@@ -284,7 +281,7 @@ class BoardQuoteCommands: IRCBotModule {
                 key: "board.sub.outofbounds", fromCommand: command,
                 map: [
                     "index": quoteIndex,
-                    "caseId": caseId,
+                    "caseId": caseId
                 ])
             return
         }
@@ -306,7 +303,7 @@ class BoardQuoteCommands: IRCBotModule {
                     "caseId": caseId,
                     "client": rescue.clientDescription,
                     "previousContents": previousContents.excerpt(maxLength: 50),
-                    "contents": contents,
+                    "contents": contents
                 ])
         } else {
             let removedQuote = rescue.quotes.remove(at: quoteIndex)
@@ -319,7 +316,7 @@ class BoardQuoteCommands: IRCBotModule {
                     "caseId": caseId,
                     "client": rescue.clientDescription,
                     "author": quote.author,
-                    "contents": quote.message.excerpt(maxLength: 80),
+                    "contents": quote.message.excerpt(maxLength: 80)
                 ])
         }
     }

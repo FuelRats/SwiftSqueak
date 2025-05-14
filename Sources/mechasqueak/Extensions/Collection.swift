@@ -42,8 +42,7 @@ extension Array {
     }
 
     func asyncCompactMap<T>(_ transform: @escaping (Element) async throws -> T?) async rethrows
-        -> [T]
-    {
+        -> [T] {
         var mappedElements: [T] = []
         try await withThrowingTaskGroup(of: T?.self) { group in
             for element in self {
@@ -62,8 +61,7 @@ extension Array {
     }
 
     func asyncFirst(where predicate: @escaping (Element) async throws -> Bool) async rethrows
-        -> Element?
-    {
+        -> Element? {
         for element in self {
             let result = try await predicate(element)
             if result {

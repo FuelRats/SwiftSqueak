@@ -88,8 +88,7 @@ struct SignalScanner {
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let range = message.range(
-            of: "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b", options: .regularExpression)
-        {
+            of: "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b", options: .regularExpression) {
             self.system = String(message[range])
         } else {
             self.system = nil
@@ -102,8 +101,7 @@ struct SignalScanner {
                     let probableSystem = currentComponent.trimmingCharacters(
                         in: CharacterSet.whitespaces.union(CharacterSet.punctuationCharacters))
                     if probableSystem.components(separatedBy: " ").count < 6
-                        && probableSystem.count > 0
-                    {
+                        && probableSystem.count > 0 {
                         return probableSystem
                     }
                     return system

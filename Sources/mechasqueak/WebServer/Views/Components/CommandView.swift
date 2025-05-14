@@ -13,8 +13,9 @@ struct CommandView: View {
                     }
                     ShareAnchorView(value: command.commands[0].lowercased())
                     
-                    
-                    if let groups = command.permission?.groups.sorted(by: { $0.priority < $1.priority }), !groups.isEmpty {
+                    if let groups = command.permission?.groups.sorted(by: {
+                        $0.priority < $1.priority
+                    }), !groups.isEmpty {
                         Div {
                             for group in groups {
                                 CommandPermissionGroupView(group: group)

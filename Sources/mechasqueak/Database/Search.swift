@@ -5,13 +5,10 @@
 //  Created by Alex Sørlie on 11/05/2025.
 //
 
-
 import Vapor
 import SQLKit
 import NIO
 import SQLiteKit
-import SQLKit
-
 struct Command: Content {
     let id: Int?
     let name: String

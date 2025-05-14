@@ -7,13 +7,13 @@ struct AutomaticLinkTextView: View {
         let linkTexts: [LinkTextContentType] = parseText()
         for linkText in linkTexts {
             switch linkText {
-            case .plainText(let text):
-                "\(text)"
-            case .link(let text):
-                Anchor {
+                case .plainText(let text):
                     "\(text)"
-                }.reference(text)
-                .target(.blank)
+                case .link(let text):
+                    Anchor {
+                        "\(text)"
+                    }.reference(text)
+                    .target(.blank)
             }
             
         }

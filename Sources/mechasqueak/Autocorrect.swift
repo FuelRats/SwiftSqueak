@@ -107,19 +107,9 @@ struct ProceduralSystem: CustomStringConvertible {
         guard components.count > 2 && components[0].contains("-") == false else {
             return nil
         }
+        // Extract sector logic
         var proceduralStart: String.Index?
-        if let sectorComponent = components.first(where: {
-            $0.count > 3 && $0.lowercased().levenshtein("sector") <= 2
-        }) {
-            let sectorRange = systemName.range(of: sectorComponent)!
-            if sectorRange.lowerBound > systemName.startIndex
-                && sectorRange.upperBound < systemName.endIndex {
-                hasSectorSuffix = true
-                proceduralStart = systemName.index(before: sectorRange.lowerBound)
-                systemName.removeSubrange(sectorRange)
-            }
-
-        }
+        proceduralStart = ProceduralSystem.extractSectorName(from: &systemName, hasSectorSuffix: &hasSectorSuffix)
         self.hasSectorSuffix = hasSectorSuffix
 
         let hyphenIndex = systemName.firstIndex(of: "-")
@@ -172,68 +162,62 @@ struct ProceduralSystem: CustomStringConvertible {
         guard proceduralComponents.count > 2 && proceduralComponents.first!.count > 1 else {
             return nil
         }
-        let part1: Character = proceduralComponents[0].removeFirst()
-        let part2: Character = proceduralComponents[0].removeFirst()
-        var suffix: Character? =
-            proceduralComponents[0].count > 0 ? proceduralComponents[0].removeFirst() : nil
-        proceduralComponents.removeFirst()
-        if proceduralComponents[0].count == 0 {
-            proceduralComponents.removeFirst()
-        }
-
-        if suffix == nil {
-            suffix = proceduralComponents[0].removeFirst()
-        }
-        self.cubeId = CubeID(part1: part1, part2: part2, suffix: suffix!)
-
-        if proceduralComponents[0].count == 0 {
-            proceduralComponents.removeFirst()
-        }
-
-        guard proceduralComponents.count > 0 else {
+        // Use helper for cubeId
+        guard let cubeId = ProceduralSystem.parseCubeID(from: &proceduralComponents) else {
             return nil
         }
+        self.cubeId = cubeId
 
-        self.massCategory = proceduralComponents[0].removeFirst()
-        var cubePosition: String = proceduralComponents[0]
-        proceduralComponents.removeFirst()
-
-        if cubePosition.count == 0 {
-            guard proceduralComponents.count > 0 else {
-                return nil
-            }
-            cubePosition.append(proceduralComponents[0])
+        if proceduralComponents.count > 0 && proceduralComponents[0].count == 0 {
             proceduralComponents.removeFirst()
         }
+
+        guard let (massCategory, cubePosition) = parseMassCategoryAndCubePosition(from: &proceduralComponents) else {
+            return nil
+        }
+        self.massCategory = massCategory
         self.cubePosition = cubePosition
 
-        var systemId = ""
-        while proceduralComponents.count > 0 {
-            while let first = proceduralComponents[0].first,
-                first.isNumber
-                    || (systemId.count == 0 && ProceduralSystem.letterSubstitutions[first] != nil) {
-                systemId += String(first)
-                proceduralComponents[0].removeFirst()
-            }
-            if proceduralComponents[0].count > 0 {
-                break
-            } else {
-                proceduralComponents.removeFirst()
-                if systemId.last == "0" {
-                    break
-                }
-            }
-
-        }
-        if systemId.count > 0 {
-            self.systemId = systemId
-        }
+        self.systemId = ProceduralSystem.parseSystemId(from: &proceduralComponents)
         if proceduralComponents.count > 0 {
             let remaining = " " + proceduralComponents.joined(separator: " ")
             if let systemBody = ProceduralSystem.systemBodyPattern.findFirst(in: remaining) {
                 self.systemBody = systemBody.matched.trimmingCharacters(in: .whitespaces)
             }
         }
+    }
+
+    // MARK: - Helper Methods for ProceduralSystem
+
+    private static func extractSectorName(from systemName: inout String, hasSectorSuffix: inout Bool) -> String.Index? {
+        var proceduralStart: String.Index?
+        if let sectorComponent = systemName.components(separatedBy: CharacterSet.alphanumerics.inverted).first(where: {
+            $0.count > 3 && $0.lowercased().levenshtein("sector") <= 2
+        }) {
+            let sectorRange = systemName.range(of: sectorComponent)!
+            if sectorRange.lowerBound > systemName.startIndex && sectorRange.upperBound < systemName.endIndex {
+                hasSectorSuffix = true
+                proceduralStart = systemName.index(before: sectorRange.lowerBound)
+                systemName.removeSubrange(sectorRange)
+            }
+        }
+        return proceduralStart
+    }
+
+    private static func parseCubeID(from components: inout [String]) -> CubeID? {
+        guard components.count > 0 else { return nil }
+        var first = components[0]
+        guard first.count >= 2 else { return nil }
+        let part1 = first.removeFirst()
+        let part2 = first.removeFirst()
+        var suffix: Character? = first.isEmpty ? nil : first.removeFirst()
+        components.removeFirst()
+        if components.first?.isEmpty == true { components.removeFirst() }
+        if suffix == nil, var next = components.first, !next.isEmpty {
+            suffix = next.removeFirst()
+        }
+        guard let suffixUnwrapped = suffix else { return nil }
+        return CubeID(part1: part1, part2: part2, suffix: suffixUnwrapped)
     }
 
     var description: String {
@@ -361,6 +345,26 @@ struct ProceduralSystem: CustomStringConvertible {
         }
         return system
     }
+    
+    private static func parseSystemId(from components: inout [String]) -> String? {
+        var systemId = ""
+        while components.count > 0 {
+            while let first = components[0].first,
+                  first.isNumber || (systemId.isEmpty && letterSubstitutions[first] != nil) {
+                systemId.append(first)
+                components[0].removeFirst()
+            }
+            if components[0].isEmpty {
+                components.removeFirst()
+                if systemId.last == "0" {
+                    break
+                }
+            } else {
+                break
+            }
+        }
+        return systemId.isEmpty ? nil : systemId
+    }
 }
 
 struct HandauthoredCorrection {
@@ -381,4 +385,22 @@ struct HandauthoredCorrection {
 
         return nil
     }
+}
+
+// Helper to parse massCategory and cubePosition from proceduralComponents
+private func parseMassCategoryAndCubePosition(from components: inout [String]) -> (Character, String)? {
+    guard components.count > 0 else { return nil }
+
+    let massCategory = components[0].removeFirst()
+    guard components.count > 0 else { return nil }
+
+    var cubePosition = components[0]
+    components.removeFirst()
+
+    if cubePosition.isEmpty, components.count > 0 {
+        cubePosition.append(contentsOf: components[0])
+        components.removeFirst()
+    }
+
+    return (massCategory, cubePosition)
 }

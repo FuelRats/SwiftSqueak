@@ -67,7 +67,7 @@ typealias UserGetDocument = Document<
 
 extension User {
     static func get(id: UUID) async throws -> UserGetDocument {
-        let request = try! HTTPClient.Request(apiPath: "/users/\(id.uuidString)", method: .GET)
+        let request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)", method: .GET)
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
@@ -83,8 +83,7 @@ extension User {
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        let body = try! encoder.encode(patchRequestDocument)
-        debug(String(data: body, encoding: .utf8)!)
+        let body = try encoder.encode(patchRequestDocument)
 
         request.body = .data(body)
 
@@ -119,13 +118,13 @@ extension User {
                 "id": self.id.rawValue.uuidString,
                 "attributes": [
                     "email": email
-                ],
+                ]
             ]
         ]
         var request = try HTTPClient.Request(
             apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
+        request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
@@ -160,7 +159,7 @@ enum UserStatus: String, Codable {
 
 struct UserDataObject: Codable, Equatable {
     var preferredPrivateMethod: MessagingMethod? = .Privmsg
-    var clientTranslateSubscription: ClientTranslateSubscription? = nil
+    var clientTranslateSubscription: ClientTranslateSubscription?
 }
 
 enum MessagingMethod: String, Codable {

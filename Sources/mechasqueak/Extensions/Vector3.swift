@@ -33,6 +33,7 @@ extension Array {
 
 struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable,
     ExpressibleByFloatLiteral, ExpressibleByArrayLiteral {
+    // swiftlint:disable identifier_name
     var x: Double
     var y: Double
     var z: Double
@@ -51,6 +52,7 @@ struct Vector3: Codable, Equatable, AdditiveArithmetic, Numeric, Comparable,
 
     init(vector: VectorTuple) {
         let (x, y, z) = vector
+        // swiftlint:enable identifier_name
         self.x = x
         self.y = y
         self.z = z
@@ -147,24 +149,24 @@ enum CardinalDirection: String {
 
     init(bearing: Double) {
         switch bearing {
-        case _ where bearing >= 337.5 && bearing <= 22.7:
-            self = .North
-        case 22.7...67.7:
-            self = .NorthEast
-        case 67.7...112.7:
-            self = .East
-        case 112.7...157.3:
-            self = .SouthEast
-        case 157.3...202.7:
-            self = .South
-        case 202.7...247.7:
-            self = .SouthWest
-        case 247.7...292.7:
-            self = .West
-        case 292.7...337.5:
-            self = .NorthWest
-        default:
-            self = .North
+            case _ where bearing >= 337.5 && bearing <= 22.7:
+                self = .North
+            case 22.7...67.7:
+                self = .NorthEast
+            case 67.7...112.7:
+                self = .East
+            case 112.7...157.3:
+                self = .SouthEast
+            case 157.3...202.7:
+                self = .South
+            case 202.7...247.7:
+                self = .SouthWest
+            case 247.7...292.7:
+                self = .West
+            case 292.7...337.5:
+                self = .NorthWest
+            default:
+                self = .North
         }
     }
 }
@@ -172,21 +174,25 @@ enum CardinalDirection: String {
 extension CGPoint {
     func intersects(polygon: [CGPoint]) -> Bool {
         guard polygon.count > 0 else { return false }
-        var i = 0
-        var j = polygon.count - 1
-        var c = false
-        var vi: CGPoint
-        var vj: CGPoint
+        var currentIndex = 0
+        var previousIndex = polygon.count - 1
+        var isInside = false
+        var currentVertex: CGPoint
+        var previousVertex: CGPoint
         while true {
-            guard i < polygon.count else { break }
-            vi = polygon[i]
-            vj = polygon[j]
-            if (vi.y > y) != (vj.y > y) && x < (vj.x - vi.x) * (y - vi.y) / (vj.y - vi.y) + vi.x {
-                c = !c
+            guard currentIndex < polygon.count else { break }
+            currentVertex = polygon[currentIndex]
+            previousVertex = polygon[previousIndex]
+            let deltaX = previousVertex.x - currentVertex.x
+            let deltaY = previousVertex.y - currentVertex.y
+            let yOffset = y - currentVertex.y
+            let intersectX = (deltaX * yOffset / deltaY) + currentVertex.x
+            if (currentVertex.y > y) != (previousVertex.y > y) && x < intersectX {
+                isInside = !isInside
             }
-            j = i
-            i += 1
+            previousIndex = currentIndex
+            currentIndex += 1
         }
-        return c
+        return isInside
     }
 }

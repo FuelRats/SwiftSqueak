@@ -101,9 +101,9 @@ extension Rat {
             return []
         }
 
-        return try! await board.filter({ (_, rescue) in
+        return (try? await board.filter({ (_, rescue) in
             rescue.jumpCalls.contains(where: { $0.0.relationships.user?.id?.rawValue == userId })
-        }).getAllResults()
+        }).getAllResults()) ?? []
     }
 
     func update() async throws {
@@ -114,7 +114,7 @@ extension Rat {
             meta: .none,
             links: .none
         )
-        var request = try! HTTPClient.Request(
+        var request = try HTTPClient.Request(
             apiPath: "/rats/\(self.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/vnd.api+json")
 
@@ -156,13 +156,13 @@ enum GamePlatform: String, Codable, CaseIterable {
         let platformMap: [GamePlatform: IRCColor] = [
             .PC: .Purple,
             .Xbox: .Green,
-            .PS: .LightBlue,
+            .PS: .LightBlue
         ]
 
         let englishDescriptions: [GamePlatform: String] = [
             .PC: "PC",
             .Xbox: "Xbox",
-            .PS: "Playstation",
+            .PS: "Playstation"
         ]
 
         return IRCFormat.color(platformMap[self]!, englishDescriptions[self]!)
@@ -172,7 +172,7 @@ enum GamePlatform: String, Codable, CaseIterable {
         let platformMap: [GamePlatform: String] = [
             .PC: "pc",
             .Xbox: "x",
-            .PS: "ps",
+            .PS: "ps"
         ]
         return platformMap[self]!
     }
@@ -180,29 +180,28 @@ enum GamePlatform: String, Codable, CaseIterable {
     static func parsedFromText(text: String) -> GamePlatform? {
         let text = text.lowercased()
         switch text {
-        case "pc":
-            return .PC
+            case "pc":
+                return .PC
 
-        case "xbox", "xb", "xb1":
-            return .Xbox
+            case "xbox", "xb", "xb1":
+                return .Xbox
 
-        case "ps", "ps4", "playstation", "ps5":
-            return .PS
+            case "ps", "ps4", "playstation", "ps5":
+                return .PS
 
-        default:
-            return nil
+            default:
+                return nil
         }
     }
-    
+
     var fontAwesomeClass: String {
         switch self {
-        case .PC:
-            "fa-steam"
-        case .Xbox:
-            "fa-xbox"
-        case .PS:
-            "fa-playstation"
-
+            case .PC:
+                "fa-steam"
+            case .Xbox:
+                "fa-xbox"
+            case .PS:
+                "fa-playstation"
         }
     }
 }
@@ -230,19 +229,19 @@ enum GameMode: String, Codable, CaseIterable {
             return ""
         }
         switch self {
-        case .legacy:
-            return "(LEG_SIGNAL)"
-        case .horizons:
-            return "(HOR_SIGNAL)"
-        case .odyssey:
-            return "(ODY_SIGNAL)"
+            case .legacy:
+                return "(LEG_SIGNAL)"
+            case .horizons:
+                return "(HOR_SIGNAL)"
+            case .odyssey:
+                return "(ODY_SIGNAL)"
         }
     }
 
     static var englishDescriptions: [GameMode: String] = [
         .legacy: "Legacy",
         .horizons: "Horizons",
-        .odyssey: "Odyssey",
+        .odyssey: "Odyssey"
     ]
     var englishDescription: String {
         return GameMode.englishDescriptions[self]!
@@ -251,7 +250,7 @@ enum GameMode: String, Codable, CaseIterable {
     static var announcerDescriptions: [GameMode: String] = [
         .legacy: "Horizons 3.8",
         .horizons: "Horizons 4.0",
-        .odyssey: "Odyssey",
+        .odyssey: "Odyssey"
     ]
     var announcerDescription: String {
         return GameMode.announcerDescriptions[self]!
@@ -260,7 +259,7 @@ enum GameMode: String, Codable, CaseIterable {
     static var shortEnglishDescriptions: [GameMode: String] = [
         .legacy: "LEG",
         .horizons: "HOR",
-        .odyssey: "ODY",
+        .odyssey: "ODY"
     ]
     var shortEnglishDescription: String {
         return GameMode.shortEnglishDescriptions[self]!
@@ -269,7 +268,7 @@ enum GameMode: String, Codable, CaseIterable {
     static var colors: [GameMode: IRCColor] = [
         .legacy: .Pink,
         .horizons: .LightCyan,
-        .odyssey: .Orange,
+        .odyssey: .Orange
     ]
     var color: IRCColor {
         return GameMode.colors[self]!
@@ -286,17 +285,17 @@ enum GameMode: String, Codable, CaseIterable {
     static func parsedFromText(text: String) -> GameMode? {
         let text = text.lowercased()
         switch text {
-        case "legacy", "leg", "l", "horizons3", "horizons 3", "h3", "3h", "horizons 3.8":
-            return .legacy
+            case "legacy", "leg", "l", "horizons3", "horizons 3", "h3", "3h", "horizons 3.8":
+                return .legacy
 
-        case "horizons", "hor", "h", "live", "horizons4", "horizons 4", "h4", "4h", "horizons 4.0":
-            return .horizons
+            case "horizons", "hor", "h", "live", "horizons4", "horizons 4", "h4", "4h", "horizons 4.0":
+                return .horizons
 
-        case "odyssey", "o", "ody":
-            return .odyssey
+            case "odyssey", "o", "ody":
+                return .odyssey
 
-        default:
-            return nil
+            default:
+                return nil
         }
     }
 

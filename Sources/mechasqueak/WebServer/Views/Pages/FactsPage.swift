@@ -5,7 +5,7 @@ struct FactsPage: View {
     struct Context {}
     
     let factCategories: [FactCategory]
-    let platformFacts: [String : [GroupedFact]]
+    let platformFacts: [String: [GroupedFact]]
 
     var body: Content {
         Div {

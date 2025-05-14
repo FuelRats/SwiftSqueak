@@ -66,26 +66,26 @@ extension TimeInterval {
         let seconds = Double(num)
 
         switch suffix {
-        case "s":
-            return seconds
+            case "s":
+                return seconds
 
-        case "m":
-            return seconds * 60
+            case "m":
+                return seconds * 60
 
-        case "h":
-            return seconds * 3600
+            case "h":
+                return seconds * 3600
 
-        case "d":
-            return seconds * 86400
+            case "d":
+                return seconds * 86400
 
-        case "w":
-            return seconds * 604800
+            case "w":
+                return seconds * 604800
 
-        case "y":
-            return seconds * 220_903_200
+            case "y":
+                return seconds * 220_903_200
 
-        default:
-            return nil
+            default:
+                return nil
         }
     }
 }

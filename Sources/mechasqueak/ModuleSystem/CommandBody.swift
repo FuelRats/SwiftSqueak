@@ -53,7 +53,7 @@ extension Array where Element == CommandBody {
 
     var parameters: [CommandBody] {
         return self.filter({
-            guard case .param(_, _, _, _) = $0 else {
+            guard case .param = $0 else {
                 return false
             }
             return true
@@ -86,8 +86,7 @@ extension Array where Element == CommandBody {
     var helpArguments: [(String, String?, String?)] {
         return self.reduce(
             [(String, String?, String?)](),
-            {
-                (args: [(String, String?, String?)], token: CommandBody) -> [(
+            { (args: [(String, String?, String?)], token: CommandBody) -> [(
                     String, String?, String?
                 )] in
                 guard case .argument(let option, let value, let example) = token else {
@@ -105,23 +104,23 @@ extension Array where Element == CommandBody {
                 return nil
             }
             switch type {
-            case .standard:
-                if nullability == .required {
-                    return "<\(description)>"
-                }
-                return "[\(description)]"
+                case .standard:
+                    if nullability == .required {
+                        return "<\(description)>"
+                    }
+                    return "[\(description)]"
 
-            case .continuous:
-                if nullability == .required {
-                    return "<\(description)>..."
-                }
-                return "[\(description)]..."
+                case .continuous:
+                    if nullability == .required {
+                        return "<\(description)>..."
+                    }
+                    return "[\(description)]..."
 
-            case .multiple:
-                if nullability == .required {
-                    return "<\(description)1> [\(description)2]..."
-                }
-                return "...[\(description)1] [\(description)2]..."
+                case .multiple:
+                    if nullability == .required {
+                        return "<\(description)1> [\(description)2]..."
+                    }
+                    return "...[\(description)1] [\(description)2]..."
             }
 
         }).joined(separator: " ")
@@ -134,14 +133,14 @@ extension Array where Element == CommandBody {
             }
 
             switch type {
-            case .standard:
-                if example.components(separatedBy: " ").count > 1 {
-                    return "\"\(example)\""
-                }
-                return example
+                case .standard:
+                    if example.components(separatedBy: " ").count > 1 {
+                        return "\"\(example)\""
+                    }
+                    return example
 
-            default:
-                return example
+                default:
+                    return example
             }
         }).joined(separator: " ")
     }

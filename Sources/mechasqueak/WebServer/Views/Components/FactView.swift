@@ -4,7 +4,6 @@ import Foundation
 struct FactView: View {
     let fact: GroupedFact
     var defaultLocale: Foundation.Locale = Foundation.Locale(identifier: "en")
-   
 
     var body: Content {
         let defaultFact = fact.messages["en"] ?? fact.messages.first?.1
@@ -43,7 +42,6 @@ struct PlatformFactView: View {
     let identifier: String
     let platformFacts: [GroupedFact]
     var defaultLocale: Foundation.Locale = Foundation.Locale(identifier: "en")
-   
 
     var body: Content {
         let defaultPlatform = platformFacts.first!
@@ -56,7 +54,12 @@ struct PlatformFactView: View {
                     for (localeString, _) in defaultPlatform.messages.sorted(by: { $0.key < $1.key }) {
                         let locale = Locale(identifier: localeString)
                         let isActive = localeString == defaultLocale.identifier
-                        FactLanguageView(identifier: identifier, locale: locale, isActive: isActive, isPlatformFact: true)
+                        FactLanguageView(
+                            identifier: identifier,
+                            locale: locale,
+                            isActive: isActive,
+                            isPlatformFact: true
+                        )
                     }
                 }
                 .class("fact-header")
@@ -103,7 +106,7 @@ let webFormatter: DateFormatter = {
 
 struct FactMessageView: View {
     let fact: Fact
-    var platform: GamePlatform? = nil
+    var platform: GamePlatform?
     
     var body: Content {
         let date = webFormatter.string(from: fact.updatedAt)

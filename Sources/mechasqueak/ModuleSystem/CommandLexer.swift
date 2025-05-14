@@ -81,30 +81,29 @@ struct IRCBotCommand {
                 let currentToken = tokens[tokenIndex]
 
                 switch currentToken {
-                case .Argument(let argumentName):
-                    guard let argumentDefinition = commandDefinition?.arguments[argumentName],
-                        argumentDefinition != nil
-                    else {
-                        arguments.updateValue(nil, forKey: argumentName)
+                    case .Argument(let argumentName):
+                        guard let argumentDefinition = commandDefinition?.arguments[argumentName],
+                            argumentDefinition != nil
+                        else {
+                            arguments.updateValue(nil, forKey: argumentName)
+                            break
+                        }
+                        var params: [String] = []
+                        while tokenIndex + 1 < tokens.count,
+                            case .Parameter(let param, _) = tokens[tokenIndex + 1] {
+                            params.append(param)
+                            tokenIndex += 1
+                        }
+                        arguments.updateValue(params.joined(separator: " "), forKey: argumentName)
+                    case .Option(let optionName):
+                        options.append(optionName)
+
+                    case .Parameter(let param, let quoted):
+                        parameters.append(param)
+                        parameterQuoted.append(quoted)
+
+                    default:
                         break
-                    }
-                    var params: [String] = []
-                    while tokenIndex + 1 < tokens.count,
-                        case .Parameter(let param, _) = tokens[tokenIndex + 1]
-                    {
-                        params.append(param)
-                        tokenIndex += 1
-                    }
-                    arguments.updateValue(params.joined(separator: " "), forKey: argumentName)
-                case .Option(let optionName):
-                    options.append(optionName)
-
-                case .Parameter(let param, let quoted):
-                    parameters.append(param)
-                    parameterQuoted.append(quoted)
-
-                default:
-                    break
                 }
                 tokenIndex += 1
             }
@@ -171,12 +170,7 @@ struct IRCBotCommand {
         return previousIncoation != nil
             && Date().timeIntervalSince(previousIncoation!.message.raw.time) < 30
     }
-
-    var forceOverride: Bool {
-        return self.options.contains("f") || self.arguments.keys.contains("force")
-            || self.isRepeatInvocation
-    }
-
+    
     var param1: String? {
         self.parameters[safe: 0]
     }
@@ -189,18 +183,9 @@ struct IRCBotCommand {
         return (self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2])
     }
 
-    var param4: (String?, String?, String?, String?) {
-        return (
-            self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2],
-            self.parameters[safe: 3]
-        )
-    }
-
-    var param5: (String?, String?, String?, String?, String?) {
-        return (
-            self.parameters[safe: 0], self.parameters[safe: 1], self.parameters[safe: 2],
-            self.parameters[safe: 3], self.parameters[safe: 4]
-        )
+    var forceOverride: Bool {
+        return self.options.contains("f") || self.arguments.keys.contains("force")
+            || self.isRepeatInvocation
     }
 
     func error(_ error: Error) {
@@ -253,22 +238,22 @@ struct Lexer {
         let nextIsIdentifier = next?.unicodeScalars.allSatisfy({ Lexer.identifierSet.contains($0) })
 
         switch (state, current, isIdentifier, next, nextIsIdentifier) {
-        case (.Command, "!", _, _, true): return try lexCommand()
-        case (.Parameters, " ", _, _, _): return delimit()
-        case (.Parameters, "-", _, "-", _): return try lexArgument()
-        case (.Parameters, "-", _, _, true):
-            do {
-                state = .ParsingOptions
-                return delimit()
-            }
-        case (.ParsingOptions, _, true, _, _): return lexOption()
-        case (.ParsingOptions, _, false, _, _):
-            do {
-                state = .Parameters
-                return delimit()
-            }
-        case (.Parameters, _, _, _, _): return try lexParameter()
-        case (.Command, _, _, _, _): throw LexerError.noCommand
+            case (.Command, "!", _, _, true): return try lexCommand()
+            case (.Parameters, " ", _, _, _): return delimit()
+            case (.Parameters, "-", _, "-", _): return try lexArgument()
+            case (.Parameters, "-", _, _, true):
+                do {
+                    state = .ParsingOptions
+                    return delimit()
+                }
+            case (.ParsingOptions, _, true, _, _): return lexOption()
+            case (.ParsingOptions, _, false, _, _):
+                do {
+                    state = .Parameters
+                    return delimit()
+                }
+            case (.Parameters, _, _, _, _): return try lexParameter()
+            case (.Command, _, _, _, _): throw LexerError.noCommand
         }
     }
 

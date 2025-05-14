@@ -6,7 +6,7 @@ struct TableOfContentsView: View {
     var body: Content {
         Nav {
             Details {
-                Summary{ "Table of Contents" }
+                Summary { "Table of Contents" }
                 UnorderedList {
                     for item in items {
                         ListItem {
@@ -46,11 +46,11 @@ struct TableOfContentsView: View {
 
 protocol TOCItem {
     var title: String { get }
-    var reference : String { get }
+    var reference: String { get }
     var children: [TOCSubItem] { get }
 }
 
 protocol TOCSubItem {
     var title: String { get }
-    var reference : String { get }
+    var reference: String { get }
 }

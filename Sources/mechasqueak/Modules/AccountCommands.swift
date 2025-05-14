@@ -96,7 +96,7 @@ class AccountCommands: IRCBotModule {
                     "group": group as Any,
                     "displayId": command.options.contains("@"),
                     "joined": joinedDate?.eliteFormattedString ?? "unknown",
-                    "rats": associatedNickname.ratsBelongingTo(user: apiUser),
+                    "rats": associatedNickname.ratsBelongingTo(user: apiUser)
                 ])) ?? ""
         command.message.reply(message: output)
     }
@@ -161,7 +161,7 @@ class AccountCommands: IRCBotModule {
                     "group": group as Any,
                     "displayId": command.options.contains("@"),
                     "joined": joinedDate?.eliteFormattedString ?? "unknown",
-                    "rats": rats,
+                    "rats": rats
                 ])) ?? ""
 
         command.message.reply(message: output)
@@ -199,7 +199,7 @@ class AccountCommands: IRCBotModule {
             map: [
                 "platform": platform.ircRepresentable,
                 "id": rat.id.rawValue.ircRepresentation,
-                "name": rat.attributes.name.value,
+                "name": rat.attributes.name.value
             ])
     }
 
@@ -305,7 +305,7 @@ class AccountCommands: IRCBotModule {
                 key: "addpermit.added", fromCommand: command,
                 map: [
                     "name": currentRat.attributes.name.value,
-                    "permit": permitName,
+                    "permit": permitName
                 ])
 
         } catch {
@@ -356,7 +356,7 @@ class AccountCommands: IRCBotModule {
                 key: "delpermit.removed", fromCommand: command,
                 map: [
                     "name": currentRat.attributes.name.value,
-                    "permit": permitName,
+                    "permit": permitName
                 ])
         } catch {
             command.error(error)
@@ -406,10 +406,10 @@ class AccountCommands: IRCBotModule {
                 key: "myexpansion.success", fromCommand: command,
                 map: [
                     "name": currentRat.attributes.name.value,
-                    "expansion": expansion.englishDescription,
+                    "expansion": expansion.englishDescription
                 ])
 
-            for rescue in await board.rescues {
+            for rescue in await board.getRescues() {
                 if let jumpCall = rescue.value.jumpCalls.first(where: {
                     $0.0 == currentRat && rescue.value.expansion == expansion
                 }) {
@@ -420,7 +420,7 @@ class AccountCommands: IRCBotModule {
                             "nick": command.message.user.nickname,
                             "jumps": jumpCall.1,
                             "oldExpansion": oldExpansion.ircRepresentable,
-                            "newExpansion": expansion.ircRepresentable,
+                            "newExpansion": expansion.ircRepresentable
                         ])
                     break
                 }
@@ -429,30 +429,5 @@ class AccountCommands: IRCBotModule {
             debug(String(describing: error))
             command.error(error)
         }
-    }
-
-    @BotCommand(
-        ["useodyssey"],
-        category: nil,
-        description:
-            "DEPRECATED: Informs Mecha that you are currently using Odyssey on your active commander (Determined by your nickname)",
-        permission: .UserWriteOwn
-    )
-    var didReceiveUseOdysseyCommand = { command in
-        command.message.reply(message: "!useodyssey has been deprecated, use !mymode o")
-    }
-
-    @BotCommand(
-        ["usehorizons"],
-        category: nil,
-        description:
-            "DEPRECATED: Informs Mecha that you are currently using Horizons on your active commander (Determined by your nickname)",
-        permission: .UserWriteOwn
-    )
-    var didReceiveUseHorizonsCommand = { command in
-        command.message.reply(
-            message:
-                "!usehorizons has been deprecated, use !mymode h3 or !mymode h4 depending on whether you are using 3.8 or 4.0"
-        )
     }
 }

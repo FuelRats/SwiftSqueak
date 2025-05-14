@@ -69,25 +69,29 @@ struct Fact: Codable, Hashable {
                     .join(
                         "factmessages",
                         method: .left,
-                        on: "\(ident: "facts").\(ident: "id")=\(ident: "factmessages").\(ident: "fact") and \(ident: "factmessages").\(ident: "language")=\(bind: localeString)" as SQLQueryString
+                        on:
+                            """
+                            \(ident: "facts").\(ident: "id") = \(ident: "factmessages").\(ident: "fact") \
+                            and \(ident: "factmessages").\(ident: "language") = \(bind: localeString)
+                            """ as SQLQueryString
                     )
                     .where("alias", .equal, factName)
                     .first().whenComplete({ result in
                         switch result {
-                        case .failure(let error):
-                            continuation.resume(throwing: error)
+                            case .failure(let error):
+                                continuation.resume(throwing: error)
 
-                        case .success(let row):
-                            guard let row = row else {
-                                continuation.resume(returning: nil)
-                                return
-                            }
+                            case .success(let row):
+                                guard let row = row else {
+                                    continuation.resume(returning: nil)
+                                    return
+                                }
 
-                            let fact = try? row.decode(model: Fact.self)
-                            if let cacheFact = fact {
-                                cache["\(factName)-\(localeString)"] = cacheFact
-                            }
-                            continuation.resume(returning: fact)
+                                let fact = try? row.decode(model: Fact.self)
+                                if let cacheFact = fact {
+                                    cache["\(factName)-\(localeString)"] = cacheFact
+                                }
+                                continuation.resume(returning: fact)
                         }
                     })
             })
@@ -115,15 +119,15 @@ struct Fact: Codable, Hashable {
                 )
                 .all().whenComplete({ result in
                     switch result {
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
 
-                    case .success(let rows):
-                        let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
-                        for fact in facts {
-                            cache[fact.cacheIdentifier] = fact
-                        }
-                        continuation.resume(returning: facts)
+                        case .success(let rows):
+                            let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
+                            for fact in facts {
+                                cache[fact.cacheIdentifier] = fact
+                            }
+                            continuation.resume(returning: facts)
                     }
                 })
         })
@@ -211,11 +215,11 @@ struct Fact: Codable, Hashable {
             Fact.create(name: name, author: author, message: message, forLocale: locale)
                 .whenComplete { result in
                     switch result {
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
 
-                    case .success(let fact):
-                        continuation.resume(returning: fact)
+                        case .success(let fact):
+                            continuation.resume(returning: fact)
                     }
                 }
         })
@@ -310,17 +314,17 @@ struct GroupedFact: Codable {
         }
 
         switch self.cannonicalName {
-        case let str where str.starts(with: "pc"):
-            return .PC
+            case let str where str.starts(with: "pc"):
+                return .PC
 
-        case let str where str.starts(with: "x"):
-            return .Xbox
+            case let str where str.starts(with: "x"):
+                return .Xbox
 
-        case let str where str.starts(with: "ps"):
-            return .PS
+            case let str where str.starts(with: "ps"):
+                return .PS
 
-        default:
-            return nil
+            default:
+                return nil
         }
     }
 
@@ -330,11 +334,11 @@ struct GroupedFact: Codable {
         }
 
         switch platform {
-        case .PC, .PS:
-            return String(self.cannonicalName.dropFirst(2))
+            case .PC, .PS:
+                return String(self.cannonicalName.dropFirst(2))
 
-        case .Xbox:
-            return String(self.cannonicalName.dropFirst(1))
+            case .Xbox:
+                return String(self.cannonicalName.dropFirst(1))
         }
     }
 

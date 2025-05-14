@@ -57,8 +57,8 @@ struct GeneralConfiguration: Codable {
     @Default<False>
     var drillMode: Bool
     let drillChannels: [String]
-    let ratBlacklist: [String]
-    let dispatchBlacklist: [String]
+    let ratDenylist: [String]
+    let dispatchDenylist: [String]
     let cooldownExceptionChannels: [String]
 
     let operLogin: [String]?

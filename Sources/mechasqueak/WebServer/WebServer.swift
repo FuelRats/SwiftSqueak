@@ -21,7 +21,7 @@ final class WebServer {
         self.app = try await Application.make(env)
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
         print("Serving static files from: \(app.directory.publicDirectory)")
-        
+
         self.app.http.server.configuration.hostname = configuration.host
         self.app.http.server.configuration.port = configuration.port
         try app.register(collection: Routes())

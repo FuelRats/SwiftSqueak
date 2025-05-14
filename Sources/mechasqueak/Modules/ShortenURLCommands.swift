@@ -33,7 +33,7 @@ class ShortenURLCommands: IRCBotModule {
         ["shorten", "short", "shortener"],
         [
             .param("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
-            .param("custom link", "importantinfo", .standard, .optional),
+            .param("custom link", "importantinfo", .standard, .optional)
         ],
         category: .utility,
         description:
@@ -73,7 +73,7 @@ class ShortenURLCommands: IRCBotModule {
                 key: "shorten.shortened", fromCommand: command,
                 map: [
                     "url": response.shorturl,
-                    "title": response.title.prefix(160),
+                    "title": response.title.prefix(160)
                 ])
         } catch {
             command.message.error(key: "shorten.error", fromCommand: command)

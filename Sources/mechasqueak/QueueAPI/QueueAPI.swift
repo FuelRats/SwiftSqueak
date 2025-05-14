@@ -116,12 +116,12 @@ class QueueAPI {
             loop.next().scheduleTask(
                 in: .seconds(15),
                 {
-                    if let promise = QueueAPI.pendingQueueJoins[
-                        participant.client.name.lowercased()]
-                    {
-                        promise.fail(ClientJoinError.joinFailed)
-                        RescueBoard.pendingClientJoins.removeValue(
-                            forKey: participant.client.name.lowercased())
+                    Task {
+                        if let promise = QueueAPI.pendingQueueJoins[
+                            participant.client.name.lowercased()] {
+                            promise.fail(ClientJoinError.joinFailed)
+                            await board.removePendingJoin(key: participant.client.name.lowercased())
+                        }
                     }
                 })
         }
@@ -140,10 +140,10 @@ class QueueAPI {
         return try await withCheckedThrowingContinuation({ continuation in
             awaitQueueJoin(participant: participant).whenComplete({ result in
                 switch result {
-                case .failure(let error):
-                    continuation.resume(throwing: error)
-                case .success(_):
-                    continuation.resume(returning: ())
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    case .success:
+                        continuation.resume(returning: ())
                 }
 
             })

@@ -102,7 +102,7 @@ class QueueCommands: IRCBotModule {
                 "averageRescuetime": stats.averageRescuetimeSpan,
                 "longestQueuetime": stats.longestQueuetimeSpan,
                 "lostQueues": stats.lostQueues ?? 0,
-                "successfulQueues": stats.successfulQueues ?? 0,
+                "successfulQueues": stats.successfulQueues ?? 0
             ])
     }
 
@@ -127,11 +127,13 @@ class QueueCommands: IRCBotModule {
         ["maxclients", "maxload", "maxcases"],
         [.param("number of clients", "10", .standard, .optional)],
         category: .queue,
-        description:
-            "See how many rescues are allowed at once before clients get put into a queue, provide a number as an argument to change the value",
+        description: "See how many rescues are allowed at once before clients get put into a queue",
         permission: .DispatchWrite,
         allowedDestinations: .Channel,
-        cooldown: .seconds(60)
+        cooldown: .seconds(60),
+        helpExtra: {
+            return "Provide a number as an argument to change the value"
+        }
     )
     var didReceiveMaxClientsCommand = { command in
         if let queueSizeString = command.param1 {

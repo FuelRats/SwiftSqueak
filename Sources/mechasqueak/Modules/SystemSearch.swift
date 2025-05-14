@@ -73,7 +73,7 @@ class SystemSearch: IRCBotModule {
                 key: "systemsearch.nearestmatches", fromCommand: command,
                 map: [
                     "system": system,
-                    "results": resultString,
+                    "results": resultString
                 ])
 
         } catch {
@@ -93,8 +93,7 @@ class SystemSearch: IRCBotModule {
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
         if let (_, rescue) = await board.findRescue(
-            withCaseIdentifier: system, includingRecentlyClosed: true)
-        {
+            withCaseIdentifier: system, includingRecentlyClosed: true) {
             system = rescue.system?.name ?? system
         }
         if system.lowercased().starts(with: "near ") {
@@ -139,25 +138,25 @@ class SystemSearch: IRCBotModule {
         [
             .argument("range", "jump range", example: "68"),
             .param("departure system / case id / client name", "NLTT 48288"),
-            .param("arrival system / case id / client name", "Sagittarius A*", .continuous),
+            .param("arrival system / case id / client name", "Sagittarius A*", .continuous)
         ],
         category: .utility,
         description: "Calculate the distance between two star systems",
         cooldown: .seconds(30)
     )
     var didReceiveDistanceCommand = { command in
-        var (depSystem, arrSystem) = command.param2 as! (String, String)
+        guard var (depSystem, arrSystem) = command.param2 as? (String, String) else {
+            return
+        }
         let range = command.argumentValue(for: "range")
 
         if let (_, rescue) = await board.findRescue(
-            withCaseIdentifier: depSystem, includingRecentlyClosed: true)
-        {
+            withCaseIdentifier: depSystem, includingRecentlyClosed: true) {
             depSystem = rescue.system?.name ?? depSystem
         }
 
         if let (_, rescue) = await board.findRescue(
-            withCaseIdentifier: arrSystem, includingRecentlyClosed: true)
-        {
+            withCaseIdentifier: arrSystem, includingRecentlyClosed: true) {
             arrSystem = rescue.system?.name ?? arrSystem
         }
 
@@ -178,26 +177,22 @@ class SystemSearch: IRCBotModule {
             var plotDepName = departure.name
             var plotArrName = arrival.name
             if let proceduralCheck = departure.proceduralCheck,
-                let sectordata = proceduralCheck.sectordata
-            {
+                let sectordata = proceduralCheck.sectordata {
                 if let nearestKnown = try? await SystemsAPI.getNearestSystem(
-                    forCoordinates: sectordata.coords)?.data
-                {
+                    forCoordinates: sectordata.coords)?.data {
                     plotDepName = nearestKnown.name
                 }
             }
 
             if let proceduralCheck = arrival.proceduralCheck,
-                let sectordata = proceduralCheck.sectordata
-            {
+                let sectordata = proceduralCheck.sectordata {
                 if let nearestKnown = try? await SystemsAPI.getNearestSystem(
-                    forCoordinates: sectordata.coords)?.data
-                {
+                    forCoordinates: sectordata.coords)?.data {
                     plotArrName = nearestKnown.name
                 }
             }
 
-            var spanshUrl: URL? = nil
+            var spanshUrl: URL?
             if distance > 1000 || range != nil {
                 spanshUrl = try? await generateSpanshRoute(
                     from: plotDepName, to: plotArrName, range: Int(range ?? "75") ?? 75)
@@ -216,7 +211,7 @@ class SystemSearch: IRCBotModule {
                     "departure": departure.name,
                     "arrival": arrival.name,
                     "distance": displayDistance.eliteDistance,
-                    "plotterUrl": spanshUrl?.absoluteString ?? "",
+                    "plotterUrl": spanshUrl?.absoluteString ?? ""
                 ])
         } catch {
             print(error)
@@ -228,7 +223,7 @@ class SystemSearch: IRCBotModule {
         ["station", "stations"],
         [
             .param("reference system / case id / client name", "Sagittarius A*", .continuous),
-            .options(["p", "l"]), .argument("legacy"),
+            .options(["p", "l"]), .argument("legacy")
         ],
         category: .utility,
         description:
@@ -242,22 +237,20 @@ class SystemSearch: IRCBotModule {
         var legacyStations = command.arguments["legacy"] != nil
 
         if let (_, rescue) = await board.findRescue(
-            withCaseIdentifier: systemName, includingRecentlyClosed: true)
-        {
+            withCaseIdentifier: systemName, includingRecentlyClosed: true) {
             systemName = rescue.system?.name ?? ""
             if rescue.platform == .Xbox || rescue.platform == .PS || rescue.expansion == .legacy {
                 legacyStations = true
             }
         }
 
-        var proceduralCheck: SystemsAPI.ProceduralCheckDocument? = nil
-        var nearestSystem: SystemsAPI.NearestSystemDocument.NearestSystem? = nil
+        var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
+        var nearestSystem: SystemsAPI.NearestSystemDocument.NearestSystem?
         let systemCheck = try? await SystemsAPI.performSystemCheck(forSystem: systemName)
         if systemCheck?.landmark == nil, let sectordata = systemCheck?.proceduralCheck?.sectordata {
             let cords = sectordata.coords
             if let nearestSystemSearch = try? await SystemsAPI.getNearestSystem(
-                forCoordinates: cords)?.data
-            {
+                forCoordinates: cords)?.data {
                 systemName = nearestSystemSearch.name
                 proceduralCheck = systemCheck?.proceduralCheck
                 nearestSystem = nearestSystemSearch
@@ -291,10 +284,9 @@ class SystemSearch: IRCBotModule {
                 return
             }
 
-            var approximatedDistance: String? = nil
+            var approximatedDistance: String?
             if let proc = proceduralCheck, let nearest = nearestSystem,
-                let sectordata = proc.sectordata
-            {
+                let sectordata = proc.sectordata {
                 let formatter = NumberFormatter.englishFormatter()
                 formatter.usesSignificantDigits = true
                 // Round of output distance based on uncertainty provided by SystemsAPI
@@ -321,7 +313,7 @@ class SystemSearch: IRCBotModule {
                         "showAllServices": command.options.contains("s"),
                         "additionalServices": station.services.count
                             - station.notableServices.count,
-                        "hasLargePad": station.hasLargePad,
+                        "hasLargePad": station.hasLargePad
                     ])) ?? "")
         } catch {
             debug(String(describing: error))

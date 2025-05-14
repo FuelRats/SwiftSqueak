@@ -121,8 +121,7 @@ struct XboxLive {
     }
 
     static func getCommunicationPrivacyState(xuid: String) async throws
-        -> CommunicationPrivacyRequest?
-    {
+        -> CommunicationPrivacyRequest? {
         guard let xlConfig = configuration.xbox else {
             return nil
         }
@@ -131,7 +130,7 @@ struct XboxLive {
         url.queryItems =
             [
                 "setting": "CommunicateUsingText",
-                "target": "xuid(\(xuid))",
+                "target": "xuid(\(xuid))"
             ].queryItems
 
         var request = try HTTPClient.Request(url: url.url!, method: .GET)
@@ -192,7 +191,7 @@ struct XboxLive {
                     "client_id": xlConfig.clientId,
                     "client_secret": xlConfig.clientSecret,
                     "grant_type": "refresh_token",
-                    "scope": "XboxLive.signin XboxLive.offline_access",
+                    "scope": "XboxLive.signin XboxLive.offline_access"
                 ].formUrlEncoded
 
             let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
@@ -201,7 +200,7 @@ struct XboxLive {
             decoder.dateDecodingStrategy = .iso8601
             decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-            return try! decoder.decode(RefreshTokenResponse.self, from: result)
+            return try decoder.decode(RefreshTokenResponse.self, from: result)
         }
 
         static func exchangeForLiveToken(token: String) async throws -> LiveTokenResponse {
@@ -220,8 +219,8 @@ struct XboxLive {
                 "Properties": [
                     "SiteName": "user.auth.xboxlive.com",
                     "AuthMethod": "RPS",
-                    "RpsTicket": "d=\(token)",
-                ],
+                    "RpsTicket": "d=\(token)"
+                ]
             ]
 
             request.httpBody = try JSONSerialization.data(withJSONObject: bodyObject, options: [])
@@ -247,8 +246,8 @@ struct XboxLive {
                 "RelyingParty": "http://xboxlive.com",
                 "Properties": [
                     "UserTokens": [token],
-                    "SandboxId": "RETAIL",
-                ],
+                    "SandboxId": "RETAIL"
+                ]
             ]
 
             request.httpBody = try JSONSerialization.data(withJSONObject: bodyObject, options: [])

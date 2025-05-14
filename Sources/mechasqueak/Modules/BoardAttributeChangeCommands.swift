@@ -35,7 +35,7 @@ class BoardAttributeCommands: IRCBotModule {
         ["active", "inactive", "activate", "deactivate"],
         [
             .param("case id/client", "4"),
-            .param("message", "client left irc", .continuous, .optional),
+            .param("message", "client left irc", .continuous, .optional)
         ],
         category: .board,
         description:
@@ -85,7 +85,7 @@ class BoardAttributeCommands: IRCBotModule {
                 "status": status,
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "message": message,
+                "message": message
             ])
     }
 
@@ -93,7 +93,7 @@ class BoardAttributeCommands: IRCBotModule {
         ["system", "sys", "loc", "location"],
         [
             .options(["f"]), .param("case id/client", "4"),
-            .param("system name", "NLTT 48288", .continuous),
+            .param("system name", "NLTT 48288", .continuous)
         ],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
@@ -117,8 +117,7 @@ class BoardAttributeCommands: IRCBotModule {
 
         var key = "board.syschange"
         if let correction = ProceduralSystem.correct(system: systemName),
-            command.forceOverride == false && configuration.general.drillMode == false
-        {
+            command.forceOverride == false && configuration.general.drillMode == false {
             key += ".autocorrect"
             systemName = correction
         }
@@ -157,15 +156,14 @@ class BoardAttributeCommands: IRCBotModule {
         try? rescue.save(command)
 
         if let distance = rescue.system?.landmark?.distance, distance > 2500,
-            let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName)
-        {
+            let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName) {
             command.message.reply(
                 key: key + ".spansh", fromCommand: command,
                 map: [
                     "caseId": caseId,
                     "client": rescue.clientDescription,
                     "systemInfo": rescue.system.description,
-                    "plotUrl": plotUrl.absoluteString,
+                    "plotUrl": plotUrl.absoluteString
                 ])
             return
         }
@@ -175,7 +173,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "systemInfo": rescue.system.description,
+                "systemInfo": rescue.system.description
             ])
     }
 
@@ -195,14 +193,14 @@ class BoardAttributeCommands: IRCBotModule {
         let oldClient = rescue.clientDescription
         let client = command.parameters[1]
 
-        if let existingCase = await board.rescues.first(where: {
+        if let existingCase = await board.getRescues().first(where: {
             $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(
                 key: "board.clientchange.exists", fromCommand: command,
                 map: [
                     "caseId": existingCase.key,
-                    "client": client,
+                    "client": client
                 ])
             return
         }
@@ -217,14 +215,13 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
 
             if case let .found(xboxProfile) = rescue.xboxProfile,
-                xboxProfile.privacy.isAllowed == false
-            {
+                xboxProfile.privacy.isAllowed == false {
                 command.message.reply(
                     message: lingo.localize(
                         "board.xboxprivacy", locale: "en",
                         interpolations: [
                             "caseId": caseId,
-                            "client": rescue.clientDescription,
+                            "client": rescue.clientDescription
                         ]))
             }
         }
@@ -238,7 +235,7 @@ class BoardAttributeCommands: IRCBotModule {
                         "board.psplusmissing", locale: "en",
                         interpolations: [
                             "caseId": caseId,
-                            "client": rescue.clientDescription,
+                            "client": rescue.clientDescription
                         ]))
             }
         }
@@ -252,7 +249,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "oldClient": oldClient,
-                "client": clientName,
+                "client": clientName
             ])
 
         try? rescue.save(command)
@@ -280,17 +277,17 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "nick": nick,
+                "nick": nick
             ])
 
-        if let existingCase = await board.rescues.first(where: {
+        if let existingCase = await board.getRescues().first(where: {
             $0.1.clientNick?.lowercased() == nick.lowercased() && $0.1.id != rescue.id
         }) {
             command.message.error(
                 key: "board.nickchange.exists", fromCommand: command,
                 map: [
                     "caseId": existingCase.key,
-                    "nick": nick,
+                    "nick": nick
                 ])
         }
     }
@@ -326,7 +323,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))",
+                "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
             ])
 
     }
@@ -350,7 +347,7 @@ class BoardAttributeCommands: IRCBotModule {
                 key: "board.codered.no", fromCommand: command,
                 map: [
                     "caseId": caseId,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ])
         } else {
             rescue.codeRed = true
@@ -358,7 +355,7 @@ class BoardAttributeCommands: IRCBotModule {
                 key: "board.codered.active", fromCommand: command,
                 map: [
                     "caseId": caseId,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ])
 
             if rescue.rats.count > 0 {
@@ -399,7 +396,7 @@ class BoardAttributeCommands: IRCBotModule {
             key: "board.title.set", fromCommand: command,
             map: [
                 "caseId": caseId,
-                "title": title,
+                "title": title
             ])
     }
 
@@ -439,7 +436,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "expansion": expansion.ircRepresentable,
+                "expansion": expansion.ircRepresentable
             ])
     }
 
@@ -466,7 +463,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "expansion": expansion.ircRepresentable,
+                "expansion": expansion.ircRepresentable
             ])
     }
 
@@ -497,7 +494,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "expansion": expansion.ircRepresentable,
+                "expansion": expansion.ircRepresentable
             ])
     }
 
@@ -528,7 +525,7 @@ class BoardAttributeCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "expansion": expansion.ircRepresentable,
+                "expansion": expansion.ircRepresentable
             ])
     }
 }

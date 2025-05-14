@@ -175,19 +175,15 @@ extension OrderedSet: SetAlgebra {
     }
 
     public mutating func formUnion(_ other: __owned OrderedSet<E>) {
-        for member in other {
-            if set.insert(member).inserted {
-                array.append(member)
-            }
+        for member in other where set.insert(member).inserted {
+            array.append(member)
         }
     }
 
     public mutating func formIntersection(_ other: OrderedSet<E>) {
-        for member in self {
-            if other.contains(member) == false {
-                set.remove(member)
-                array.removeAll(where: { $0 == member })
-            }
+        for member in self where other.contains(member) == false {
+            set.remove(member)
+            array.removeAll(where: { $0 == member })
         }
     }
 

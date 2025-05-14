@@ -63,6 +63,7 @@
     "board.bannedclose": "\u0002Client of case #%{caseId} (%{client}) has been banned by the moderator team. Do the paperwork: %{link}\u0002",
     "board.bannedmd": "\u0002Client of case #%{caseId} (%{client}) has been banned by the moderator team and the case has been trashed.\u0002",
     "board.bannedvpn": "\u0002Client of case #%{caseId} (%{client}) was using a banned VPN or proxy and couldn't join so the case has been trashed.\u0002",
+    "board.xboxcorrected": "The star system of this case was automatically corrected based on information retrieved from Xbox Live",
     "board.clientnick": "Caution: Client of case #%{caseId} (%{client}) has changed IRC nick to %{newNick}",
     "board.nickcorrected": "Caution: Nickname of case #%{caseId} (%{client}) has been automatically corrected to %{newNick}",
     "board.synced": "Successfully synced board with %{api}. %{updates}",
@@ -144,6 +145,11 @@
         "one": "%{client} Please REMAIN at the main menu and add the following rat to your friends list: %{rats}",
         "other": "%{client} Please REMAIN at the main menu and add the following %{count} rats to your friends list: %{rats}"
     },
+    "board.assign.invalidcmdr": "%{rats} does not have a valid CMDR for %{platform}",
+    "board.assign.invalidcmdrpc": "%{rats} does not have a valid CMDR for %{platform} (%{expansion})",
+    "board.assign.invalidcmdrcarrier": "%{rats} does not have a valid CMDR for %{platform} (%{expansion}), for carrier rescues make sure the rat has their CMDR set to %{universe}",
+    "board.assign.undrilled": "%{rats} are not drilled yet they were assigned to a CR case, this is heavily discouraged. ",
+    "board.assign.callconflict": "%{rats} called for a different case and not this one. ",
     "board.assign.carrier": "Assigned rats %{rats} to case %{client} as a carrier rescue",
     "board.unassign.notassigned": "Could not unassign %{rats} from case #%{caseId}, they are not assigned.",
     "board.unassign.removed": "Unassigned %{rats} from case #%{caseId}.",
@@ -296,6 +302,8 @@
     "xbl.error": "An error occured when attempting to retrieve an Xbox Live profile",
     "psn.notfound": "No Playstation username was found by that name",
     "psn.error": "An error occured when attempting to retrieve a Playstation Network profile",
+    "psn.noactivity": "%{id} %{status} %{psplus}. Privacy Settings: %{privacy}",
+    "psn.activity": "%{id} %{status} %{psplus} playing %{activity}. Privacy Settings: %{privacy}",
     "flushall.response": "Cleared local cache and fetching user data for all logged in users..",
     "flush.notfound": "%{name} was not found in the account data cache.",
     "flush.nouser": "Cleared local cache for %{name} but I was unable to fetch a new copy as no online user for them could be found.",
@@ -449,5 +457,6 @@
         "one": "%{time} week",
         "other": "%{time} weeks",
     },
-    "genericerror": "Command failed to due an unknown error"
+    "genericerror": "Command failed to due an unknown error",
+    "update": "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/%{release}",
 }

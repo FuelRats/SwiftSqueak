@@ -17,7 +17,12 @@ struct FactLanguageView: View {
             .custom(key: "hx-get", value: fetchUrl)
             .custom(key: "hx-target", value: replaceTarget)
             .custom(key: "hx-swap", value: "innerHTML")
-            .custom(key: "hx-on", value: "click: this.closest('.fact').querySelectorAll('.fact-language').forEach(el => el.classList.remove('active')); this.classList.add('active')")
+            .custom(key: "hx-on", value: """
+                click: this.closest('.fact')
+                            .querySelectorAll('.fact-language')
+                            .forEach(el => el.classList.remove('active'));
+                        this.classList.add('active')
+                """)
     }
     
     var fetchUrl: String {

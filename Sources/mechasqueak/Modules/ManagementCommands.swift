@@ -150,7 +150,7 @@ class ManagementCommands: IRCBotModule {
             key: "groups.response", fromCommand: command,
             map: [
                 "nick": command.parameters[0],
-                "groups": groups?.joined(separator: ", ") ?? "",
+                "groups": groups?.joined(separator: ", ") ?? ""
             ])
     }
 
@@ -239,7 +239,7 @@ class ManagementCommands: IRCBotModule {
                 map: [
                     "group": group.attributes.name.value,
                     "groupId": group.id.rawValue.ircRepresentation,
-                    "userId": userId.ircRepresentation,
+                    "userId": userId.ircRepresentation
                 ])
         } catch let error as HTTPClient.Response {
             if error.status == .conflict {
@@ -307,7 +307,7 @@ class ManagementCommands: IRCBotModule {
                 map: [
                     "group": group.attributes.name.value,
                     "groupId": group.id.rawValue.ircRepresentation,
-                    "userId": userId.ircRepresentation,
+                    "userId": userId.ircRepresentation
                 ])
         } catch {
             command.message.error(key: "delgroup.error", fromCommand: command)
@@ -357,7 +357,7 @@ class ManagementCommands: IRCBotModule {
                 key: "suspend.success", fromCommand: command,
                 map: [
                     "userId": userId.ircRepresentation,
-                    "date": date.ircRepresentable,
+                    "date": date.ircRepresentable
                 ])
         } catch {
             command.message.error(key: "suspend.error", fromCommand: command)
@@ -376,7 +376,7 @@ class ManagementCommands: IRCBotModule {
             key: "say.sending", fromCommand: command,
             map: [
                 "target": command.parameters[0],
-                "contents": command.parameters[1],
+                "contents": command.parameters[1]
             ])
         command.message.client.sendMessage(
             toTarget: command.parameters[0], contents: command.parameters[1])
@@ -386,7 +386,7 @@ class ManagementCommands: IRCBotModule {
         ["me", "action", "emote"],
         [
             .param("destination", "#ratchat"),
-            .param("message", "takes all the snickers", .continuous),
+            .param("message", "takes all the snickers", .continuous)
         ],
         category: .utility,
         description: "Make the bot send an IRC action (/me) somewhere.",
@@ -397,7 +397,7 @@ class ManagementCommands: IRCBotModule {
             key: "me.sending", fromCommand: command,
             map: [
                 "target": command.parameters[0],
-                "contents": command.parameters[1],
+                "contents": command.parameters[1]
             ])
         command.message.client.sendActionMessage(
             toChannelName: command.parameters[0], contents: command.parameters[1])
@@ -407,7 +407,7 @@ class ManagementCommands: IRCBotModule {
         ["sendraw"],
         [
             .param("command"),
-            .param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional),
+            .param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional)
         ],
         category: nil,
         description: "Send a raw command to the IRC server",
@@ -422,7 +422,7 @@ class ManagementCommands: IRCBotModule {
             key: "sendraw", fromCommand: command,
             map: [
                 "command": command.parameters[0],
-                "contents": command.parameters.dropFirst().joined(separator: " "),
+                "contents": command.parameters.dropFirst().joined(separator: " ")
             ])
 
         command.message.client.send(

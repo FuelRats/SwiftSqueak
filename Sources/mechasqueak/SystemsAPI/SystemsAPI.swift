@@ -39,12 +39,11 @@ class SystemsAPI {
         "H": "h",
         "AO": "Ao",
         "EL": "El",
-        "KI": "Ki",
+        "KI": "Ki"
     ]
 
     static func performSearch(forSystem systemName: String, quickSearch: Bool = false) async throws
-        -> SearchDocument
-    {
+        -> SearchDocument {
         var queryItems = [
             "name": systemName
         ]
@@ -60,8 +59,7 @@ class SystemsAPI {
             request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
 
-    static func performLandmarkCheck(forSystem systemName: String) async throws -> LandmarkDocument
-    {
+    static func performLandmarkCheck(forSystem systemName: String) async throws -> LandmarkDocument {
         let request = try HTTPClient.Request(
             systemApiPath: "/landmark", method: .GET,
             query: [
@@ -71,8 +69,7 @@ class SystemsAPI {
     }
 
     static func getSystemInfo(forSystem system: SystemsAPI.SearchDocument.SearchResult) async throws
-        -> StarSystem
-    {
+        -> StarSystem {
         let (landmarkDocument, systemData) = try await (
             performLandmarkCheck(forSystem: system.name), getSystemData(forId: system.id64)
         )
@@ -90,8 +87,7 @@ class SystemsAPI {
     }
 
     static func performProceduralCheck(forSystem systemName: String) async throws
-        -> ProceduralCheckDocument
-    {
+        -> ProceduralCheckDocument {
         let request = try HTTPClient.Request(
             systemApiPath: "/procname", method: .GET,
             query: [
@@ -115,11 +111,10 @@ class SystemsAPI {
     static func getNearestStations(
         forSystem systemName: String, limit: Int = 10, legacy: Bool = false
     ) async throws
-        -> NearestPopulatedDocument?
-    {
+        -> NearestPopulatedDocument? {
         var queryItems = [
             "name": systemName,
-            "limit": String(limit),
+            "limit": String(limit)
         ]
         if legacy {
             queryItems["legacy"] = "True"
@@ -177,14 +172,13 @@ class SystemsAPI {
     }
 
     static func getNearestSystem(forCoordinates coords: Vector3) async throws
-        -> NearestSystemDocument?
-    {
+        -> NearestSystemDocument? {
         let request = try HTTPClient.Request(
             systemApiPath: "/nearest_coords", method: .GET,
             query: [
                 "x": String(coords.x),
                 "y": String(coords.y),
-                "z": String(coords.z),
+                "z": String(coords.z)
             ])
 
         return try await httpClient.execute(
@@ -299,6 +293,7 @@ class SystemsAPI {
             let coordinates: Vector3
             let soi: Double?
 
+            // swiftlint:disable identifier_name
             enum CodingKeys: String, CodingKey {
                 case name, x, y, z, soi
             }
@@ -316,6 +311,7 @@ class SystemsAPI {
                 let x = try values.decode(Double.self, forKey: .x)
                 let y = try values.decode(Double.self, forKey: .y)
                 let z = try values.decode(Double.self, forKey: .z)
+                // swiftlint:enable identifier_name
                 self.coordinates = Vector3(x, y, z)
 
                 self.soi = try? values.decode(Double.self, forKey: .soi)
@@ -486,8 +482,7 @@ class SystemsAPI {
                 }
 
                 if system.levenshtein(correctionName) < 2
-                    && correctionName.strippingNonLetters == system.strippingNonLetters
-                {
+                    && correctionName.strippingNonLetters == system.strippingNonLetters {
                     return 3
                 }
 
@@ -522,8 +517,7 @@ class SystemsAPI {
         func preferableSystems(
             requireLargePad: Bool = false, requireSpace: Bool = false, legacyStations: Bool = false
         )
-            -> [PopulatedSystem]
-        {
+            -> [PopulatedSystem] {
             return self.data.filter({
                 hasPermit(system: $0) == false &&
                 $0.allegiance != .Thargoid
@@ -554,8 +548,7 @@ class SystemsAPI {
             }
 
             func preferableStations(requireLargePad: Bool, requireSpace: Bool, legacyStations: Bool)
-                -> [Station]
-            {
+                -> [Station] {
                 let stations = self.stations.filter {
                     (requireLargePad == false || $0.hasLargePad)
                     && (legacyStations == false || $0.type?.isPlayerStation == false)
@@ -574,7 +567,7 @@ class SystemsAPI {
 
             struct Station: Codable {
                 static let notableServices = [
-                    "Shipyard", "Outfitting", "Refuel", "Repair", "Rearm",
+                    "Shipyard", "Outfitting", "Refuel", "Repair", "Rearm"
                 ]
                 let name: String
                 let type: StationType?
@@ -699,7 +692,7 @@ class SystemsAPI {
                         "SpaceConstructionDepot": "Space Construction Depot",
                         "PlanetaryConstructionDepot": "Planetary Construction Depot",
                         "AsteroidBase": "Asteroid base",
-                        "OnFootSettlement": "Odyssey Settlement",
+                        "OnFootSettlement": "Odyssey Settlement"
                     ]
 
                     init(from decoder: Decoder) throws {
@@ -735,7 +728,7 @@ class SystemsAPI {
                         .FleetCarrier: 5,
                         .Outpost: 6,
                         .Settlement: 7,
-                        .PlanetaryConstructionDepot: 7,
+                        .PlanetaryConstructionDepot: 7
                     ]
 
                     var rating: UInt {
@@ -755,7 +748,7 @@ class SystemsAPI {
                             StationType.SpaceConstructionDepot,
                             StationType.SystemColonizationShip,
                             StationType.OrbitalConstructionSite,
-                            StationType.PlanetaryConstructionDepot,
+                            StationType.PlanetaryConstructionDepot
                         ].contains(self)
                     }
 
@@ -766,7 +759,7 @@ class SystemsAPI {
                             StationType.OrbitalConstructionSite,
                             StationType.PlanetaryConstructionSite,
                             StationType.FleetCarrier,
-                            StationType.SystemColonizationShip,
+                            StationType.SystemColonizationShip
                         ].contains(self)
                     }
 
@@ -776,7 +769,7 @@ class SystemsAPI {
                             StationType.PlanetaryOutpost,
                             StationType.PlanetaryConstructionSite,
                             StationType.Settlement,
-                            StationType.PlanetaryConstructionDepot,
+                            StationType.PlanetaryConstructionDepot
                         ].contains(self)
                     }
                 }
@@ -809,12 +802,6 @@ class SystemsAPI {
         }
 
         struct Meta: Codable {
-            enum CodingKeys: String, CodingKey {
-                case name = "name"
-                case type = "type"
-                case permSystems = "permSystems"
-            }
-            
             let name: String?
             let type: String?
             let permSystems: [PermitSystem]?
@@ -845,8 +832,7 @@ struct StarSector {
 
 extension HTTPClient.Request {
     fileprivate init(systemApiPath: String, method: HTTPMethod, query: [String: String?] = [:])
-        throws
-    {
+        throws {
         var url = URLComponents(string: "https://systems.api.fuelrats.com")!
         url.path = systemApiPath
 

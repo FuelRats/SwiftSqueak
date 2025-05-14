@@ -91,7 +91,7 @@ class HelpCommands: IRCBotModule {
                     map: [
                         "command": "!" + helpCommand.commands[0],
                         "params": helpCommand.paramText,
-                        "description": helpCommand.description,
+                        "description": helpCommand.description
                     ])
             }
 
@@ -113,7 +113,7 @@ class HelpCommands: IRCBotModule {
                         "language": command.locale.englishDescription,
                         "count": groupedFacts.count,
                         "facts": groupedFacts.map({ "!\($0.cannonicalName)" }).joined(
-                            separator: ", "),
+                            separator: ", ")
                     ])
 
                 if platformFacts.count > 0 {
@@ -122,7 +122,7 @@ class HelpCommands: IRCBotModule {
                         map: [
                             "count": platformFacts.count,
                             "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" })
-                                .joined(separator: ", "),
+                                .joined(separator: ", ")
                         ])
                 }
             }
@@ -154,8 +154,7 @@ class HelpCommands: IRCBotModule {
             })
         else {
             if let fact = try? await Fact.get(
-                name: commandText, forLocale: Locale(identifier: languageCode ?? "en"))
-            {
+                name: commandText, forLocale: Locale(identifier: languageCode ?? "en")) {
                 command.message.replyPrivate(
                     key: "anyfact.info", fromCommand: command,
                     map: [
@@ -163,7 +162,7 @@ class HelpCommands: IRCBotModule {
                         "language": Locale(identifier: fact.language).englishDescription,
                         "created": fact.createdAt.eliteFormattedString,
                         "updated": fact.updatedAt.eliteFormattedString,
-                        "author": fact.author,
+                        "author": fact.author
                     ])
                 command.message.replyPrivate(message: fact.message)
                 return
@@ -267,7 +266,7 @@ class HelpCommands: IRCBotModule {
                 map: [
                     "command": "!" + helpCommand.commands[0],
                     "params": helpCommand.paramText,
-                    "description": helpCommand.description,
+                    "description": helpCommand.description
                 ])
         }
     }
@@ -283,7 +282,7 @@ class HelpCommands: IRCBotModule {
                 "command": helpCommand.usageDescription(command: nil),
                 "example": helpCommand.example.count > 0
                     ? "(Example: !\(commandText) \(helpCommand.example))"
-                    : "",
+                    : ""
             ])
         let permissionGroups =
             helpCommand.permission?.groups

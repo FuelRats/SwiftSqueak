@@ -40,7 +40,11 @@ struct Routes: RouteCollection {
             if req.isHTMX {
                 return try await req.htmlkit.render(FactsPage(factCategories: facts, platformFacts: platformFacts))
             } else {
-                return try await req.htmlkit.render(MainPage(currentPage: .facts, factCategories: facts, platformFacts: platformFacts))
+                return try await req.htmlkit.render(MainPage(
+                    currentPage: .facts,
+                    factCategories: facts,
+                    platformFacts: platformFacts
+                ))
             }
         }
         
@@ -80,7 +84,10 @@ struct Routes: RouteCollection {
                 throw Abort(.notFound)
             }
             
-            return try await req.htmlkit.render(PlatformFactMessageGroupView(platformFacts: fact, defaultLocale: Locale(identifier: locale)))
+            return try await req.htmlkit.render(PlatformFactMessageGroupView(
+                platformFacts: fact,
+                defaultLocale: Locale(identifier: locale)
+            ))
         }
     }
 }

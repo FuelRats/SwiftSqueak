@@ -51,15 +51,14 @@ class TweetCommands: IRCBotModule {
             command.message.error(key: "tweet.minlength", fromCommand: command)
             return
         }
-        if await board.first(where: { (caseId, rescue) in
+        if await board.first(where: { (_, rescue) in
             if let system = rescue.system {
                 if contents.lowercased().contains(system.name.lowercased()) {
                     return true
                 }
             }
             if let clientName = rescue.client,
-                contents.lowercased().contains(clientName.lowercased())
-            {
+                contents.lowercased().contains(clientName.lowercased()) {
                 return true
             }
             return false
@@ -108,8 +107,7 @@ class TweetCommands: IRCBotModule {
             return
         }
 
-        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick)
-        {
+        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick) {
             if user.lastMessage == nil {
                 command.message.reply(
                     message: "!alertc cannot be used on a case before the client has spoken")
@@ -156,7 +154,7 @@ class TweetCommands: IRCBotModule {
                 "systemDescription": description ?? "",
                 "caseId": caseId,
                 "id": shortId.lowercased(),
-                "link": url.absoluteString,
+                "link": url.absoluteString
             ])
 
         do {

@@ -125,8 +125,7 @@ class SessionLogger: IRCBotModule {
         if let session = sessions[message.destination.name] {
             if message.message.lowercased().starts(with: "!savelogs")
                 || message.message.lowercased().starts(with: "!startlogs")
-                || message.raw.time.timeIntervalSince(session.initiated) < 0.5
-            {
+                || message.raw.time.timeIntervalSince(session.initiated) < 0.5 {
                 return
             }
             if let time = session.messages.last?.raw.time, Date().timeIntervalSince(time) > 1200 {
