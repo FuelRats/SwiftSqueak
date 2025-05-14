@@ -45,10 +45,10 @@ jobs:
       - name: Confirm Swift version
         run: swift --version
 
-      - name: Build project
-        run: swift build --build-tests
+      - name: Build project (no plugin execution)
+        run: swift build --disable-build-tools --build-tests
 
-      - name: Install SwiftLint
+      - name: Install SwiftLint CLI
         run: |
           curl -L https://github.com/realm/SwiftLint/releases/download/0.54.0/swiftlint_linux.zip -o swiftlint.zip
           unzip swiftlint.zip -d swiftlint
