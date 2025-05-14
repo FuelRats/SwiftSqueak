@@ -11,8 +11,12 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout code
+      - name: Checkout SwiftSqueak
         uses: actions/checkout@v4
+
+      - name: Clone IRCKit to ../IRCKit
+        run: |
+          git clone https://github.com/fuelrats/IRCKit.git ../IRCKit
 
       - name: Install Swift 6.1
         run: |
