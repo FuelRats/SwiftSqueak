@@ -51,15 +51,13 @@ class RatAnniversary: IRCBotModule {
             mecha.reportingChannel?.send(
                 key: "fuelratsanniversary",
                 map: [
-                    "years": todayComponents.year ?? 0 - 2017,
+                    "years": todayComponents.year ?? 0 - 2017
             ])
         }
-        
 
         if let apiData = channelMessage.user.associatedAPIData,
             let apiUser = apiData.user,
-            let joinDate = apiData.joinDate
-        {
+            let joinDate = apiData.joinDate {
             guard birthdayAnnounced.contains(apiUser.id.rawValue) == false else {
                 return
             }
@@ -71,8 +69,7 @@ class RatAnniversary: IRCBotModule {
             let years = todayComponents.year! - joinComponents.year!
 
             if joinComponents.day! == todayComponents.day!
-                && joinComponents.month! == todayComponents.month!, years > 0
-            {
+                && joinComponents.month! == todayComponents.month!, years > 0 {
                 var key = "birthday"
                 if channelMessage.user.account == "TobyCharles" {
                     key += ".toby"
@@ -81,7 +78,7 @@ class RatAnniversary: IRCBotModule {
                     key: key,
                     map: [
                         "name": channelMessage.user.nickname,
-                        "years": years,
+                        "years": years
                     ])
                 birthdayAnnounced.insert(apiUser.id.rawValue)
             }

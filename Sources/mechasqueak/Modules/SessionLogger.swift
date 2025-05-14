@@ -38,6 +38,7 @@ class SessionLogger: IRCBotModule {
         ["startlogs"],
         category: .utility,
         description: "Start a new logging session in this channel",
+        tags: ["drill", "training", "logs"],
         permission: .AnnouncementWrite,
         allowedDestinations: .Channel
     )
@@ -59,6 +60,7 @@ class SessionLogger: IRCBotModule {
         category: .utility,
         description:
             "Save logs from a drill or training session, use after the session has completed",
+        tags: ["drill", "training", "logs"],
         permission: .AnnouncementWrite,
         allowedDestinations: .Channel
     )
@@ -125,8 +127,7 @@ class SessionLogger: IRCBotModule {
         if let session = sessions[message.destination.name] {
             if message.message.lowercased().starts(with: "!savelogs")
                 || message.message.lowercased().starts(with: "!startlogs")
-                || message.raw.time.timeIntervalSince(session.initiated) < 0.5
-            {
+                || message.raw.time.timeIntervalSince(session.initiated) < 0.5 {
                 return
             }
             if let time = session.messages.last?.raw.time, Date().timeIntervalSince(time) > 1200 {

@@ -88,7 +88,6 @@ extension HTTPClient.Request {
         var url = URLComponents(string: "\(configuration.api.url)")!
         url.path = apiPath
         
-        
         url.queryItems = query.queryItems
         try self.init(url: url.url!, method: method)
         

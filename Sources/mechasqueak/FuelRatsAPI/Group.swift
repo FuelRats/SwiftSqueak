@@ -136,7 +136,7 @@ extension Group {
             "operations": "Operations team",
             "netadmin": "Network administrator",
             "admin": "Network moderator",
-            "owner": "Special snowflake",
+            "owner": "Special snowflake"
         ]
     }
 
@@ -155,7 +155,7 @@ extension Group {
             "operations": .Purple,
             "netadmin": .LightBlue,
             "admin": .Purple,
-            "owner": .Purple,
+            "owner": .Purple
         ]
     }
 

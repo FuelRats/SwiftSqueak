@@ -30,8 +30,16 @@ class FactCommands: IRCBotModule {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
-    private var prepFacts = [
-        "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit",
+    public static var prepFacts = [
+        "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit"
+    ]
+    public static var factCategoryNames: [String: String] = [
+        "irc": "IRC info",
+        "dispatch": "Dispatching",
+        "rescue": "Rescue information",
+        "info": "About us",
+        "rat": "Ratting",
+        "": "Other"
     ]
 
     static func parseFromParameter(param: String) -> (String, Locale) {
@@ -48,10 +56,10 @@ class FactCommands: IRCBotModule {
         description: "View the list of facts"
     )
     var didReceiveFactListCommand = { command in
-        guard var allFacts = try? await Fact.getAllFacts() else {
-            return
-        }
         if command.has(argument: "locales") {
+            guard var allFacts = try? await Fact.getAllFacts() else {
+                return
+            }
             let languages = allFacts.reduce(
                 Set<String>(),
                 { languages, fact in
@@ -70,24 +78,38 @@ class FactCommands: IRCBotModule {
                 ])
             return
         }
-        var facts = Array(allFacts.grouped.values).sorted(by: {
-            $0.cannonicalName < $1.cannonicalName
-        })
-        let filterLanguage = String(command.locale.identifier.prefix(2))
-        if filterLanguage != "en" {
-            facts = facts.filter({ $0.messages[filterLanguage] != nil })
+        
+        guard var allFacts = try? await Fact.getAllFacts() else {
+            return
         }
+        
+        let factCategories = (try? await Fact.getFactsGroupedByCategory()) ?? []
+        
+        for category in factCategories {
+            var facts = category.facts
+            let categoryName = factCategoryNames[category.key] ?? category.key.firstCapitalized
+            
+            let filterLanguage = String(command.locale.identifier.prefix(2))
+            if filterLanguage != "en" {
+                facts = facts.filter({ $0.messages[filterLanguage] != nil })
+            }
 
+            command.message.replyPrivate(
+                key: "facts.list", fromCommand: command,
+                map: [
+                    "category": categoryName,
+                    "language": command.locale.englishDescription,
+                    "count": facts.count,
+                    "facts": facts.map({ "!\($0.canonicalName)" }).joined(separator: ", ")
+                ]
+            )
+        }
+        
+        var facts = Array(allFacts.grouped.values).sorted(by: {
+            $0.canonicalName < $1.canonicalName
+        })
+        
         var platformFacts = facts.filter({ $0.isPlatformFact }).platformGrouped
-        facts = facts.filter({ $0.isPlatformFact == false })
-
-        command.message.replyPrivate(
-            key: "facts.list", fromCommand: command,
-            map: [
-                "language": command.locale.englishDescription,
-                "count": facts.count,
-                "facts": facts.map({ "!\($0.cannonicalName)" }).joined(separator: ", "),
-            ])
 
         if platformFacts.count > 0 {
             command.message.replyPrivate(
@@ -95,9 +117,33 @@ class FactCommands: IRCBotModule {
                 map: [
                     "count": platformFacts.count,
                     "facts": platformFacts.map({ "!\($0.value.platformFactDescription)" }).joined(
-                        separator: ", "),
-                ])
+                        separator: ", "
+                    )
+                ]
+            )
         }
+    }
+    
+    @BotCommand(
+        ["searchfacts", "factsearch", "factssearch"],
+        [.param("search term", "log in to open", .continuous)],
+        category: .facts,
+        description: "Search for facts"
+    )
+    var didReceiveFactSearchCommand = { command in
+        let search = command.parameters[0]
+        guard let facts = try? await Fact.search(search) else {
+            return
+        }
+        command.message.replyPrivate(
+            key: "facts.list", fromCommand: command,
+            map: [
+                "category": "Search results",
+                "language": command.locale.englishDescription,
+                "count": facts.count,
+                "facts": facts.map({ "!\($0.canonicalName)" }).joined(separator: ", ")
+            ]
+        )
     }
 
     @BotCommand(
@@ -105,6 +151,7 @@ class FactCommands: IRCBotModule {
         [
             .param("fact-language", "pcquit-en"),
             .param("fact message", "Get out it's gonna blow!", .continuous),
+            .argument("category", "info")
         ],
         category: .facts,
         description: "Add a new fact or a new language onto an existing fact",
@@ -123,31 +170,29 @@ class FactCommands: IRCBotModule {
                 ])
             return
         }
+        let category = command.arguments["category"] ?? nil
         let author = command.message.user.nickname
 
         do {
             let fact = try await GroupedFact.get(name: factCommand.command)
 
             if fact == nil {
-                Fact.create(
-                    name: factCommand.command, author: author, message: message,
-                    forLocale: factCommand.locale
-                ).whenComplete({ result in
-                    switch result {
-                    case .failure(_):
-                        command.message.error(key: "addfact.error", fromCommand: command)
-
-                    case .success(let fact):
-                        command.message.reply(
-                            key: "addfact.new", fromCommand: command,
-                            map: [
-                                "fact": factCommand.command,
-                                "language": factCommand.locale.englishDescription,
-                                "locale": factCommand.locale.short,
-                                "message": message.excerpt(maxLength: 350),
-                            ])
-                    }
-                })
+                do {
+                    let result = try await Fact.create(
+                        name: factCommand.command, author: author, message: message, category: category,
+                        forLocale: factCommand.locale
+                    )
+                    command.message.reply(
+                        key: "addfact.new", fromCommand: command,
+                        map: [
+                            "fact": factCommand.command,
+                            "language": factCommand.locale.englishDescription,
+                            "locale": factCommand.locale.short,
+                            "message": message.excerpt(maxLength: 350)
+                        ])
+                } catch {
+                    command.message.error(key: "addfact.error", fromCommand: command)
+                }
             } else if let fact = fact, fact.messages[factCommand.locale.short] == nil {
                 try await Fact.create(
                     message: message, forName: factCommand.command, inLocale: factCommand.locale,
@@ -159,7 +204,7 @@ class FactCommands: IRCBotModule {
                         "fact": factCommand.command,
                         "language": factCommand.locale.englishDescription,
                         "locale": factCommand.locale.short,
-                        "message": message.excerpt(maxLength: 350),
+                        "message": message.excerpt(maxLength: 350)
                     ])
             } else {
                 command.message.error(key: "addfact.exists", fromCommand: command)
@@ -175,14 +220,17 @@ class FactCommands: IRCBotModule {
         ["setfact"],
         [
             .param("fact-language", "pcquit-en"),
-            .param("fact message", "Get out it's gonna blow!", .continuous),
+            .param("fact message", "Get out it's gonna blow!", .continuous)
         ],
         category: .facts,
         description: "Update an existing fact",
+        tags: ["add", "set", "create"],
         permission: .UserWrite
     )
     var didReceiveFactSetCommand = { command in
-        let (commandName, message) = command.param2 as! (String, String)
+        guard let (commandName, message) = command.param2 as? (String, String) else {
+            return
+        }
         guard let factCommand = IRCBotCommand(from: "!\(commandName)", inMessage: command.message)
         else {
             command.message.error(
@@ -210,7 +258,7 @@ class FactCommands: IRCBotModule {
                     "fact": factCommand.command,
                     "language": factCommand.locale.englishDescription,
                     "locale": factCommand.locale.short,
-                    "message": message.excerpt(maxLength: 350),
+                    "message": message.excerpt(maxLength: 350)
                 ])
         } catch {
             debug(String(describing: error))
@@ -223,6 +271,7 @@ class FactCommands: IRCBotModule {
         [.param("fact-language", "pcquit-en")],
         category: .facts,
         description: "Delete a fact or an alias",
+        tags: ["delete", "remove"],
         permission: .UserWrite
     )
     var didReceiveFactDelCommand = { command in
@@ -247,11 +296,11 @@ class FactCommands: IRCBotModule {
             }
 
             if fact.messages.count == 1 {
-                try await Fact.drop(name: fact.cannonicalName)
+                try await Fact.drop(name: fact.canonicalName)
                 command.message.reply(
                     key: "delfact.dropped", fromCommand: command,
                     map: [
-                        "fact": fact.cannonicalName
+                        "fact": fact.canonicalName
                     ])
             } else {
                 try await Fact.delete(locale: factCommand.locale, forFact: factCommand.command)
@@ -261,7 +310,7 @@ class FactCommands: IRCBotModule {
                     map: [
                         "locale": factCommand.locale.short,
                         "language": factCommand.locale.englishDescription,
-                        "fact": fact.cannonicalName,
+                        "fact": fact.canonicalName
                     ])
             }
         } catch {
@@ -277,7 +326,9 @@ class FactCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveFactAliasCommand = { command in
-        var (cannonicalFact, alias) = command.param2 as! (String, String)
+        guard var (cannonicalFact, alias) = command.param2 as? (String, String) else {
+            return
+        }
         alias = alias.lowercased()
 
         do {
@@ -307,12 +358,12 @@ class FactCommands: IRCBotModule {
                 return
             }
 
-            try await Fact.create(alias: alias, forName: fact.cannonicalName)
+            try await Fact.create(alias: alias, forName: fact.canonicalName)
             command.message.reply(
                 key: "aliasfact.added", fromCommand: command,
                 map: [
                     "alias": alias,
-                    "fact": fact.cannonicalName,
+                    "fact": fact.canonicalName
                 ])
         } catch {
             command.message.error(key: "addfact.error", fromCommand: command)
@@ -324,6 +375,7 @@ class FactCommands: IRCBotModule {
         [.param("alias", "ircguides")],
         category: .facts,
         description: "Delete an existing alias",
+        tags: ["delete", "remove"],
         permission: .UserWrite
     )
     var didReceiveDeleteAliasCommand = { command in
@@ -341,7 +393,7 @@ class FactCommands: IRCBotModule {
                 return
             }
 
-            guard alias != fact.cannonicalName else {
+            guard alias != fact.canonicalName else {
                 command.message.error(
                     key: "delalias.protected", fromCommand: command,
                     map: [
@@ -355,7 +407,7 @@ class FactCommands: IRCBotModule {
                 key: "delalias.deleted", fromCommand: command,
                 map: [
                     "alias": alias,
-                    "fact": fact.cannonicalName,
+                    "fact": fact.canonicalName
                 ])
         } catch {
             command.message.error(key: "addfact.error", fromCommand: command)
@@ -366,13 +418,13 @@ class FactCommands: IRCBotModule {
         ["anyfact"],
         [
             .argument("info"), .argument("locales"),
-            .param("targets", "SpaceDawg", .multiple, .optional),
+            .param("targets", "SpaceDawg", .multiple, .optional)
         ],
         category: .facts,
         description: "Use a fact in the channel",
         permission: .UserWrite
     )
-    var dummyFactHelpEntry = { command in
+    var dummyFactHelpEntry = { _ in
 
     }
 
@@ -399,123 +451,8 @@ class FactCommands: IRCBotModule {
                 ])
         }
 
-        let isPrepFact = prepFacts.contains(where: { $0 == command.command })
-
         if command.parameters.count > 0 {
-            let targets: [(String, Rescue?)] = await command.parameters.asyncMap({ target in
-                var target = target
-                let (_, rescue) =
-                    await board.findRescue(
-                        withCaseIdentifier: target, includingRecentlyClosed: true) ?? (nil, nil)
-                if rescue == nil && Int(target) == nil
-                    && command.message.destination.member(named: target) == nil
-                {
-                    let targetLowercased = target.lowercased()
-                    if let fuzzyTarget = command.message.destination.members.first(where: {
-                        $0.nickname.lowercased().levenshtein(targetLowercased) < 3
-                    }) {
-                        target = fuzzyTarget.nickname
-                    }
-                }
-                if let rescue = rescue {
-                    if isPrepFact {
-                        await board.cancelPrepTimer(forRescue: rescue)
-                    }
-                    return (rescue.clientNick ?? target, rescue)
-                }
-                return (target, nil)
-            })
-          
-            if command.locale.identifier == "auto"  || command.locale.identifier == "a", targets.count > 0,
-                let firstRescue = targets[0].1 {
-                command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en")
-            }
-
-            if command.command == "prep" && targets.contains(where: { $0.1?.codeRed == true })
-                && configuration.general.drillMode == false
-            {
-                command.command = "quit"
-
-                if command.message.destination.isPrivateMessage == false {
-                    mecha.reportingChannel?.send(
-                        key: "facts.prepquitcorrection",
-                        map: [
-                            "nick": command.message.user.nickname
-                        ])
-                }
-            }
-
-            if command.command == "sctimes" && command.param1?.first?.isNumber == true {
-                command.command = "sctime"
-                await IRCBotModuleManager.handleIncomingCommand(ircBotCommand: command)
-                return
-            }
-
-            if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion == .legacy })
-            {
-                command.command = "oldkgbfoam"
-            }
-
-            if command.command == "crinst" && targets.contains(where: { $1?.expansion == .legacy })
-            {
-                command.command = "oldcrinst"
-            }
-
-            if Fact.platformFacts.contains(where: { $0 == command.command }) {
-                for platform in GamePlatform.allCases {
-                    let platformTargets = targets.filter({ $0.1?.platform == platform })
-                    if platformTargets.count == 0 {
-                        continue
-                    }
-
-                    var smartCommand = command
-                    smartCommand.command = "\(platform.factPrefix)\(command.command)"
-                    if command.command == "fr" && platform == .PC
-                        && targets.contains(where: { $1?.codeRed ?? false == true })
-                    {
-                        smartCommand.command += "cr"
-                    }
-                    if smartCommand.command == "pcteam"
-                        && targets.contains(where: { $1?.expansion == .legacy })
-                    {
-                        smartCommand.command = "pcwing"
-                    }
-                    if smartCommand.command == "pcwing"
-                        && targets.contains(where: { $1?.expansion != .legacy })
-                    {
-                        smartCommand.command = "pcteam"
-                    }
-                    smartCommand.parameters = platformTargets.map({ $0.0 })
-                    sendFact(command: smartCommand, message: message)
-                }
-                if command.command == "quit" {
-                    command.command = "prepcr"
-                }
-                let unknownTargets = targets.compactMap({ target -> String? in
-                    if target.1 != nil && target.1?.platform != nil {
-                        return nil
-                    }
-                    return target.0
-                })
-                if unknownTargets.count > 0 {
-                    command.parameters = unknownTargets
-                    sendFact(command: command, message: message)
-                }
-            } else {
-                if command.command == "pcteam"
-                    && targets.contains(where: { $1?.expansion == .legacy })
-                {
-                    command.command = "pcwing"
-                }
-                if command.command == "pcwing"
-                    && targets.contains(where: { $1?.expansion != .legacy })
-                {
-                    command.command = "pcteam"
-                }
-
-                command.parameters = targets.map({ $0.0 })
-                sendFact(command: command, message: message)
-            }
+            await handleFactCommandWithTargets(&command, message: message)
         } else if command.has(argument: "locales") {
             factLocales(command: command)
         } else if command.has(argument: "info") {
@@ -526,6 +463,103 @@ class FactCommands: IRCBotModule {
         } else if Fact.platformFacts.contains(where: { $0 == command.command }) {
             command.message.error(key: "facts.noclienterror", fromCommand: command)
         } else {
+            sendFact(command: command, message: message)
+        }
+    }
+
+    private func handleFactCommandWithTargets(_ command: inout IRCBotCommand, message: IRCPrivateMessage) async {
+        let targets = await resolveTargets(for: command)
+
+        if
+            command.locale.identifier == "auto" || command.locale.identifier == "a",
+            targets.count > 0,
+            let firstRescue = targets[0].1 {
+            command.locale = firstRescue.clientLanguage ?? Locale(identifier: "en")
+        }
+
+        if command.command == "prep"
+            && targets.contains(where: { $0.1?.codeRed == true })
+            && configuration.general.drillMode == false {
+            command.command = "quit"
+
+            if command.message.destination.isPrivateMessage == false {
+                mecha.reportingChannel?.send(
+                    key: "facts.prepquitcorrection",
+                    map: [
+                        "nick": command.message.user.nickname
+                    ])
+            }
+        }
+
+        if command.command == "sctimes" && command.param1?.first?.isNumber == true {
+            command.command = "sctime"
+            await IRCBotModuleManager.handleIncomingCommand(ircBotCommand: command)
+            return
+        }
+
+        if command.command == "kgbfoam" && targets.contains(where: { $1?.expansion == .legacy }) {
+            command.command = "oldkgbfoam"
+        }
+
+        if command.command == "crinst" && targets.contains(where: { $1?.expansion == .legacy }) {
+            command.command = "oldcrinst"
+        }
+        if Fact.platformFacts.contains(where: { $0 == command.command }) {
+            handlePlatformFactCommand(&command, targets: targets, message: message)
+        } else {
+            if command.command == "pcteam" && targets.contains(where: { $1?.expansion == .legacy }) {
+                command.command = "pcwing"
+            }
+            if command.command == "pcwing" && targets.contains(where: { $1?.expansion != .legacy }) {
+                command.command = "pcteam"
+            }
+
+            command.parameters = targets.map({ $0.0 })
+            sendFact(command: command, message: message)
+        }
+    }
+
+    private func handlePlatformFactCommand(
+        _ command: inout IRCBotCommand,
+        targets: [(String, Rescue?)],
+        message: IRCPrivateMessage
+    ) {
+        for platform in GamePlatform.allCases {
+            let platformTargets = targets.filter({ $0.1?.platform == platform })
+            if platformTargets.isEmpty {
+                continue
+            }
+
+            var smartCommand = command
+            smartCommand.command = "\(platform.factPrefix)\(command.command)"
+            if command.command == "fr"
+                && platform == .PC
+                && targets.contains(where: { $1?.codeRed ?? false }) {
+                smartCommand.command += "cr"
+            }
+            if smartCommand.command == "pcteam" && targets.contains(where: { $1?.expansion == .legacy }) {
+                smartCommand.command = "pcwing"
+            }
+            if smartCommand.command == "pcwing" && targets.contains(where: { $1?.expansion != .legacy }) {
+                smartCommand.command = "pcteam"
+            }
+            smartCommand.parameters = platformTargets.map({ $0.0 })
+            sendFact(command: smartCommand, message: message)
+        }
+
+        if command.command == "quit" {
+            command.command = "prepcr"
+        }
+
+        let unknownTargets = targets.compactMap { target -> String? in
+            if target.1?.platform != nil {
+                return nil
+            }
+            return target.0
+        }
+
+        if !unknownTargets.isEmpty {
+            command.parameters = unknownTargets
             sendFact(command: command, message: message)
         }
     }
@@ -549,8 +583,8 @@ class FactCommands: IRCBotModule {
             command.message.replyPrivate(
                 key: "anyfact.locales", fromCommand: command,
                 map: [
-                    "fact": fact.cannonicalName,
-                    "locales": locales,
+                    "fact": fact.canonicalName,
+                    "locales": locales
                 ])
         }
     }
@@ -575,7 +609,7 @@ class FactCommands: IRCBotModule {
                     "language": Locale(identifier: fact.language).englishDescription,
                     "created": fact.createdAt.eliteFormattedString,
                     "updated": fact.updatedAt.eliteFormattedString,
-                    "author": fact.author,
+                    "author": fact.author
                 ])
         }
     }
@@ -611,7 +645,7 @@ class FactCommands: IRCBotModule {
                     map: [
                         "fact": command.command,
                         "identifier": command.locale.identifier,
-                        "language": command.locale.englishDescription,
+                        "language": command.locale.englishDescription
                     ])
                 self.messageFact(command: command, fact: fallbackFact)
                 return
@@ -622,18 +656,14 @@ class FactCommands: IRCBotModule {
     }
 
     func messageFact(command: IRCBotCommand, fact: Fact) {
-        if (command.command == "discord" || command.command == "spritz")
-            && command.message.user.account == "Wacky"
-        {
+        if (command.command == "discord" || command.command == "spritz") && command.message.user.account == "Wacky" {
             command.message.retaliate()
             return
         }
         if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
-            if (firstTarget == command.message.client.currentNick.lowercased()
-                || firstTarget == "supermanifolds")
-                && command.message.destination != mecha.rescueChannel
-            {
+            if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "supermanifolds")
+                && command.message.destination != mecha.rescueChannel {
                 command.message.retaliate()
                 return
             }
@@ -666,5 +696,31 @@ class FactCommands: IRCBotModule {
             descriptor: IRCPrivateMessageNotification(),
             using: onMessage(_:)
         )
+    }
+}
+
+private func resolveTargets(for command: IRCBotCommand) async -> [(String, Rescue?)] {
+    let isPrepFact = FactCommands.prepFacts.contains(command.command)
+    return await command.parameters.asyncMap { target in
+        var target = target
+        let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: target,
+            includingRecentlyClosed: true
+        ) ?? (nil, nil)
+        if rescue == nil && Int(target) == nil && command.message.destination.member(named: target) == nil {
+            let targetLowercased = target.lowercased()
+            if let fuzzyTarget = command.message.destination.members.first(where: {
+                $0.nickname.lowercased().levenshtein(targetLowercased) < 3
+            }) {
+                target = fuzzyTarget.nickname
+            }
+        }
+        if let rescue = rescue {
+            if isPrepFact {
+                await board.cancelPrepTimer(forRescue: rescue)
+            }
+            return (rescue.clientNick ?? target, rescue)
+        }
+        return (target, nil)
     }
 }

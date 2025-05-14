@@ -99,29 +99,29 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
 
                 httpClient.execute(request: request).whenComplete { result in
                     switch result {
-                    case .success(let response):
-                        if response.status == .ok {
-                            self.rescue.synced = true
+                        case .success(let response):
+                            if response.status == .ok {
+                                self.rescue.synced = true
 
-                            do {
-                                let rescue = try RescueGetDocument.from(
-                                    data: Data(buffer: response.body!))
-                                continuation.resume(returning: rescue.body.data!.primary.value)
-                            } catch {
-                                continuation.resume(throwing: error)
+                                do {
+                                    let rescue = try RescueGetDocument.from(
+                                        data: Data(buffer: response.body!))
+                                    continuation.resume(returning: rescue.body.data!.primary.value)
+                                } catch {
+                                    continuation.resume(throwing: error)
+                                }
+                            } else {
+                                self.rescue.synced = false
+
+                                continuation.resume(throwing: response)
+                                debug(String(response.status.code))
+                                debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
                             }
-                        } else {
+
+                        case .failure(let error):
+                            debug(String(describing: error))
                             self.rescue.synced = false
-
-                            continuation.resume(throwing: response)
-                            debug(String(response.status.code))
-                            debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
-                        }
-
-                    case .failure(let error):
-                        debug(String(describing: error))
-                        self.rescue.synced = false
-                        continuation.resume(throwing: error)
+                            continuation.resume(throwing: error)
                     }
                 }
             } catch {
@@ -145,7 +145,7 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
                         "caseId": caseId
                     ])
             }
-            let allSuccess = await board.rescues.allSatisfy({ $0.value.synced && $0.value.uploaded }
+            let allSuccess = await board.getRescues().allSatisfy({ $0.value.synced && $0.value.uploaded }
             )
             if allSuccess {
                 await board.setIsSynced(true)

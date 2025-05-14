@@ -31,17 +31,16 @@ extension IRCPrivateMessage {
     }
 
     func error(key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
+        let msg = lingo.localize(key, locale: command.locale.short, interpolations: map)
         self.reply(
-            message:
-                "\(command.message.user.nickname): \(lingo.localize(key, locale: command.locale.short, interpolations: map))"
+            message: "\(command.message.user.nickname): \(msg)"
         )
     }
 
     func replyPrivate(message: String) {
         if self.destination.isPrivateMessage
             || (configuration.general.drillMode == true
-                && configuration.general.drillChannels.contains(self.destination.name.lowercased()))
-        {
+                && configuration.general.drillChannels.contains(self.destination.name.lowercased())) {
             self.reply(message: message)
             return
         }
@@ -106,5 +105,5 @@ private let retaliationPhrases = [
     "unleashes a horde of angry canadian geese at %@",
     "locks %@ in a room where they have to solve traffic light captchas for all of eternity",
     "changes %@'s computer to light mode",
-    "permanently subscribes %@ to daily LinkedIn inspirational posts",
+    "permanently subscribes %@ to daily LinkedIn inspirational posts"
 ]

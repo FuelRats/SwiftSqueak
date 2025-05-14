@@ -40,6 +40,7 @@ struct MechaConfiguration: Codable {
     let mastodon: MastodonConfiguration?
     let bluesky: BlueSkyConfiguration?
     let openAIToken: String?
+    let webServer: WebServerConfiguration?
     
     func save () throws {
         let configEncoder = JSONEncoder()
@@ -56,8 +57,8 @@ struct GeneralConfiguration: Codable {
     @Default<False>
     var drillMode: Bool
     let drillChannels: [String]
-    let ratBlacklist: [String]
-    let dispatchBlacklist: [String]
+    let ratDenylist: [String]
+    let dispatchDenylist: [String]
     let cooldownExceptionChannels: [String]
 
     let operLogin: [String]?
@@ -118,4 +119,9 @@ struct MastodonConfiguration: Codable {
 struct BlueSkyConfiguration: Codable {
     let handle: String
     let appPassword: String
+}
+
+struct WebServerConfiguration: Codable {
+    let host: String
+    let port: Int
 }

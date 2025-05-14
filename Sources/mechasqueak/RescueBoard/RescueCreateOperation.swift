@@ -96,20 +96,20 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
 
                 httpClient.execute(request: request).whenComplete { result in
                     switch result {
-                    case .success(let response):
-                        if response.status == .created || response.status == .conflict {
-                            self.rescue.synced = true
-                            continuation.resume(returning: ())
-                        } else {
-                            self.rescue.synced = false
-                            continuation.resume(throwing: response)
-                        }
+                        case .success(let response):
+                            if response.status == .created || response.status == .conflict {
+                                self.rescue.synced = true
+                                continuation.resume(returning: ())
+                            } else {
+                                self.rescue.synced = false
+                                continuation.resume(throwing: response)
+                            }
 
-                        self.isFinished = true
-                        self.isExecuting = false
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
-                        debug(String(describing: error))
+                            self.isFinished = true
+                            self.isExecuting = false
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
+                            debug(String(describing: error))
                     }
                 }
             } catch {
@@ -132,8 +132,7 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                         "caseId": caseId
                     ])
             }
-            let allSuccess = await board.rescues.allSatisfy({ $0.value.synced && $0.value.uploaded }
-            )
+            let allSuccess = await board.getRescues().allSatisfy({ $0.value.synced && $0.value.uploaded })
             if allSuccess {
                 await board.setIsSynced(true)
             }

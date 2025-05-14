@@ -82,7 +82,7 @@ class FuelRatsAPI {
 
     static func getLastRescues() async throws -> RescueSearchDocument {
         return try await FuelRatsAPI.rescueSearch(query: [
-            "page[limit]": "200", "sort": "-createdAt",
+            "page[limit]": "200", "sort": "-createdAt"
         ])
     }
 
@@ -92,7 +92,7 @@ class FuelRatsAPI {
                 "status": ["eq": "closed"]
             ].jsonString,
             "sort": "-createdAt",
-            "page[limit]": String(count),
+            "page[limit]": String(count)
         ]
 
         return try await FuelRatsAPI.rescueSearch(query: query)
@@ -103,7 +103,7 @@ class FuelRatsAPI {
             "filter": [
                 "client": ["ilike": client]
             ].jsonString,
-            "sort": "-createdAt",
+            "sort": "-createdAt"
         ]
 
         return try await FuelRatsAPI.rescueSearch(query: query)
@@ -113,7 +113,7 @@ class FuelRatsAPI {
         let query = [
             "filter": [
                 "status": ["eq": "closed"],
-                "outcome": "purge",
+                "outcome": "purge"
             ].jsonString
         ]
 
@@ -130,8 +130,8 @@ class FuelRatsAPI {
                 "outcome": ["is": nil],
                 "createdAt": [
                     "gte": DateFormatter.iso8601Full.string(from: thirtyDaysAgo),
-                    "lt": DateFormatter.iso8601Full.string(from: twoHoursAgo),
-                ],
+                    "lt": DateFormatter.iso8601Full.string(from: twoHoursAgo)
+                ]
             ].jsonString
         ]
 
@@ -139,7 +139,7 @@ class FuelRatsAPI {
     }
 
     static func deleteRescue(id: UUID, command: IRCBotCommand?) async throws {
-        let request = try! HTTPClient.Request(
+        let request = try HTTPClient.Request(
             apiPath: "/rescues/\(id)", method: .DELETE, command: command)
 
         _ = try await httpClient.execute(

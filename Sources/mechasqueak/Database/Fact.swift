@@ -38,17 +38,19 @@ let sql = pools.database(logger: Logger(label: "SQL")).sql()
 
 struct Fact: Codable, Hashable {
     static let platformFacts = [
-        "wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team",
+        "wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team", "open"
     ]
     private static var cache = [String: Fact]()
 
     var id: String
     var fact: String
+    var alias: String
     var createdAt: Date
     var updatedAt: Date
     var language: String
     var message: String
     var author: String
+    var category: String?
 
     var cacheIdentifier: String {
         return "\(self.fact.lowercased())-\(self.language)"
@@ -65,26 +67,31 @@ struct Fact: Codable, Hashable {
                 sql.select().column("*")
                     .from("facts")
                     .join(
-                        "factmessages", method: .inner,
-                        on: "facts.id=factmessages.fact and factmessages.language='\(localeString)'"
+                        "factmessages",
+                        method: .left,
+                        on:
+                            """
+                            \(ident: "facts").\(ident: "id") = \(ident: "factmessages").\(ident: "fact") \
+                            and \(ident: "factmessages").\(ident: "language") = \(bind: localeString)
+                            """ as SQLQueryString
                     )
                     .where("alias", .equal, factName)
                     .first().whenComplete({ result in
                         switch result {
-                        case .failure(let error):
-                            continuation.resume(throwing: error)
+                            case .failure(let error):
+                                continuation.resume(throwing: error)
 
-                        case .success(let row):
-                            guard let row = row else {
-                                continuation.resume(returning: nil)
-                                return
-                            }
+                            case .success(let row):
+                                guard let row = row else {
+                                    continuation.resume(returning: nil)
+                                    return
+                                }
 
-                            let fact = try? row.decode(model: Fact.self)
-                            if let cacheFact = fact {
-                                cache["\(factName)-\(localeString)"] = cacheFact
-                            }
-                            continuation.resume(returning: fact)
+                                let fact = try? row.decode(model: Fact.self)
+                                if let cacheFact = fact {
+                                    cache["\(factName)-\(localeString)"] = cacheFact
+                                }
+                                continuation.resume(returning: fact)
                         }
                     })
             })
@@ -93,8 +100,7 @@ struct Fact: Codable, Hashable {
 
     }
 
-    public static func getWithFallback(name: String, forLocale locale: Locale) async throws -> Fact?
-    {
+    public static func getWithFallback(name: String, forLocale locale: Locale) async throws -> Fact? {
         if let fact = try await Fact.get(name: name, forLocale: locale) {
             return fact
         }
@@ -106,25 +112,61 @@ struct Fact: Codable, Hashable {
         return try await withCheckedThrowingContinuation({ continuation in
             sql.select().column("*")
                 .from("facts")
-                .join("factmessages", method: .inner, on: "facts.id=factmessages.fact")
+                .join(
+                    "factmessages",
+                    method: .left,
+                    on: "\(ident: "facts").\(ident: "id")=\(ident: "factmessages").\(ident: "fact")" as SQLQueryString
+                )
                 .all().whenComplete({ result in
                     switch result {
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
 
-                    case .success(let rows):
-                        let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
-                        for fact in facts {
-                            cache[fact.cacheIdentifier] = fact
-                        }
-                        continuation.resume(returning: facts)
+                        case .success(let rows):
+                            let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
+                            for fact in facts {
+                                cache[fact.cacheIdentifier] = fact
+                            }
+                            continuation.resume(returning: facts)
                     }
                 })
         })
     }
+    
+    public static func getFactsGroupedByCategory() async throws -> [FactCategory] {
+        guard let allFacts = try? await Fact.getAllFacts() else {
+            return []
+        }
+        
+        let groupedFacts = Array(allFacts.grouped.values).sorted(by: {
+            $0.canonicalName < $1.canonicalName
+        }).filter({ $0.isPlatformFact == false })
+        let items = Dictionary(grouping: groupedFacts, by: { $0.category ?? "" }).sorted(by: { $0.key < $1.key })
+        return items.map({ FactCategory(key: $0.key, facts: $0.value) })
+    }
+    
+    public static func search(
+        _ query: String,
+        locale: Locale = Locale(identifier: "en")
+    ) async throws -> [GroupedFact] {
+        let lhs = SQLFunction("to_tsvector", args: SQLLiteral.string("english"), SQLIdentifier("message"))
+        let rhs = SQLFunction("plainto_tsquery", args: SQLLiteral.string("english"), SQLBind(query))
+        let searchExpression = SQLBinaryExpression(left: lhs, op: SQLRaw(" @@ "), right: rhs)
+        let rows = try await sql.select().column("*")
+            .from("facts")
+            .join(
+                "factmessages",
+                method: .left,
+                on: "\(ident: "facts").\(ident: "id")=\(ident: "factmessages").\(ident: "fact")" as SQLQueryString
+            )
+            .where(searchExpression)
+            .where("language", .equal, SQLBind(locale.short))
+            .all()
+        return rows.compactMap { try? $0.decode(model: Fact.self) }.groupedOrdered
+    }
 
     public static func create(
-        name: String, author: String, message: String,
+        name: String, author: String, message: String, category: String? = nil,
         forLocale locale: Locale = Locale(identifier: "en")
     ) -> EventLoopFuture<Fact> {
         let createDate = Date()
@@ -134,8 +176,8 @@ struct Fact: Codable, Hashable {
             let sql = conn.sql()
             let queries = conn.simpleQuery("BEGIN").flatMap({ _ in
                 return sql.insert(into: "facts")
-                    .columns("id", "alias", "createdAt", "updatedAt")
-                    .values(SQLBind(name), SQLBind(name), SQLBind(createDate), SQLBind(createDate))
+                    .columns("id", "alias", "createdAt", "updatedAt", "category")
+                    .values(SQLBind(name), SQLBind(name), SQLBind(createDate), SQLBind(createDate), SQLBind(category))
                     .run()
             }).flatMap({
                 return sql.insert(into: "factmessages")
@@ -151,6 +193,7 @@ struct Fact: Codable, Hashable {
                 return Fact(
                     id: name,
                     fact: name,
+                    alias: name,
                     createdAt: createDate,
                     updatedAt: createDate,
                     language: localeString,
@@ -168,18 +211,18 @@ struct Fact: Codable, Hashable {
     }
 
     public static func create(
-        name: String, author: String, message: String,
+        name: String, author: String, message: String, category: String? = nil,
         forLocale locale: Locale = Locale(identifier: "en")
     ) async throws -> Fact {
         return try await withCheckedThrowingContinuation({ continuation in
             Fact.create(name: name, author: author, message: message, forLocale: locale)
                 .whenComplete { result in
                     switch result {
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
 
-                    case .success(let fact):
-                        continuation.resume(returning: fact)
+                        case .success(let fact):
+                            continuation.resume(returning: fact)
                     }
                 }
         })
@@ -253,13 +296,19 @@ struct Fact: Codable, Hashable {
     }
 }
 
+struct FactCategory: Codable {
+    let key: String
+    let facts: [GroupedFact]
+}
+
 struct GroupedFact: Codable {
-    let cannonicalName: String
+    let canonicalName: String
     var messages: [String: Fact]
     var aliases: [String]
+    var category: String?
 
     var isPlatformFact: Bool {
-        return Fact.platformFacts.contains(where: { cannonicalName.hasSuffix($0) })
+        return Fact.platformFacts.contains(where: { canonicalName.hasSuffix($0) })
     }
 
     var platform: GamePlatform? {
@@ -267,18 +316,18 @@ struct GroupedFact: Codable {
             return nil
         }
 
-        switch self.cannonicalName {
-        case let str where str.starts(with: "pc"):
-            return .PC
+        switch self.canonicalName {
+            case let str where str.starts(with: "pc"):
+                return .PC
 
-        case let str where str.starts(with: "x"):
-            return .Xbox
+            case let str where str.starts(with: "x"):
+                return .Xbox
 
-        case let str where str.starts(with: "ps"):
-            return .PS
+            case let str where str.starts(with: "ps"):
+                return .PS
 
-        default:
-            return nil
+            default:
+                return nil
         }
     }
 
@@ -288,11 +337,11 @@ struct GroupedFact: Codable {
         }
 
         switch platform {
-        case .PC, .PS:
-            return String(self.cannonicalName.dropFirst(2))
+            case .PC, .PS:
+                return String(self.canonicalName.dropFirst(2))
 
-        case .Xbox:
-            return String(self.cannonicalName.dropFirst(1))
+            case .Xbox:
+                return String(self.canonicalName.dropFirst(1))
         }
     }
 
@@ -304,7 +353,7 @@ struct GroupedFact: Codable {
             SQLColumn("updatedAt", table: "factmessages"),
             SQLColumn("language", table: "factmessages"),
             SQLColumn("author", table: "factmessages"),
-            SQLColumn("message", table: "factmessages"),
+            SQLColumn("message", table: "factmessages")
         ])
         .from("facts")
         .join(
@@ -312,7 +361,11 @@ struct GroupedFact: Codable {
             method: SQLJoinMethod.left,
             on: SQLColumn("id", table: "facts"), .equal, SQLColumn("id", table: "aliases")
         )
-        .join("factmessages", method: .left, on: "facts.id=factmessages.fact")
+        .join(
+            "factmessages",
+            method: .left,
+            on: "\(ident: "facts").\(ident: "id")=\(ident: "factmessages").\(ident: "fact")" as SQLQueryString
+        )
         .where(SQLColumn("alias", table: "facts"), .equal, SQLBind(name))
         .all(decoding: Fact.self).asContinuation()
         return facts.grouped.values.first
@@ -333,7 +386,8 @@ extension Array where Element == GroupedFact {
                 }
                 groups[platformLessIdentifier]?.append(group)
                 return groups
-            })
+            }
+        )
     }
 
     var platformFactDescription: String {
@@ -350,19 +404,47 @@ extension Array where Element == Fact {
             { facts, fact in
                 var facts = facts
                 if var entry = facts[fact.id] {
-                    if entry.aliases.contains(fact.fact) == false {
-                        entry.aliases.append(fact.fact)
+                    if entry.aliases.contains(fact.alias) == false {
+                        entry.aliases.append(fact.alias)
                     }
                     entry.messages[fact.language] = fact
                     facts[fact.id] = entry
                 } else {
                     facts[fact.id] = GroupedFact(
-                        cannonicalName: fact.id,
+                        canonicalName: fact.id,
                         messages: [fact.language: fact],
-                        aliases: [fact.fact]
+                        aliases: [fact.fact],
+                        category: fact.category
                     )
                 }
                 return facts
             })
+    }
+    
+    var groupedOrdered: [GroupedFact] {
+        return self.reduce(
+            [GroupedFact](),
+            { facts, fact in
+                var facts = facts
+                if let existingIndex = facts.firstIndex(where: {
+                    $0.canonicalName == fact.id
+                }) {
+                    var entry = facts[existingIndex]
+                    if entry.aliases.contains(fact.alias) == false {
+                        entry.aliases.append(fact.alias)
+                    }
+                    entry.messages[fact.language] = fact
+                    facts[existingIndex] = entry
+                } else {
+                    facts.append(GroupedFact(
+                        canonicalName: fact.id,
+                        messages: [fact.language: fact],
+                        aliases: [fact.fact],
+                        category: fact.category
+                    ))
+                }
+                return facts
+            }
+        )
     }
 }

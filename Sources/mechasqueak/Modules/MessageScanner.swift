@@ -26,8 +26,12 @@ import Foundation
 import IRCKit
 import Regex
 
+private let standDownPhrases = ["stand down", "stnd", "stdn"]
+private let carrierPhrases = ["fc", "carrier", "horizons", "odyssey"]
+
 class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
+    // swiftlint:disable force_try
     static let jumpCallExpression = try! Regex(
         pattern: "([0-9]{1,3})[jJ] #([0-9]{1,3})", groupNames: ["jumps", "case"])
     static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
@@ -37,6 +41,7 @@ class MessageScanner: IRCBotModule {
         pattern: "#([0-9]{1,3}) ([0-9]{1,3})[jJ]",
         groupNames: ["case", "jumps"]
     )
+    // swiftlint:enable force_try
 
     static let caseRelevantPhrases = [
         "fr+", "fr-", "friend+", "wr+", "wing+", "wr-", "bc+", "bc-", "fuel+", "fuel-", "sys-",
@@ -45,11 +50,9 @@ class MessageScanner: IRCBotModule {
         "private", "actual",
         "solo", "ready", "pos+", "rdy", "stand down", "stnd", "stdn", "log off", "mmconf", "sys",
         "system", "tm-", "tm+", "pg",
-        "horizons", "odyssey", "3.8", "4.0", "tr-", "tr+",
+        "horizons", "odyssey", "3.8", "4.0", "tr-", "tr+"
     ]
-    private static let standDownPhrases = ["stand down", "stnd", "stdn"]
-    private static let carrierPhrases = ["fc", "carrier", "horizons", "odyssey"]
-
+    
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }
@@ -71,8 +74,7 @@ class MessageScanner: IRCBotModule {
         if configuration.general.drillChannels.contains(
             channelMessage.destination.name.lowercased()),
             let range = channelMessage.message.range(
-                of: "ch[o]{2,} ch[o]{2,}", options: .regularExpression)
-        {
+                of: "ch[o]{2,} ch[o]{2,}", options: .regularExpression) {
             let trainCarriages = String(
                 channelMessage.message[range].filter({ $0 == "O" || $0 == "o" }).map({ _ in
                     return "🚃"
@@ -85,171 +87,12 @@ class MessageScanner: IRCBotModule {
 
         if let jumpCallMatch = MessageScanner.jumpCallExpressionCaseAfter.findFirst(
             in: channelMessage.message)
-            ?? MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message)
-        {
-            let caseId = jumpCallMatch.group(named: "case")!
-            let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
-
-            guard let (_, rescue) = await board.findRescue(withCaseIdentifier: caseId) else {
-                if configuration.general.drillMode == false,
-                    channelMessage.destination.name.lowercased()
-                        == configuration.general.rescueChannel
-                {
-                    channelMessage.replyPrivate(
-                        message: lingo.localize(
-                            "jumpcall.notfound",
-                            locale: "en-GB",
-                            interpolations: [
-                                "case": caseId
-                            ]
-                        ))
-                }
-                return
-            }
-
-            if await rescue.isPrepped() == false && configuration.general.drillMode == false
-                && rescue.codeRed == false
-            {
-                // User called jumps for a case where the client has not been prepped, yell at them.
-                channelMessage.replyPrivate(
-                    message: lingo.localize(
-                        "jumpcall.notprepped",
-                        locale: "en-GB",
-                        interpolations: [:]
-                    ))
-            }
-
-            let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
-            if let system = rescue.system, let permit = rescue.system?.permit {
-
-                if (rat?.hasPermitFor(system: system) ?? false) == false {
-                    if rat?.attributes.data.value.permits?.count ?? 0 > 0 {
-                        channelMessage.reply(
-                            message: lingo.localize(
-                                "jumpcall.publicpermit",
-                                locale: "en-GB",
-                                interpolations: [
-                                    "nick": channelMessage.user.nickname,
-                                    "caseId": caseId,
-                                    "permit": permit.name ?? system.name,
-                                ])
-                        )
-                    } else {
-                        channelMessage.replyPrivate(
-                            message: lingo.localize(
-                                "jumpcall.permit",
-                                locale: "en-GB",
-                                interpolations: [
-                                    "caseId": caseId,
-                                    "permit": permit.name ?? system.name,
-                                ])
-                        )
-                    }
-                }
-            }
-
-            if rescue.system?.isIncomplete == true
-                && channelMessage.message.components(separatedBy: " ").count < 4,
-                rescue.system?.jumpCallWarned != true
-            {
-                channelMessage.client.sendMessage(
-                    toChannelName: channelMessage.destination.name,
-                    withKey: "jumpcall.incompletesys",
-                    mapping: [
-                        "case": caseId,
-                        "nick": channelMessage.user.nickname,
-                    ]
-                )
-                rescue.system?.jumpCallWarned = true
-            }
-
-            let containsCarrierPhrase = carrierPhrases.contains(where: {
-                channelMessage.message.lowercased().contains($0)
-            })
-            let boardSynced = await board.isSynced
-
-            if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user
-            {
-                let rats = accountInfo.ratsBelongingTo(user: user)
-                if rats.first(where: { (rat: Rat) -> Bool in
-                    return rat.attributes.platform.value == rescue.platform
-                }) == nil {
-                    if configuration.general.drillMode == false && containsCarrierPhrase == false {
-                        channelMessage.client.sendMessage(
-                            toChannelName: channelMessage.destination.name,
-                            withKey: "jumpcall.wrongplatform",
-                            mapping: [
-                                "case": caseId,
-                                "nick": channelMessage.user.nickname,
-                                "platform": rescue.platform.ircRepresentable,
-                            ]
-                        )
-                    }
-                }
-            } else if configuration.general.drillMode == false && boardSynced {
-                channelMessage.replyPrivate(
-                    message: lingo.localize(
-                        "jumpcall.noaccount",
-                        locale: "en-GB",
-                        interpolations: [
-                            "case": caseId
-                        ]
-                    ))
-            }
-
-            var message = "<\(channelMessage.user.nickname)> \(channelMessage.message)"
-
-            let isDrilled = channelMessage.user.hasPermission(permission: .DispatchRead)
-            if channelMessage.user.account == nil {
-                message += " (Unidentified)"
-            } else if isDrilled == false {
-                message += " (Not Drilled)"
-            }
-
-            if let system = rescue.system, system.permit != nil {
-                if rat?.hasPermitFor(system: system) == false {
-                    message += " (MISSING PERMIT)"
-                }
-            }
-
-            let platform = rescue.platform
-            if configuration.general.drillMode == false && platform == .PC,
-                let rat = channelMessage.user.getRatRepresenting(platform: platform!)
-            {
-                if rescue.expansion != rat.attributes.expansion.value
-                    && containsCarrierPhrase == false
-                {
-                    channelMessage.client.sendMessage(
-                        toChannelName: channelMessage.destination.name,
-                        withKey: "jumpcall.clientexpansion",
-                        mapping: [
-                            "caseId": caseId,
-                            "nick": channelMessage.user.nickname,
-                            "rescueExpansion": rescue.expansion.ircRepresentable,
-                            "ratExpansion": rat.attributes.expansion.value.ircRepresentable,
-                        ]
-                    )
-
-                    message += " (Using \(rat.expansion.englishDescription))"
-                }
-            }
-
-            if let jumpRat = rat ?? channelMessage.user.currentRat {
-                rescue.jumpCalls.append((jumpRat, jumps))
-            }
-            if casesUpdatedForMessage.contains(where: { $0.id == rescue.id }) == false {
-                rescue.quotes.append(
-                    RescueQuote(
-                        author: channelMessage.client.currentNick,
-                        message: message,
-                        createdAt: Date(),
-                        updatedAt: Date(),
-                        lastAuthor: channelMessage.client.currentNick
-                    ))
-                try? rescue.save(nil)
-                casesUpdatedForMessage.append(rescue)
-
-            }
+            ?? MessageScanner.jumpCallExpression.findFirst(in: channelMessage.message) {
+            casesUpdatedForMessage = await handleJumpCall(
+                jumpCallMatch: jumpCallMatch,
+                channelMessage: channelMessage,
+                casesUpdatedForMessage: casesUpdatedForMessage
+            )
         }
 
         if channelMessage.message.starts(with: "Incoming Client: ") {
@@ -263,8 +106,7 @@ class MessageScanner: IRCBotModule {
 
         if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased())
             && channelMessage.message.trimmingCharacters(in: .whitespaces).starts(with: "!")
-                == false
-        {
+                == false {
             guard let rescue = Rescue(fromRatsignal: channelMessage) else {
                 return
             }
@@ -304,8 +146,7 @@ class MessageScanner: IRCBotModule {
                     $0.message.starts(with: "<\(channelMessage.user.nickname)>")
                         && MessageScanner.jumpCallExpression.findFirst(in: $0.message) != nil
                 }) {
-                    rescue.quotes[callQuoteIndex].message =
-                        rescue.quotes[callQuoteIndex].message + " (Rat has called stand down)"
+                    rescue.quotes[callQuoteIndex].message += " (Rat has called stand down)"
                 }
             }
 
@@ -321,4 +162,233 @@ class MessageScanner: IRCBotModule {
             casesUpdatedForMessage.append(rescue)
         }
     }
+}
+
+private func checkPermitWarning(
+    channelMessage: IRCChannelMessageNotification.Payload,
+    rescue: Rescue,
+    caseId: String,
+    rat: Rat?
+) {
+    if let system = rescue.system, let permit = rescue.system?.permit {
+        if (rat?.hasPermitFor(system: system) ?? false) == false {
+            if rat?.attributes.data.value.permits?.count ?? 0 > 0 {
+                channelMessage.reply(
+                    message: lingo.localize(
+                        "jumpcall.publicpermit",
+                        locale: "en-GB",
+                        interpolations: [
+                            "nick": channelMessage.user.nickname,
+                            "caseId": caseId,
+                            "permit": permit.name ?? system.name
+                        ])
+                )
+            } else {
+                channelMessage.replyPrivate(
+                    message: lingo.localize(
+                        "jumpcall.permit",
+                        locale: "en-GB",
+                        interpolations: [
+                            "caseId": caseId,
+                            "permit": permit.name ?? system.name
+                        ])
+                )
+            }
+        }
+    }
+}
+
+private func warnIfIncompleteSystem(
+    rescue: Rescue,
+    channelMessage: IRCChannelMessageNotification.Payload,
+    caseId: String
+) {
+    if rescue.system?.isIncomplete == true
+        && channelMessage.message.components(separatedBy: " ").count < 4,
+        rescue.system?.jumpCallWarned != true {
+        channelMessage.client.sendMessage(
+            toChannelName: channelMessage.destination.name,
+            withKey: "jumpcall.incompletesys",
+            mapping: [
+                "case": caseId,
+                "nick": channelMessage.user.nickname
+            ]
+        )
+        rescue.system?.jumpCallWarned = true
+    }
+}
+
+private func checkRatPlatformMismatch(
+    channelMessage: IRCChannelMessageNotification.Payload,
+    caseId: String,
+    rescue: Rescue,
+    containsCarrierPhrase: Bool
+) {
+    if let accountInfo = channelMessage.user.associatedAPIData, let user = accountInfo.user {
+        let rats = accountInfo.ratsBelongingTo(user: user)
+        if rats.first(where: { $0.attributes.platform.value == rescue.platform }) == nil {
+            if configuration.general.drillMode == false && containsCarrierPhrase == false {
+                channelMessage.client.sendMessage(
+                    toChannelName: channelMessage.destination.name,
+                    withKey: "jumpcall.wrongplatform",
+                    mapping: [
+                        "case": caseId,
+                        "nick": channelMessage.user.nickname,
+                        "platform": rescue.platform.ircRepresentable
+                    ]
+                )
+            }
+        }
+    }
+}
+
+private func handleJumpCall (
+    jumpCallMatch: Match,
+    channelMessage: IRCChannelMessageNotification.Payload,
+    casesUpdatedForMessage: [Rescue]
+) async -> [Rescue] {
+    var casesUpdatedForMessage = casesUpdatedForMessage
+    let caseId = jumpCallMatch.group(named: "case")!
+    let jumps = Int(jumpCallMatch.group(named: "jumps")!)!
+
+    guard let (_, rescue) = await board.findRescue(withCaseIdentifier: caseId) else {
+        if configuration.general.drillMode == false,
+            channelMessage.destination.name.lowercased()
+                == configuration.general.rescueChannel {
+            channelMessage.replyPrivate(
+                message: lingo.localize(
+                    "jumpcall.notfound",
+                    locale: "en-GB",
+                    interpolations: [
+                        "case": caseId
+                    ]
+                ))
+        }
+        return casesUpdatedForMessage
+    }
+
+    if await rescue.isPrepped() == false && configuration.general.drillMode == false
+        && rescue.codeRed == false {
+        // User called jumps for a case where the client has not been prepped, yell at them.
+        channelMessage.replyPrivate(
+            message: lingo.localize(
+                "jumpcall.notprepped",
+                locale: "en-GB",
+                interpolations: [:]
+            ))
+    }
+
+    let rat = channelMessage.user.getRatRepresenting(platform: rescue.platform ?? .PC)
+    checkPermitWarning(channelMessage: channelMessage, rescue: rescue, caseId: caseId, rat: rat)
+
+    warnIfIncompleteSystem(rescue: rescue, channelMessage: channelMessage, caseId: caseId)
+
+    let containsCarrierPhrase = carrierPhrases.contains(where: {
+        channelMessage.message.lowercased().contains($0)
+    })
+    let boardSynced = await board.getIsSynced()
+
+    checkRatPlatformMismatch(
+        channelMessage: channelMessage,
+        caseId: caseId,
+        rescue: rescue,
+        containsCarrierPhrase: containsCarrierPhrase
+    )
+
+    guard checkAccountInfoOrWarn(channelMessage: channelMessage, caseId: caseId, boardSynced: boardSynced) else {
+        return casesUpdatedForMessage
+    }
+
+    var message = "<\(channelMessage.user.nickname)> \(channelMessage.message)"
+
+    let isDrilled = channelMessage.user.hasPermission(permission: .DispatchRead)
+    if channelMessage.user.account == nil {
+        message += " (Unidentified)"
+    } else if isDrilled == false {
+        message += " (Not Drilled)"
+    }
+
+    if let system = rescue.system, system.permit != nil {
+        if rat?.hasPermitFor(system: system) == false {
+            message += " (MISSING PERMIT)"
+        }
+    }
+
+    if let expansionNote = checkExpansionMismatch(
+        channelMessage: channelMessage,
+        caseId: caseId,
+        rescue: rescue,
+        rat: rat,
+        containsCarrierPhrase: containsCarrierPhrase
+    ) {
+        message += expansionNote
+    }
+
+    if let jumpRat = rat ?? channelMessage.user.currentRat {
+        rescue.jumpCalls.append((jumpRat, jumps))
+    }
+    if casesUpdatedForMessage.contains(where: { $0.id == rescue.id }) == false {
+        rescue.quotes.append(
+            RescueQuote(
+                author: channelMessage.client.currentNick,
+                message: message,
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: channelMessage.client.currentNick
+            ))
+        try? rescue.save(nil)
+        casesUpdatedForMessage.append(rescue)
+    }
+    return casesUpdatedForMessage
+}
+
+private func checkAccountInfoOrWarn(
+    channelMessage: IRCChannelMessageNotification.Payload,
+    caseId: String,
+    boardSynced: Bool
+) -> Bool {
+    guard channelMessage.user.associatedAPIData != nil else {
+        if configuration.general.drillMode == false && boardSynced {
+            channelMessage.replyPrivate(
+                message: lingo.localize(
+                    "jumpcall.noaccount",
+                    locale: "en-GB",
+                    interpolations: [
+                        "case": caseId
+                    ]
+                ))
+        }
+        return false
+    }
+    return true
+}
+
+private func checkExpansionMismatch(
+    channelMessage: IRCChannelMessageNotification.Payload,
+    caseId: String,
+    rescue: Rescue,
+    rat: Rat?,
+    containsCarrierPhrase: Bool
+) -> String? {
+    guard configuration.general.drillMode == false,
+          rescue.platform == .PC,
+          let rat = rat,
+          rescue.expansion != rat.attributes.expansion.value,
+          containsCarrierPhrase == false
+    else {
+        return nil
+    }
+
+    channelMessage.client.sendMessage(
+        toChannelName: channelMessage.destination.name,
+        withKey: "jumpcall.clientexpansion",
+        mapping: [
+            "caseId": caseId,
+            "nick": channelMessage.user.nickname,
+            "rescueExpansion": rescue.expansion.ircRepresentable,
+            "ratExpansion": rat.attributes.expansion.value.ircRepresentable
+        ]
+    )
+
+    return " (Using \(rat.expansion.englishDescription))"
 }

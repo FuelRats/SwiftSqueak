@@ -1,18 +1,18 @@
 /*
  Copyright 2021 The Fuel Rats Mischief
-
+ 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
-
+ 
  1. Redistributions of source code must retain the above copyright notice,
  this list of conditions and the following disclaimer.
-
+ 
  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
  disclaimer in the documentation and/or other materials provided with the distribution.
-
+ 
  3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
  products derived from this software without specific prior written permission.
-
+ 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -31,12 +31,12 @@ class BoardAssignCommands: IRCBotModule {
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
     }
-
+    
     @BotCommand(
         ["go", "assign", "add"],
         [
             .options(["a", "f"]), .argument("carrier"), .param("case id/client", "4"),
-            .param("rats", "SpaceDawg StuffedRat", .multiple, .optional),
+            .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)
         ],
         category: .board,
         description: "Add rats to the rescue and instruct the client to add them as friends.",
@@ -45,10 +45,10 @@ class BoardAssignCommands: IRCBotModule {
     )
     var didReceiveAssignCommand = { command in
         let message = command.message
-
+        
         let force = command.forceOverride
         let carrier = command.has(argument: "carrier")
-
+        
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
@@ -57,15 +57,15 @@ class BoardAssignCommands: IRCBotModule {
         if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
-
+        
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
             command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
-
+        
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
-
+        
         var assigns: [Result<AssignmentResult, RescueAssignError>] = []
         for param in params {
             assigns.append(
@@ -74,53 +74,48 @@ class BoardAssignCommands: IRCBotModule {
             )
         }
         try? rescue.save(command)
-
+        
         _ = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
-
+        
     }
-
+    
     @BotCommand(
         ["gofr", "assignfr", "frgo"],
         [
             .options(["a", "f"]), .argument("carrier"), .param("case id/client", "4"),
-            .param("rats", "SpaceDawg StuffedRat", .multiple, .optional),
+            .param("rats", "SpaceDawg StuffedRat", .multiple, .optional)
         ],
         category: .board,
         description:
-            "Add rats to the rescue and instruct the client to add them as friends, also inform the client how to add friends.",
+            "Add rats to the rescue and instruct the client to add them as friends, also posts !fr",
+        tags: ["go", "assign"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveAssignWithInstructionsCommand = { command in
         let message = command.message
-        if command.command == "f" {
-            command.message.replyPrivate(
-                message:
-                    "Warning: !f was added by accident and will be removed in a future update. It is recommended that you start using !gofr."
-            )
-        }
-
+        
         let force = command.forceOverride
         let carrier = command.has(argument: "carrier")
-
+        
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-
+        
         var command = command
         if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
-
+        
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
             command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
-
+        
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
-
+        
         var assigns: [Result<AssignmentResult, RescueAssignError>] = []
         for param in params {
             assigns.append(
@@ -129,32 +124,32 @@ class BoardAssignCommands: IRCBotModule {
             )
         }
         try? rescue.save(command)
-
+        
         let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
-
+        
         if didSend {
             guard carrier == false else {
                 command.message.reply(
-                    message:
-                        "I could try asking the client to befriend a fleet carrier but I don't think that's going to help much"
+                    message: "I could try asking the client to befriend a fleet carrier "
+                           + "but I don't think that's going to help much"
                 )
                 return
             }
             var factName =
-                rescue.codeRed && rescue.platform == .PC
-                ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
+            rescue.codeRed && rescue.platform == .PC
+            ? "\(platform.factPrefix)frcr" : "\(platform.factPrefix)fr"
             guard
                 let fact = try? await Fact.getWithFallback(
                     name: factName, forLocale: command.locale)
             else {
                 return
             }
-
+            
             let client = rescue.clientNick ?? rescue.client ?? ""
             message.reply(message: "\(client) \(fact.message)")
         }
     }
-
+    
     @BotCommand(
         ["unassign", "deassign", "rm", "remove", "standdown"],
         [.param("case id/client", "4"), .param("rats", "SpaceDawg StuffedRat", .multiple)],
@@ -165,15 +160,15 @@ class BoardAssignCommands: IRCBotModule {
     )
     var didReceiveUnassignCommand = { command in
         let message = command.message
-
+        
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-
+        
         let unassigns = command.parameters[1...]
-
+        
         var removed: [String] = []
-
+        
         for unassign in unassigns {
             if let assignIndex = rescue.unidentifiedRats.firstIndex(where: {
                 $0.lowercased() == unassign.lowercased()
@@ -182,26 +177,25 @@ class BoardAssignCommands: IRCBotModule {
                 removed.append(unassign)
                 continue
             } else if let nick = message.destination.member(named: unassign),
-                let apiData = nick.associatedAPIData,
-                let user = apiData.user
-            {
+                      let apiData = nick.associatedAPIData,
+                      let user = apiData.user {
                 var rats = apiData.ratsBelongingTo(user: user).filter({ rat in
                     return rescue.rats.contains(where: {
                         $0.id.rawValue == rat.id.rawValue
                     })
                 })
-
+                
                 if rats.count == 0 {
                     continue
                 }
-
+                
                 let nickname = unassign.lowercased()
                 rats.sort(by: {
                     nickname.levenshtein($0.attributes.name.value.lowercased())
-                        < nickname.levenshtein($1.attributes.name.value.lowercased())
+                    < nickname.levenshtein($1.attributes.name.value.lowercased())
                 })
                 let rat = rats[0]
-
+                
                 if let ratIndex = rescue.rats.firstIndex(of: rat) {
                     rescue.rats.remove(at: ratIndex)
                     removed.append(rat.attributes.name.value)
@@ -214,143 +208,78 @@ class BoardAssignCommands: IRCBotModule {
                 rescue.rats.remove(at: ratIndex)
                 continue
             }
-
+            
             command.message.reply(
                 key: "board.unassign.notassigned", fromCommand: command,
                 map: [
                     "rats": unassign,
-                    "caseId": caseId,
+                    "caseId": caseId
                 ])
         }
-
+        
         guard removed.count > 0 else {
             return
         }
-
+        
         try? rescue.save(command)
         let unassignedRats = removed.joined(separator: ", ")
         command.message.reply(
             key: "board.unassign.removed", fromCommand: command,
             map: [
                 "caseId": caseId,
-                "rats": unassignedRats,
+                "rats": unassignedRats
             ])
     }
-
+    
     static func sendAssignMessages(
         assigns: [Result<AssignmentResult, RescueAssignError>], forRescue rescue: Rescue,
         fromCommand command: IRCBotCommand
     ) -> Bool {
         let includeExistingAssigns = command.options.contains("a")
         let carrier = command.has(argument: "carrier")
-
+        
         let failedAssigns = assigns.compactMap({ assign -> RescueAssignError? in
             if case let .failure(result) = assign {
                 return result
             }
             return nil
         })
-
+        
         if failedAssigns.count > 0 {
-            var errorMessage = "\(failedAssigns.count) rats failed to assign: "
-            let notFound = failedAssigns.compactMap({ assign -> String? in
-                if case let .notFound(rat) = assign {
-                    return rat
-                }
-                return nil
-            })
-            if notFound.count > 0 {
-                errorMessage += "\(notFound.joined(separator: ", ")) was not found in the channel. "
-            }
-
-            let invalid = failedAssigns.compactMap({ assign -> String? in
-                if case let .invalid(rat) = assign {
-                    return rat
-                }
-                return nil
-            })
-            if invalid.count > 0 {
-                errorMessage += "\(invalid.joined(separator: ", ")) as they are not a fuel rat. "
-            }
-
-            let notLoggedIn = failedAssigns.compactMap({ assign -> String? in
-                if case let .notLoggedIn(rat) = assign {
-                    return rat
-                }
-                return nil
-            })
-            if notLoggedIn.count > 0 {
-                errorMessage +=
-                    "\(invalid.joined(separator: ", ")) as they do not appear to be logged in. "
-            }
-
-            let unidentified = failedAssigns.compactMap({ assign -> String? in
-                if case let .unidentified(rat) = assign {
-                    return rat
-                }
-                return nil
-            })
-            if unidentified.count > 0 {
-                if carrier {
-                    let universe = rescue.expansion == .legacy ? "legacy" : "live / odyssey"
-                    errorMessage +=
-                        "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(rescue.expansion.ircRepresentable)), for carrier rescues make sure the rat has their CMDR set to \(universe)"
-                } else if rescue.platform == .PC {
-                    errorMessage +=
-                        "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable) (\(rescue.expansion.ircRepresentable))"
-                } else {
-                    errorMessage +=
-                        "\(unidentified.joined(separator: ", ")) does not have a valid CMDR for \(rescue.platform.ircRepresentable)"
-                }
-            }
-
-            let jumpCallConflicts = failedAssigns.compactMap({ assign -> String? in
-                if case let .jumpCallConflict(rat) = assign {
-                    return rat.name
-                }
-                return nil
-            })
-            if jumpCallConflicts.count > 0 {
-                errorMessage +=
-                    "\(jumpCallConflicts.joined(separator: ", ")) called for a different case and not this one. "
-            }
-            let unqualifiedRats = failedAssigns.compactMap({ assign -> String? in
-                if case let .unqualified(name) = assign {
-                    return name
-                }
-                return nil
-            })
-            if unqualifiedRats.count > 0 {
-                errorMessage +=
-                    "\(unqualifiedRats.joined(separator: ", ")) are not drilled yet they were assigned to a CR case, this is heavily discouraged "
-            }
-            command.message.reply(message: errorMessage)
-
-            let blacklisted = failedAssigns.compactMap({ assign -> String? in
-                if case let .blacklisted(rat) = assign {
-                    return rat
-                }
-                return nil
-            })
-            if blacklisted.count > 0 {
-                command.message.error(
-                    key: "board.assign.banned", fromCommand: command,
-                    map: [
-                        "rats": blacklisted.joined(separator: ", ")
-                    ])
-            }
+            handleFailedAssigns(failedAssigns, rescue: rescue, command: command, carrier: carrier)
         }
-
+        
         let successfulAssigns = assigns.compactMap({ assign -> AssignmentResult? in
             if case let .success(result) = assign {
                 return result
             }
             return nil
         })
-
+        
         if successfulAssigns.count > 0 || includeExistingAssigns || assigns.count == 0 {
-            var names = successfulAssigns.compactMap({ assign -> String? in
-                switch assign {
+            return handleSuccessfulAssigns(
+                successfulAssigns,
+                assigns: assigns,
+                includeExistingAssigns: includeExistingAssigns,
+                rescue: rescue,
+                command: command,
+                carrier: carrier
+            )
+        }
+        return false
+    }
+
+    // Extracted success handling for successful assigns into a helper
+    private static func handleSuccessfulAssigns(
+        _ successfulAssigns: [AssignmentResult],
+        assigns: [Result<AssignmentResult, RescueAssignError>],
+        includeExistingAssigns: Bool,
+        rescue: Rescue,
+        command: IRCBotCommand,
+        carrier: Bool
+    ) -> Bool {
+        var names = successfulAssigns.compactMap({ assign -> String? in
+            switch assign {
                 case .assigned(let rat):
                     return rat.name
                 case .unidentified(let unidentifiedRat):
@@ -359,44 +288,144 @@ class BoardAssignCommands: IRCBotModule {
                     return rat.name
                 case .unidentifiedDuplicate(let unidentifiedRat):
                     return unidentifiedRat
-                }
-            })
-
-            if assigns.count == 0 || includeExistingAssigns {
-                names =
-                    rescue.rats.map({
-                        $0.name
-                    }) + rescue.unidentifiedRats
             }
-            guard names.count > 0 else {
-                return false
-            }
+        })
 
-            var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
-            if carrier {
-                format = "board.assign.carrier"
-                rescue.quotes.append(
-                    RescueQuote(
-                        author: command.message.client.currentNick,
-                        message: "This rescue has been assigned a fleet carrier",
-                        createdAt: Date(),
-                        updatedAt: Date(),
-                        lastAuthor: command.message.client.currentNick
-                    ))
-                try? rescue.save(command)
-            }
-
-            command.message.reply(
-                key: format, fromCommand: command,
-                map: [
-                    "client": rescue.clientNick!,
-                    "rats": names.map({
-                        "\"\($0)\""
-                    }).joined(separator: ", "),
-                    "count": names.count,
-                ])
-            return true
+        if assigns.count == 0 || includeExistingAssigns {
+            names = rescue.rats.map { $0.name } + rescue.unidentifiedRats
         }
-        return false
+
+        guard names.count > 0 else {
+            return false
+        }
+
+        var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
+        if carrier {
+            format = "board.assign.carrier"
+            rescue.quotes.append(
+                RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "This rescue has been assigned a fleet carrier",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick
+                ))
+            try? rescue.save(command)
+        }
+        
+        command.message.reply(
+            key: format, fromCommand: command,
+            map: [
+                "client": rescue.clientNick!,
+                "rats": names.map { "\"\($0)\"" }.joined(separator: ", "),
+                "count": names.count
+            ])
+        return true
+    }
+}
+
+private func handleFailedAssigns(
+    _ failedAssigns: [RescueAssignError],
+    rescue: Rescue,
+    command: IRCBotCommand,
+    carrier: Bool
+) {
+    let errorMessage = buildFailedAssignErrorMessage(failedAssigns, rescue: rescue, carrier: carrier)
+    command.message.reply(message: errorMessage)
+    sendDenylistedErrorMessage(failedAssigns, command: command)
+}
+
+private func buildFailedAssignErrorMessage(
+    _ failedAssigns: [RescueAssignError],
+    rescue: Rescue,
+    carrier: Bool
+) -> String {
+    var errorMessage = "\(failedAssigns.count) rats failed to assign: "
+
+    let notFound = failedAssigns.compactMap {
+        if case let .notFound(rat) = $0 { return rat }
+        return nil
+    }
+    if notFound.count > 0 {
+        errorMessage += "\(notFound.joined(separator: ", ")) was not found in the channel. "
+    }
+
+    let invalid = failedAssigns.compactMap {
+        if case let .invalid(rat) = $0 { return rat }
+        return nil
+    }
+    if invalid.count > 0 {
+        errorMessage += "\(invalid.joined(separator: ", ")) as they are not a fuel rat. "
+    }
+
+    let notLoggedIn = failedAssigns.compactMap {
+        if case let .notLoggedIn(rat) = $0 { return rat }
+        return nil
+    }
+    if notLoggedIn.count > 0 {
+        errorMessage += "\(notLoggedIn.joined(separator: ", ")) as they do not appear to be logged in. "
+    }
+
+    let unidentified = failedAssigns.compactMap {
+        if case let .unidentified(rat) = $0 { return rat }
+        return nil
+    }
+    if unidentified.count > 0 {
+        if carrier {
+            let universe = rescue.expansion == .legacy ? "legacy" : "live / odyssey"
+            errorMessage += lingo.localize("board.assign.invalidcmdrcarrier", locale: "en", interpolations: [
+                "rats": unidentified.joined(separator: ", "),
+                "platform": rescue.platform.ircRepresentable,
+                "expansion": rescue.expansion.ircRepresentable,
+                "universe": universe
+            ])
+        } else if rescue.platform == .PC {
+            errorMessage += lingo.localize("board.assign.invalidcmdr", locale: "en", interpolations: [
+                "rats": unidentified.joined(separator: ", "),
+                "platform": rescue.platform.ircRepresentable,
+                "expansion": rescue.expansion.ircRepresentable
+            ])
+        } else {
+            errorMessage += lingo.localize("board.assign.invalidcmdr", locale: "en", interpolations: [
+                "rats": unidentified.joined(separator: ", "),
+                "platform": rescue.platform.ircRepresentable
+            ])
+        }
+    }
+
+    let jumpCallConflicts = failedAssigns.compactMap {
+        if case let .jumpCallConflict(rat) = $0 { return rat.name }
+        return nil
+    }
+    if jumpCallConflicts.count > 0 {
+        errorMessage += lingo.localize("board.assign.callconflict", locale: "en", interpolations: [
+            "rats": jumpCallConflicts.joined(separator: ", ")
+        ])
+    }
+
+    let unqualifiedRats = failedAssigns.compactMap {
+        if case let .unqualified(name) = $0 { return name }
+        return nil
+    }
+    if unqualifiedRats.count > 0 {
+        errorMessage += lingo.localize("board.assign.undrilled", locale: "en", interpolations: [
+            "rats": unqualifiedRats.joined(separator: ", ")
+        ])
+    }
+
+    return errorMessage
+}
+
+private func sendDenylistedErrorMessage(_ failedAssigns: [RescueAssignError], command: IRCBotCommand) {
+    let denylisted = failedAssigns.compactMap {
+        if case let .denylisted(rat) = $0 { return rat }
+        return nil
+    }
+    if denylisted.count > 0 {
+        command.message.error(
+            key: "board.assign.banned", fromCommand: command,
+            map: [
+                "rats": denylisted.joined(separator: ", ")
+            ])
     }
 }

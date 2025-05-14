@@ -16,11 +16,11 @@ extension EventLoopFuture {
             of: (Value, SecondValue, ThirdValue).self)
         self.and(future2).and(future3).whenComplete({ result in
             switch result {
-            case .success(let value):
-                combinedFuture.succeed((value.0.0, value.0.1, value.1))
+                case .success(let value):
+                    combinedFuture.succeed((value.0.0, value.0.1, value.1))
 
-            case .failure(let error):
-                combinedFuture.fail(error)
+                case .failure(let error):
+                    combinedFuture.fail(error)
             }
         })
 
@@ -31,11 +31,11 @@ extension EventLoopFuture {
         return try await withCheckedThrowingContinuation({ continuation in
             self.whenComplete({ result in
                 switch result {
-                case .failure(let error):
-                    continuation.resume(throwing: error)
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
 
-                case .success(let value):
-                    continuation.resume(returning: value)
+                    case .success(let value):
+                        continuation.resume(returning: value)
                 }
             })
         })
@@ -48,18 +48,18 @@ extension TimeInterval {
             return nil
         }
         switch dispatchTimeInterval {
-        case .seconds(let value):
-            self = Double(value)
-        case .milliseconds(let value):
-            self = Double(value) / 1_000
-        case .microseconds(let value):
-            self = Double(value) / 1_000_000
-        case .nanoseconds(let value):
-            self = Double(value) / 1_000_000_000
-        case .never:
-            return nil
-        @unknown default:
-            return nil
+            case .seconds(let value):
+                self = Double(value)
+            case .milliseconds(let value):
+                self = Double(value) / 1_000
+            case .microseconds(let value):
+                self = Double(value) / 1_000_000
+            case .nanoseconds(let value):
+                self = Double(value) / 1_000_000_000
+            case .never:
+                return nil
+            @unknown default:
+                return nil
         }
     }
 

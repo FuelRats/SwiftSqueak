@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import HTMLKit
 
 class TweetCommands: IRCBotModule {
     var name: String = "Alert Commands"
@@ -37,6 +38,7 @@ class TweetCommands: IRCBotModule {
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
         description: "Send a message via Mastodon & BlueSky",
+        tags: ["twitter", "bluesky", "blue sky", "mastodon", "notification", "notify"],
         permission: .TwitterWrite,
         allowedDestinations: .Channel,
         helpExtra: {
@@ -50,15 +52,14 @@ class TweetCommands: IRCBotModule {
             command.message.error(key: "tweet.minlength", fromCommand: command)
             return
         }
-        if await board.first(where: { (caseId, rescue) in
+        if await board.first(where: { (_, rescue) in
             if let system = rescue.system {
                 if contents.lowercased().contains(system.name.lowercased()) {
                     return true
                 }
             }
             if let clientName = rescue.client,
-                contents.lowercased().contains(clientName.lowercased())
-            {
+                contents.lowercased().contains(clientName.lowercased()) {
                 return true
             }
             return false
@@ -83,11 +84,24 @@ class TweetCommands: IRCBotModule {
         category: .utility,
         description:
             "Notify users that rats are needed on a case via Mastodon & Bluesky",
+        tags: ["twitter", "bluesky", "blue sky", "mastodon", "notification", "notify"],
         permission: .DispatchRead,
         allowedDestinations: .Channel,
         helpExtra: {
             return
                 "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "The Mastodon is at "
+                Anchor("fuelratsalerts@mastodon.localecho.net")
+                    .reference("https://mastodon.localecho.net/@fuelratsalerts")
+                    .target(.blank)
+                " and the BlueSky at "
+                Anchor("alerts.fuelrats.com")
+                    .reference("https://alerts.fuelrats.com/")
+                    .target(.blank)
+            }
         }
     )
     var didReceiveTweetCaseCommand = { command in
@@ -95,8 +109,7 @@ class TweetCommands: IRCBotModule {
             return
         }
 
-        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick)
-        {
+        if let clientNick = rescue.clientNick, let user = rescue.channel?.member(named: clientNick) {
             if user.lastMessage == nil {
                 command.message.reply(
                     message: "!alertc cannot be used on a case before the client has spoken")
@@ -143,7 +156,7 @@ class TweetCommands: IRCBotModule {
                 "systemDescription": description ?? "",
                 "caseId": caseId,
                 "id": shortId.lowercased(),
-                "link": url.absoluteString,
+                "link": url.absoluteString
             ])
 
         do {

@@ -30,6 +30,7 @@ import Regex
 
 class Rescue {
     private static let announcerExpression =
+    // swiftlint:disable:next line_length
         "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( (Horizons 3.8|Horizons 4.0|Odyssey))? - O2: (.*) - Language: .* \\(([a-z]{2,3}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?"
         .r!
 
@@ -61,13 +62,13 @@ class Rescue {
     var clientLastHostName: String?
     var jumpCalls: [(Rat, Int)]
     var dispatchers: [UUID] = []
-    var xboxProfile: XboxLive.ProfileLookup? = nil
-    var psnProfile: (PSN.ProfileLookup, PSN.PresenceResponse?)? = nil
+    var xboxProfile: XboxLive.ProfileLookup?
+    var psnProfile: (PSN.ProfileLookup, PSN.PresenceResponse?)?
     var banned: Bool = false
     var synced: Bool = false
-    var lastEditUser: User? = nil
+    var lastEditUser: User?
     var uploaded: Bool
-    var uploadOperation: RescueCreateOperation? = nil
+    var uploadOperation: RescueCreateOperation?
 
     init?(fromAnnouncer message: IRCPrivateMessage) {
         guard let match = Rescue.announcerExpression.findFirst(in: message.message) else {
@@ -179,8 +180,7 @@ class Rescue {
 
         if message.user.associatedAPIData != nil {
             if let providedPlatform = GamePlatform.parsedFromText(text: signal.platform ?? ""),
-                let rat = message.user.getRatRepresenting(platform: providedPlatform)
-            {
+                let rat = message.user.getRatRepresenting(platform: providedPlatform) {
                 self.client = rat.name
                 self.platform = rat.platform
                 self.expansion = rat.expansion
@@ -343,12 +343,12 @@ class Rescue {
 
     var onlineStatus: String? {
         switch self.platform {
-        case .Xbox:
-            return self.xboxLiveStatus
-        case .PS:
-            return self.psnStatus
-        default:
-            return nil
+            case .Xbox:
+                return self.xboxLiveStatus
+            case .PS:
+                return self.psnStatus
+            default:
+                return nil
         }
     }
 
@@ -368,8 +368,7 @@ class Rescue {
         }
         if let presence = self.xboxProfile?.elitePresence {
             if let system = self.xboxProfile?.systemName,
-                system.uppercased() == self.system?.name.uppercased()
-            {
+                system.uppercased() == self.system?.name.uppercased() {
                 return IRCFormat.color(.LightGreen, " (Confirmed)")
             } else if presence == "Is blazing their own trail" {
                 return IRCFormat.color(.LightGreen, " (In game, location hidden)")
@@ -380,7 +379,7 @@ class Rescue {
     }
 
     var psnStatus: String? {
-        guard case .found(_) = self.psnProfile?.0 else {
+        guard case .found = self.psnProfile?.0 else {
             if case .notFound = self.xboxProfile {
                 return IRCFormat.color(.Orange, " (PSN Profile not found)")
             }
@@ -391,8 +390,7 @@ class Rescue {
         }
         guard presence.basicPresence.primaryPlatformInfo?.onlineStatus == .online else {
             if let lastSeenAgo = presence.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(
-                maximumUnits: 1)
-            {
+                maximumUnits: 1) {
                 return IRCFormat.color(.Grey, " (Last online \(lastSeenAgo) ago)")
             }
             return IRCFormat.color(.Grey, " (Offline)")
@@ -444,17 +442,17 @@ class Rescue {
             return ""
         }
         switch self.platform {
-        case .PC:
-            return self.expansion.signal
+            case .PC:
+                return self.expansion.signal
 
-        case .Xbox:
-            return "(XB_SIGNAL)"
+            case .Xbox:
+                return "(XB_SIGNAL)"
 
-        case .PS:
-            return "(PS_SIGNAL)"
+            case .PS:
+                return "(PS_SIGNAL)"
 
-        default:
-            return ""
+            default:
+                return ""
         }
     }
 
@@ -545,8 +543,7 @@ class Rescue {
     }
 
     func close(firstLimpet: Rat? = nil, paperworkOnly: Bool = false, command: IRCBotCommand?)
-        async throws
-    {
+        async throws {
         let wasInactive = self.status == .Inactive
         self.status = .Closed
         if paperworkOnly == false {
@@ -555,8 +552,7 @@ class Rescue {
         if let firstLimpet = firstLimpet,
             self.rats.contains(where: {
                 $0.id.rawValue == firstLimpet.id.rawValue
-            }) == false
-        {
+            }) == false {
             self.rats.append(firstLimpet)
         }
 
@@ -594,10 +590,9 @@ class Rescue {
                 Task {
                     _ = try? await QueueAPI.dequeue()
                     if let platform = self.platform,
-                        await board.lastSignalsReceived[
+                        await board.getLastSignalsRecieved()[
                             PlatformExpansion(platform: platform, expansion: self.expansion)]
-                            ?? Date(timeIntervalSince1970: 0) < self.createdAt
-                    {
+                            ?? Date(timeIntervalSince1970: 0) < self.createdAt {
                         await board.setLastSignalReceived(
                             platform: platform, expansion: self.expansion, date: self.createdAt)
                     }
@@ -614,10 +609,10 @@ class Rescue {
     ) async -> Result<AssignmentResult, RescueAssignError> {
         let param = param.lowercased()
         guard
-            configuration.general.ratBlacklist.contains(where: { $0.lowercased() == param })
+            configuration.general.ratDenylist.contains(where: { $0.lowercased() == param })
                 == false
         else {
-            return Result.failure(RescueAssignError.blacklisted(param))
+            return Result.failure(RescueAssignError.denylisted(param))
         }
 
         guard
@@ -630,8 +625,7 @@ class Rescue {
         guard let nick = channel.member(named: param) else {
             return Result.failure(RescueAssignError.notFound(param))
         }
-        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false && !force
-        {
+        if self.codeRed == true && nick.hasPermission(permission: .DispatchRead) == false && !force {
             return Result.failure(.unqualified(nick.nickname))
         }
 
@@ -639,7 +633,7 @@ class Rescue {
             return Result.failure(.notLoggedIn(nick.nickname))
         }
 
-        var rat: Rat? = nil
+        var rat: Rat?
         if carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
             rat = nick.currentRat
         } else {
@@ -649,7 +643,7 @@ class Rescue {
             }
         }
 
-        let boardSynced = await board.isSynced
+        let boardSynced = await board.getIsSynced()
         guard let rat = rat else {
             guard force || configuration.general.drillMode || boardSynced == false else {
                 return Result.failure(.unidentified(param))
@@ -718,7 +712,7 @@ class Rescue {
     }
 
     func isPrepped() async -> Bool {
-        return await board.prepTimers[self.id] == nil
+        return await board.getPrepTimers()[self.id] == nil
     }
 
     func validateSystem() async throws {
@@ -767,7 +761,7 @@ class Rescue {
                     map: [
                         "caseId": caseId,
                         "client": self.clientDescription,
-                        "system": self.system.description,
+                        "system": self.system.description
                     ]
                 )
                 return
@@ -788,7 +782,7 @@ class Rescue {
                 map: [
                     "caseId": caseId,
                     "client": self.clientDescription,
-                    "systems": resultString,
+                    "systems": resultString
                 ])
         }
         return
@@ -820,13 +814,14 @@ class Rescue {
                     continuation.resume(throwing: error)
                 }
 
-                board.queue.addOperation(operation)
-                self.uploadOperation = operation
+                Task {
+                    await board.addSyncOperation(operation)
+                    self.uploadOperation = operation
+                }
             }
         }
 
-        if let representing = command?.message.user, let user = representing.associatedAPIData?.user
-        {
+        if let representing = command?.message.user, let user = representing.associatedAPIData?.user {
             if self.dispatchers.contains(user.id.rawValue) == false {
                 self.dispatchers.append(user.id.rawValue)
             }
@@ -850,7 +845,9 @@ class Rescue {
                 continuation.resume(throwing: error)
             }
 
-            board.queue.addOperation(operation)
+            Task {
+                await board.addSyncOperation(operation)
+            }
         }
     }
 
@@ -869,7 +866,7 @@ class Rescue {
 }
 
 enum RescueAssignError: Error {
-    case blacklisted(String)
+    case denylisted(String)
     case invalid(String)
     case notFound(String)
     case jumpCallConflict(Rat)

@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import HTMLKit
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
@@ -38,10 +39,20 @@ class Translate: IRCBotModule {
         [.param("message", "Help is on the way!", .continuous)],
         category: .utility,
         description: "Translate a message to another language",
+        tags: ["google", "deepl"],
         helpLocale: "fr",
         cooldown: .seconds(30),
         helpExtra: {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
+                    .target(.blank)
+                " for a list of valid language codes"
+            }
         }
     )
     var didReceiveTranslateCommand = { command in
@@ -53,8 +64,7 @@ class Translate: IRCBotModule {
         }
         do {
             if let translation = try await Translate.translate(
-                command.parameters[0], locale: command.locale)
-            {
+                command.parameters[0], locale: command.locale) {
                 command.message.reply(message: translation)
             }
         } catch {
@@ -66,7 +76,8 @@ class Translate: IRCBotModule {
         ["tcase", "tc"],
         [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous)],
         category: .utility,
-        description: "Translates a message to the client's language and replies to the client in the rescue channel as you",
+        description: "Translates a message to the client's language and replies in the rescue channel as you",
+        tags: ["google", "deepl", "client", "rescue"],
         allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateCaseCommand = { command in
@@ -93,8 +104,7 @@ class Translate: IRCBotModule {
 
         do {
             if let translation = try await Translate.translate(
-                command.parameters[1], locale: locale)
-            {
+                command.parameters[1], locale: locale) {
                 let destination = rescue.channel ?? mecha.rescueChannel
                 command.message.client.send("MSGAS", parameters: [
                     command.message.raw.sender?.nickname ?? "",
@@ -109,13 +119,27 @@ class Translate: IRCBotModule {
     
     @BotCommand(
         ["translateme", "tme"],
-        [.param("channel", "#fuelrats"), .param("language code", "fr"), .param("message", "Help is on the way!", .continuous)],
+        [
+            .param("channel", "#fuelrats"),
+            .param("language code", "fr"),
+            .param("message", "Help is on the way!", .continuous)
+        ],
         category: .utility,
         description: "Translate a message to another language and sends the message to a channel as you",
+        tags: ["google", "deepl"],
         allowedDestinations: .PrivateMessage,
         cooldown: .seconds(30),
         helpExtra: {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
+                    .target(.blank)
+                " for a list of valid language codes"
+            }
         }
     )
     var didReceiveTranslateMeCommand = { command in
@@ -127,13 +151,13 @@ class Translate: IRCBotModule {
             return $0.name.lowercased() == channelName.lowercased()
         }) else {
             command.message.error(key: "translate.destination", fromCommand: command, map: [
-                "channel": channelName,
+                "channel": channelName
             ])
             return
         }
         guard channel.member(fromSender: command.message.raw.sender!) != nil else {
             command.message.error(key: "translate.destination", fromCommand: command, map: [
-                "channel": channelName,
+                "channel": channelName
             ])
             return
         }
@@ -147,8 +171,7 @@ class Translate: IRCBotModule {
         
         do {
             if let translation = try await Translate.translate(
-                message, locale: locale)
-            {
+                message, locale: locale) {
                 command.message.client.send("MSGAS", parameters: [
                     command.message.raw.sender?.nickname ?? "",
                     channel.name,
@@ -166,10 +189,24 @@ class Translate: IRCBotModule {
         category: .utility,
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
+        tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage,
         helpExtra: {
-            "Follow this guide to change how notices appear in HexChat https://hexchat.readthedocs.io/en/latest/tips.html#how-to-make-notices-show-up-in-a-consistent-location"
+            "Follow this guide to change how notices appear in HexChat " +
+            "https://hexchat.readthedocs.io/en/latest/tips.html#how-to-make-notices-show-up-in-a-consistent-location"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "Follow "
+                Anchor("this guide")
+                    .reference(
+                        "https://hexchat.readthedocs.io/en/latest/tips.html" +
+                        "#how-to-make-notices-show-up-in-a-consistent-location"
+                    )
+                    .target(.blank)
+                " to change how notices appear in HexChat"
+            }
         }
     )
     var didReceiveTranslateSubscribeCommand = { command in
@@ -201,6 +238,7 @@ class Translate: IRCBotModule {
         category: .utility,
         description:
             "Subscribe to automatic translations of client messages by either private message, or notice",
+        tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage
     )
@@ -217,11 +255,15 @@ class Translate: IRCBotModule {
         command.message.reply(key: "transsub.unsubbed", fromCommand: command)
     }
 
-    static func translate(_ text: String, locale: Locale? = nil) async throws -> String? {
+    static func translate(_ text: String, locale: Foundation.Locale? = nil) async throws -> String? {
         var prompt = OpenAIMessage(
             role: .system,
             content:
-                "Translate to English only, no extra text or quotes, if it's already in english output 'no translation'. Context: Fuel Rats bot helping stranded Elite Dangerous players."
+                """
+                Translate to English only, no extra text or quotes,
+                if it's already in english output 'no translation'.
+                Context: Fuel Rats bot helping stranded Elite Dangerous players.
+                """
         )
         if let locale = locale {
             let languageText = locale.englishDescription
@@ -237,10 +279,12 @@ class Translate: IRCBotModule {
             messages: [prompt, message], model: "gpt-4o", temperature: 0.2, maxTokens: nil)
         let result = try await OpenAI.request(params: request)
         let translation = result.choices.first?.message.content
-        let translationStripped = translation?.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: .punctuationCharacters).lowercased()
+        let translationStripped = translation?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: .punctuationCharacters)
+            .lowercased()
         if translationStripped?.count == 0
-            || translationStripped == "no translation"
-        {
+            || translationStripped == "no translation" {
             return nil
         }
         return result.choices.first?.message.content
@@ -264,15 +308,15 @@ class Translate: IRCBotModule {
             let contents = "<\(channelMessage.user.nickname)> \(translation)"
             for (subscriber, subType) in Translate.clientTranslationSubscribers {
                 switch subType {
-                case .Notice:
-                    channelMessage.client.send("CNOTICE", parameters: [
-                        subscriber,
-                        channelMessage.destination.name,
-                        contents
-                    ])
+                    case .Notice:
+                        channelMessage.client.send("CNOTICE", parameters: [
+                            subscriber,
+                            channelMessage.destination.name,
+                            contents
+                        ])
 
-                case .PrivateMessage:
-                    channelMessage.client.sendMessage(toTarget: subscriber, contents: contents)
+                    case .PrivateMessage:
+                        channelMessage.client.sendMessage(toTarget: subscriber, contents: contents)
                 }
             }
         }

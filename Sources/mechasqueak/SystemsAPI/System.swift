@@ -107,32 +107,32 @@ extension SystemsAPI {
 
         public static func parseAllegience(rawValue: String) -> Allegiance? {
             switch rawValue {
-            case "Federation":
-                return .Federation
+                case "Federation":
+                    return .Federation
 
-            case "Empire":
-                return .Empire
+                case "Empire":
+                    return .Empire
 
-            case "Alliance":
-                return .Alliance
+                case "Alliance":
+                    return .Alliance
 
-            case "Independent":
-                return .Independent
+                case "Independent":
+                    return .Independent
 
-            case "Pilots Federation", "PilotsFederation":  // FDEV, why are you like this?
-                return .PilotsFederation
+                case "Pilots Federation", "PilotsFederation":  // FDEV, why are you like this?
+                    return .PilotsFederation
 
-            case "Thargoid":
-                return .Thargoid
+                case "Thargoid":
+                    return .Thargoid
 
-            case "Guardian":
-                return .Guardian
+                case "Guardian":
+                    return .Guardian
 
-            case "":
-                return .Unknown
+                case "":
+                    return .Unknown
 
-            default:
-                return nil
+                default:
+                    return nil
             }
         }
     }

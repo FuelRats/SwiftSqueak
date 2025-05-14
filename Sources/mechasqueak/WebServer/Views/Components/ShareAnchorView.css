@@ -1,0 +1,31 @@
+.share-anchor::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f0c5"; /* fa-link */
+    margin-right: 0.3em;
+}
+
+.share-anchor {
+    margin-left: 0.25rem;
+    font-size: 0.85rem;
+    background: none;
+    border: none;
+    color: var(--link-color);
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.share-anchor:hover {
+    color: var(--link-hover);
+    opacity: 1;
+}
+
+.share-anchor.copied {
+    transform: scale(1.2);
+    opacity: 1;
+}
+
+.share-anchor.copied::before {
+    content: "\f00c"; /* fa-check */
+}

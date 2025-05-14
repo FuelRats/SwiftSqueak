@@ -38,9 +38,9 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
     var manuallyCorrected: Bool = false
     var automaticallyCorrected: Bool = false
-    var searchResult: SystemsAPI.SearchDocument.SearchResult? = nil
-    var permit: Permit? = nil
-    var availableCorrections: [SystemsAPI.SearchDocument.SearchResult]? = nil
+    var searchResult: SystemsAPI.SearchDocument.SearchResult?
+    var permit: Permit?
+    var availableCorrections: [SystemsAPI.SearchDocument.SearchResult]?
     var landmarks: [SystemsAPI.LandmarkDocument.LandmarkResult] = []
     var clientProvidedBody: String?
     var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
@@ -140,7 +140,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 context: [
                     "system": self,
                     "landmark": self.landmark as Any,
-                    "invalid": self.isInvalid,
+                    "invalid": self.isInvalid
                 ])) ?? ""
     }
 
@@ -150,11 +150,9 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
             if self.landmark?.distance ?? 0 > 2500 {
                 plotUrl = try? await generateSpanshRoute(from: "Sol", to: self.name)
             } else if let procedural = self.proceduralCheck, let sectordata = procedural.sectordata,
-                procedural.estimatedSolDistance?.2 ?? 0 > 2500
-            {
+                procedural.estimatedSolDistance?.2 ?? 0 > 2500 {
                 if let nearestTarget = try? await SystemsAPI.getNearestSystem(
-                    forCoordinates: sectordata.coords)?.data
-                {
+                    forCoordinates: sectordata.coords)?.data {
                     plotUrl = try? await generateSpanshRoute(from: "Sol", to: nearestTarget.name)
                 }
             }
@@ -230,7 +228,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                         "government": government as Any,
                         "economy": economy as Any,
                         "underAttack": isUnderAttack as Any,
-                        "edsmUrl": edsmUrl?.absoluteString as Any,
+                        "edsmUrl": edsmUrl?.absoluteString as Any
                     ])) ?? ""
         }
     }
@@ -262,8 +260,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         }
 
         if ProceduralSystem.proceduralEndPattern.matches(
-            self.name.components(separatedBy: CharacterSet.alphanumerics.inverted).joined())
-        {
+            self.name.components(separatedBy: CharacterSet.alphanumerics.inverted).joined()) {
             return true
         }
 
@@ -272,8 +269,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
 
     var isInvalid: Bool {
         if ProceduralSystem.proceduralSystemExpression.matches(self.name),
-            let procedural = ProceduralSystem(string: self.name)
-        {
+            let procedural = ProceduralSystem(string: self.name) {
             return
                 (self.proceduralCheck?.isPgSystem == false
                 || (self.proceduralCheck?.isPgSector == false
@@ -304,8 +300,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         guard let landmark = self.landmark else {
             if let procedural = self.proceduralCheck,
                 procedural.isPgSystem == true
-                    && (procedural.isPgSector || procedural.sectordata?.handauthored == true)
-            {
+                    && (procedural.isPgSector || procedural.sectordata?.handauthored == true) {
                 guard let (landmark, distance, _) = procedural.estimatedLandmarkDistance else {
                     return nil
                 }
@@ -357,7 +352,7 @@ func generateSpanshRoute(from: String, to: String, range: Int = 65) async throws
         "efficiency": "60",
         "range": String(range),
         "from": from,
-        "to": to,
+        "to": to
     ]
     request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
     request.headers.add(
@@ -374,7 +369,7 @@ func generateEDSMLink(name: String) async throws -> URL {
     var requestUrl = URLComponents(string: "https://www.edsm.net/api-v1/system")!
     requestUrl.queryItems = [
         URLQueryItem(name: "systemName", value: name),
-        URLQueryItem(name: "showId", value: "1"),
+        URLQueryItem(name: "showId", value: "1")
     ]
 
     var request = try HTTPClient.Request(url: requestUrl.url!)
@@ -423,7 +418,7 @@ func loadRegions() -> [GalacticRegion] {
     }
 
     let regionDecoder = JSONDecoder()
-    return try! regionDecoder.decode([GalacticRegion].self, from: regionData)
+    return (try? regionDecoder.decode([GalacticRegion].self, from: regionData)) ?? []
 }
 
 let regions = loadRegions()
@@ -438,7 +433,7 @@ func loadNamedBodies() -> [String: String] {
     }
 
     let bodyDecoder = JSONDecoder()
-    return try! bodyDecoder.decode([String: String].self, from: bodyData)
+    return (try? bodyDecoder.decode([String: String].self, from: bodyData)) ?? [:]
 }
 
 let namedBodies = loadNamedBodies()

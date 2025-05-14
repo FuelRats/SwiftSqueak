@@ -38,6 +38,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("number of cases", "10", .standard, .optional)],
         category: .rescues,
         description: "Shows recently closed cases.",
+        tags: ["rescue"],
         permission: .DispatchRead
     )
     var didReceiveRecentlyClosedCommand = { command in
@@ -73,7 +74,7 @@ class RemoteRescueCommands: IRCBotModule {
                         "client": rescue.client ?? "unknown client",
                         "platform": rescue.platform.ircRepresentable,
                         "system": rescue.system ?? "unknown system",
-                        "id": rescue.id.rawValue.ircRepresentation,
+                        "id": rescue.id.rawValue.ircRepresentation
                     ])
             })
 
@@ -121,12 +122,12 @@ class RemoteRescueCommands: IRCBotModule {
         var successDeletes: [UUID] = []
         var failedDeletes: [UUID] = []
         for id in ids {
-            if let (boardId, boardRescue) = await board.rescues.first(where: { $0.value.id == id }) {
+            if let (boardId, boardRescue) = await board.getRescues().first(where: { $0.value.id == id }) {
                 command.message.reply(
                     key: "rescue.delete.active", fromCommand: command,
                     map: [
                         "id": boardRescue.id.ircRepresentation,
-                        "caseId": boardId,
+                        "caseId": boardId
                     ])
                 continue
             }
@@ -252,7 +253,7 @@ class RemoteRescueCommands: IRCBotModule {
                         "platform": rescue.platform.ircRepresentable,
                         "reason": rescue.notes,
                         "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
-                        "by": lastEditRat?.name ?? "unknown",
+                        "by": lastEditRat?.name ?? "unknown"
                     ])
             }
         } catch {
@@ -266,6 +267,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Restore a case from the trash list.",
+        tags: ["reopen", "re-open", "open", "rescue"],
         permission: .RescueWrite
     )
     var didReceiveRestoreTrashCommand = { command in
@@ -348,7 +350,7 @@ class RemoteRescueCommands: IRCBotModule {
                         "firstLimpet": firstLimpet?.attributes.name.value ?? "unknown rat",
                         "link":
                             "https://fuelrats.com/paperwork/\(rescue.id.rawValue.uuidString.lowercased())/edit",
-                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                        "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1)
                     ])
             }
         } catch {
@@ -361,6 +363,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Show all information about a case by UUID",
+        tags: ["rescue", "info", "information", "quotes"],
         permission: .DispatchRead
     )
     var didReceiveQuoteRemoteCommand = { command in
@@ -384,7 +387,6 @@ class RemoteRescueCommands: IRCBotModule {
                 return
             }
 
-
             command.message.replyPrivate(
                 key: "rescue.quoteid.title", fromCommand: command,
                 map: [
@@ -393,7 +395,7 @@ class RemoteRescueCommands: IRCBotModule {
                     "platform": rescue.platform.ircRepresentable,
                     "created": rescue.createdAt.ircRepresentable,
                     "updated": rescue.updatedAt.ircRepresentable,
-                    "id": rescue.id.rawValue.ircRepresentation,
+                    "id": rescue.id.rawValue.ircRepresentation
                 ])
 
             for (index, quote) in rescue.quotes.enumerated() {
@@ -403,7 +405,7 @@ class RemoteRescueCommands: IRCBotModule {
                         "index": index,
                         "author": quote.lastAuthor,
                         "time": quote.updatedAt,
-                        "message": quote.message,
+                        "message": quote.message
                     ])
             }
         } catch {
@@ -420,6 +422,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.param("rescue uuid/client name", "3811e593-160b-45af-bf5e-ab8b5f26b718")],
         category: .rescues,
         description: "Add a previously closed case back onto the board",
+        tags: ["re-open", "rescue"],
         permission: .RescueWrite
     )
     var didReceiveReopenCommand = { command in
@@ -435,17 +438,17 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        var rescue: Rescue? = nil
+        var rescue: Rescue?
         var caseId = 0
         if let id = UUID(uuidString: command.parameters[0]) {
-            if let (existingId, existingRescue) = await board.rescues.first(where: {
+            if let (existingId, existingRescue) = await board.getRescues().first(where: {
                 $0.value.id == id
             }) {
                 command.message.error(
                     key: "rescue.reopen.exists", fromCommand: command,
                     map: [
                         "id": id,
-                        "caseId": existingId,
+                        "caseId": existingId
                     ])
                 return
             }
@@ -513,7 +516,7 @@ class RemoteRescueCommands: IRCBotModule {
             key: "rescue.reopen.opened", fromCommand: command,
             map: [
                 "id": rescue.id.ircRepresentation,
-                "caseId": newCaseId,
+                "caseId": newCaseId
             ])
     }
 
@@ -523,11 +526,12 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description:
             "Add a previously closed case back onto the board by its previous case number.",
+        tags: ["reopen", "rescue"],
         permission: .DispatchWrite
     )
     var didReceiveUncloseCommand = { command in
         guard let caseNumber = Int(command.parameters[0]),
-            let closedRescue = await board.recentlyClosed[caseNumber]
+            let closedRescue = await board.getRecentlyClosed()[caseNumber]
         else {
             command.message.error(
                 key: "board.casenotfound", fromCommand: command,
@@ -537,20 +541,20 @@ class RemoteRescueCommands: IRCBotModule {
             return
         }
 
-        if let existingRescue = await board.rescues.first(where: {
+        if let existingRescue = await board.getRescues().first(where: {
             $0.value.id == closedRescue.id
         }) {
             command.message.error(
                 key: "rescue.reopen.exists", fromCommand: command,
                 map: [
                     "id": closedRescue.id,
-                    "caseId": existingRescue.key,
+                    "caseId": existingRescue.key
                 ])
             return
         }
 
         guard configuration.general.drillMode == false else {
-            guard let rescue = await board.recentlyClosed[caseNumber] else {
+            guard let rescue = await board.getRecentlyClosed()[caseNumber] else {
                 command.message.error(
                     key: "rescue.reopen.error", fromCommand: command,
                     map: [
@@ -567,7 +571,7 @@ class RemoteRescueCommands: IRCBotModule {
                 key: "rescue.reopen.opened", fromCommand: command,
                 map: [
                     "id": rescue.id.ircRepresentation,
-                    "caseId": caseId,
+                    "caseId": caseId
                 ])
             return
         }
@@ -604,7 +608,7 @@ class RemoteRescueCommands: IRCBotModule {
             key: "rescue.reopen.opened", fromCommand: command,
             map: [
                 "id": closedRescue.id.ircRepresentation,
-                "caseId": caseID,
+                "caseId": caseID
             ])
     }
 
@@ -613,6 +617,7 @@ class RemoteRescueCommands: IRCBotModule {
         [.argument("all"), .param("client name", "SpaceDawg", .continuous)],
         category: .rescues,
         description: "Get paperwork link for a previous client by name.",
+        tags: ["last", "client", "previous", "paperwork"],
         permission: .RescueWrite
     )
     var didReceiveClientPaperworkCommand = { command in
@@ -644,7 +649,7 @@ class RemoteRescueCommands: IRCBotModule {
                             "index": index,
                             "system": rescue.attributes.system.value ?? "?",
                             "created": rescue.attributes.createdAt.value.ircRepresentable,
-                            "link": url,
+                            "link": url
                         ])
                 }
                 return
@@ -662,7 +667,7 @@ class RemoteRescueCommands: IRCBotModule {
                 map: [
                     "client": rescue.attributes.client.value ?? "unknown client",
                     "created": rescue.attributes.createdAt.value.ircRepresentable,
-                    "link": shortUrl,
+                    "link": shortUrl
                 ])
         } catch {
             command.error(error)
@@ -673,10 +678,11 @@ class RemoteRescueCommands: IRCBotModule {
         ["renameid"],
         [
             .param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"),
-            .param("client name", "SpaceDawg", .continuous),
+            .param("client name", "SpaceDawg", .continuous)
         ],
         category: .rescues,
         description: "Change the client name of a closed case",
+        tags: ["rename", "change"],
         permission: .RescueWrite
     )
     var didReceiveRenameIDCommand = { command in

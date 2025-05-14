@@ -1,0 +1,80 @@
+:root {
+    --navbar-border: #ddd;
+    --navbar-padding: 1rem 2rem;
+    --navbar-gap: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --navbar-border: #3a3a3c;
+    }
+}
+
+.navbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: var(--primary-bg);
+    border-bottom: 1px solid var(--navbar-border);
+    padding: var(--navbar-padding);
+    font-weight: 500;
+    gap: var(--navbar-gap);
+}
+
+.navbar a {
+    text-decoration: none;
+    color: var(--link-color);
+    cursor: pointer;
+    transition: var(--link-transition);
+    padding: 0.5em;
+}
+
+.navbar a:hover {
+    color: var(--link-hover);
+}
+
+.navbar a:active {
+    color: var(--link-active);
+}
+
+.navbar .nav-right {
+    margin-left: auto;
+}
+
+.navbar-logo {
+    height: 2em;
+    width: auto;
+    filter: invert(0);
+}
+
+@media (prefers-color-scheme: dark) {
+    .navbar-logo {
+        filter: invert(1);
+    }
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        .navbar {
+            border-bottom: 1px solid #000;
+        }
+        
+        .navbar a {
+            border: 1px solid #000;
+            border-radius: 4px;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .navbar {
+            border-bottom: 1px solid #fff;
+        }
+        
+        .navbar a {
+            border: 1px solid #fff;
+            border-radius: 4px;
+        }
+    }
+}

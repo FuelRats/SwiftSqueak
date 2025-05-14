@@ -1,0 +1,44 @@
+.command-section summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    cursor: pointer;
+    outline: none;
+    padding: 0.25rem 0;
+}
+
+.command-section summary::before {
+    content: "▸";
+    font-size: 2rem;
+    line-height: 1;
+    margin-right: 0.5rem;
+    transition: transform 0.2s ease;
+}
+
+.command-section[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.command-section summary h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.command-section summary .description {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    flex: 1 1 100%;
+}
+
+@media (min-width: 600px) {
+    .command-section summary .description {
+        flex: 0 1 auto;
+    }
+}
+
+.command-list {
+    padding-top: 0.5rem;
+}

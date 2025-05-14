@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/xlexi/Lingo.git", from: Version(3, 0, 6)),
+        .package(url: "https://github.com/miroslavkovac/Lingo.git", from: Version(3, 1, 0)),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 10, 0)),
         .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 32, 3)),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 15, 1)),
@@ -21,9 +21,13 @@ let package = Package(
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 5, 1)),
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 18, 0)),
         .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 6, 0)),
+        .package(url: "https://github.com/vapor/sqlite-kit.git", from: Version(4, 5, 2)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 14, 2)),
         .package(url: "https://github.com/swift-server/swift-backtrace.git", from: Version(1, 3, 1)),
         .package(url: "https://github.com/vapor/websocket-kit.git", from: Version(2, 5, 0)),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
+        .package(url: "https://github.com/vapor-community/HTMLKit.git", branch: "main"),
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: Version(0, 59, 1)),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 15, 0))
     ],
@@ -45,8 +49,11 @@ let package = Package(
                 .product(name: "IRCKit", package: "IRCKit"),
                 .product(name: "SQLKit", package: "sql-kit"),
                 .product(name: "PostgresKit", package: "postgres-kit"),
+                .product(name: "SQLiteKit", package: "sqlite-kit"),
                 .product(name: "Backtrace", package: "swift-backtrace"),
-                .product(name: "WebSocketKit", package: "websocket-kit")
+                .product(name: "WebSocketKit", package: "websocket-kit"),
+                .product(name: "Vapor", package: "vapor"),
+                .product(name: "HTMLKit", package: "HTMLKit"),
             ]
         ),
         .testTarget(

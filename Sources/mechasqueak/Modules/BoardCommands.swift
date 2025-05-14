@@ -25,6 +25,7 @@
 import Foundation
 import IRCKit
 import Regex
+import HTMLKit
 
 class BoardCommands: IRCBotModule {
     var name: String = "Rescue Board"
@@ -43,15 +44,16 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         [
             "sync", "fbr", "refreshboard", "reindex", "resetboard", "forcerestartboard",
-            "forcerefreshboard", "frb", "boardrefresh",
+            "forcerefreshboard", "frb", "boardrefresh"
         ],
         category: .rescues,
         description:
             "Force MechaSqueak to perform a synchronization of data between itself and the rescue server.",
+        tags: ["refresh", "board", "force"],
         permission: .RescueWrite,
         allowedDestinations: .Channel
     )
-    var didReceiveSyncCommand = { command in
+    var didReceiveSyncCommand = { _ in
         await board.performSyncUntilSuccess()
     }
 
@@ -67,7 +69,7 @@ class BoardCommands: IRCBotModule {
             .argument("cr"),
             .argument("sys", "system", example: "NLTT 48288"),
             .argument("cmdr", "CMDR name", example: "Space Dawg"),
-            .argument("lang", "language code", example: "ru"),
+            .argument("lang", "language code", example: "ru")
         ],
         category: .board,
         description: "Create a new rescue case and add it to the board",
@@ -80,14 +82,13 @@ class BoardCommands: IRCBotModule {
         let codeRed = command.has(argument: "cr")
         let starSystem = command.argumentValue(for: "sys")
         let cmdrName = command.argumentValue(for: "cmdr")
-        var locale: Locale? = nil
+        var locale: Foundation.Locale?
         if let lang = command.argumentValue(for: "lang") {
             locale = Locale(identifier: lang)
         }
         var expansion: GameMode = .legacy
         if let expansionString = command.argumentValue(for: "mode"),
-            let parsedExpansion = GameMode.parsedFromText(text: expansionString)
-        {
+            let parsedExpansion = GameMode.parsedFromText(text: expansionString) {
             expansion = parsedExpansion
         }
         if command.options.contains("o") {
@@ -130,7 +131,7 @@ class BoardCommands: IRCBotModule {
         ["list"],
         [
             .options(["i", "a", "q", "r", "u", "@"]), .argument("pc"), .argument("xb"),
-            .argument("ps"), .argument("mode", "game version", example: "h"),
+            .argument("ps"), .argument("mode", "game version", example: "h")
         ],
         category: .board,
         description:
@@ -152,28 +153,24 @@ class BoardCommands: IRCBotModule {
             GamePlatform(rawValue: $0)
         })
 
-        var filterExpansion: GameMode? = nil
+        var filterExpansion: GameMode?
         if let expansionString = command.argumentValue(for: "mode"),
-            let parsedExpansion = GameMode.parsedFromText(text: expansionString)
-        {
+            let parsedExpansion = GameMode.parsedFromText(text: expansionString) {
             filterExpansion = parsedExpansion
         }
 
-        let rescues = await board.rescues.filter({ (caseId, rescue) in
+        let rescues = await board.getRescues().filter({ (_, rescue) in
             if filteredPlatforms.count > 0
-                && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false
-            {
+                && (rescue.platform == nil || filteredPlatforms.contains(rescue.platform!)) == false {
                 return false
             }
             if arguments.contains(.showOnlyAssigned) && rescue.rats.count == 0
-                && rescue.unidentifiedRats.count == 0
-            {
+                && rescue.unidentifiedRats.count == 0 {
                 return false
             }
 
             if arguments.contains(.showOnlyUnassigned)
-                && (rescue.rats.count > 0 || rescue.unidentifiedRats.count > 0)
-            {
+                && (rescue.rats.count > 0 || rescue.unidentifiedRats.count > 0) {
                 return false
             }
 
@@ -221,7 +218,7 @@ class BoardCommands: IRCBotModule {
                         "platform": rescue.platform.ircRepresentable,
                         "expansion": rescue.platform == .PC
                             ? rescue.expansion.shortIRCRepresentable : "",
-                        "includeCaseIds": arguments.contains(.includeCaseIds),
+                        "includeCaseIds": arguments.contains(.includeCaseIds)
                     ])) ?? ""
             return output
         })
@@ -234,13 +231,21 @@ class BoardCommands: IRCBotModule {
         ["clear", "close"],
         [
             .options(["f", "p"]), .param("case id/client", "4"),
-            .param("first limpet rat", "SpaceDawg", .standard, .optional),
+            .param("first limpet rat", "SpaceDawg", .standard, .optional)
         ],
         category: .board,
-        description:
-            "Closes a case and posts the paperwork link. Optional parameter takes the nick of the person that got first limpet (fuel+).",
+        description: "Closes a case and posts the paperwork link",
+        tags: ["rescue"],
         permission: .DispatchWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpView: {
+            HTMLKit.Group {
+                Anchor("Consult this page")
+                    .reference("https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182")
+                    .target(.blank)
+                " to see when cases should be closed and when they should be deleted"
+            }
+        }
     )
     var didReceiveCloseCommand = { command in
         let message = command.message
@@ -250,14 +255,13 @@ class BoardCommands: IRCBotModule {
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             if command.parameters.count > 1,
                 let (caseId, _) = await message.destination.member(named: command.parameters[1])?
-                    .getAssignedRescue()
-            {
+                    .getAssignedRescue() {
                 command.message.reply(
                     key: "board.close.suggestcase", fromCommand: command,
                     map: [
                         "caseId": caseId,
                         "rat": message.destination.member(named: command.parameters[1])?.nickname
-                            ?? "",
+                            ?? ""
                     ])
             }
             return
@@ -277,8 +281,7 @@ class BoardCommands: IRCBotModule {
                 let nick = message.destination.member(named: command.parameters[1]),
                 let rat = rescue.rats.first(where: { rat in
                     if let userId = rat.relationships.user?.id?.rawValue,
-                        let nickUserId = nick.associatedAPIData?.user?.id.rawValue
-                    {
+                        let nickUserId = nick.associatedAPIData?.user?.id.rawValue {
                         return userId == nickUserId
                     }
                     return false
@@ -295,7 +298,7 @@ class BoardCommands: IRCBotModule {
                     key: "board.close.notfound", fromCommand: command,
                     map: [
                         "caseId": caseId,
-                        "firstLimpet": command.parameters[1],
+                        "firstLimpet": command.parameters[1]
                     ])
                 return
             }
@@ -304,14 +307,13 @@ class BoardCommands: IRCBotModule {
 
             let currentRescues = await rat.getCurrentRescues()
             if currentRescues.contains(where: { $0.1.id == rescue.id }) == false,
-                let conflictCase = currentRescues.first, override == false
-            {
+                let conflictCase = currentRescues.first, override == false {
                 command.message.error(
                     key: "board.close.conflict", fromCommand: command,
                     map: [
                         "rat": target,
                         "closeCaseId": caseId,
-                        "conflictId": conflictCase.0,
+                        "conflictId": conflictCase.0
                     ])
                 return
             }
@@ -327,7 +329,7 @@ class BoardCommands: IRCBotModule {
                 key: "board.close.success", fromCommand: command,
                 map: [
                     "caseId": caseId,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ])
 
             guard configuration.general.drillMode == false else {
@@ -345,8 +347,7 @@ class BoardCommands: IRCBotModule {
                 if firstLimpet.relationships.user?.id.rawValue
                     == UUID(uuidString: "e9520722-02d2-4d69-9dba-c4e3ea727b14")
                     || firstLimpet.relationships.user?.id.rawValue
-                        == UUID(uuidString: "5ed94356-bdcc-4139-9208-3cec320d51c9")
-                {
+                        == UUID(uuidString: "5ed94356-bdcc-4139-9208-3cec320d51c9") {
                     key += ".aleethia"
                 }
                 message.client.sendMessage(
@@ -356,7 +357,7 @@ class BoardCommands: IRCBotModule {
                         "caseId": caseId,
                         "firstLimpet": target,
                         "client": rescue.clientDescription,
-                        "link": shortUrl,
+                        "link": shortUrl
                     ]
                 )
 
@@ -366,7 +367,7 @@ class BoardCommands: IRCBotModule {
                     mapping: [
                         "caseId": caseId,
                         "client": rescue.clientDescription,
-                        "link": shortUrl,
+                        "link": shortUrl
                     ]
                 )
                 return
@@ -377,7 +378,7 @@ class BoardCommands: IRCBotModule {
                     mapping: [
                         "caseId": caseId,
                         "client": rescue.clientDescription,
-                        "link": shortUrl,
+                        "link": shortUrl
                     ]
                 )
             }
@@ -387,7 +388,7 @@ class BoardCommands: IRCBotModule {
                 mapping: [
                     "caseId": caseId,
                     "link": shortUrl,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ]
             )
         } catch {
@@ -404,12 +405,20 @@ class BoardCommands: IRCBotModule {
         ["trash", "md", "purge", "mdadd", "yeet"],
         [
             .options(["f"]), .param("case id/client", "4"),
-            .param("message", "client left before rats were assigned", .continuous),
+            .param("message", "client left before rats were assigned", .continuous)
         ],
         category: .board,
         description: "Moves a case to the trash list with a message describing why it was deleted",
         permission: .DispatchWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .Channel,
+        helpView: {
+            HTMLKit.Group {
+                Anchor("Consult this page")
+                    .reference("https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182")
+                    .target(.blank)
+                " to see when cases should be deleted"
+            }
+        }
     )
     var didReceiveTrashCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
@@ -453,7 +462,7 @@ class BoardCommands: IRCBotModule {
                 key: "board.trash.success", fromCommand: command,
                 map: [
                     "caseId": caseId,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ])
         } catch {
             debug(String(describing: error))
@@ -489,7 +498,7 @@ class BoardCommands: IRCBotModule {
             key: "board.pwl.generated", fromCommand: command,
             map: [
                 "caseId": caseId,
-                "link": shortUrl,
+                "link": shortUrl
             ])
     }
 
@@ -497,7 +506,7 @@ class BoardCommands: IRCBotModule {
         ["quiet", "last"],
         [
             .argument("pc"), .argument("xb"), .argument("ps"),
-            .argument("mode", "game version", example: "h"),
+            .argument("mode", "game version", example: "h")
         ],
         category: .other,
         description: "Displays the amount of time since the last rescue",
@@ -512,18 +521,18 @@ class BoardCommands: IRCBotModule {
                 message: "Yeah no you're gonna have to make up your mind and pick one")
             return
         }
-        var lastSignalDate: Date? = nil
-        var platform: GamePlatform? = nil
+        var lastSignalDate: Date?
+        var platform: GamePlatform?
         var expansion: GameMode = .legacy
         if let expansionString = command.argumentValue(for: "mode"),
-            let parsedExpansion = GameMode.parsedFromText(text: expansionString)
-        {
+            let parsedExpansion = GameMode.parsedFromText(text: expansionString) {
             expansion = parsedExpansion
         }
         if platforms.count == 0 && command.argumentValue(for: "mode") != nil {
             platforms = [.PC]
         }
 
+        let lastSignalsRecieved = await board.getLastSignalsRecieved()
         if let commandPlatform = platforms.first {
             if expansion != .legacy && commandPlatform != .PC {
                 command.message.reply(
@@ -533,12 +542,10 @@ class BoardCommands: IRCBotModule {
                 return
             }
 
-            lastSignalDate =
-            await board.lastSignalsReceived[
-                    PlatformExpansion(platform: commandPlatform, expansion: expansion)]
+            lastSignalDate = lastSignalsRecieved[PlatformExpansion(platform: commandPlatform, expansion: expansion)]
             platform = commandPlatform
         } else {
-            lastSignalDate = await board.lastSignalsReceived.values.sorted(by: { $0 > $1 }).first
+            lastSignalDate = lastSignalsRecieved.values.sorted(by: { $0 > $1 }).first
         }
         var ircPlatform = platform != nil ? platform.ircRepresentable : ""
         if platform == .PC {
@@ -550,12 +557,14 @@ class BoardCommands: IRCBotModule {
                 key: "board.quiet.unknown", fromCommand: command,
                 map: [
                     "platform": ircPlatform
-                ])
+                ]
+            )
             return
         }
 
+        let rescues = await board.getRescues()
         guard
-            await board.rescues.first(where: { (caseId, rescue) -> Bool in
+            rescues.first(where: { (_, rescue) -> Bool in
                 return rescue.status != .Inactive
                     && (platform == nil
                         || (rescue.platform == platform && rescue.expansion == expansion))
@@ -567,12 +576,13 @@ class BoardCommands: IRCBotModule {
                 key: "board.quiet.currentcalljumps", fromCommand: command,
                 map: [
                     "platform": ircPlatform
-                ])
+                ]
+            )
             return
         }
 
         guard
-            await board.rescues.first(where: { rescue in
+            rescues.first(where: { rescue in
                 return rescue.1.status != .Inactive
                     && (platform == nil
                         || (rescue.1.platform == platform && rescue.1.expansion == expansion))
@@ -590,7 +600,8 @@ class BoardCommands: IRCBotModule {
                 key: "board.quiet.current", fromCommand: command,
                 map: [
                     "platform": ircPlatform
-                ])
+                ]
+            )
             return
         }
 
@@ -603,8 +614,9 @@ class BoardCommands: IRCBotModule {
                 key: "board.quiet.quiet", fromCommand: command,
                 map: [
                     "timespan": timespanString,
-                    "platform": ircPlatform,
-                ])
+                    "platform": ircPlatform
+                ]
+            )
             return
         }
 
@@ -613,8 +625,9 @@ class BoardCommands: IRCBotModule {
                 key: "board.quiet.notrecent", fromCommand: command,
                 map: [
                     "timespan": timespanString,
-                    "platform": ircPlatform,
-                ])
+                    "platform": ircPlatform
+                ]
+            )
             return
         }
 
@@ -622,8 +635,9 @@ class BoardCommands: IRCBotModule {
             key: "board.quiet.recent", fromCommand: command,
             map: [
                 "timespan": timespanString,
-                "platform": ircPlatform,
-            ])
+                "platform": ircPlatform
+            ]
+        )
     }
 
     @BotCommand(
@@ -632,6 +646,7 @@ class BoardCommands: IRCBotModule {
         category: .board,
         description:
             "Correct the system of a case to one of the options provided by the system correction search.",
+        tags: ["autocorrect", "auto", "correct"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -645,7 +660,7 @@ class BoardCommands: IRCBotModule {
                 key: "sysc.nocorrections", fromCommand: command,
                 map: [
                     "caseId": caseId,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ])
             return
         }
@@ -672,13 +687,12 @@ class BoardCommands: IRCBotModule {
             map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription,
-                "systemInfo": rescue.system.description,
+                "systemInfo": rescue.system.description
             ])
     }
 
     static func assertGetRescueId(command: IRCBotCommand, includingRecentlyClosed: Bool = false)
-        async -> (Int, Rescue)?
-    {
+        async -> (Int, Rescue)? {
         guard
             let rescue = await board.findRescue(
                 withCaseIdentifier: command.parameters[0],
@@ -700,6 +714,7 @@ class BoardCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Silences the prep warning on a case",
+        tags: ["silence", "stop", "prep"],
         permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
@@ -747,7 +762,7 @@ enum ListCommandArgument: String {
             .showOnlyPC: "Show only PC cases",
             .showOnlyXbox: "Show only Xbox cases",
             .showOnlyPS: "Show only Playstation cases",
-            .expansion: "Filter by game version",
+            .expansion: "Filter by game version"
         ]
         return maps[self]!
     }

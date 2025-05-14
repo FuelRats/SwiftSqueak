@@ -26,6 +26,7 @@ import AsyncHTTPClient
 import Foundation
 import IRCKit
 import NIO
+import HTMLKit
 
 class ManagementCommands: IRCBotModule {
     var name: String = "ManagementCommands"
@@ -38,6 +39,7 @@ class ManagementCommands: IRCBotModule {
         ["flushnames", "clearnames", "flushall", "invalidateall"],
         category: .management,
         description: "Invalidate the bots cache of API user data and fetch it again for all users.",
+        tags: ["nick", "user", "nickserv", "flush"],
         permission: .UserWrite
     )
     var didReceiveFlushAllCommand = { command in
@@ -63,7 +65,7 @@ class ManagementCommands: IRCBotModule {
         ["relaunch"],
         [.param("update link", "https://fuelrats.com/", .standard, .optional)],
         category: .management,
-        description: "Invalidate the bots cache of API user data and fetch it again for all users.",
+        description: "Restarts MechaSqueak",
         permission: .UserWrite
     )
     var didReceiveRebootCommand = { command in
@@ -89,6 +91,7 @@ class ManagementCommands: IRCBotModule {
         [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Invalidate a single name in the cache and fetch it again.",
+        tags: ["nick", "user", "nickserv"],
         permission: .RescueWrite
     )
     var didReceiveFlushCommand = { command in
@@ -117,10 +120,11 @@ class ManagementCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["groups", "permissions"],
+        ["groups", "permissions", "roles"],
         [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Lists the permissions of a specific person",
+        tags: ["group", "permission", "role"],
         permission: .UserRead
     )
     var didReceivePermissionsCommand = { command in
@@ -149,7 +153,7 @@ class ManagementCommands: IRCBotModule {
             key: "groups.response", fromCommand: command,
             map: [
                 "nick": command.parameters[0],
-                "groups": groups?.joined(separator: ", ") ?? "",
+                "groups": groups?.joined(separator: ", ") ?? ""
             ])
     }
 
@@ -164,16 +168,40 @@ class ManagementCommands: IRCBotModule {
         }
         return "Available permission groups: " + groupList.joined(separator: ", ")
     }
+    
+    static func generateGroupListView () -> Content {
+        HTMLKit.Group {
+            H5 {
+                "Available permission groups:"
+            }
+            let groups = mecha.groups.sorted(by: {
+                $0.attributes.priority.value > $1.attributes.priority.value
+            })
+            UnorderedList {
+                for group in groups {
+                    ListItem {
+                        Code {
+                            group.attributes.name.value
+                        }
+                        Span { " " }
+                        CommandPermissionGroupView(group: group)
+                    }
+                }
+            }
+        }
+    }
 
     @BotCommand(
-        ["addgroup"],
+        ["addgroup", "addrole"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Add a permission to a person",
+        tags: ["group", "permission", "role"],
         permission: .UserWrite,
         helpExtra: {
             return generateGroupList()
-        }
+        },
+        helpView: generateGroupListView
     )
     var didReceiveAddGroupCommand = { command in
         var getUserId = UUID(uuidString: command.parameters[0])
@@ -215,7 +243,7 @@ class ManagementCommands: IRCBotModule {
                 map: [
                     "group": group.attributes.name.value,
                     "groupId": group.id.rawValue.ircRepresentation,
-                    "userId": userId.ircRepresentation,
+                    "userId": userId.ircRepresentation
                 ])
         } catch let error as HTTPClient.Response {
             if error.status == .conflict {
@@ -233,14 +261,16 @@ class ManagementCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["delgroup"],
+        ["delgroup", "delreole"],
         [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Remove a permission from a person",
+        tags: ["group", "permission", "role", "delete"],
         permission: .UserWrite,
         helpExtra: {
             return generateGroupList()
-        }
+        },
+        helpView: generateGroupListView
     )
     var didReceiveDelGroupCommand = { command in
         var getUserId = UUID(uuidString: command.parameters[0])
@@ -282,7 +312,7 @@ class ManagementCommands: IRCBotModule {
                 map: [
                     "group": group.attributes.name.value,
                     "groupId": group.id.rawValue.ircRepresentation,
-                    "userId": userId.ircRepresentation,
+                    "userId": userId.ircRepresentation
                 ])
         } catch {
             command.message.error(key: "delgroup.error", fromCommand: command)
@@ -294,6 +324,7 @@ class ManagementCommands: IRCBotModule {
         [.param("nickname/user id", "SpaceDawg"), .param("timespan", "7d")],
         category: .management,
         description: "Suspend a user account, accepts IRC style timespans (0 for indefinite).",
+        tags: ["ban"],
         permission: .UserWrite
     )
     var didReceiveSuspendCommand = { command in
@@ -332,7 +363,7 @@ class ManagementCommands: IRCBotModule {
                 key: "suspend.success", fromCommand: command,
                 map: [
                     "userId": userId.ircRepresentation,
-                    "date": date.ircRepresentable,
+                    "date": date.ircRepresentable
                 ])
         } catch {
             command.message.error(key: "suspend.error", fromCommand: command)
@@ -344,6 +375,7 @@ class ManagementCommands: IRCBotModule {
         [.param("destination", "#ratchat"), .param("message", "squeak!", .continuous)],
         category: .utility,
         description: "Make the bot send an IRC message somewhere.",
+        tags: ["message"],
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
@@ -351,7 +383,7 @@ class ManagementCommands: IRCBotModule {
             key: "say.sending", fromCommand: command,
             map: [
                 "target": command.parameters[0],
-                "contents": command.parameters[1],
+                "contents": command.parameters[1]
             ])
         command.message.client.sendMessage(
             toTarget: command.parameters[0], contents: command.parameters[1])
@@ -361,10 +393,11 @@ class ManagementCommands: IRCBotModule {
         ["me", "action", "emote"],
         [
             .param("destination", "#ratchat"),
-            .param("message", "takes all the snickers", .continuous),
+            .param("message", "takes all the snickers", .continuous)
         ],
         category: .utility,
         description: "Make the bot send an IRC action (/me) somewhere.",
+        tags: ["/me"],
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in
@@ -372,7 +405,7 @@ class ManagementCommands: IRCBotModule {
             key: "me.sending", fromCommand: command,
             map: [
                 "target": command.parameters[0],
-                "contents": command.parameters[1],
+                "contents": command.parameters[1]
             ])
         command.message.client.sendActionMessage(
             toChannelName: command.parameters[0], contents: command.parameters[1])
@@ -382,7 +415,7 @@ class ManagementCommands: IRCBotModule {
         ["sendraw"],
         [
             .param("command"),
-            .param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional),
+            .param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional)
         ],
         category: nil,
         description: "Send a raw command to the IRC server",
@@ -397,7 +430,7 @@ class ManagementCommands: IRCBotModule {
             key: "sendraw", fromCommand: command,
             map: [
                 "command": command.parameters[0],
-                "contents": command.parameters.dropFirst().joined(separator: " "),
+                "contents": command.parameters.dropFirst().joined(separator: " ")
             ])
 
         command.message.client.send(

@@ -62,7 +62,7 @@ class NicknameLookupManager {
             }
         }
 
-        operation.onError = { error in
+        operation.onError = { _ in
         }
 
         self.queue.addOperation(operation)

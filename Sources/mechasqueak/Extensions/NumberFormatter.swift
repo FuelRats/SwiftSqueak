@@ -71,10 +71,10 @@ extension Double {
         scientificFormatter.positiveFormat = "0.###E+0"
         scientificFormatter.exponentSymbol = "E"
 
-        if self > 3.1 * pow(10, 13) {
+        if self > 3.1 * Double.pow(10, 13) {
             formattedDistance =
                 "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
-        } else if self > 3.6 * pow(10, 6) {
+        } else if self > 3.6 * Double.pow(10, 6) {
             formattedDistance = (formatter.string(from: lightYears) ?? "\(lightYears)") + "ly"
         } else if self < 1 {
             formattedDistance = "\(scientificFormatter.string(from: self) ?? "\(self)")ls"
@@ -124,18 +124,20 @@ extension Double {
     func distanceToSeconds(destinationGravity: Bool = false, sco: Double? = nil) -> Double {
         var distance = self
         if destinationGravity {
-            distance = distance / 2
+            distance /= 2
         }
 
         var seconds = 0.0
         if let sco = sco {
            seconds = timeToTravel(lightSeconds: distance, maxSpeed: sco) ?? 0
         } else if distance < 100000 {
-            seconds = 8.9034 * pow(distance, 0.3292)
+            seconds = 8.9034 * Double.pow(distance, 0.3292)
         } else if distance < 1_907_087 {
             // -8*(10 ** -23) * (x ** 4) + 4*(10 ** -16) * (x ** 3) - 8*(10 ** -10) * (x ** 2) + 0.0014 * x + 264.79
-            let part1 = -8 * pow(10, -23) * pow(distance, 4)
-            let part2 = 4 * pow(10, -16) * pow(distance, 3) - 8 * pow(10, -10) * pow(distance, 2)
+            let part1 = -8 * Double.pow(10, -23) * Double.pow(distance, 4)
+            let d2 = distance * distance
+            let d3 = d2 * distance
+            let part2 = 4e-16 * d3 - 8e-10 * d2
             let part3 = 0.0014 * distance + 264.79
             seconds = part1 + part2 + part3
         } else {
@@ -147,13 +149,11 @@ extension Double {
         }
 
         if destinationGravity {
-            seconds = seconds * 2
+            seconds *= 2
         }
         return seconds
     }
 }
-
-import Foundation
 
 // Logistic curve parameters (fitted to Elite Dangerous supercruise data)
 let accelerationRate = 0.244343173        // Controls curve steepness
@@ -170,9 +170,9 @@ func distanceTravelled(upTo time: Double, steps: Int = 1000, maxSpeed: Double) -
     let dt = time / Double(steps)
     var distance = 0.0
 
-    for i in 0..<steps {
-        let t1 = Double(i) * dt
-        let t2 = Double(i + 1) * dt
+    for step in 0..<steps {
+        let t1 = Double(step) * dt
+        let t2 = Double(step + 1) * dt
         let v1 = supercruiseSpeed(at: t1, maxSpeed: maxSpeed)
         let v2 = supercruiseSpeed(at: t2, maxSpeed: maxSpeed)
         distance += 0.5 * (v1 + v2) * dt
@@ -182,14 +182,19 @@ func distanceTravelled(upTo time: Double, steps: Int = 1000, maxSpeed: Double) -
 }
 
 // Find time (in seconds) to travel given distance (in light-seconds)
-func timeToTravel(lightSeconds targetDistance: Double, tolerance: Double = 1e-6, maxSearchTime: Double = 400_000, maxSpeed: Double) -> Double? {
+func timeToTravel(
+    lightSeconds targetDistance: Double,
+    tolerance: Double = 1e-6,
+    maxSearchTime: Double = 400_000,
+    maxSpeed: Double
+) -> Double? {
     var low = 0.0
     var high = maxSearchTime
 
     while high - low > tolerance {
         let mid = (low + high) / 2.0
-        let d = distanceTravelled(upTo: mid, maxSpeed: maxSpeed)
-        if d < targetDistance {
+        let distance = distanceTravelled(upTo: mid, maxSpeed: maxSpeed)
+        if distance < targetDistance {
             low = mid
         } else {
             high = mid

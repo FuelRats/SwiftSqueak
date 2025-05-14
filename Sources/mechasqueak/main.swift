@@ -28,6 +28,7 @@ import Foundation
 import IRCKit
 import Lingo
 import NIO
+import SQLKit
 
 Backtrace.install()
 
@@ -37,7 +38,7 @@ try "\(processId)".write(
     encoding: .utf8)
 
 let httpClient = HTTPClient(
-    eventLoopGroupProvider: .createNew,
+    eventLoopGroupProvider: .singleton,
     configuration: .init(
         redirectConfiguration: .none,
         timeout: .init(connect: .seconds(5), read: .seconds(180))
@@ -50,13 +51,13 @@ if CommandLine.arguments.count > 1 {
     configPath = URL(fileURLWithPath: CommandLine.arguments[1])
 }
 
-func loadConfiguration() -> MechaConfiguration {
+func loadConfiguration() throws -> MechaConfiguration {
     guard let configData = try? Data(contentsOf: configPath) else {
         fatalError("Could not locate configuration file in \(configPath.absoluteString)")
     }
 
     let configDecoder = JSONDecoder()
-    return try! configDecoder.decode(MechaConfiguration.self, from: configData)
+    return try configDecoder.decode(MechaConfiguration.self, from: configData)
 }
 
 func debug(_ output: String) {
@@ -65,8 +66,8 @@ func debug(_ output: String) {
     }
 }
 
-var configuration = loadConfiguration()
-let lingo = try! Lingo(
+var configuration = try loadConfiguration()
+let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 class MechaSqueak {
@@ -85,8 +86,10 @@ class MechaSqueak {
     var sectors: [StarSector] = []
     var groups: [Group] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
-    static var lastDeltaMessageTime: Date? = nil
+    static var lastDeltaMessageTime: Date?
     let ratSocket: RatSocket?
+    var webServer: WebServer?
+    var sqliteDatabase: SQLDatabase?
 
     init() {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -129,7 +132,7 @@ class MechaSqueak {
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
             SessionLogger(moduleManager),
-            Translate(moduleManager),
+            Translate(moduleManager)
         ]
 
         if configuration.queue != nil {
@@ -139,11 +142,23 @@ class MechaSqueak {
         ratSocket = RatSocket()
 
         Task {
+            if let webServerConfiguration = configuration.webServer {
+                do {
+                    self.webServer = try await WebServer(configuration: webServerConfiguration)
+                    try await self.webServer?.start()
+                } catch {
+                    print("Failed to start web server: \(error)")
+                }
+            }
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
             self.sectors = try await SystemsAPI.fetchSectorList()
             self.groups = try await Group.getList().body.data?.primary.values ?? []
-
-            ReferenceGenerator.generate(inPath: configuration.sourcePath)
+            if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
+                self.sqliteDatabase = database
+                for command in MechaSqueak.commands {
+                    try await insertCommand(command, on: database)
+                }
+            }
         }
     }
 
@@ -166,14 +181,12 @@ class MechaSqueak {
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased()
-                == configuration.general.rescueChannel.lowercased()
-        {
+                == configuration.general.rescueChannel.lowercased() {
             mecha.rescueChannel = userJoin.channel
         }
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased()
-                == configuration.general.reportingChannel.lowercased()
-        {
+                == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
             Task {
                 await board.performSyncUntilSuccess()
@@ -184,16 +197,14 @@ class MechaSqueak {
                 "/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             if let releaseName = release, releaseName.count > 0 {
-                mecha.reportingChannel?.send(
-                    message:
-                        "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/\(releaseName)"
-                )
+                mecha.reportingChannel?.send(key: "update", map: [
+                    "release": releaseName
+                ])
             }
         } else {
             accounts.lookup(user: userJoin.user)
             if let (caseId, rescue) = await board.findRescue(
-                withCaseIdentifier: userJoin.user.nickname)
-            {
+                withCaseIdentifier: userJoin.user.nickname) {
                 rescue.clientLastHostName = userJoin.user.hostmask
 
                 var quotes = rescue.quotes
@@ -219,7 +230,7 @@ class MechaSqueak {
                         "caseId": caseId,
                         "client": rescue.clientDescription,
                         "platform": rescue.platform.ircRepresentable,
-                        "system": rescue.system.description,
+                        "system": rescue.system.description
                     ])
             }
         }
@@ -227,8 +238,7 @@ class MechaSqueak {
 
     @AsyncEventListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
-        if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: userPart.user.nickname)
-        {
+        if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: userPart.user.nickname) {
             guard rescue.channel == userPart.channel else {
                 return
             }
@@ -253,7 +263,7 @@ class MechaSqueak {
                 key: "board.clientquit",
                 map: [
                     "caseId": caseId,
-                    "client": rescue.clientDescription,
+                    "client": rescue.clientDescription
                 ])
         }
 
@@ -262,15 +272,13 @@ class MechaSqueak {
     @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
         if let subscription = Translate.clientTranslationSubscribers[
-            userQuit.raw.sender?.nickname ?? ""]
-        {
+            userQuit.raw.sender?.nickname ?? ""] {
             Translate.clientTranslationSubscribers[userQuit.raw.sender?.nickname ?? ""] = nil
         }
 
         try? await Task.sleep(nanoseconds: 2 * 10 ^ 8)  // 200ms
         if let sender = userQuit.raw.sender,
-            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname)
-        {
+            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
             await board.cancelPrepTimer(forRescue: rescue)
             var quotes = rescue.quotes
             quotes.removeAll(where: {
@@ -278,8 +286,7 @@ class MechaSqueak {
             })
 
             if let quitMessage = userQuit.raw.parameters.first,
-                quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ")
-            {
+                quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ") {
                 if rescue.rats.count > 0 {
                     rescue.notes = "Client was banned"
                     let url =
@@ -293,7 +300,7 @@ class MechaSqueak {
                             map: [
                                 "caseId": caseId,
                                 "link": url,
-                                "client": rescue.clientDescription,
+                                "client": rescue.clientDescription
                             ])
                         await board.remove(id: caseId)
                     } catch {
@@ -308,7 +315,7 @@ class MechaSqueak {
                             key: banDueToVpn ? "board.bannedvpn" : "board.bannedmd",
                             map: [
                                 "caseId": caseId,
-                                "client": rescue.clientDescription,
+                                "client": rescue.clientDescription
                             ])
                         await board.remove(id: caseId)
                     } catch {
@@ -335,7 +342,7 @@ class MechaSqueak {
                     key: "board.clientquit",
                     map: [
                         "caseId": caseId,
-                        "client": rescue.clientDescription,
+                        "client": rescue.clientDescription
                     ])
             }
         }
@@ -348,8 +355,7 @@ class MechaSqueak {
         }
 
         if channelMessage.destination.name.lowercased()
-            == configuration.general.rescueChannel.lowercased()
-        {
+            == configuration.general.rescueChannel.lowercased() {
             mecha.ratSocket?.broadcast(
                 event: .channelMessage,
                 payload: ChannelMessageEventPayload(channelMessage: channelMessage))
@@ -357,11 +363,9 @@ class MechaSqueak {
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
             && channelMessage.destination.name.lowercased()
-                != configuration.general.rescueChannel.lowercased()
-        {
+                != configuration.general.rescueChannel.lowercased() {
             if let deltaInterval = lastDeltaMessageTime,
-                Date().timeIntervalSince(deltaInterval) < 0.5
-            {
+                Date().timeIntervalSince(deltaInterval) < 0.5 {
                 lastDeltaMessageTime = nil
                 DispatchQueue.main.asyncAfter(
                     deadline: .now() + .seconds(1),
@@ -382,8 +386,7 @@ class MechaSqueak {
         }
 
         if echoMessage.destination.name.lowercased()
-            == configuration.general.rescueChannel.lowercased()
-        {
+            == configuration.general.rescueChannel.lowercased() {
             mecha.ratSocket?.broadcast(
                 event: .channelMessage,
                 payload: ChannelMessageEventPayload(channelMessage: echoMessage))
@@ -407,7 +410,7 @@ class MechaSqueak {
                 map: [
                     "caseId": caseId,
                     "client": rescue.clientDescription,
-                    "newNick": nickChange.newNick,
+                    "newNick": nickChange.newNick
                 ])
         }
     }

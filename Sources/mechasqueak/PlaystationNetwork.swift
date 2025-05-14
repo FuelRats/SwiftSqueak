@@ -57,7 +57,7 @@ struct PlaystationNetwork {
                 "refresh_token": psnConfig.refreshToken,
                 "grant_type": "refresh_token",
                 "token_format": "jwt",
-                "scope": "psn:mobile.v2.core psn:clientapp",
+                "scope": "psn:mobile.v2.core psn:clientapp"
             ].formUrlEncoded
 
         let (result, _) = try await URLSession.shared.data(for: request, delegate: nil)
@@ -73,8 +73,7 @@ struct PlaystationNetwork {
     }
 
     static func performRetryingProfileLookup(name: String, retried: Bool = false) async
-        -> ProfileLookup
-    {
+        -> ProfileLookup {
         guard let psnConfig = configuration.psn else {
             return .failure
         }
@@ -88,12 +87,28 @@ struct PlaystationNetwork {
             return .failure
         }
         url.queryItems = []
-        url.queryItems?.append(
-            URLQueryItem(
-                name: "fields",
-                value:
-                    "npId,onlineId,accountId,avatarUrls,plus,aboutMe,languagesUsed,trophySummary(@default,level,progress,earnedTrophies),isOfficiallyVerified,personalDetail(@default,profilePictureUrls),personalDetailSharing,personalDetailSharingRequestMessageFlag,primaryOnlineStatus,presences(@default,@titleInfo,platform,lastOnlineDate,hasBroadcastData),requestMessageFlag,blocking,friendRelation,following,consoleAvailability"
-            ))
+        let fields = [
+            "npId",
+            "onlineId",
+            "accountId",
+            "avatarUrls",
+            "plus",
+            "aboutMe",
+            "languagesUsed",
+            "trophySummary(@default,level,progress,earnedTrophies)",
+            "isOfficiallyVerified",
+            "personalDetail(@default,profilePictureUrls)",
+            "personalDetailSharing",
+            "personalDetailSharingRequestMessageFlag",
+            "primaryOnlineStatus",
+            "presences(@default,@titleInfo,platform,lastOnlineDate,hasBroadcastData)",
+            "requestMessageFlag",
+            "blocking",
+            "friendRelation",
+            "following",
+            "consoleAvailability"
+        ]
+        url.queryItems?.append(URLQueryItem(name: "fields", value: fields.joined(separator: ",")))
         do {
             var request = try HTTPClient.Request(url: url.url!, method: .GET)
 
@@ -200,9 +215,7 @@ struct PlaystationNetwork {
             if status == .online {
                 return IRCFormat.color(.LightGreen, "(Online)")
             }
-            if let lastSeen = self.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(
-                maximumUnits: 1)
-            {
+            if let lastSeen = self.basicPresence.primaryPlatformInfo?.lastOnlineDate.timeAgo(maximumUnits: 1) {
                 return IRCFormat.color(.LightGrey, "(Offline, last seen \(lastSeen) ago)")
             }
             return IRCFormat.color(.LightGrey, "(Offline)")
