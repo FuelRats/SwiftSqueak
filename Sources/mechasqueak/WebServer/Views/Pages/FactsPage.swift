@@ -21,7 +21,7 @@ struct FactsPage: View {
                             .placeholder("Search facts…")
                             .custom(key: "autocomplete", value: "off")
                             .custom(key: "hx-get", value: "/fact-search")
-                            .custom(key: "hx-target", value: "#facts-list")
+                            .custom(key: "hx-target", value: "#fact-list")
                             .custom(key: "hx-trigger", value: "input changed delay:300ms")
                     }
                     .class("search fact-search")

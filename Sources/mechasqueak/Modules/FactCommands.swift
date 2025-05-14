@@ -123,6 +123,28 @@ class FactCommands: IRCBotModule {
             )
         }
     }
+    
+    @BotCommand(
+        ["searchfacts", "factsearch", "factssearch"],
+        [.param("search term", "log in to open", .continuous)],
+        category: .facts,
+        description: "Search for facts"
+    )
+    var didReceiveFactSearchCommand = { command in
+        let search = command.parameters[0]
+        guard let facts = try? await Fact.search(search) else {
+            return
+        }
+        command.message.replyPrivate(
+            key: "facts.list", fromCommand: command,
+            map: [
+                "category": "Search results",
+                "language": command.locale.englishDescription,
+                "count": facts.count,
+                "facts": facts.map({ "!\($0.canonicalName)" }).joined(separator: ", ")
+            ]
+        )
+    }
 
     @BotCommand(
         ["addfact"],

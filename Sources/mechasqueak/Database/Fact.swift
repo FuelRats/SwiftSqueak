@@ -145,7 +145,10 @@ struct Fact: Codable, Hashable {
         return items.map({ FactCategory(key: $0.key, facts: $0.value) })
     }
     
-    public static func search(_ query: String, locale: Locale = Locale(identifier: "en")) async throws -> [Fact] {
+    public static func search(
+        _ query: String,
+        locale: Locale = Locale(identifier: "en")
+    ) async throws -> [GroupedFact] {
         let lhs = SQLFunction("to_tsvector", args: SQLLiteral.string("english"), SQLIdentifier("message"))
         let rhs = SQLFunction("plainto_tsquery", args: SQLLiteral.string("english"), SQLBind(query))
         let searchExpression = SQLBinaryExpression(left: lhs, op: SQLRaw(" @@ "), right: rhs)
@@ -159,7 +162,7 @@ struct Fact: Codable, Hashable {
             .where(searchExpression)
             .where("language", .equal, SQLBind(locale.short))
             .all()
-        return rows.compactMap { try? $0.decode(model: Fact.self) }
+        return rows.compactMap { try? $0.decode(model: Fact.self) }.groupedOrdered
     }
 
     public static func create(
@@ -416,5 +419,32 @@ extension Array where Element == Fact {
                 }
                 return facts
             })
+    }
+    
+    var groupedOrdered: [GroupedFact] {
+        return self.reduce(
+            [GroupedFact](),
+            { facts, fact in
+                var facts = facts
+                if let existingIndex = facts.firstIndex(where: {
+                    $0.canonicalName == fact.id
+                }) {
+                    var entry = facts[existingIndex]
+                    if entry.aliases.contains(fact.alias) == false {
+                        entry.aliases.append(fact.alias)
+                    }
+                    entry.messages[fact.language] = fact
+                    facts[existingIndex] = entry
+                } else {
+                    facts.append(GroupedFact(
+                        canonicalName: fact.id,
+                        messages: [fact.language: fact],
+                        aliases: [fact.fact],
+                        category: fact.category
+                    ))
+                }
+                return facts
+            }
+        )
     }
 }

@@ -30,6 +30,20 @@ struct Routes: RouteCollection {
             }
         }
         
+        routes.get("command-search") { req in
+            let search = (try? req.query.get(String.self, at: "query")) ?? ""
+            if search.isEmpty {
+                return try await req.htmlkit.render(CommandsListView())
+            }
+            let results = (try? await searchCommands(query: search, on: mecha.sqliteDatabase!)) ?? []
+            let commands = results.compactMap({ result -> IRCBotCommandDeclaration? in
+                return MechaSqueak.commands.first(where: {
+                    $0.commands[0].lowercased() == result.name
+                })
+            })
+            return try await req.htmlkit.render(CommandSearchView(commands: commands))
+        }
+        
         routes.get("facts") { req in
             let facts = (try? await Fact.getFactsGroupedByCategory()) ?? []
             let allFacts = Array((try? await Fact.getAllFacts()) ?? []).grouped.values.sorted(by: {
@@ -48,20 +62,6 @@ struct Routes: RouteCollection {
             }
         }
         
-        routes.get("command-search") { req in
-            let search = (try? req.query.get(String.self, at: "query")) ?? ""
-            if search.isEmpty {
-                return try await req.htmlkit.render(CommandsListView())
-            }
-            let results = (try? await searchCommands(query: search, on: mecha.sqliteDatabase!)) ?? []
-            let commands = results.compactMap({ result -> IRCBotCommandDeclaration? in
-                return MechaSqueak.commands.first(where: {
-                    $0.commands[0].lowercased() == result.name
-                })
-            })
-            return try await req.htmlkit.render(CommandSearchView(commands: commands))
-        }
-        
         routes.get("fact-message") { req in
             let name = (try? req.query.get(String.self, at: "name")) ?? ""
             let locale = (try? req.query.get(String.self, at: "locale")) ?? ""
@@ -70,6 +70,22 @@ struct Routes: RouteCollection {
             }
             
             return try await req.htmlkit.render(FactMessageView(fact: fact))
+        }
+        
+        routes.get("fact-search") { req in
+            let search = (try? req.query.get(String.self, at: "query")) ?? ""
+            let facts = (try? await Fact.search(search)) ?? []
+            if search.isEmpty {
+                let facts = (try? await Fact.getFactsGroupedByCategory()) ?? []
+                let allFacts = Array((try? await Fact.getAllFacts()) ?? []).grouped.values.sorted(by: {
+                    $0.canonicalName < $1.canonicalName
+                })
+                
+                let platformFacts = allFacts.filter({ $0.isPlatformFact }).platformGrouped
+                return try await req.htmlkit.render(FactListView(factCategories: facts, platformFacts: platformFacts))
+            }
+            
+            return try await req.htmlkit.render(FactSearchView(facts: facts))
         }
         
         routes.get("platform-fact") { req in
