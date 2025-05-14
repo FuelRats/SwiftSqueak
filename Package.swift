@@ -54,8 +54,7 @@ let package = Package(
                 .product(name: "WebSocketKit", package: "websocket-kit"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "HTMLKit", package: "HTMLKit"),
-            ],
-            plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+            ]
         ),
         .testTarget(
             name: "mechasqueakTests",

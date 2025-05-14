@@ -46,7 +46,7 @@ jobs:
         run: swift --version
 
       - name: Build project (no plugin execution)
-        run: swift build --disable-build-tools --build-tests
+        run: swift build --build-tests
 
       - name: Install SwiftLint CLI
         run: |
