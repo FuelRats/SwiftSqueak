@@ -132,12 +132,12 @@ extension SystemsAPI.Star {
             case (let spectral, let lum, _)
             where spectral?.within([.K, .M]) == true && lum.within([.IV, .IVa, .IVb, .IVab]) == true:
                 return "Red sub-giant"
-
+          
             case (.O, _, _):
-                return "Blue-white star"
+                return "Blue star"
 
             case (.B, _, _):
-                return "Blue star"
+                return "Blue-white star"
 
             case (.A, _, _):
                 return "White star"
