@@ -45,15 +45,13 @@ jobs:
       - name: Confirm Swift version
         run: swift --version
 
-      - name: Build project (no plugin execution)
+      - name: Build project
         run: swift build --build-tests
 
-      - name: Install SwiftLint CLI
+      - name: Run SwiftLint via Docker
         run: |
-          curl -L https://github.com/realm/SwiftLint/releases/download/0.54.0/swiftlint_linux.zip -o swiftlint.zip
-          unzip swiftlint.zip -d swiftlint
-          sudo mv swiftlint/swiftlint /usr/local/bin
-          swiftlint version
-
-      - name: Run SwiftLint
-        run: swiftlint --strict
+          docker run --rm \
+            -v "$(pwd):/swiftlint" \
+            -w /swiftlint \
+            ghcr.io/realm/swiftlint \
+            swiftlint --strict
