@@ -352,7 +352,7 @@
     "queuestats.date": "A valid date must be given to !queuestats as year-month-day",
     "queuestats.stats": "%{totalClients} total clients where %{instantJoin} instantly joined and %{queuedJoin} were queued. Average queue time was %{averageQueuetime} and the average rescue time was %{averageRescuetime}. The longest queuetime was %{longestQueuetime} and %{lostQueues} clients were lost in the queue.",
     "help.howto": "This is a list of MechaSqueak's command categories, to see a detailed view of all the commands in a category, do \u0002!help <category>\u0002, (e.g !help board). To see information about a specific command, do \u0002!help !command\u0002 (e.g !help !assign).",
-    "help.webpage": "A list of commands are also available at: https://t.fuelr.at/mechacmd",
+    "help.webpage": "A list of commands are also available at: https://mecha.fuelrats.com/commands",
     "help.nofacts": "Information commands such as !prep and !pcwing are not listed here, to see a list of those, use !facts.",
     "help.categoryerror": "%{category} is not in the categories list. To list all categories, do !help. To see help for a specific command, add a ! before the command.",
     "help.categorylist": "Showing commands in the %{category} category. To see see more information about the command, do !help !command (e.g !help !assign).",
