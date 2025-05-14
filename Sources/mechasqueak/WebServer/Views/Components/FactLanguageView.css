@@ -26,3 +26,34 @@
 .fact-language pre {
     margin: 0;
 }
+
+@media (prefers-contrast: more) {
+    :root {
+        .fact-language {
+            background-color: #fff;
+            border: 1px solid #000;
+            color: #000;
+        }
+        
+        .fact-language.active {
+            background-color: #000;
+            border: 1px solid #fff;
+            color: #fff;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .fact-language {
+            background-color: #000;
+            border: 1px solid #fff;
+            color: #fff;
+        }
+        .fact-language.active {
+            background-color: #fff;
+            border: 1px solid #000;
+            color: #000;
+        }
+    }
+}

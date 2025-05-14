@@ -146,3 +146,20 @@
     content: "\f06e";
 }
 
+@media (prefers-contrast: more) {
+    :root {
+        .command-permission-group {
+            background-color: #000;
+            color: #fff;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .command-permission-group {
+            background-color: #fff;
+            color: #000;
+        }
+    }
+}

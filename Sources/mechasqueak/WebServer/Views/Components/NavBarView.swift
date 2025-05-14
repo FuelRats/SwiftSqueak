@@ -4,6 +4,10 @@ struct NavbarComponent: View {
     var body: Content {
         HTMLKit.Group {
             Nav {
+                Image()
+                    .source("/images/logo.png")
+                    .alternate("Fuel Rats Logo")
+                    .class("navbar-logo")
                 Anchor("Home")
                     .custom(key: "hx-get", value: "/home")
                     .custom(key: "hx-target", value: "#main-content")
