@@ -44,6 +44,18 @@ class TweetCommands: IRCBotModule {
         helpExtra: {
             return
                 "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
+        },
+        helpView: {
+            HTMLKit.Group {
+                "The Mastodon is at "
+                Anchor("fuelratsalerts@mastodon.localecho.net")
+                    .reference("https://mastodon.localecho.net/@fuelratsalerts")
+                    .target(.blank)
+                " and the BlueSky at "
+                Anchor("alerts.fuelrats.com")
+                    .reference("https://alerts.fuelrats.com/")
+                    .target(.blank)
+            }
         }
     )
     var didReceiveTweetCommand = { command in
