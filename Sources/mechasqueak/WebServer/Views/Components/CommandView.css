@@ -50,6 +50,7 @@
     font-weight: bold;
     font-family: monospace;
     color: var(--link-color);
+    padding-right: 0.5em;
 }
 
 .command-options ul,
@@ -64,11 +65,6 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-}
-
-.cmmand-options-description,
-.command-arguments-description {
-    margin-left: 0.4em;
 }
 
 .command-example {
