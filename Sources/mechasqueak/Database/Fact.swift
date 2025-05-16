@@ -228,11 +228,11 @@ struct Fact: Codable, Hashable {
         })
     }
 
-    public static func create(alias: String, forName name: String) async throws {
+    public static func create(alias: String, forName name: String, category: String?) async throws {
         let createDate = Date()
         return try await sql.insert(into: "facts")
-            .columns("id", "alias", "createdAt", "updatedAt")
-            .values(SQLBind(name), SQLBind(alias), SQLBind(createDate), SQLBind(createDate))
+            .columns("id", "alias", "createdAt", "updatedAt", "category")
+            .values(SQLBind(name), SQLBind(alias), SQLBind(createDate), SQLBind(createDate), SQLBind(category))
             .run().asContinuation()
     }
 
@@ -346,28 +346,18 @@ struct GroupedFact: Codable {
     }
 
     static func get(name: String) async throws -> GroupedFact? {
-        let facts = try await sql.select().columns([
-            SQLColumn("id", table: "aliases"),
-            SQLAlias(SQLColumn("alias", table: "aliases"), as: SQLIdentifier("fact")),
-            SQLColumn("createdAt", table: "factmessages"),
-            SQLColumn("updatedAt", table: "factmessages"),
-            SQLColumn("language", table: "factmessages"),
-            SQLColumn("author", table: "factmessages"),
-            SQLColumn("message", table: "factmessages")
-        ])
-        .from("facts")
-        .join(
-            SQLAlias(SQLIdentifier("facts"), as: SQLIdentifier("aliases")),
-            method: SQLJoinMethod.left,
-            on: SQLColumn("id", table: "facts"), .equal, SQLColumn("id", table: "aliases")
-        )
-        .join(
-            "factmessages",
-            method: .left,
-            on: "\(ident: "facts").\(ident: "id")=\(ident: "factmessages").\(ident: "fact")" as SQLQueryString
-        )
-        .where(SQLColumn("alias", table: "facts"), .equal, SQLBind(name))
-        .all(decoding: Fact.self).asContinuation()
+        let facts = try await sql.select().column("*")
+            .from("facts")
+            .join(
+                "factmessages",
+                method: .left,
+                on:
+                    """
+                    \(ident: "facts").\(ident: "id") = \(ident: "factmessages").\(ident: "fact")
+                    """ as SQLQueryString
+            )
+            .where(SQLColumn("alias", table: "facts"), .equal, SQLBind(name))
+            .all(decoding: Fact.self)
         return facts.grouped.values.first
     }
 }
