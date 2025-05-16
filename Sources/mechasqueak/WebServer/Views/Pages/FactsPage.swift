@@ -1,6 +1,7 @@
 import HTMLKit
 
 struct FactsPage: View {
+    static let title = "Facts | MechaSqueak Docs"
 
     struct Context {}
     
@@ -9,6 +10,9 @@ struct FactsPage: View {
 
     var body: Content {
         Div {
+            Title {
+                FactsPage.title
+            }
             TableOfContentsView(items: factCategories)
             Anchor("↑ TOC").reference("#toc").class("toc-jump")
             Div {
