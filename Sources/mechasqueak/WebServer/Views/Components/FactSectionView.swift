@@ -6,12 +6,14 @@ struct FactSectionView: View {
     var body: Content {
         let categoryName = FactCommands.factCategoryNames[category.key] ?? category.key.firstCapitalized
         
-        Div {
-            H2 {
-                categoryName
-                
-                ShareAnchorView(value: category.key)
-            }.class("section-heading")
+        Details {
+            Summary {
+                H2 {
+                    categoryName
+                    
+                    ShareAnchorView(value: category.key)
+                }.class("section-heading")
+            }
 
             Div {
                 for fact in category.facts {
@@ -20,6 +22,7 @@ struct FactSectionView: View {
             }
             .class("fact-list")
         }
+        .isOpen(true)
         .id(category.key)
         .class("section fact-section")
     }
