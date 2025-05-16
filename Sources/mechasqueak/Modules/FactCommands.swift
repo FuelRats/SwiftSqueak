@@ -358,7 +358,7 @@ class FactCommands: IRCBotModule {
                 return
             }
 
-            try await Fact.create(alias: alias, forName: fact.canonicalName)
+            try await Fact.create(alias: alias, forName: fact.canonicalName, category: fact.category)
             command.message.reply(
                 key: "aliasfact.added", fromCommand: command,
                 map: [
