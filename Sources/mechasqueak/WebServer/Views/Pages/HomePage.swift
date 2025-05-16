@@ -1,11 +1,15 @@
 import HTMLKit
 
 struct HomePage: View {
+    static let title = "Home | MechaSqueak Docs"
 
     struct Context {}
 
     var body: Content {
         Div {
+            Title {
+                HomePage.title
+            }
             H1 { "MechaSqueak" }
             Paragraph {
                 "Welcome to the MechaSqueak help site. " +

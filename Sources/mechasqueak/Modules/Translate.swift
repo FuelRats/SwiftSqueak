@@ -191,23 +191,7 @@ class Translate: IRCBotModule {
             "Subscribe to automatic translations of client messages by either private message, or notice",
         tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
-        allowedDestinations: .PrivateMessage,
-        helpExtra: {
-            "Follow this guide to change how notices appear in HexChat " +
-            "https://hexchat.readthedocs.io/en/latest/tips.html#how-to-make-notices-show-up-in-a-consistent-location"
-        },
-        helpView: {
-            HTMLKit.Group {
-                "Follow "
-                Anchor("this guide")
-                    .reference(
-                        "https://hexchat.readthedocs.io/en/latest/tips.html" +
-                        "#how-to-make-notices-show-up-in-a-consistent-location"
-                    )
-                    .target(.blank)
-                " to change how notices appear in HexChat"
-            }
-        }
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveTranslateSubscribeCommand = { command in
         guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")

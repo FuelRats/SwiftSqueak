@@ -1,11 +1,15 @@
 import HTMLKit
 
 struct CommandsPage: View {
+    static let title = "Commands | MechaSqueak Docs"
 
     struct Context {}
 
     var body: Content {
         Div {
+            Title {
+                CommandsPage.title
+            }
             TableOfContentsView(items: HelpCategory.allCases)
             Anchor("↑ TOC").reference("#toc").class("toc-jump")
             Div {

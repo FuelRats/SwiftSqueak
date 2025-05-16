@@ -1,13 +1,11 @@
 :root {
     --color-group-verified: #918f8f;
     --color-group-developer: #92b1c7;
-    --color-group-crawler: #92b1c7;
     --color-group-techrat: #5d93b9;
     --color-group-netadmin: #276a99;
     --color-group-rat: #49c549;
     --color-group-dispatch: #1e711e;
     --color-group-trainer: #ffb366;
-    --color-group-traineradmin: #bb88ff;
     --color-group-merch: #b883ba;
     --color-group-overseer: #df8122;
     --color-group-moderator: #d15656;
@@ -55,9 +53,6 @@
     content: "\f121"; /* fa-code */
 }
 
-.command-permission-group-crawler {
-    background-color: var(--color-group-crawler);
-}
 .command-permission-group-crawler::before {
     content: "\f717"; /* fa-code */
 }
@@ -97,9 +92,6 @@
     content: "\f239";
 }
 
-.command-permission-group-traineradmin {
-    background-color: var(--color-group-traineradmin);
-}
 .command-permission-group-traineradmin::before {
     content: "\f19d";
 }
@@ -108,7 +100,7 @@
     background-color: var(--color-group-operations);
 }
 .command-permission-group-operations::before {
-    content: "\f0e3";
+    content: "\f328";
 }
 
 .command-permission-group-admin {
@@ -143,7 +135,7 @@
     background-color: var(--color-group-moderator);
 }
 .command-permission-group-moderator::before {
-    content: "\f06e";
+    content: "\f0e3";
 }
 
 @media (prefers-contrast: more) {
