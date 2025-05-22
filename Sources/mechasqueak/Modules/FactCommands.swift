@@ -444,11 +444,19 @@ class FactCommands: IRCBotModule {
 
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
-            mecha.reportingChannel?.send(
-                key: "facts.cncorrection",
-                map: [
+            if command.message.destination.isPrivateMessage || configuration.general.drillMode {
+                command.message.reply(key: "facts.cncorrection.pm", fromCommand: command, map: [
                     "nick": command.message.user.nickname
                 ])
+            } else {
+                mecha.reportingChannel?.send(
+                    key: "facts.cncorrection",
+                    map: [
+                        "nick": command.message.user.nickname
+                    ]
+                )
+            }
+            
         }
 
         if command.parameters.count > 0 {
