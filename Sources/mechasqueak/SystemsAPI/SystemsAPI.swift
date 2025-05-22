@@ -724,10 +724,10 @@ class SystemsAPI {
                         .SpaceConstructionDepot: 3,
                         .PlanetaryConstructionSite: 4,
                         .OrbitalConstructionSite: 4,
-                        .SystemColonizationShip: 5,
                         .FleetCarrier: 5,
                         .Outpost: 6,
                         .Settlement: 7,
+                        .SystemColonizationShip: 7,
                         .PlanetaryConstructionDepot: 7
                     ]
 
