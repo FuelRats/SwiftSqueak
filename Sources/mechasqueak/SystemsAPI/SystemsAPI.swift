@@ -555,7 +555,7 @@ class SystemsAPI {
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
                 }
-                let maxDistance = stations.map { $0.distance ?? 0 }.max() ?? maxUsefulDistance
+                let maxDistance = stations.map { $0.distance ?? 100000 }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
                 let weightRanking = minPreferredDistance * weightDistance
 
@@ -663,7 +663,7 @@ class SystemsAPI {
                 func score(weightDistance: Double = 1.0, weightRanking: Double = 0.1) -> Double {
                     let rankingPenalty =
                         Double(self.ranking) + (self.isLimited ? limitedPenalty : 0)
-                    return (self.distance ?? 0 * weightDistance) + (rankingPenalty * weightRanking)
+                    return (self.distance ?? 100000 * weightDistance) + (rankingPenalty * weightRanking)
                 }
 
                 enum StationType: String, Codable {
