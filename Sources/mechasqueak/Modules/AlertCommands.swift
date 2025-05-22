@@ -34,7 +34,7 @@ class TweetCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["alert", "tweet"],
+        ["alert", "squeak", "tweet"],
         [.param("message", "Need rats urgently for two PS4 cases in the bubble", .continuous)],
         category: .utility,
         description: "Send a message via Mastodon & BlueSky",
@@ -91,7 +91,7 @@ class TweetCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["alertcase", "alertc", "tweetcase", "tweetc"],
+        ["alertcase", "alertc", "squeakcase", "squeakc", "tweetcase", "tweetc"],
         [.param("case id/client", "4")],
         category: .utility,
         description:
