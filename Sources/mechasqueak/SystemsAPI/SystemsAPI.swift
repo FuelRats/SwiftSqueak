@@ -32,6 +32,7 @@ import NIOHTTP1
 let maxUsefulDistance = 300000.0
 let minPreferredDistance = 15000.0
 let limitedPenalty = 50.0
+let defaultMaxDistance = 1000000.0
 
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
