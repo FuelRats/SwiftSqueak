@@ -215,6 +215,7 @@ struct ProceduralSystem: CustomStringConvertible {
         if components.first?.isEmpty == true { components.removeFirst() }
         if suffix == nil, var next = components.first, !next.isEmpty {
             suffix = next.removeFirst()
+            components.removeFirst()
         }
         guard let suffixUnwrapped = suffix else { return nil }
         return CubeID(part1: part1, part2: part2, suffix: suffixUnwrapped)
