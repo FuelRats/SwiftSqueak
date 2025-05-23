@@ -555,7 +555,7 @@ class SystemsAPI {
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
                 }
-                let maxDistance = stations.map { $0.distance ?? 100000 }.max() ?? maxUsefulDistance
+                let maxDistance = stations.map { $0.distance ?? defaultMaxDistance }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
                 let weightRanking = minPreferredDistance * weightDistance
 
