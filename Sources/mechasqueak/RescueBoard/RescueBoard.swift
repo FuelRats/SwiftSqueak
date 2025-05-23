@@ -294,7 +294,7 @@ actor RescueBoard {
         return nil
     }
 
-    nonisolated func findMentionedCasesIn(message: IRCPrivateMessage) async -> [(Int, Rescue)] {
+    nonisolated func findMentionedCasesIn(message: IRCPrivateMessage) async -> ([(Int, Rescue)], Set<Int>) {
         let caseIds = MessageScanner.caseMentionExpression.findAll(in: message.message).compactMap(
             { (match: Match) -> Int? in
             if let id = match.group(at: 1) {
@@ -302,14 +302,19 @@ actor RescueBoard {
             }
             return nil
         })
-
+        
         let rescues = await self.getRescues()
-        return caseIds.compactMap({
-            if let rescue = rescues[$0] {
-                return ($0, rescue)
+        let (validCases, invalidCaseIds): ([(Int, Rescue)], Set<Int>) = caseIds.reduce(
+            into: ([], [])
+        ) { result, caseId in
+            if let rescue = rescues[caseId] {
+                result.0.append((caseId, rescue))
+            } else {
+                result.1.insert(caseId)
             }
-            return nil
-        })
+        }
+        
+        return (validCases, invalidCaseIds)
     }
 
     func fuzzyFindRescue(forChannelMember member: IRCUser) async -> (Int, Rescue)? {

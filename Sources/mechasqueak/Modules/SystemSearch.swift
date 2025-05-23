@@ -300,6 +300,13 @@ class SystemSearch: IRCBotModule {
                     .squareRoot()
                 approximatedDistance = formatter.string(from: calculatedDistance)
             }
+            
+            var stationDistance = "unknown distance"
+            if let dist = station.distance {
+                stationDistance = dist.distanceToSeconds(
+                    destinationGravity: true
+                ).timeSpan(maximumUnits: 1)
+            }
 
             command.message.reply(
                 message: (try? stencil.renderLine(
@@ -308,9 +315,7 @@ class SystemSearch: IRCBotModule {
                         "system": system,
                         "approximatedDistance": approximatedDistance as Any,
                         "station": station,
-                        "travelTime": (station.distance ?? 0).distanceToSeconds(
-                            destinationGravity: true
-                        ).timeSpan(maximumUnits: 1),
+                        "travelTime": stationDistance,
                         "services": station.allServices,
                         "notableServices": station.notableServices,
                         "stationType": station.type?.rawValue as Any,

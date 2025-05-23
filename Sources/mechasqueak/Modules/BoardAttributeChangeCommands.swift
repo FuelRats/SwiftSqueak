@@ -117,6 +117,7 @@ class BoardAttributeCommands: IRCBotModule {
         }
 
         var key = "board.syschange"
+        
         if let correction = ProceduralSystem.correct(system: systemName),
             command.forceOverride == false && configuration.general.drillMode == false {
             key += ".autocorrect"

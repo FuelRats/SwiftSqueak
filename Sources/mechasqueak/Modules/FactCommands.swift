@@ -441,14 +441,21 @@ class FactCommands: IRCBotModule {
         if command.command == "fact" || command.command == "facts" {
             return
         }
-
+        
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
-            mecha.reportingChannel?.send(
-                key: "facts.cncorrection",
-                map: [
+            if command.message.destination.isPrivateMessage || configuration.general.drillMode {
+                command.message.reply(key: "facts.cncorrection.pm", fromCommand: command, map: [
                     "nick": command.message.user.nickname
                 ])
+            } else {
+                mecha.reportingChannel?.send(
+                    key: "facts.cncorrection",
+                    map: [
+                        "nick": command.message.user.nickname
+                    ]
+                )
+            }
         }
 
         if command.parameters.count > 0 {
@@ -487,7 +494,8 @@ class FactCommands: IRCBotModule {
                     key: "facts.prepquitcorrection",
                     map: [
                         "nick": command.message.user.nickname
-                    ])
+                    ]
+                )
             }
         }
 
@@ -660,7 +668,9 @@ class FactCommands: IRCBotModule {
             command.message.retaliate()
             return
         }
-        if command.parameters.count > 0 {
+        if command.parameters.count > 5 {
+            return
+        } else if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
             if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "supermanifolds")
                 && command.message.destination != mecha.rescueChannel {

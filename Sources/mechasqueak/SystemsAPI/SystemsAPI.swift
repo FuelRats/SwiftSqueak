@@ -555,7 +555,7 @@ class SystemsAPI {
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
                 }
-                let maxDistance = stations.map { $0.distance ?? 0 }.max() ?? maxUsefulDistance
+                let maxDistance = stations.map { $0.distance ?? defaultMaxDistance }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
                 let weightRanking = minPreferredDistance * weightDistance
 
@@ -663,7 +663,7 @@ class SystemsAPI {
                 func score(weightDistance: Double = 1.0, weightRanking: Double = 0.1) -> Double {
                     let rankingPenalty =
                         Double(self.ranking) + (self.isLimited ? limitedPenalty : 0)
-                    return (self.distance ?? 0 * weightDistance) + (rankingPenalty * weightRanking)
+                    return ((self.distance ?? 100000) * weightDistance) + (rankingPenalty * weightRanking)
                 }
 
                 enum StationType: String, Codable {
@@ -692,7 +692,8 @@ class SystemsAPI {
                         "SpaceConstructionDepot": "Space Construction Depot",
                         "PlanetaryConstructionDepot": "Planetary Construction Depot",
                         "AsteroidBase": "Asteroid base",
-                        "OnFootSettlement": "Odyssey Settlement"
+                        "OnFootSettlement": "Odyssey Settlement",
+                        "MegaShip": "Mega ship"
                     ]
 
                     init(from decoder: Decoder) throws {
@@ -724,10 +725,10 @@ class SystemsAPI {
                         .SpaceConstructionDepot: 3,
                         .PlanetaryConstructionSite: 4,
                         .OrbitalConstructionSite: 4,
-                        .SystemColonizationShip: 5,
                         .FleetCarrier: 5,
                         .Outpost: 6,
                         .Settlement: 7,
+                        .SystemColonizationShip: 7,
                         .PlanetaryConstructionDepot: 7
                     ]
 
