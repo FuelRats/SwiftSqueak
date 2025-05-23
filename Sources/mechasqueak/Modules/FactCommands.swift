@@ -441,6 +441,7 @@ class FactCommands: IRCBotModule {
         if command.command == "fact" || command.command == "facts" {
             return
         }
+        
 
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
@@ -456,7 +457,6 @@ class FactCommands: IRCBotModule {
                     ]
                 )
             }
-            
         }
 
         if command.parameters.count > 0 {
@@ -495,7 +495,8 @@ class FactCommands: IRCBotModule {
                     key: "facts.prepquitcorrection",
                     map: [
                         "nick": command.message.user.nickname
-                    ])
+                    ]
+                )
             }
         }
 
@@ -668,7 +669,9 @@ class FactCommands: IRCBotModule {
             command.message.retaliate()
             return
         }
-        if command.parameters.count > 0 {
+        if command.parameters.count > 5 {
+            return
+        } else if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
             if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "supermanifolds")
                 && command.message.destination != mecha.rescueChannel {
