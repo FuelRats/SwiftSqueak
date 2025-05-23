@@ -148,6 +148,14 @@ extension User {
             })
         return try await User.update(user: updatedUser)
     }
+    
+    func getCurrentRescues() async -> [(key: Int, value: Rescue)] {
+        let userId = self.id.rawValue
+        return
+            (try? await board.filter({ (_, rescue) in
+                rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
+            }).getAllResults()) ?? []
+    }
 }
 
 enum UserStatus: String, Codable {

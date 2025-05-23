@@ -442,7 +442,6 @@ class FactCommands: IRCBotModule {
             return
         }
         
-
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
             if command.message.destination.isPrivateMessage || configuration.general.drillMode {

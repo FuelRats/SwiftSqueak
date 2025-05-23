@@ -115,7 +115,7 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        let mentionedRescues = await board.findMentionedCasesIn(message: channelMessage)
+        let (mentionedRescues, invalidMentions) = await board.findMentionedCasesIn(message: channelMessage)
         for (caseId, rescue) in mentionedRescues {
             let rescueChannel = rescue.channel
             guard
@@ -160,6 +160,21 @@ class MessageScanner: IRCBotModule {
                 ))
             try? rescue.save(nil)
             casesUpdatedForMessage.append(rescue)
+        }
+        if
+            invalidMentions.isEmpty == false && mentionedRescues.isEmpty,
+            let rescue = await channelMessage.user.associatedAPIData?.user?.getCurrentRescues().first {
+                channelMessage.replyPrivate(
+                    message: lingo.localize(
+                        "invalidcasemention",
+                        locale: "en-GB",
+                        interpolations: [
+                            "invalidCaseId": invalidMentions.first ?? "unknown",
+                            "caseId": rescue.0,
+                            "client": rescue.1.client ?? "unknown"
+                        ]
+                    )
+                )
         }
     }
 }
