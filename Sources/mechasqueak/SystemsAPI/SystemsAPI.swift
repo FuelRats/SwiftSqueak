@@ -33,6 +33,7 @@ let maxUsefulDistance = 300000.0
 let minPreferredDistance = 15000.0
 let limitedPenalty = 50.0
 let defaultMaxDistance = 1000000.0
+let systemDistanceWeight = 0.05
 
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
@@ -153,23 +154,28 @@ class SystemsAPI {
             return nil
         }
 
-        guard
-            let system = response.preferableSystems(
-                requireLargePad: requireLargePad, requireSpace: requireSpace
-            ).first
-        else {
-            return nil
+        let systemDistanceWeight = 0.05  // tweakable weight for system distance
+
+        var bestCandidate: (SystemsAPI.NearestPopulatedDocument.PopulatedSystem,
+                             SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station, Double)? = nil
+
+        for system in response.preferableSystems(
+            requireLargePad: requireLargePad, requireSpace: requireSpace, legacyStations: legacyStations
+        ) {
+            let stations = system.preferableStations(
+                requireLargePad: requireLargePad, requireSpace: requireSpace, legacyStations: legacyStations
+            )
+            guard let bestStation = stations.first else {
+                continue
+            }
+
+            let totalScore = bestStation.score() + (system.distance * systemDistanceWeight)
+            if bestCandidate == nil || totalScore < bestCandidate!.2 {
+                bestCandidate = (system, bestStation, totalScore)
+            }
         }
 
-        guard
-            let station = system.preferableStations(
-                requireLargePad: requireLargePad, requireSpace: requireSpace,
-                legacyStations: legacyStations
-            ).first
-        else {
-            return nil
-        }
-        return (system, station)
+        return bestCandidate.map { ($0.0, $0.1) }
     }
 
     static func getNearestSystem(forCoordinates coords: Vector3) async throws
