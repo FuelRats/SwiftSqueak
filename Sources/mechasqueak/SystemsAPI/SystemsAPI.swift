@@ -669,7 +669,7 @@ class SystemsAPI {
 
                 func score(weightDistance: Double = 1.0, weightRanking: Double = 0.1) -> Double {
                     let rankingPenalty =
-                        Double(self.ranking) + (self.isLimited ? limitedPenalty : 0)
+                        Double(self.ranking * 1000) + (self.isLimited ? limitedPenalty : 0)
                     return ((self.distance ?? 100000) * weightDistance) + (rankingPenalty * weightRanking)
                 }
 
