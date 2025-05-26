@@ -115,28 +115,11 @@ class AccountCommands: IRCBotModule {
         let message = command.message
         let nick = command.parameters[0]
 
-        let user = message.client.channels.compactMap({ channel in
+        let channelUser = message.client.channels.compactMap({ channel in
             return channel.member(named: nick)
         }).first
 
-        guard
-            let accountData = try? await FuelRatsAPI.getNickname(
-                forIRCAccount: user?.account ?? nick)
-        else {
-            command.message.reply(
-                key: "whois.notfound", fromCommand: command,
-                map: [
-                    "nick": nick
-                ])
-            return
-        }
-
-        if accountData.user == nil {
-            command.message.reply(
-                key: "whois.noaccount", fromCommand: command,
-                map: [
-                    "account": user?.account ?? nick
-                ])
+        guard let (accountData, user) = await getAccountData(nick: nick, fromCommand: command) else {
             return
         }
 
@@ -156,7 +139,7 @@ class AccountCommands: IRCBotModule {
                 name: "whois.stencil",
                 context: [
                     "nick": nick,
-                    "account": user?.account as Any,
+                    "account": channelUser?.account as Any,
                     "id": accountData.user?.id.rawValue.ircRepresentation ?? "",
                     "group": group as Any,
                     "displayId": command.options.contains("@"),
@@ -430,4 +413,33 @@ class AccountCommands: IRCBotModule {
             command.error(error)
         }
     }
+}
+
+func getAccountData(nick: String, fromCommand command: IRCBotCommand) async -> (NicknameSearchDocument, User)? {
+    let message = command.message
+    let user = message.client.channels.compactMap({ channel in
+        return channel.member(named: nick)
+    }).first
+
+    guard
+        let accountData = try? await FuelRatsAPI.getNickname(
+            forIRCAccount: user?.account ?? nick)
+    else {
+        command.message.reply(
+            key: "whois.notfound", fromCommand: command,
+            map: [
+                "nick": nick
+            ])
+        return nil
+    }
+
+    guard let user = accountData.user else {
+        command.message.reply(
+            key: "whois.noaccount", fromCommand: command,
+            map: [
+                "account": user?.account ?? nick
+            ])
+        return nil
+    }
+    return (accountData, user)
 }

@@ -128,22 +128,15 @@ class ManagementCommands: IRCBotModule {
         permission: .UserRead
     )
     var didReceivePermissionsCommand = { command in
-        guard
-            let user = command.message.client.channels.first(where: {
-                $0.member(named: command.parameters[0]) != nil
-            })?.member(named: command.parameters[0])
-        else {
-            command.message.reply(
-                key: "groups.nouser", fromCommand: command,
-                map: [
-                    "nick": command.parameters[0]
-                ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
+        
+        let userId = user.id.rawValue
 
-        let groupIds = user.associatedAPIData?.user?.relationships.groups?.ids ?? []
+        let groupIds = user.relationships.groups?.ids ?? []
 
-        let groups = user.associatedAPIData?.body.includes![Group.self].filter({
+        let groups = accountData.body.includes![Group.self].filter({
             groupIds.contains($0.id)
         }).map({
             $0.ircRepresentation
@@ -153,7 +146,7 @@ class ManagementCommands: IRCBotModule {
             key: "groups.response", fromCommand: command,
             map: [
                 "nick": command.parameters[0],
-                "groups": groups?.joined(separator: ", ") ?? ""
+                "groups": groups.joined(separator: ", ")
             ])
     }
 
@@ -204,21 +197,11 @@ class ManagementCommands: IRCBotModule {
         helpView: generateGroupListView
     )
     var didReceiveAddGroupCommand = { command in
-        var getUserId = UUID(uuidString: command.parameters[0])
-        if getUserId == nil {
-            getUserId =
-                command.message.client.user(withName: command.parameters[0])?.associatedAPIData?
-                .user?.id.rawValue
-        }
-
-        guard let userId = getUserId else {
-            command.message.reply(
-                key: "addgroup.noid", fromCommand: command,
-                map: [
-                    "param": command.parameters[0]
-                ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
+        
+        let userId = user.id.rawValue
 
         do {
             let groupSearch = try await Group.getList()
@@ -273,21 +256,11 @@ class ManagementCommands: IRCBotModule {
         helpView: generateGroupListView
     )
     var didReceiveDelGroupCommand = { command in
-        var getUserId = UUID(uuidString: command.parameters[0])
-        if getUserId == nil {
-            getUserId =
-                command.message.client.user(withName: command.parameters[0])?.associatedAPIData?
-                .user?.id.rawValue
-        }
-
-        guard let userId = getUserId else {
-            command.message.reply(
-                key: "delgroup.noid", fromCommand: command,
-                map: [
-                    "param": command.parameters[0]
-                ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
+        
+        let userId = user.id.rawValue
 
         do {
             let groupSearch = try await Group.getList()
@@ -328,19 +301,7 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveSuspendCommand = { command in
-        var getUserId = UUID(uuidString: command.parameters[0])
-        if getUserId == nil {
-            getUserId =
-                command.message.client.user(withName: command.parameters[0])?.associatedAPIData?
-                .user?.id.rawValue
-        }
-
-        guard let userId = getUserId else {
-            command.message.error(
-                key: "suspend.noid", fromCommand: command,
-                map: [
-                    "param": command.parameters[0]
-                ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
 
@@ -356,13 +317,13 @@ class ManagementCommands: IRCBotModule {
         let date = Date().addingTimeInterval(timespan)
 
         do {
-            let userDocument = try await User.get(id: userId)
+            let userDocument = try await User.get(id: user.id.rawValue)
             try await userDocument.body.primaryResource?.value.suspend(date: date)
 
             command.message.reply(
                 key: "suspend.success", fromCommand: command,
                 map: [
-                    "userId": userId.ircRepresentation,
+                    "userId": user.id.rawValue.ircRepresentation,
                     "date": date.ircRepresentable
                 ])
         } catch {
