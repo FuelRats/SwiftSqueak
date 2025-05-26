@@ -157,7 +157,7 @@ class SystemsAPI {
         let systemDistanceWeight = 0.05  // tweakable weight for system distance
 
         var bestCandidate: (SystemsAPI.NearestPopulatedDocument.PopulatedSystem,
-                             SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station, Double)? = nil
+                             SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station, Double)?
 
         for system in response.preferableSystems(
             requireLargePad: requireLargePad, requireSpace: requireSpace, legacyStations: legacyStations
