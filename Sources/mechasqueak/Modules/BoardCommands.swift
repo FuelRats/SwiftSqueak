@@ -318,6 +318,15 @@ class BoardCommands: IRCBotModule {
                 return
             }
         }
+        
+        if rescue.rats.isEmpty && !override {
+            command.message.error(
+                key: "board.close.noassign", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                ])
+            return
+        }
 
         do {
             try await rescue.close(
