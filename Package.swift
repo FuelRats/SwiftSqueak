@@ -28,6 +28,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
         .package(url: "https://github.com/vapor-community/HTMLKit.git", branch: "main"),
         .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: Version(0, 59, 1)),
+        .package(url: "https://github.com/swiftlang/swift-markdown.git", branch: "main"),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 15, 0))
     ],
@@ -54,7 +55,9 @@ let package = Package(
                 .product(name: "WebSocketKit", package: "websocket-kit"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "HTMLKit", package: "HTMLKit"),
-            ]
+                .product(name: "Markdown", package: "swift-markdown"),
+            ],
+            plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
             name: "mechasqueakTests",

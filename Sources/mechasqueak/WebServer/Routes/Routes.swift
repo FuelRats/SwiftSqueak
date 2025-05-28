@@ -11,14 +11,16 @@ import HTMLKitVapor
 struct Routes: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.get { req in
-            req.htmlkit.render(MainPage(currentPage: .home))
+            let releases = (try? await GithubRelease.get()) ?? []
+            return try await req.htmlkit.render(MainPage(currentPage: .home, releases: releases))
         }
         
         routes.get("home") { req in
+            let releases = (try? await GithubRelease.get()) ?? []
             if req.isHTMX {
-                req.htmlkit.render(HomePage())
+                return try await req.htmlkit.render(HomePage(releases: releases))
             } else {
-                req.htmlkit.render(MainPage(currentPage: .home))
+                return try await req.htmlkit.render(MainPage(currentPage: .home, releases: releases))
             }
         }
         

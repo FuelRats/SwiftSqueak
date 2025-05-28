@@ -1,0 +1,46 @@
+.gh-release {
+    margin-bottom: 1rem;
+    background: var(--secondary-bg);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+}
+
+.gh-release h3 {
+    margin: 0;
+    padding-bottom: 0.5em;
+    font-size: 1.1rem;
+}
+
+.gh-release h4 {
+    margin-bottom: 0.2em;
+}
+
+.gh-release h5 {
+    margin-bottom: 0.2em;
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        .gh-release {
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        
+        .gh-release-aliases-inline {
+            color: #000;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .gh-release {
+            border: 1px solid #fff;
+            background-color: #000;
+        }
+        
+        .gh-release-aliases-inline {
+            color: #fff;
+        }
+    }
+}

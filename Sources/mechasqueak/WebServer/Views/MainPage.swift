@@ -4,6 +4,7 @@ struct MainPage: View {
     let currentPage: Page
     var factCategories: [FactCategory]?
     var platformFacts: [String: [GroupedFact]]?
+    var releases: [GithubRelease]?
 
     var body: Content {
         HTMLKit.Document(.html5)
@@ -44,7 +45,7 @@ struct MainPage: View {
                 Main {
                     switch currentPage {
                         case .home:
-                            HomePage().body
+                        HomePage(releases: releases ?? []).body
                         case .commands:
                             CommandsPage().body
                         case .facts:
