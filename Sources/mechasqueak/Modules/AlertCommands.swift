@@ -46,7 +46,7 @@ class TweetCommands: IRCBotModule {
                 "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
         },
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 "The Mastodon is at "
                 Anchor("fuelratsalerts@mastodon.localecho.net")
                     .reference("https://mastodon.localecho.net/@fuelratsalerts")
@@ -104,7 +104,7 @@ class TweetCommands: IRCBotModule {
                 "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
         },
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 "The Mastodon is at "
                 Anchor("fuelratsalerts@mastodon.localecho.net")
                     .reference("https://mastodon.localecho.net/@fuelratsalerts")

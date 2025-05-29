@@ -14,9 +14,7 @@ struct MarkdownView: View {
         var visitor = HTMLVisitor()
         let document = Markdown.Document(parsing: text)
         
-        HTMLKit.Group {
-            visitor.visit(document)
-        }
+        visitor.visit(document)
     }
 }
 
@@ -24,11 +22,11 @@ struct HTMLVisitor: MarkupVisitor {
     mutating func defaultVisit(_ markup: Markup) -> any Content {
         switch markup {
             case let doc as Markdown.Document:
-                return HTMLKit.Group {
+                return HTMLKit.Div {
                     for child in doc.children {
                         defaultVisit(child)
                     }
-                }
+                }.class("markdown")
             
             case let text as Markdown.Text:
                 return AutomaticLinkTextView(text: text.string)

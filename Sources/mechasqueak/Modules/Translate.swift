@@ -46,7 +46,7 @@ class Translate: IRCBotModule {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
         },
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
                     .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
@@ -133,7 +133,7 @@ class Translate: IRCBotModule {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
         },
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
                     .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")

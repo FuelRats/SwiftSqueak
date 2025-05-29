@@ -163,7 +163,7 @@ class ManagementCommands: IRCBotModule {
     }
     
     static func generateGroupListView () -> Content {
-        HTMLKit.Group {
+        HTMLKit.Div {
             H5 {
                 "Available permission groups:"
             }
