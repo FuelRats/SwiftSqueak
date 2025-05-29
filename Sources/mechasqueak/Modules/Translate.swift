@@ -111,6 +111,20 @@ class Translate: IRCBotModule {
                     destination?.name ?? "",
                     "\(target): \(translation)"
                 ])
+                let contents = "<\(command.message.user.nickname)> \(command.parameters[1])"
+                for (subscriber, subType) in Translate.clientTranslationSubscribers {
+                    switch subType {
+                        case .Notice:
+                            command.message.client.send("CNOTICE", parameters: [
+                                subscriber,
+                                destination?.name ?? "",
+                                contents
+                            ])
+
+                        case .PrivateMessage:
+                        command.message.client.sendMessage(toTarget: subscriber, contents: contents)
+                    }
+                }
             }
         } catch {
             command.error(error)
@@ -177,6 +191,20 @@ class Translate: IRCBotModule {
                     channel.name,
                     translation
                 ])
+                let contents = "<\(command.message.user.nickname)> \(message)"
+                for (subscriber, subType) in Translate.clientTranslationSubscribers {
+                    switch subType {
+                        case .Notice:
+                            command.message.client.send("CNOTICE", parameters: [
+                                subscriber,
+                                channelName,
+                                contents
+                            ])
+
+                        case .PrivateMessage:
+                        command.message.client.sendMessage(toTarget: subscriber, contents: contents)
+                    }
+                }
             }
         } catch {
             command.error(error)

@@ -323,7 +323,7 @@ class BoardCommands: IRCBotModule {
             command.message.error(
                 key: "board.close.noassign", fromCommand: command,
                 map: [
-                    "caseId": caseId,
+                    "caseId": caseId
                 ])
             return
         }
