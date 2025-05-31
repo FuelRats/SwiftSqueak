@@ -291,6 +291,38 @@ class ManagementCommands: IRCBotModule {
             command.message.error(key: "delgroup.error", fromCommand: command)
         }
     }
+    
+    @BotCommand(
+        ["syncgroups"],
+        [.param("nickname/user id", "SpaceDawg")],
+        category: .management,
+        description: "Syncs a person's permissions and updates their vhost",
+        tags: ["group", "permission", "role", "update", "sync", "vhost"],
+        permission: .UserWrite,
+        helpExtra: {
+            return generateGroupList()
+        },
+        helpView: generateGroupListView
+    )
+    var didReceiveSyncGroupCommand = { command in
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
+            return
+        }
+        
+        let userId = user.id.rawValue
+
+        do {
+            _ = try await User.sync(id: userId)
+
+            command.message.reply(
+                key: "syncgroup.success", fromCommand: command,
+                map: [
+                    "userId": userId.ircRepresentation
+                ])
+        } catch {
+            command.message.error(key: "syncgroup.error", fromCommand: command)
+        }
+    }
 
     @BotCommand(
         ["suspend"],

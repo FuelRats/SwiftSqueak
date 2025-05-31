@@ -71,6 +71,12 @@ extension User {
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
+    
+    static func sync(id: UUID) async throws -> UserGetDocument {
+        let request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/sync", method: .PUT)
+
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
 
     @discardableResult
     static func update(user: User) async throws -> UserGetDocument {

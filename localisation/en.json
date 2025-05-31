@@ -294,6 +294,8 @@
     "delgroup.nogroup": "Could not remove group as %{param} is not a valid group name",
     "delgroup.error": "Unable to remove group from user due to an unknown error",
     "delgroup.success": "Successfully removed group %{group} (%{groupId}) from user ID %{userId}",
+    "syncgroup.success": "Successfully synced permissions of user ID %{userId}",
+    "syncgroup.error": "Failed to sync permissions of user ID %{userId}",
     "suspend.noid": "Unable to suspend user as %{param} is not a logged in nick or user id",
     "suspend.invalidspan": "Unable to suspend user as %{param} is not a valid timespan",
     "suspend.nouser": "Unable to suspend user as the user ID could not be found",
