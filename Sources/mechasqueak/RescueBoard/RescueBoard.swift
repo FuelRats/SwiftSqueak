@@ -597,7 +597,7 @@ actor RescueBoard {
                         return
                     }
                     if rescue.codeRed == false || rescue.status == .Inactive {
-                        rescue.channel?.send(key: "notprepped", map: [
+                        rescue.channel?.send(key: "board.notprepped", map: [
                             "caseId": caseId
                         ])
                     }
