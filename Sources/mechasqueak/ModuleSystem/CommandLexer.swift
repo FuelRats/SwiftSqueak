@@ -367,7 +367,7 @@ struct Lexer {
 }
 
 struct CommandToken {
-    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{2,}))?".r!
+    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{1,}(?:_[A-Za-z]{1,2})?))?".r!
 
     let declaration: String
     let identifier: String
