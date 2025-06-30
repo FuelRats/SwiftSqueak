@@ -216,7 +216,7 @@ class Translate: IRCBotModule {
         [.param("message type", "notice", .standard, .optional)],
         category: .utility,
         description:
-            "Subscribe to automatic translations of client messages by either private message, or notice",
+            "Unsubscribe from automatic translations of client messages",
         tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage

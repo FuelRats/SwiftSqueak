@@ -35,6 +35,12 @@ extension String {
     }
 }
 
+fileprivate var localeSubstitutions: [String: String] = [
+    "zh_SG": "zh_CN",
+    "zh_HK": "zh_TW",
+    "zh_MO": "zh_TW"
+]
+
 struct IRCBotCommand {
     var id: UUID
     var command: String
@@ -66,6 +72,9 @@ struct IRCBotCommand {
             self.message = privateMessage
             self.command = commandToken.identifier
             self.locale = Locale(identifier: commandToken.languageCode ?? "en")
+            if let substitution = localeSubstitutions[self.locale.identifier] {
+                self.locale = Locale(identifier: substitution)
+            }
 
             let commandDefinition = MechaSqueak.commands.first(where: {
                 $0.commands.contains(commandToken.identifier)
@@ -367,7 +376,7 @@ struct Lexer {
 }
 
 struct CommandToken {
-    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{2,}))?".r!
+    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{1,}(?:_[A-Za-z]{1,2})?))?".r!
 
     let declaration: String
     let identifier: String

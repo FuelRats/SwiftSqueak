@@ -1,0 +1,7 @@
+env           = "dev"
+image_tag     = "dev"
+dc_list     = ["dc1"]
+replicas      = 1
+
+# Static Role-ID, freshly minted Secret-ID per deploy (CI can inject)
+vault_role_id   = "8f6c2d04-…"

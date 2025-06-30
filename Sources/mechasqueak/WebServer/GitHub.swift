@@ -3,7 +3,7 @@ import AsyncHTTPClient
 
 struct GithubRelease: Codable {
     let url: URL
-    let id: uint64
+    let id: UInt64
     let tagName: String
     let author: Author
     let name: String
@@ -15,7 +15,7 @@ struct GithubRelease: Codable {
     
     struct Author: Codable {
         let login: String
-        let id: uint64
+        let id: UInt64
         let avatarUrl: URL
         let url: URL
     }

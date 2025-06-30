@@ -245,11 +245,8 @@ class GeneralCommands: IRCBotModule {
     )
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
-
-        let gitDir = configuration.sourcePath
-        let version =
-            shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let version = versionString
+        
         command.message.reply(
             key: replyKey, fromCommand: command,
             map: [
@@ -293,9 +290,6 @@ class GeneralCommands: IRCBotModule {
         cooldown: .seconds(300)
     )
     var didReceiveTimeZoneCommand = { command in
-        guard let chrono = configuration.chrono else {
-            return
-        }
         var components = command.param1?.components(separatedBy: " ") ?? []
         guard components.count > 2,
             let index = components.firstIndex(of: "in") ?? components.firstIndex(of: "to")
@@ -326,9 +320,9 @@ class GeneralCommands: IRCBotModule {
         }
 
         let output = shell(
-            chrono.nodePath,
+            "/usr/bin/env",
             [
-                chrono.file,
+                "chrono",
                 timeInput
             ])
         guard

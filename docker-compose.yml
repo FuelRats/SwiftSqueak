@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  swiftsqueak:
+    build: .
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+    volumes:
+      - ./vault-files:/vault
+    environment:
+      PORT: ${WEB_PORT}
+      VAULT_ADDR: ${VAULT_ADDR}
+      VAULT_TOKEN_FILE: /vault/token

@@ -23,55 +23,37 @@
  */
 
 import AsyncHTTPClient
-import Backtrace
 import Foundation
 import IRCKit
 import Lingo
 import NIO
 import SQLKit
 
-Backtrace.install()
-
-let processId = ProcessInfo.processInfo.processIdentifier
-try "\(processId)".write(
-    toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true,
-    encoding: .utf8)
+#if canImport(Version)
+let versionString = buildVersion
+#else
+let versionString = "dev"
+#endif
 
 let httpClient = HTTPClient(
     eventLoopGroupProvider: .singleton,
     configuration: .init(
         redirectConfiguration: .none,
         timeout: .init(connect: .seconds(5), read: .seconds(180))
-    ))
-
-var configPath = URL(
-    fileURLWithPath: FileManager.default.currentDirectoryPath
-).appendingPathComponent("config.json")
-if CommandLine.arguments.count > 1 {
-    configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-}
-
-func loadConfiguration() throws -> MechaConfiguration {
-    guard let configData = try? Data(contentsOf: configPath) else {
-        fatalError("Could not locate configuration file in \(configPath.absoluteString)")
-    }
-
-    let configDecoder = JSONDecoder()
-    return try configDecoder.decode(MechaConfiguration.self, from: configData)
-}
+    )
+)
 
 func debug(_ output: String) {
-    if configuration.general.debug == true {
-        print(output)
-    }
+    #if DEBUG
+    print(output)
+    #endif
 }
 
-var configuration = try loadConfiguration()
 let lingo = try Lingo(
-    rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
+    rootPath: "localisation", defaultLocale: "en")
+var configuration = try MechaConfiguration()
 
 class MechaSqueak {
-    let configPath: URL
     static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
     static let accounts = NicknameLookupManager()
@@ -91,13 +73,7 @@ class MechaSqueak {
     var webServer: WebServer?
     var sqliteDatabase: SQLDatabase?
 
-    init() {
-        var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        if CommandLine.arguments.count > 1 {
-            configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-        }
-        self.configPath = configPath
-
+    init() throws {
         self.startupTime = Date()
 
         self.connections = configuration.connections.map({
@@ -181,26 +157,26 @@ class MechaSqueak {
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased()
-                == configuration.general.rescueChannel.lowercased() {
+            == configuration.general.rescueChannel.lowercased() {
             mecha.rescueChannel = userJoin.channel
         }
         if userJoin.raw.sender!.isCurrentUser(client: client)
             && userJoin.channel.name.lowercased()
-                == configuration.general.reportingChannel.lowercased() {
+            == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
             Task {
                 await board.performSyncUntilSuccess()
             }
 
-            let gitDir = configuration.sourcePath
-            let release = shell(
-                "/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            if let releaseName = release, releaseName.count > 0 {
-                mecha.reportingChannel?.send(key: "update", map: [
-                    "release": releaseName
-                ])
-            }
+//            let gitDir = configuration.sourcePath
+//            let release = shell(
+//                "/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?
+//                .trimmingCharacters(in: .whitespacesAndNewlines)
+//            if let releaseName = release, releaseName.count > 0 {
+//                mecha.reportingChannel?.send(key: "update", map: [
+//                    "release": releaseName
+//                ])
+//            }
         } else {
             accounts.lookup(user: userJoin.user)
             if let (caseId, rescue) = await board.findRescue(
@@ -363,7 +339,7 @@ class MechaSqueak {
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
             && channelMessage.destination.name.lowercased()
-                != configuration.general.rescueChannel.lowercased() {
+            != configuration.general.rescueChannel.lowercased() {
             if let deltaInterval = lastDeltaMessageTime,
                 Date().timeIntervalSince(deltaInterval) < 0.5 {
                 lastDeltaMessageTime = nil
@@ -446,8 +422,7 @@ let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount * 2)
 func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
     return loop.next().makePromise(of: type)
 }
-let mecha = MechaSqueak()
+let mecha = try MechaSqueak()
 let board = RescueBoard()
 board.startUpRoutines()
-
 RunLoop.main.run()

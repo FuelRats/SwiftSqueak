@@ -69,7 +69,11 @@ struct PlaystationNetwork {
         let response = try decoder.decode(RefreshTokenResponse.self, from: result)
         configuration.psn?.token = response.accessToken
         configuration.psn?.refreshToken = response.refreshToken
-        try configuration.save()
+        let updates = [
+            "PSN_TOKEN": response.accessToken,
+            "PSN_RERESH_TOKEN": response.refreshToken
+        ]
+        try await configuration.vault.updateSecret(at: "swiftsqueak", modifying: updates)
     }
 
     static func performRetryingProfileLookup(name: String, retried: Bool = false) async

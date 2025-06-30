@@ -1,0 +1,30 @@
+vault {
+  address = "http://vault:8200"
+}
+
+auto_auth {
+  method "approle" {
+    mount_path = "auth/approle"
+    config = {
+      role_id_file_path    = "/run/secrets/vault/role-id"
+      secret_id_file_path  = "/run/secrets/vault/secret-id"
+    }
+  }
+}
+
+template_config {
+  static_secret_render_interval = "5m"
+  exit_on_retry_failure         = true
+  max_connections_per_host      = 10
+}
+
+env_template "VAULT_TOKEN" {
+  contents = "{{ with secret \"auth/token/lookup-self\" }}{{ .Data.id }}{{ end }}"
+  error_on_missing_key = true
+}
+
+exec {
+  command = ["/app/mechasqueak"]
+  restart_on_secret_changes = "always"
+  restart_stop_signal = "SIGTERM"
+}

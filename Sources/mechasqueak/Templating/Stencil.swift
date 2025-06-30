@@ -251,7 +251,7 @@ private func makeIdFilter() -> (Any?) throws -> Any? {
 private func generateEnvironment () -> Environment {
     let ext = Extension()
     let environment = Environment(
-        loader: FileSystemLoader(paths: [Path("\(configuration.sourcePath.path)/templates")]),
+        loader: FileSystemLoader(paths: [Path("templates")]),
         extensions: [ext]
     )
     

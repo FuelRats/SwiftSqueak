@@ -90,7 +90,14 @@ struct XboxLive {
         configuration.xbox?.xuid = xstsToken.DisplayClaims.xui.first!.xid
         configuration.xbox?.uhs = xstsToken.DisplayClaims.xui.first!.uhs
         configuration.xbox?.token = xstsToken.Token
-        try configuration.save()
+        
+        let updates = [
+            "XBOX_TOKEN": xstsToken.Token,
+            "XBOX_REFRESH_TOKEN": refreshedToken.refreshToken,
+            "XBOX_XUID": xstsToken.DisplayClaims.xui.first!.xid,
+            "XBOX_UHS": xstsToken.DisplayClaims.xui.first!.uhs
+        ]
+        try await configuration.vault.updateSecret(at: "swiftsqueak", modifying: updates)
     }
 
     static func getUserPresence(xuid: String) async throws -> UserPresenceRequest? {

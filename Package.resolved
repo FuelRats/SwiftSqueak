@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "3b265e6a00fc5c3fdb8f91f773e506990c704337",
-          "version": "1.26.0"
+          "revision": "333f51104b75d1a5b94cb3b99e4c58a3b442c9f7",
+          "version": "1.25.2"
         }
       },
       {
@@ -53,6 +53,15 @@
           "branch": "main",
           "revision": "66312d87108315d74723e1b7239e0b3620105c3d",
           "version": null
+        }
+      },
+      {
+        "package": "IRCKit",
+        "repositoryURL": "https://github.com/FuelRats/IRCKit.git",
+        "state": {
+          "branch": null,
+          "revision": "143c6003e78f6552dc044b7cf7025257017d2487",
+          "version": "0.16.0"
         }
       },
       {
@@ -249,8 +258,8 @@
         "repositoryURL": "https://github.com/apple/swift-http-structured-headers.git",
         "state": {
           "branch": null,
-          "revision": "db6eea3692638a65e2124990155cd220c2915903",
-          "version": "1.3.0"
+          "revision": "f280fc7676b9940ff2c6598642751ea333c6544f",
+          "version": "1.2.2"
         }
       },
       {
@@ -276,7 +285,7 @@
         "repositoryURL": "https://github.com/swiftlang/swift-markdown.git",
         "state": {
           "branch": "main",
-          "revision": "5d4f6b83fb9509b49f7735e7591abb3e4b6dbc2f",
+          "revision": "5ad49ed3219261b085e86da832d0657752bba63c",
           "version": null
         }
       },
@@ -294,8 +303,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "34d486b01cd891297ac615e40d5999536a1e138d",
-          "version": "2.83.0"
+          "revision": "0f54d58bb5db9e064f332e8524150de379d1e51c",
+          "version": "2.82.1"
         }
       },
       {
@@ -321,8 +330,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "4b38f35946d00d8f6176fe58f96d83aba64b36c7",
-          "version": "2.31.0"
+          "revision": "6df102a39c8da5fdc2eae29a0f63546d660866fc",
+          "version": "2.30.0"
         }
       },
       {

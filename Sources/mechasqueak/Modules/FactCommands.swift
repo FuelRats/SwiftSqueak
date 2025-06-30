@@ -443,7 +443,7 @@ class FactCommands: IRCBotModule {
         }
         
         if command.locale.identifier == "cn" {
-            command.locale = Locale(identifier: "zh")
+            command.locale = Locale(identifier: "zh_CN")
             if command.message.destination.isPrivateMessage || configuration.general.drillMode {
                 command.message.reply(key: "facts.cncorrection.pm", fromCommand: command, map: [
                     "nick": command.message.user.nickname
@@ -652,7 +652,7 @@ class FactCommands: IRCBotModule {
                     key: "fact.fallback", fromCommand: command,
                     map: [
                         "fact": command.command,
-                        "identifier": command.locale.identifier,
+                        "identifier": "en",
                         "language": command.locale.englishDescription
                     ])
                 self.messageFact(command: command, fact: fallbackFact)

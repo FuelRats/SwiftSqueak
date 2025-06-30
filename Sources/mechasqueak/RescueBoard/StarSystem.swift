@@ -409,9 +409,7 @@ extension Optional where Wrapped == StarSystem {
 }
 
 func loadRegions() -> [GalacticRegion] {
-    let regionPath = URL(
-        fileURLWithPath: configuration.sourcePath.path
-    ).appendingPathComponent("regions.json")
+    let regionPath = URL(fileURLWithPath: "regions.json")
 
     guard let regionData = try? Data(contentsOf: regionPath) else {
         fatalError("Could not locate region file in \(regionPath.absoluteString)")
@@ -424,9 +422,7 @@ func loadRegions() -> [GalacticRegion] {
 let regions = loadRegions()
 
 func loadNamedBodies() -> [String: String] {
-    let namedBodyPath = URL(
-        fileURLWithPath: configuration.sourcePath.path
-    ).appendingPathComponent("namedbodies.json")
+    let namedBodyPath = URL(fileURLWithPath: "namedbodies.json")
 
     guard let bodyData = try? Data(contentsOf: namedBodyPath) else {
         fatalError("Could not locate named bodies file in \(namedBodyPath.absoluteString)")
