@@ -15,7 +15,7 @@ struct GithubRelease: Codable {
     
     struct Author: Codable {
         let login: String
-        let id: uint64
+        let id: UInt64
         let avatarUrl: URL
         let url: URL
     }
