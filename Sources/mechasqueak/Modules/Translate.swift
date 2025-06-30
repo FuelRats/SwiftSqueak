@@ -310,7 +310,10 @@ class Translate: IRCBotModule {
 
         if let translation = try? await Translate.translate(channelMessage.message) {
             let contents = "<\(channelMessage.user.nickname)> \(translation)"
-            notifyTranslateSubscribers(client: channelMessage.client, channel: channelMessage.destination.name, contents: contents)
+            notifyTranslateSubscribers(
+                client: channelMessage.client,
+                channel: channelMessage.destination.name, contents: contents
+            )
         }
     }
 }
