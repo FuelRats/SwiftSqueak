@@ -66,11 +66,11 @@
       },
       {
         "package": "Lingo",
-        "repositoryURL": "https://github.com/miroslavkovac/Lingo.git",
+        "repositoryURL": "https://github.com/supermanifolds/Lingo.git",
         "state": {
           "branch": null,
-          "revision": "e4b032f65bde917209a1cb0962c0fd13fa0add2f",
-          "version": "3.1.0"
+          "revision": "dddf57a82f373591eae106c933c12115a4b02c1e",
+          "version": "4.0.0"
         }
       },
       {
