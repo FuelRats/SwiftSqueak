@@ -33,7 +33,7 @@ struct AutomaticLinkTextView: View {
         for match in regex.findAll(in: text) {
             let matchRange = match.range
             if matchRange.lowerBound > currentIndex {
-                let plainText = String(text[currentIndex..<matchRange.lowerBound])
+                let plainText = String(text[currentIndex..<matchRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
                 result.append(.plainText(plainText))
             }
 
