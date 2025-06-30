@@ -270,7 +270,11 @@ class Translate: IRCBotModule {
             prompt = OpenAIMessage(
                 role: .system,
                 content:
-                    "Translate to \(languageText) only, no extra text or quotes. Context: Fuel Rats bot helping stranded Elite Dangerous players."
+                    """
+                    Translate to \(languageText) only, no extra text or quotes,
+                    if it's already in english output 'no translation'.
+                    Context: Fuel Rats bot helping stranded Elite Dangerous players.
+                    """
             )
         }
         let message = OpenAIMessage(role: .user, content: text)
