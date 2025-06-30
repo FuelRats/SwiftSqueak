@@ -239,7 +239,7 @@ class BoardCommands: IRCBotModule {
         permission: .DispatchWrite,
         allowedDestinations: .Channel,
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 Anchor("Consult this page")
                     .reference("https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182")
                     .target(.blank)
@@ -317,6 +317,15 @@ class BoardCommands: IRCBotModule {
                     ])
                 return
             }
+        }
+        
+        if rescue.rats.isEmpty && !override {
+            command.message.error(
+                key: "board.close.noassign", fromCommand: command,
+                map: [
+                    "caseId": caseId
+                ])
+            return
         }
 
         do {
@@ -412,7 +421,7 @@ class BoardCommands: IRCBotModule {
         permission: .DispatchWrite,
         allowedDestinations: .Channel,
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 Anchor("Consult this page")
                     .reference("https://confluence.fuelrats.com/pages/releaseview.action?pageId=2687182")
                     .target(.blank)

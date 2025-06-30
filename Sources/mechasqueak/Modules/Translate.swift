@@ -46,7 +46,7 @@ class Translate: IRCBotModule {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
         },
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
                     .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
@@ -111,6 +111,20 @@ class Translate: IRCBotModule {
                     destination?.name ?? "",
                     "\(target): \(translation)"
                 ])
+                let contents = "<\(command.message.user.nickname)> \(command.parameters[1])"
+                for (subscriber, subType) in Translate.clientTranslationSubscribers {
+                    switch subType {
+                        case .Notice:
+                            command.message.client.send("CNOTICE", parameters: [
+                                subscriber,
+                                destination?.name ?? "",
+                                contents
+                            ])
+
+                        case .PrivateMessage:
+                        command.message.client.sendMessage(toTarget: subscriber, contents: contents)
+                    }
+                }
             }
         } catch {
             command.error(error)
@@ -133,7 +147,7 @@ class Translate: IRCBotModule {
             return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
         },
         helpView: {
-            HTMLKit.Group {
+            HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
                     .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
@@ -177,6 +191,8 @@ class Translate: IRCBotModule {
                     channel.name,
                     translation
                 ])
+                let contents = "<\(command.message.user.nickname)> \(message)"
+                notifyTranslateSubscribers(client: command.message.client, channel: channelName, contents: contents)
             }
         } catch {
             command.error(error)
@@ -254,7 +270,11 @@ class Translate: IRCBotModule {
             prompt = OpenAIMessage(
                 role: .system,
                 content:
-                    "Translate to \(languageText) only, no extra text or quotes. Context: Fuel Rats bot helping stranded Elite Dangerous players."
+                    """
+                    Translate to \(languageText) only, no extra text or quotes,
+                    if it's already in english output 'no translation'.
+                    Context: Fuel Rats bot helping stranded Elite Dangerous players.
+                    """
             )
         }
         let message = OpenAIMessage(role: .user, content: text)
@@ -290,19 +310,26 @@ class Translate: IRCBotModule {
 
         if let translation = try? await Translate.translate(channelMessage.message) {
             let contents = "<\(channelMessage.user.nickname)> \(translation)"
-            for (subscriber, subType) in Translate.clientTranslationSubscribers {
-                switch subType {
-                    case .Notice:
-                        channelMessage.client.send("CNOTICE", parameters: [
-                            subscriber,
-                            channelMessage.destination.name,
-                            contents
-                        ])
+            notifyTranslateSubscribers(
+                client: channelMessage.client,
+                channel: channelMessage.destination.name, contents: contents
+            )
+        }
+    }
+}
 
-                    case .PrivateMessage:
-                        channelMessage.client.sendMessage(toTarget: subscriber, contents: contents)
-                }
-            }
+func notifyTranslateSubscribers (client: IRCClient, channel: String, contents: String) {
+    for (subscriber, subType) in Translate.clientTranslationSubscribers {
+        switch subType {
+            case .Notice:
+                client.send("CNOTICE", parameters: [
+                    subscriber,
+                    channel,
+                    contents
+                ])
+
+            case .PrivateMessage:
+                client.sendMessage(toTarget: subscriber, contents: contents)
         }
     }
 }

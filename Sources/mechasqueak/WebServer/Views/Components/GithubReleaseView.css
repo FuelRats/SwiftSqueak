@@ -1,0 +1,57 @@
+.gh-release {
+    margin-bottom: 1rem;
+    background: var(--secondary-bg);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+}
+
+.gh-release h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.markdown h1 {
+    font-size: 1.1rem;
+}
+
+.markdown h2 {
+    font-size: 1.0rem;
+}
+
+.markdown h3 {
+    font-size: 0.9rem;
+}
+
+.markdown h4 {
+    font-size: 0.8rem;
+}
+
+.gh-release h5 {
+    font-size: 0.7rem;
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        .gh-release {
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        
+        .gh-release-aliases-inline {
+            color: #000;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .gh-release {
+            border: 1px solid #fff;
+            background-color: #000;
+        }
+        
+        .gh-release-aliases-inline {
+            color: #fff;
+        }
+    }
+}

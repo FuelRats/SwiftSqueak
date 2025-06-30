@@ -2,7 +2,7 @@ import HTMLKit
 
 struct NavbarComponent: View {
     var body: Content {
-        HTMLKit.Group {
+        HTMLKit.Div {
             Nav {
                 Image()
                     .source("/images/logo.png")

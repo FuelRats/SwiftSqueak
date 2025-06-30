@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/miroslavkovac/Lingo.git", from: Version(3, 1, 0)),
+        .package(url: "https://github.com/supermanifolds/Lingo.git", from: Version(4, 0, 0)),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 10, 0)),
         .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 32, 3)),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version (2, 15, 1)),
@@ -28,6 +28,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
         .package(url: "https://github.com/vapor-community/HTMLKit.git", branch: "main"),
         .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: Version(0, 59, 1)),
+        .package(url: "https://github.com/swiftlang/swift-markdown.git", branch: "main"),
         .package(path: "../IRCKit")
         //.package(name: "IRCKit", url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 15, 0))
     ],
@@ -54,7 +55,9 @@ let package = Package(
                 .product(name: "WebSocketKit", package: "websocket-kit"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "HTMLKit", package: "HTMLKit"),
-            ]
+                .product(name: "Markdown", package: "swift-markdown"),
+            ],
+            //plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
             name: "mechasqueakTests",

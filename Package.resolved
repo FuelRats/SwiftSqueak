@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "333f51104b75d1a5b94cb3b99e4c58a3b442c9f7",
-          "version": "1.25.2"
+          "revision": "3b265e6a00fc5c3fdb8f91f773e506990c704337",
+          "version": "1.26.0"
         }
       },
       {
@@ -51,7 +51,7 @@
         "repositoryURL": "https://github.com/vapor-community/HTMLKit.git",
         "state": {
           "branch": "main",
-          "revision": "df7eaede1ee1d5ef79281d3ca323be350905b4a5",
+          "revision": "66312d87108315d74723e1b7239e0b3620105c3d",
           "version": null
         }
       },
@@ -66,11 +66,11 @@
       },
       {
         "package": "Lingo",
-        "repositoryURL": "https://github.com/miroslavkovac/Lingo.git",
+        "repositoryURL": "https://github.com/supermanifolds/Lingo.git",
         "state": {
           "branch": null,
-          "revision": "e4b032f65bde917209a1cb0962c0fd13fa0add2f",
-          "version": "3.1.0"
+          "revision": "dddf57a82f373591eae106c933c12115a4b02c1e",
+          "version": "4.0.0"
         }
       },
       {
@@ -209,6 +209,15 @@
         }
       },
       {
+        "package": "cmark-gfm",
+        "repositoryURL": "https://github.com/swiftlang/swift-cmark.git",
+        "state": {
+          "branch": "gfm",
+          "revision": "b97d09472e847a416629f026eceae0e2afcfad65",
+          "version": null
+        }
+      },
+      {
         "package": "swift-collections",
         "repositoryURL": "https://github.com/apple/swift-collections.git",
         "state": {
@@ -240,8 +249,8 @@
         "repositoryURL": "https://github.com/apple/swift-http-structured-headers.git",
         "state": {
           "branch": null,
-          "revision": "f280fc7676b9940ff2c6598642751ea333c6544f",
-          "version": "1.2.2"
+          "revision": "db6eea3692638a65e2124990155cd220c2915903",
+          "version": "1.3.0"
         }
       },
       {
@@ -263,6 +272,15 @@
         }
       },
       {
+        "package": "swift-markdown",
+        "repositoryURL": "https://github.com/swiftlang/swift-markdown.git",
+        "state": {
+          "branch": "main",
+          "revision": "5d4f6b83fb9509b49f7735e7591abb3e4b6dbc2f",
+          "version": null
+        }
+      },
+      {
         "package": "swift-metrics",
         "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
@@ -276,8 +294,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "0f54d58bb5db9e064f332e8524150de379d1e51c",
-          "version": "2.82.1"
+          "revision": "34d486b01cd891297ac615e40d5999536a1e138d",
+          "version": "2.83.0"
         }
       },
       {
@@ -303,8 +321,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "6df102a39c8da5fdc2eae29a0f63546d660866fc",
-          "version": "2.30.0"
+          "revision": "4b38f35946d00d8f6176fe58f96d83aba64b36c7",
+          "version": "2.31.0"
         }
       },
       {

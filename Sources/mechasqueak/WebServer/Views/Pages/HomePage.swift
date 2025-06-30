@@ -2,6 +2,7 @@ import HTMLKit
 
 struct HomePage: View {
     static let title = "Home | MechaSqueak Docs"
+    let releases: [GithubRelease]
 
     struct Context {}
 
@@ -25,6 +26,14 @@ struct HomePage: View {
             Paragraph {
                 "See the Facts page for one‑line information snippets that dispatchers can post in‑channel. " +
                 "Facts can be added or translated live by Ops and Overseers."
+            }
+        }.class("content section")
+        Div {
+            H2 { "Changelog" }
+            Div {
+                for release in releases {
+                    GithubReleaseView(release: release)
+                }
             }
         }.class("content section")
     }
