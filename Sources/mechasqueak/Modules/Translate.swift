@@ -192,19 +192,7 @@ class Translate: IRCBotModule {
                     translation
                 ])
                 let contents = "<\(command.message.user.nickname)> \(message)"
-                for (subscriber, subType) in Translate.clientTranslationSubscribers {
-                    switch subType {
-                        case .Notice:
-                            command.message.client.send("CNOTICE", parameters: [
-                                subscriber,
-                                channelName,
-                                contents
-                            ])
-
-                        case .PrivateMessage:
-                        command.message.client.sendMessage(toTarget: subscriber, contents: contents)
-                    }
-                }
+                notifyTranslateSubscribers(client: command.message.client, channel: channelName, contents: contents)
             }
         } catch {
             command.error(error)
@@ -318,19 +306,23 @@ class Translate: IRCBotModule {
 
         if let translation = try? await Translate.translate(channelMessage.message) {
             let contents = "<\(channelMessage.user.nickname)> \(translation)"
-            for (subscriber, subType) in Translate.clientTranslationSubscribers {
-                switch subType {
-                    case .Notice:
-                        channelMessage.client.send("CNOTICE", parameters: [
-                            subscriber,
-                            channelMessage.destination.name,
-                            contents
-                        ])
+            notifyTranslateSubscribers(client: channelMessage.client, channel: channelMessage.destination.name, contents: contents)
+        }
+    }
+}
 
-                    case .PrivateMessage:
-                        channelMessage.client.sendMessage(toTarget: subscriber, contents: contents)
-                }
-            }
+func notifyTranslateSubscribers (client: IRCClient, channel: String, contents: String) {
+    for (subscriber, subType) in Translate.clientTranslationSubscribers {
+        switch subType {
+            case .Notice:
+                client.send("CNOTICE", parameters: [
+                    subscriber,
+                    channel,
+                    contents
+                ])
+
+            case .PrivateMessage:
+                client.sendMessage(toTarget: subscriber, contents: contents)
         }
     }
 }
