@@ -33,7 +33,7 @@ let maxUsefulDistance = 300000.0
 let minPreferredDistance = 15000.0
 let limitedPenalty = 50.0
 let defaultMaxDistance = 1000000.0
-let systemDistanceWeight = 0.05
+let systemDistanceWeight = 2.0
 
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
@@ -154,8 +154,6 @@ class SystemsAPI {
             return nil
         }
 
-        let systemDistanceWeight = 0.05  // tweakable weight for system distance
-
         var bestCandidate: (SystemsAPI.NearestPopulatedDocument.PopulatedSystem,
                              SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station, Double)?
 
@@ -169,7 +167,7 @@ class SystemsAPI {
                 continue
             }
 
-            let totalScore = bestStation.score() + (system.distance * systemDistanceWeight)
+            let totalScore = bestStation.score() + pow(system.distance, systemDistanceWeight)
             if bestCandidate == nil || totalScore < bestCandidate!.2 {
                 bestCandidate = (system, bestStation, totalScore)
             }
