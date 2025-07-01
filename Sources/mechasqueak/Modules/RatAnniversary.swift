@@ -53,6 +53,7 @@ class RatAnniversary: IRCBotModule {
                 map: [
                     "years": todayComponents.year ?? 0 - 2017
             ])
+            fuelRatsAnniversaryAnnounced = true
         }
 
         if let apiData = channelMessage.user.associatedAPIData,
