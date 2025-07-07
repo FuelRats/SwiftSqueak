@@ -55,7 +55,6 @@ struct CommandView: View {
                 }
             }
             
-            
             if let cooldown = command.cooldown {
                 Div {
                     let time = cooldown.timeSpan(maximumUnits: 1)
