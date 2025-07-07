@@ -99,6 +99,13 @@
     font-family: system-ui, sans-serif;
 }
 
+.cooldown {
+    padding-top: 1em;
+    font-size: 1rem;
+    color: #777;
+    font-style: italic;
+}
+
 .destination-tag-group::before {
     font-family: "Font Awesome 6 Free";
     font-weight: 900;

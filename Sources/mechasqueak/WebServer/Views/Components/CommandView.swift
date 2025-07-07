@@ -64,6 +64,14 @@ struct CommandView: View {
                     }
                 }
             }
+            
+            
+            if let cooldown = command.cooldown {
+                Div {
+                    let time = cooldown.timeSpan(maximumUnits: 1)
+                    "Cooldown: \(time)"
+                }.class("cooldown")
+            }
 
             if !command.options.isEmpty {
                 Div {
