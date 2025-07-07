@@ -26,16 +26,6 @@ struct CommandView: View {
                 .class("command-header")
             }
             
-            if command.allowedDestinations == .PrivateMessage {
-                Span {
-                    "Private Message Only"
-                }.class("destination-tag destination-tag-pm")
-            } else if command.allowedDestinations == .Channel {
-                Span {
-                    "In Channel Only"
-                }.class("destination-tag destination-tag-channel")
-            }
-            
             if !command.commands.dropFirst().isEmpty {
                 Div {
                     "Aliases: " + command.commands.dropFirst().map { "!\($0)" }.joined(separator: ", ")
@@ -131,6 +121,16 @@ struct CommandView: View {
                         "!\(command.commands[0]) \(command.example)"
                     }.class("command-example")
                 }
+            }
+            
+            if command.allowedDestinations == .PrivateMessage {
+                Span {
+                    "Private Message Only"
+                }.class("destination-tag destination-tag-pm")
+            } else if command.allowedDestinations == .Channel {
+                Span {
+                    "In Channel Only"
+                }.class("destination-tag destination-tag-channel")
             }
         }
         .id(command.commands[0].lowercased())

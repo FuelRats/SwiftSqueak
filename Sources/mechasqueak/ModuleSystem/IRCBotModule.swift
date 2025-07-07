@@ -164,7 +164,12 @@ struct IRCBotCommandDeclaration {
     }
 
     var example: String {
-        var example = self.parameters.example
+        var example = ""
+        if let option = options.first {
+            example += " -\(option) "
+        }
+        
+        example += self.parameters.example
 
         if let exampleArgNoParam = helpArguments.first(where: { $0.2 == nil }) {
             let (name, _, _) = exampleArgNoParam
