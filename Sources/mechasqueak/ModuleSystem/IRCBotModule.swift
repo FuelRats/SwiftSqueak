@@ -166,14 +166,14 @@ struct IRCBotCommandDeclaration {
     var example: String {
         var example = self.parameters.example
 
-        for argument in helpArguments {
-            let (name, argValue, _) = argument
-            if let exampleText = argument.2 {
-                if argValue != nil {
-                    example += " --\(name) \(exampleText)"
-                } else {
-                    example += " --\(name)"
-                }
+        if let exampleArgNoParam = helpArguments.first(where: { $0.2 == nil }) {
+            let (name, _, _) = exampleArgNoParam
+            example += " --\(name)"
+        }
+        for exampleArgParam in helpArguments.filter({ $0.2 != nil }) {
+            let (name, _, _) = exampleArgParam
+            if let exampleVal = exampleArgParam.2 {
+                example += " --\(name) \(exampleVal)"
             }
         }
         return example

@@ -61,7 +61,7 @@ class BoardCommands: IRCBotModule {
         ["addcase", "create"],
         [
             .param("client nick", "SpaceDawg"),
-            .argument("pc", example: ""),
+            .argument("pc"),
             .options(["o", "h", "l", "f"]),
             .argument("xb"),
             .argument("ps"),

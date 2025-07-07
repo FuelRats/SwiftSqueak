@@ -151,7 +151,7 @@ class FactCommands: IRCBotModule {
         [
             .param("fact-language", "pcquit-en"),
             .param("fact message", "Get out it's gonna blow!", .continuous),
-            .argument("category", "info")
+            .argument("category", "info", example: "help")
         ],
         category: .facts,
         description: "Add a new fact or a new language onto an existing fact",
