@@ -527,7 +527,8 @@ class RemoteRescueCommands: IRCBotModule {
         description:
             "Add a previously closed case back onto the board by its previous case number.",
         tags: ["reopen", "rescue"],
-        permission: .DispatchWrite
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
     )
     var didReceiveUncloseCommand = { command in
         guard let caseNumber = Int(command.parameters[0]),
@@ -675,7 +676,7 @@ class RemoteRescueCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["renameid"],
+        ["rename", "renameid"],
         [
             .param("rescue uuid", "3811e593-160b-45af-bf5e-ab8b5f26b718"),
             .param("client name", "SpaceDawg", .continuous)
