@@ -7,7 +7,7 @@ struct CommandView: View {
         Article {
             H3 {
                 Div {
-                    "!" + command.commands[0]
+                    CommandNameView(command: command)
                     for token in command.parameters {
                         CommandParameterComponent(token: token)
                     }
@@ -22,7 +22,6 @@ struct CommandView: View {
                             }
                         }.class("command-permission-groups")
                     }
-                    
                 }
                 .class("command-header")
             }
@@ -54,6 +53,13 @@ struct CommandView: View {
                         helpExtra()
                     }
                 }
+            }
+            
+            if let cooldown = command.cooldown {
+                Div {
+                    let time = cooldown.timeSpan(maximumUnits: 1)
+                    "Cooldown: \(time)"
+                }.class("cooldown")
             }
 
             if !command.options.isEmpty {
@@ -105,13 +111,44 @@ struct CommandView: View {
             if !command.example.isEmpty {
                 Div {
                     H4 { "Example:" }
+                    if let locale = command.helpLocale {
+                        Code {
+                            "!\(command.commands[0])-\(locale) \(command.example)"
+                        }.class("command-example")
+                    }
                     Code {
                         "!\(command.commands[0]) \(command.example)"
                     }.class("command-example")
                 }
             }
+            
+            if command.allowedDestinations == .PrivateMessage {
+                Span {
+                    "Private Message Only"
+                }.class("destination-tag destination-tag-pm")
+            } else if command.allowedDestinations == .Channel {
+                Span {
+                    "In Channel Only"
+                }.class("destination-tag destination-tag-channel")
+            }
         }
         .id(command.commands[0].lowercased())
         .class("command")
+    }
+}
+
+struct CommandNameView: View {
+    let command: IRCBotCommandDeclaration
+    
+    var body: Content {
+        Span {
+            "!" + command.commands[0]
+            if command.helpLocale != nil {
+                "-"
+                Span {
+                    "locale"
+                }.class("locale-parameter")
+            }
+        }
     }
 }

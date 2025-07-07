@@ -51,7 +51,7 @@ class RatAnniversary: IRCBotModule {
             mecha.reportingChannel?.send(
                 key: "fuelratsanniversary",
                 map: [
-                    "years": todayComponents.year ?? 0 - 2017
+                    "years": (todayComponents.year ?? 0) - 2017
             ])
             fuelRatsAnniversaryAnnounced = true
         }

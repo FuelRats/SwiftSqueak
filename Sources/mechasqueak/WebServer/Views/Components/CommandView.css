@@ -1,3 +1,8 @@
+:root {
+    --color-destination-pm: #ad392f;
+    --color-destination-channel: #2c92c9;
+}
+
 .command {
     margin-bottom: 1rem;
     background: var(--secondary-bg);
@@ -77,6 +82,60 @@
     font-size: 0.95em;
     white-space: pre-wrap;
     overflow-x: auto;
+}
+
+.destination-tag {
+    margin-top: 0.5em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.2em 0.6em;
+    margin-right: 0.4em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-family: system-ui, sans-serif;
+}
+
+.locale-parameter {
+    display: inline-block;
+    padding: 0.1em 0.3em;
+    border: 1px solid var(--param-border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    opacity: 0.5;
+}
+
+.cooldown {
+    padding-top: 1em;
+    font-size: 1rem;
+    color: #777;
+    font-style: italic;
+}
+
+.destination-tag-group::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    display: inline-block;
+}
+
+.destination-tag-pm {
+    background-color: var(--color-destination-pm);
+}
+
+.command-permission-group-pm::before {
+    content: "\f27a";
+}
+
+.destination-tag-channel {
+    background-color: var(--color-destination-channel);
+}
+
+.destination-tag-channel::before {
+    content: "\23";
 }
 
 @media (prefers-color-scheme: dark) {

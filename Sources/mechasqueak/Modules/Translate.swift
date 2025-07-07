@@ -43,15 +43,15 @@ class Translate: IRCBotModule {
         helpLocale: "fr",
         cooldown: .seconds(30),
         helpExtra: {
-            return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+            return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
         },
         helpView: {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
-                " for a list of valid language codes"
+                " for a guide on how to use Mecha translation"
             }
         }
     )
@@ -78,7 +78,19 @@ class Translate: IRCBotModule {
         category: .utility,
         description: "Translates a message to the client's language and replies in the rescue channel as you",
         tags: ["google", "deepl", "client", "rescue"],
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        helpExtra: {
+            return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
+        },
+        helpView: {
+            HTMLKit.Div {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://t.fuelr.at/3vtd")
+                    .target(.blank)
+                " for a guide on how to use Mecha translation"
+            }
+        }
     )
     var didReceiveTranslateCaseCommand = { command in
         guard let (caseId, rescue) = await board.findRescue(
@@ -144,15 +156,15 @@ class Translate: IRCBotModule {
         allowedDestinations: .PrivateMessage,
         cooldown: .seconds(30),
         helpExtra: {
-            return "Consult https://llm-translate.com/Supported%20languages/gpt-4o/ for a list of valid language codes"
+            return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
         },
         helpView: {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("https://llm-translate.com/Supported%20languages/gpt-4o/")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
-                " for a list of valid language codes"
+                " for a guide on how to use Mecha translation"
             }
         }
     )
@@ -207,7 +219,19 @@ class Translate: IRCBotModule {
             "Subscribe to automatic translations of client messages by either private message, or notice",
         tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        helpExtra: {
+            return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
+        },
+        helpView: {
+            HTMLKit.Div {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://t.fuelr.at/3vtd")
+                    .target(.blank)
+                " for a guide on how to use Mecha translation"
+            }
+        }
     )
     var didReceiveTranslateSubscribeCommand = { command in
         guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")
@@ -240,7 +264,19 @@ class Translate: IRCBotModule {
             "Subscribe to automatic translations of client messages by either private message, or notice",
         tags: ["google", "deepl", "notice", "subscription", "sub"],
         permission: .UserWriteOwn,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        helpExtra: {
+            return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
+        },
+        helpView: {
+            HTMLKit.Div {
+                "Consult "
+                Anchor("this page")
+                    .reference("https://t.fuelr.at/3vtd")
+                    .target(.blank)
+                " for a guide on how to use Mecha translation"
+            }
+        }
     )
     var didReceiveTranslateUnsubscribeCommand = { command in
         guard let user = command.message.user.associatedAPIData?.user else {

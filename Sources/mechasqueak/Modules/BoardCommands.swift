@@ -61,8 +61,8 @@ class BoardCommands: IRCBotModule {
         ["addcase", "create"],
         [
             .param("client nick", "SpaceDawg"),
-            .argument("pc", example: ""),
-            .options(["o", "h", "l", "f"]),
+            .argument("pc"),
+            .options(["f", "o", "h", "l"]),
             .argument("xb"),
             .argument("ps"),
             .argument("mode", "game version", example: "h"),
@@ -73,7 +73,8 @@ class BoardCommands: IRCBotModule {
         ],
         category: .board,
         description: "Create a new rescue case and add it to the board",
-        permission: .DispatchWrite
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
     )
     var didReceiveCreateCommand = { command in
         let nickname = command.parameters[0]
@@ -230,7 +231,7 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["clear", "close"],
         [
-            .options(["f", "p"]), .param("case id/client", "4"),
+            .options(["p", "f"]), .param("case id/client", "4"),
             .param("first limpet rat", "SpaceDawg", .standard, .optional)
         ],
         category: .board,

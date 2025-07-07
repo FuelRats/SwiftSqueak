@@ -328,7 +328,6 @@ class BoardAttributeCommands: IRCBotModule {
                 "client": rescue.clientDescription,
                 "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
             ])
-
     }
 
     @BotCommand(

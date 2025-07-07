@@ -37,8 +37,8 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description:
             "Check the Fuel Rats account information the bot is currently associating with your nick",
-        tags: ["user", "info"],
-        allowedDestinations: .PrivateMessage
+        tags: ["user", "info", "whois"],
+        cooldown: .seconds(60)
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -216,8 +216,9 @@ class AccountCommands: IRCBotModule {
     @BotCommand(
         ["permits"],
         category: .account,
-        description: "Add the permit belonging to this system to your account",
-        permission: .UserWriteOwn
+        description: "List all the permits currently belonging to your account",
+        permission: .UserReadOwn,
+        allowedDestinations: .PrivateMessage
     )
     var didReceiveListPermitCommand = { command in
         guard let currentRat = command.message.user.currentRat else {
