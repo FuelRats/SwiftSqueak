@@ -22,9 +22,18 @@ struct CommandView: View {
                             }
                         }.class("command-permission-groups")
                     }
-                    
                 }
                 .class("command-header")
+            }
+            
+            if command.allowedDestinations == .PrivateMessage {
+                Span {
+                    "Private Message Only"
+                }.class("destination-tag destination-tag-pm")
+            } else if command.allowedDestinations == .Channel {
+                Span {
+                    "In Channel Only"
+                }.class("destination-tag destination-tag-channel")
             }
             
             if !command.commands.dropFirst().isEmpty {
