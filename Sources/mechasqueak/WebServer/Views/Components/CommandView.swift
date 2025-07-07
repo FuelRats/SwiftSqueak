@@ -7,7 +7,7 @@ struct CommandView: View {
         Article {
             H3 {
                 Div {
-                    "!" + command.commands[0]
+                    CommandNameView(command: command)
                     for token in command.parameters {
                         CommandParameterComponent(token: token)
                     }
@@ -122,6 +122,11 @@ struct CommandView: View {
             if !command.example.isEmpty {
                 Div {
                     H4 { "Example:" }
+                    if let locale = command.helpLocale {
+                        Code {
+                            "!\(command.commands[0])-\(locale) \(command.example)"
+                        }.class("command-example")
+                    }
                     Code {
                         "!\(command.commands[0]) \(command.example)"
                     }.class("command-example")
@@ -130,5 +135,21 @@ struct CommandView: View {
         }
         .id(command.commands[0].lowercased())
         .class("command")
+    }
+}
+
+struct CommandNameView: View {
+    let command: IRCBotCommandDeclaration
+    
+    var body: Content {
+        Span {
+            "!" + command.commands[0]
+            if command.helpLocale != nil {
+                "-"
+                Span {
+                    "locale"
+                }.class("locale-parameter")
+            }
+        }
     }
 }
