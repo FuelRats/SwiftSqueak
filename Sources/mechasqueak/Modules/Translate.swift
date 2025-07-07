@@ -49,7 +49,7 @@ class Translate: IRCBotModule {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("for a guide on how to use Mecha translation")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
                 " for a guide on how to use Mecha translation"
             }
@@ -86,7 +86,7 @@ class Translate: IRCBotModule {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("for a guide on how to use Mecha translation")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
                 " for a guide on how to use Mecha translation"
             }
@@ -162,7 +162,7 @@ class Translate: IRCBotModule {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("for a guide on how to use Mecha translation")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
                 " for a guide on how to use Mecha translation"
             }
@@ -227,7 +227,7 @@ class Translate: IRCBotModule {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("for a guide on how to use Mecha translation")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
                 " for a guide on how to use Mecha translation"
             }
@@ -272,7 +272,7 @@ class Translate: IRCBotModule {
             HTMLKit.Div {
                 "Consult "
                 Anchor("this page")
-                    .reference("for a guide on how to use Mecha translation")
+                    .reference("https://t.fuelr.at/3vtd")
                     .target(.blank)
                 " for a guide on how to use Mecha translation"
             }
