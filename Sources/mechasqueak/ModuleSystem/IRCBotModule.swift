@@ -166,7 +166,7 @@ struct IRCBotCommandDeclaration {
     var example: String {
         var example = ""
         if let option = options.first {
-            example += " -\(option) "
+            example += "-\(option) "
         }
         
         example += self.parameters.example

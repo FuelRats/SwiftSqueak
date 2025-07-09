@@ -78,7 +78,7 @@ class IRCBotModuleManager {
             return
         }
 
-        guard checkIllegalOptions(command, ircBotCommand) == nil else {
+        guard checkIllegalOptions(command, ircBotCommand) == false else {
             return
         }
 
@@ -236,7 +236,7 @@ private func findAndMaybeHandleHelp(for command: IRCBotCommand) async -> IRCBotC
     return commandDecl
 }
 
-private func checkIllegalOptions(_ command: IRCBotCommandDeclaration, _ ircBotCommand: IRCBotCommand) -> String? {
+private func checkIllegalOptions(_ command: IRCBotCommandDeclaration, _ ircBotCommand: IRCBotCommand) -> Bool {
     let message = ircBotCommand.message
     let illegalNamedOptions = Set(ircBotCommand.arguments.keys).subtracting(Set(command.arguments.keys))
     if illegalNamedOptions.count > 0 {
@@ -248,11 +248,21 @@ private func checkIllegalOptions(_ command: IRCBotCommandDeclaration, _ ircBotCo
                 "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
                 "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
-        return "Illegal named options"
+        return true
     }
 
     let illegalOptions = ircBotCommand.options.subtracting(command.options)
     if illegalOptions.count > 0 {
+        let locale = Locale(identifier: String(illegalOptions))
+        if illegalOptions.count == 2 && locale.isValid {
+            message.error(
+                key: "command.illegaloptions.maybelocale", fromCommand: ircBotCommand,
+                map: [
+                    "options": String(illegalOptions),
+                    "command": ircBotCommand.command
+                ])
+            return true
+        }
         message.error(
             key: "command.illegaloptions", fromCommand: ircBotCommand,
             map: [
@@ -261,8 +271,8 @@ private func checkIllegalOptions(_ command: IRCBotCommandDeclaration, _ ircBotCo
                 "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
                 "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
-        return "Illegal options"
+        return true
     }
 
-    return nil
+    return false
 }
