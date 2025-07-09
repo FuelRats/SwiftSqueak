@@ -320,7 +320,7 @@ class BoardCommands: IRCBotModule {
             }
         }
         
-        if rescue.rats.isEmpty && !override {
+        if rescue.rats.isEmpty && firstLimpet == nil && !override {
             command.message.error(
                 key: "board.close.noassign", fromCommand: command,
                 map: [
