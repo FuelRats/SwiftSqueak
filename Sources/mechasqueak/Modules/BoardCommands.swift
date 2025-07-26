@@ -231,7 +231,7 @@ class BoardCommands: IRCBotModule {
     @BotCommand(
         ["clear", "close"],
         [
-            .options(["p", "f"]), .param("case id/client", "4"),
+            .options(["p", "f"]), .argument("carrier"), .param("case id/client", "4"),
             .param("first limpet rat", "SpaceDawg", .standard, .optional)
         ],
         category: .board,
@@ -252,6 +252,7 @@ class BoardCommands: IRCBotModule {
         let message = command.message
         let override = command.forceOverride
         let pwOnly = command.options.contains("p")
+        let carrier = command.has(argument: "carrier")
 
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             if command.parameters.count > 1,
@@ -278,45 +279,91 @@ class BoardCommands: IRCBotModule {
         var firstLimpet: Rat?
         let target = command.parameters[safe: 1] ?? ""
         if command.parameters.count > 1 && configuration.general.drillMode == false {
-            guard
-                let nick = message.destination.member(named: command.parameters[1]),
-                let rat = rescue.rats.first(where: { rat in
-                    if let userId = rat.relationships.user?.id?.rawValue,
-                        let nickUserId = nick.associatedAPIData?.user?.id.rawValue {
-                        return userId == nickUserId
-                    }
-                    return false
-                }) ?? nick.getRatRepresenting(platform: rescue.platform)
-            else {
-                if rescue.clientNick?.lowercased() == target.lowercased() {
-                    command.message.reply(
-                        message:
-                            "\(command.message.user.nickname) I'm not sure telling the client to do their own paperwork is a good idea.."
-                    )
-                    return
-                }
-                command.message.error(
-                    key: "board.close.notfound", fromCommand: command,
-                    map: [
-                        "caseId": caseId,
-                        "firstLimpet": command.parameters[1]
-                    ])
+            // Check if client is trying to assign themselves
+            if rescue.clientNick?.lowercased() == target.lowercased() {
+                command.message.reply(
+                    message:
+                        "\(command.message.user.nickname) I'm not sure telling the client to do their own paperwork is a good idea.."
+                )
                 return
             }
-
-            firstLimpet = rat
-
-            let currentRescues = await rat.getCurrentRescues()
-            if currentRescues.contains(where: { $0.1.id == rescue.id }) == false,
-                let conflictCase = currentRescues.first, override == false {
-                command.message.error(
-                    key: "board.close.conflict", fromCommand: command,
-                    map: [
-                        "rat": target,
-                        "closeCaseId": caseId,
-                        "conflictId": conflictCase.0
-                    ])
-                return
+            
+            // First check if the rat is already assigned to this rescue
+            if let nick = message.destination.member(named: command.parameters[1]),
+               let existingRat = rescue.rats.first(where: { rat in
+                   if let userId = rat.relationships.user?.id?.rawValue,
+                      let nickUserId = nick.associatedAPIData?.user?.id.rawValue {
+                       return userId == nickUserId
+                   }
+                   return false
+               }) {
+                // Rat is already assigned, just use them as first limpet
+                firstLimpet = existingRat
+            } else if !pwOnly {
+                // Rat is not assigned and we're not in paperwork-only mode, so assign them
+                let assignResult = await rescue.assign(
+                    command.parameters[1], 
+                    fromChannel: command.message.destination, 
+                    force: override, 
+                    carrier: carrier
+                )
+                
+                switch assignResult {
+                case .success(let assignment):
+                    switch assignment {
+                    case .assigned(let rat), .duplicate(let rat):
+                        firstLimpet = rat
+                        try? rescue.save(command)
+                    case .unidentified, .unidentifiedDuplicate:
+                        // For close command, we need an identified rat
+                        command.message.error(
+                            key: "board.close.notfound", fromCommand: command,
+                            map: [
+                                "caseId": caseId,
+                                "firstLimpet": command.parameters[1]
+                            ])
+                        return
+                    }
+                case .failure(let error):
+                    // Handle assignment errors
+                    switch error {
+                    case .jumpCallConflict(let rat):
+                        let currentRescues = await rat.getCurrentRescues()
+                        if let conflictCase = currentRescues.first(where: { $0.1.id != rescue.id }) {
+                            command.message.error(
+                                key: "board.close.conflict", fromCommand: command,
+                                map: [
+                                    "rat": target,
+                                    "closeCaseId": caseId,  
+                                    "conflictId": conflictCase.0
+                                ])
+                            return
+                        }
+                    default:
+                        command.message.error(
+                            key: "board.close.notfound", fromCommand: command,
+                            map: [
+                                "caseId": caseId,
+                                "firstLimpet": command.parameters[1]
+                            ])
+                        return
+                    }
+                }
+            } else {
+                // In paperwork-only mode, just try to find the rat without assigning
+                guard
+                    let nick = message.destination.member(named: command.parameters[1]),
+                    let rat = nick.getRatRepresenting(platform: rescue.platform)
+                else {
+                    command.message.error(
+                        key: "board.close.notfound", fromCommand: command,
+                        map: [
+                            "caseId": caseId,
+                            "firstLimpet": command.parameters[1]
+                        ])
+                    return
+                }
+                firstLimpet = rat
             }
         }
         

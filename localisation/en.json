@@ -409,6 +409,7 @@
     "help.command.system.f": "Prevents Mecha from automatically correcting the system name",
     "help.command.clear.f": "Force Mecha to close a case without validating the first limpet",
     "help.command.clear.p": "Sends the paperwork to a rat without actually making them the first limpet of the rescue",
+    "help.command.clear.carrier": "Allows you to assign a rat from a different platform using a fleet carrier",
     "help.command.landmark.sol": "Force !landmark to compare the distance from Sol rather than any other landmark.",
     "help.command.station.l": "Require the station to have a size L (large) landing pad",
     "help.command.station.p": "Include planetary outposts in results",

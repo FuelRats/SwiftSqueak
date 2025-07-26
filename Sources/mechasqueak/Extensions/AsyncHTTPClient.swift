@@ -66,6 +66,7 @@ extension HTTPClient {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
         do {
             guard let body = response.body else {
+                debug(request.url.absoluteString)
                 debug(String(describing: response))
                 if let body = response.body {
                     debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")

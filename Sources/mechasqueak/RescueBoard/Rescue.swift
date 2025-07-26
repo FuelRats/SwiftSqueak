@@ -549,12 +549,6 @@ class Rescue {
         if paperworkOnly == false {
             self.firstLimpet = firstLimpet
         }
-        if let firstLimpet = firstLimpet,
-            self.rats.contains(where: {
-                $0.id.rawValue == firstLimpet.id.rawValue
-            }) == false {
-            self.rats.append(firstLimpet)
-        }
 
         if configuration.general.drillMode {
             return
