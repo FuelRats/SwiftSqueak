@@ -504,6 +504,7 @@ actor RescueBoard {
         }
         
         checkThargoidSystemState(caseId: identifier, rescue: rescue)
+        checkUnobtainablePermitSystem(caseId: identifier, rescue: rescue)
         checkXboxPrivacy(caseId: identifier, rescue: rescue)
         checkPSPlusMissing(caseId: identifier, rescue: rescue)
         try? rescue.save(nil)
@@ -937,6 +938,7 @@ actor RescueBoard {
                         ]))
 
                 checkThargoidSystemState(caseId: caseId, rescue: rescue)
+                checkUnobtainablePermitSystem(caseId: caseId, rescue: rescue)
 
             }
         }
@@ -1196,6 +1198,26 @@ func checkThargoidSystemState (caseId: Int, rescue: Rescue) {
             RescueQuote(
                 author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
                 message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+            )
+        )
+    }
+}
+
+func checkUnobtainablePermitSystem (caseId: Int, rescue: Rescue) {
+    if let system = rescue.system, system.isUnobtainablePermitSystem {
+        rescue.channel?.send(key:
+            "board.unobtainablepermit",
+            map: [
+                "system": system.name
+            ]
+        )
+        rescue.appendQuote(
+            RescueQuote(
+                author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+                message: "CAUTION: \(system.name) has an unobtainable permit - no player can access this system",
                 createdAt: Date(),
                 updatedAt: Date(),
                 lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"

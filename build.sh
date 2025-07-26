@@ -4,6 +4,7 @@ cp -R localisation .build/debug/
 cp -R templates .build/debug/
 cp -R regions.json .build/debug/
 cp -R namedbodies.json .build/debug/
+cp -R unobtainable-permits.json .build/debug/
 
 INPUT_DIR="Sources/mechasqueak/WebServer/Views"
 OUTPUT_FILE="Public/css/styles.css"
