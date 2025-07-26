@@ -14,6 +14,8 @@
 {% include "landmark.stencil" %}
 {% elif system|proceduralInfo %}
 {{ system|proceduralInfo }}
+{% elif unobtainablePermit %}
+{{ "🚫 Unobtainable permit system"|color:8 }}
 {% elif invalid %}
 {{ "Invalid system name"|color:8 }}
 {% else %}

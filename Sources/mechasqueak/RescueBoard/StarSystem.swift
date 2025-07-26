@@ -140,7 +140,8 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 context: [
                     "system": self,
                     "landmark": self.landmark as Any,
-                    "invalid": self.isInvalid
+                    "invalid": self.isInvalid,
+                    "unobtainablePermit": self.isUnobtainablePermitSystem
                 ])) ?? ""
     }
 
@@ -217,6 +218,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                         "landmark": self.landmark as Any,
                         "region": self.galacticRegion as Any,
                         "invalid": self.isInvalid,
+                        "unobtainablePermit": self.isUnobtainablePermitSystem,
                         "plotUrl": plotUrl?.absoluteString as Any,
                         "stations": stations,
                         "largeStations": largeStations,
@@ -267,7 +269,16 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
         return mecha.sectors.contains(where: { $0.name == self.name })
     }
 
+    var isUnobtainablePermitSystem: Bool {
+        return SystemsAPI.isUnobtainablePermitSystem(self.name)
+    }
+    
     var isInvalid: Bool {
+        // Don't mark unobtainable permit systems as invalid
+        if isUnobtainablePermitSystem {
+            return false
+        }
+        
         if ProceduralSystem.proceduralSystemExpression.matches(self.name),
             let procedural = ProceduralSystem(string: self.name) {
             return

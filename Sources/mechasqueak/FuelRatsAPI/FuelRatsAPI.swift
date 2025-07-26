@@ -137,6 +137,27 @@ class FuelRatsAPI {
 
         return try await FuelRatsAPI.rescueSearch(query: query)
     }
+    
+    static func getUnfiledRescuesForUser(user: User) async throws -> RescueSearchDocument? {
+        // Get all rat IDs belonging to this user
+        let ratIds = user.relationships.rats?.ids ?? []
+        
+        guard !ratIds.isEmpty else {
+            // Return nil if user has no rats
+            return nil
+        }
+        
+        let query = [
+            "filter": [
+                "status": ["eq": "closed"],
+                "outcome": ["is": nil],
+                "firstLimpetId": ["in": ratIds.map { $0.rawValue.uuidString.lowercased() }]
+            ].jsonString,
+            "sort": "-createdAt"
+        ]
+
+        return try await FuelRatsAPI.rescueSearch(query: query)
+    }
 
     static func deleteRescue(id: UUID, command: IRCBotCommand?) async throws {
         let request = try HTTPClient.Request(

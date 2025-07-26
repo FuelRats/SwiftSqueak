@@ -155,6 +155,23 @@ class BoardAttributeCommands: IRCBotModule {
                     lastAuthor: command.message.client.currentNick)
             )
         }
+        
+        if let system = rescue.system, system.isUnobtainablePermitSystem {
+            command.message.reply(
+                message: lingo.localize(
+                    "board.unobtainablepermit", locale: "en",
+                    interpolations: [
+                        "system": system.name
+                    ]))
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "CAUTION: \(system.name) has an unobtainable permit - no player can access this system",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick)
+            )
+        }
         try? rescue.save(command)
 
         if let distance = rescue.system?.landmark?.distance, distance > 2500,

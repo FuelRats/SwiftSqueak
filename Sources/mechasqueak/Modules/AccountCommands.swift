@@ -188,29 +188,57 @@ class AccountCommands: IRCBotModule {
 
     @BotCommand(
         ["changeemail", "changemail"],
-        [.param("email", "spacedawg@fuelrats.com")],
+        [.param("email", "spacedawg@fuelrats.com"), .argument("user", "nickname/user id", example: "SpaceDawg")],
         category: .account,
         description: "Change your Fuel Rats account email address",
         permission: .UserWriteOwn,
         allowedDestinations: .PrivateMessage
     )
     var didReceiveChangeEmailCommand = { command in
-        guard let user = command.message.user.associatedAPIData?.user else {
-            command.message.error(key: "changemail.notloggedin", fromCommand: command)
-            return
+        let newEmail = command.parameters[0]
+        let targetUser: User
+        
+        if let targetNick = command.argumentValue(for: "user") {
+            // Admin changing another user's email
+            guard command.message.user.hasPermission(permission: .UserWrite) else {
+                command.message.error(key: "changemail.nopermission", fromCommand: command)
+                return
+            }
+            
+            guard let (accountData, user) = await getAccountData(nick: targetNick, fromCommand: command) else {
+                return
+            }
+            targetUser = user
+        } else {
+            // User changing their own email
+            guard let user = command.message.user.associatedAPIData?.user else {
+                command.message.error(key: "changemail.notloggedin", fromCommand: command)
+                return
+            }
+            targetUser = user
         }
 
         do {
-            try await user.changeEmail(to: command.parameters[0])
+            try await targetUser.changeEmail(to: newEmail)
         } catch {
             command.message.error(key: "changemail.error", fromCommand: command)
+            return
         }
 
-        command.message.reply(
-            key: "changemail.success", fromCommand: command,
-            map: [
-                "email": command.parameters[0]
-            ])
+        if command.argumentValue(for: "user") != nil {
+            command.message.reply(
+                key: "changemail.success.other", fromCommand: command,
+                map: [
+                    "email": newEmail,
+                    "user": command.argumentValue(for: "user")!
+                ])
+        } else {
+            command.message.reply(
+                key: "changemail.success", fromCommand: command,
+                map: [
+                    "email": newEmail
+                ])
+        }
     }
 
     @BotCommand(

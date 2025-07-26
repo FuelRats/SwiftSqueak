@@ -285,6 +285,22 @@ struct Fact: Codable, Hashable {
             .where("id", .equal, SQLBind(name))
             .run().asContinuation()
     }
+    
+    public static func updateCategory(forFact fact: String, toCategory category: String?) async throws {
+        // Clear cache for all aliases of this fact
+        let aliases = try await GroupedFact.get(name: fact)
+        for alias in aliases?.aliases ?? [] {
+            for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {
+                cache.removeValue(forKey: item.key)
+            }
+        }
+        
+        return try await sql.update("facts")
+            .set("category", to: category)
+            .set("updatedAt", to: Date())
+            .where("id", .equal, SQLBind(fact))
+            .run().asContinuation()
+    }
 
     public static func delete(alias: String) async throws {
         for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {

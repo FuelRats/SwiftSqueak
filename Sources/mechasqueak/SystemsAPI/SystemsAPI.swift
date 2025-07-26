@@ -35,6 +35,27 @@ let limitedPenalty = 50.0
 let defaultMaxDistance = 1000000.0
 let systemDistanceWeight = 2.0
 
+func loadUnobtainablePermitSystems() -> Set<String> {
+    let unobtainablePermitsPath = URL(
+        fileURLWithPath: configuration.sourcePath.path
+    ).appendingPathComponent("unobtainable-permits.json")
+    
+    guard let permitsData = try? Data(contentsOf: unobtainablePermitsPath) else {
+        debug("Warning: Could not locate unobtainable-permits.json file in \(unobtainablePermitsPath.absoluteString)")
+        return Set<String>()
+    }
+    
+    guard let json = try? JSONSerialization.jsonObject(with: permitsData) as? [String: Any],
+          let systems = json["unobtainable_permit_systems"] as? [String] else {
+        debug("Warning: Could not parse unobtainable-permits.json file")
+        return Set<String>()
+    }
+    
+    return Set(systems.map { $0.lowercased() })
+}
+
+let unobtainablePermitSystems = loadUnobtainablePermitSystems()
+
 class SystemsAPI {
     private static var shortNamesCapitalisation = [
         "IX": "Ix",
@@ -43,6 +64,10 @@ class SystemsAPI {
         "EL": "El",
         "KI": "Ki"
     ]
+    
+    static func isUnobtainablePermitSystem(_ systemName: String) -> Bool {
+        return unobtainablePermitSystems.contains(systemName.lowercased())
+    }
 
     static func performSearch(forSystem systemName: String, quickSearch: Bool = false) async throws
         -> SearchDocument {
@@ -194,6 +219,19 @@ class SystemsAPI {
         var systemName = systemName
         if let shortNameCorrection = shortNamesCapitalisation[systemName.uppercased()] {
             systemName = shortNameCorrection
+        }
+        
+        // Check if this is an unobtainable permit system first
+        if isUnobtainablePermitSystem(systemName) {
+            return StarSystem(
+                name: systemName,
+                searchResult: nil,
+                availableCorrections: nil,
+                landmark: nil,
+                landmarks: [],
+                proceduralCheck: nil,
+                lookupAttempted: true
+            )
         }
 
         let (searchResults, proceduralResult) = await (

@@ -315,18 +315,42 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["unfiled", "pwn", "paperworkneeded", "needspaperwork", "npw"],
+        [.argument("all")],
         category: .rescues,
-        description: "Get a list of rescues that have not had their paperwork completed.",
+        description: "Get a list of your rescues that have not had their paperwork completed.",
         permission: .DispatchRead,
         allowedDestinations: .PrivateMessage
     )
     var didReceiveUnfiledListCommand = { command in
         do {
-            let results = try await FuelRatsAPI.getUnfiledRescues()
+            let showAll = command.has(argument: "all")
+            let results: RescueSearchDocument
+            
+            if showAll {
+                // Show all unfiled rescues (with date limits)
+                results = try await FuelRatsAPI.getUnfiledRescues()
+            } else {
+                // Show only user's unfiled rescues
+                guard let userNick = command.message.user.associatedAPIData,
+                      let user = userNick.user else {
+                    command.message.error(key: "rescue.unfiled.notloggedin", fromCommand: command)
+                    return
+                }
+                guard let userResults = try await FuelRatsAPI.getUnfiledRescuesForUser(user: user) else {
+                    // User has no rats
+                    command.message.replyPrivate(key: "rescue.unfiled.emptyuser", fromCommand: command)
+                    return
+                }
+                results = userResults
+            }
 
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {
-                command.message.replyPrivate(key: "rescue.unfiled.empty", fromCommand: command)
+                if showAll {
+                    command.message.replyPrivate(key: "rescue.unfiled.empty", fromCommand: command)
+                } else {
+                    command.message.replyPrivate(key: "rescue.unfiled.emptyuser", fromCommand: command)
+                }
                 return
             }
 
