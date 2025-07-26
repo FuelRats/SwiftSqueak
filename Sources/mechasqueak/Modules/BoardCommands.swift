@@ -309,45 +309,45 @@ class BoardCommands: IRCBotModule {
                 )
                 
                 switch assignResult {
-                case .success(let assignment):
-                    switch assignment {
-                    case .assigned(let rat), .duplicate(let rat):
-                        firstLimpet = rat
-                        try? rescue.save(command)
-                    case .unidentified, .unidentifiedDuplicate:
-                        // For close command, we need an identified rat
-                        command.message.error(
-                            key: "board.close.notfound", fromCommand: command,
-                            map: [
-                                "caseId": caseId,
-                                "firstLimpet": command.parameters[1]
-                            ])
-                        return
-                    }
-                case .failure(let error):
-                    // Handle assignment errors
-                    switch error {
-                    case .jumpCallConflict(let rat):
-                        let currentRescues = await rat.getCurrentRescues()
-                        if let conflictCase = currentRescues.first(where: { $0.1.id != rescue.id }) {
-                            command.message.error(
-                                key: "board.close.conflict", fromCommand: command,
-                                map: [
-                                    "rat": target,
-                                    "closeCaseId": caseId,  
-                                    "conflictId": conflictCase.0
-                                ])
-                            return
+                    case .success(let assignment):
+                        switch assignment {
+                            case .assigned(let rat), .duplicate(let rat):
+                                firstLimpet = rat
+                                try? rescue.save(command)
+                            case .unidentified, .unidentifiedDuplicate:
+                                // For close command, we need an identified rat
+                                command.message.error(
+                                    key: "board.close.notfound", fromCommand: command,
+                                    map: [
+                                        "caseId": caseId,
+                                        "firstLimpet": command.parameters[1]
+                                    ])
+                                return
                         }
-                    default:
-                        command.message.error(
-                            key: "board.close.notfound", fromCommand: command,
-                            map: [
-                                "caseId": caseId,
-                                "firstLimpet": command.parameters[1]
-                            ])
-                        return
-                    }
+                    case .failure(let error):
+                        // Handle assignment errors
+                        switch error {
+                            case .jumpCallConflict(let rat):
+                                let currentRescues = await rat.getCurrentRescues()
+                                if let conflictCase = currentRescues.first(where: { $0.1.id != rescue.id }) {
+                                    command.message.error(
+                                        key: "board.close.conflict", fromCommand: command,
+                                        map: [
+                                            "rat": target,
+                                            "closeCaseId": caseId,  
+                                            "conflictId": conflictCase.0
+                                        ])
+                                    return
+                                }
+                            default:
+                                command.message.error(
+                                    key: "board.close.notfound", fromCommand: command,
+                                    map: [
+                                        "caseId": caseId,
+                                        "firstLimpet": command.parameters[1]
+                                    ])
+                                return
+                        }
                 }
             } else {
                 // In paperwork-only mode, just try to find the rat without assigning
