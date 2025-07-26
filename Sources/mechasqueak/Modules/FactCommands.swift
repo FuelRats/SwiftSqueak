@@ -415,6 +415,56 @@ class FactCommands: IRCBotModule {
     }
 
     @BotCommand(
+        ["factcat", "setfactcat", "factcategory"],
+        [.param("fact", "prep"), .param("category", "rescue")],
+        category: .facts,
+        description: "Change the category of an existing fact",
+        tags: ["category", "set"],
+        permission: .UserWrite
+    )
+    var didReceiveFactCategoryCommand = { command in
+        let factName = command.parameters[0].lowercased()
+        let category = command.parameters[1].lowercased()
+        
+        // Validate category against known categories
+        let validCategories = Set(FactCommands.factCategoryNames.keys.filter { !$0.isEmpty })
+        guard validCategories.contains(category) else {
+            let availableCategories = validCategories.sorted().joined(separator: ", ")
+            command.message.error(
+                key: "factcat.invalidcategory", fromCommand: command,
+                map: [
+                    "category": category,
+                    "available": availableCategories
+                ])
+            return
+        }
+        
+        do {
+            let fact = try await GroupedFact.get(name: factName)
+            guard fact != nil else {
+                command.message.error(
+                    key: "factcat.notfound", fromCommand: command,
+                    map: [
+                        "fact": factName
+                    ])
+                return
+            }
+            
+            try await Fact.updateCategory(forFact: factName, toCategory: category)
+            
+            let categoryName = FactCommands.factCategoryNames[category] ?? category.firstCapitalized
+            command.message.reply(
+                key: "factcat.success", fromCommand: command,
+                map: [
+                    "fact": factName,
+                    "category": categoryName
+                ])
+        } catch {
+            command.message.error(key: "addfact.error", fromCommand: command)
+        }
+    }
+
+    @BotCommand(
         ["anyfact"],
         [
             .argument("info"), .argument("locales"),
