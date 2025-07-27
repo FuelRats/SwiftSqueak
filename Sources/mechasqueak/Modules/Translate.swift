@@ -23,8 +23,8 @@
  */
 
 import Foundation
-import IRCKit
 import HTMLKit
+import IRCKit
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
@@ -57,14 +57,17 @@ class Translate: IRCBotModule {
     )
     var didReceiveTranslateCommand = { command in
         if command.locale.englishDescription == "unknown locale" {
-            command.message.error(key: "translate.locale", fromCommand: command, map: [
-                "locale": command.locale.identifier
-            ])
+            command.message.error(
+                key: "translate.locale", fromCommand: command,
+                map: [
+                    "locale": command.locale.identifier
+                ])
             return
         }
         do {
             if let translation = try await Translate.translate(
-                command.parameters[0], locale: command.locale) {
+                command.parameters[0], locale: command.locale)
+            {
                 command.message.reply(message: translation)
             }
         } catch {
@@ -76,7 +79,8 @@ class Translate: IRCBotModule {
         ["tcase", "tc"],
         [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous)],
         category: .utility,
-        description: "Translates a message to the client's language and replies in the rescue channel as you",
+        description:
+            "Translates a message to the client's language and replies in the rescue channel as you",
         tags: ["google", "deepl", "client", "rescue"],
         allowedDestinations: .PrivateMessage,
         helpExtra: {
@@ -93,13 +97,15 @@ class Translate: IRCBotModule {
         }
     )
     var didReceiveTranslateCaseCommand = { command in
-        guard let (caseId, rescue) = await board.findRescue(
-            withCaseIdentifier: command.parameters[0], includingRecentlyClosed: true) else {
+        guard
+            let (caseId, rescue) = await board.findRescue(
+                withCaseIdentifier: command.parameters[0], includingRecentlyClosed: true)
+        else {
             command.message.error(
                 key: "board.casenotfound", fromCommand: command,
                 map: [
                     "caseIdentifier": command.parameters[0]
-            ])
+                ])
             return
         }
         var locale = rescue.clientLanguage ?? command.locale
@@ -107,33 +113,40 @@ class Translate: IRCBotModule {
             locale = command.locale
         }
         if locale.englishDescription == "unknown locale" {
-            command.message.error(key: "translate.locale", fromCommand: command, map: [
-                "locale": locale.identifier
-            ])
+            command.message.error(
+                key: "translate.locale", fromCommand: command,
+                map: [
+                    "locale": locale.identifier
+                ])
             return
         }
         let target = rescue.clientNick ?? rescue.client ?? ""
 
         do {
             if let translation = try await Translate.translate(
-                command.parameters[1], locale: locale) {
+                command.parameters[1], locale: locale)
+            {
                 let destination = rescue.channel ?? mecha.rescueChannel
-                command.message.client.send("MSGAS", parameters: [
-                    command.message.raw.sender?.nickname ?? "",
-                    destination?.name ?? "",
-                    "\(target): \(translation)"
-                ])
+                command.message.client.send(
+                    "MSGAS",
+                    parameters: [
+                        command.message.raw.sender?.nickname ?? "",
+                        destination?.name ?? "",
+                        "\(target): \(translation)",
+                    ])
                 let contents = "<\(command.message.user.nickname)> \(command.parameters[1])"
                 for (subscriber, subType) in Translate.clientTranslationSubscribers {
                     switch subType {
-                        case .Notice:
-                            command.message.client.send("CNOTICE", parameters: [
+                    case .Notice:
+                        command.message.client.send(
+                            "CNOTICE",
+                            parameters: [
                                 subscriber,
                                 destination?.name ?? "",
-                                contents
+                                contents,
                             ])
 
-                        case .PrivateMessage:
+                    case .PrivateMessage:
                         command.message.client.sendMessage(toTarget: subscriber, contents: contents)
                     }
                 }
@@ -142,16 +155,17 @@ class Translate: IRCBotModule {
             command.error(error)
         }
     }
-    
+
     @BotCommand(
         ["translateme", "tme"],
         [
             .param("channel", "#fuelrats"),
             .param("language code", "fr"),
-            .param("message", "Help is on the way!", .continuous)
+            .param("message", "Help is on the way!", .continuous),
         ],
         category: .utility,
-        description: "Translate a message to another language and sends the message to a channel as you",
+        description:
+            "Translate a message to another language and sends the message to a channel as you",
         tags: ["google", "deepl"],
         allowedDestinations: .PrivateMessage,
         cooldown: .seconds(30),
@@ -172,39 +186,51 @@ class Translate: IRCBotModule {
         var channelName = command.parameters[0]
         var locale = Locale(identifier: command.parameters[1])
         var message = command.parameters[2]
-        
-        guard let channel = command.message.client.channels.first(where: {
-            return $0.name.lowercased() == channelName.lowercased()
-        }) else {
-            command.message.error(key: "translate.destination", fromCommand: command, map: [
-                "channel": channelName
-            ])
+
+        guard
+            let channel = command.message.client.channels.first(where: {
+                return $0.name.lowercased() == channelName.lowercased()
+            })
+        else {
+            command.message.error(
+                key: "translate.destination", fromCommand: command,
+                map: [
+                    "channel": channelName
+                ])
             return
         }
         guard channel.member(fromSender: command.message.raw.sender!) != nil else {
-            command.message.error(key: "translate.destination", fromCommand: command, map: [
-                "channel": channelName
-            ])
+            command.message.error(
+                key: "translate.destination", fromCommand: command,
+                map: [
+                    "channel": channelName
+                ])
             return
         }
-        
+
         if locale.englishDescription == "unknown locale" {
-            command.message.error(key: "translate.locale", fromCommand: command, map: [
-                "locale": locale.identifier
-            ])
+            command.message.error(
+                key: "translate.locale", fromCommand: command,
+                map: [
+                    "locale": locale.identifier
+                ])
             return
         }
-        
+
         do {
             if let translation = try await Translate.translate(
-                message, locale: locale) {
-                command.message.client.send("MSGAS", parameters: [
-                    command.message.raw.sender?.nickname ?? "",
-                    channel.name,
-                    translation
-                ])
+                message, locale: locale)
+            {
+                command.message.client.send(
+                    "MSGAS",
+                    parameters: [
+                        command.message.raw.sender?.nickname ?? "",
+                        channel.name,
+                        translation,
+                    ])
                 let contents = "<\(command.message.user.nickname)> \(message)"
-                notifyTranslateSubscribers(client: command.message.client, channel: channelName, contents: contents)
+                notifyTranslateSubscribers(
+                    client: command.message.client, channel: channelName, contents: contents)
             }
         } catch {
             command.error(error)
@@ -234,7 +260,8 @@ class Translate: IRCBotModule {
         }
     )
     var didReceiveTranslateSubscribeCommand = { command in
-        guard let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")
+        guard
+            let subscriptionType = ClientTranslateSubscription(rawValue: command.param1 ?? "notice")
         else {
             command.message.error(
                 key: "transsub.subtype", fromCommand: command, map: ["type": command.parameters[0]])
@@ -291,43 +318,88 @@ class Translate: IRCBotModule {
         command.message.reply(key: "transsub.unsubbed", fromCommand: command)
     }
 
-    static func translate(_ text: String, locale: Foundation.Locale? = nil) async throws -> String? {
-        var prompt = OpenAIMessage(
+    struct TranslationResponse: Codable {
+        let sourceLanguage: String
+        let translatedText: String
+        let confidence: Double
+
+        enum CodingKeys: String, CodingKey {
+            case sourceLanguage = "source_language"
+            case translatedText = "translated_text"
+            case confidence
+        }
+    }
+
+    static func translate(_ text: String, locale: Foundation.Locale? = nil) async throws -> String?
+    {
+        var targetCode = "en"
+        if let locale = locale {
+            targetCode = locale.languageCode ?? "en"
+        }
+
+        let prompt = OpenAIMessage(
             role: .system,
             content:
                 """
-                Translate to English only, no extra text or quotes,
-                if it's already in english output 'no translation'.
-                Context: Fuel Rats bot helping stranded Elite Dangerous players.
+                You are a bot translating text for the Fuel Rats who helps stranded players in Elite Dangerous. 
+                Translate to \(targetCode). JSON only: 
+                {"source_language":"ISO code","translated_text":"translation","confidence":0.0-1.0}
                 """
         )
-        if let locale = locale {
-            let languageText = locale.englishDescription
-            prompt = OpenAIMessage(
-                role: .system,
-                content:
-                    """
-                    Translate to \(languageText) only, no extra text or quotes,
-                    if it's already in english output 'no translation'.
-                    Context: Fuel Rats bot helping stranded Elite Dangerous players.
-                    """
-            )
-        }
         let message = OpenAIMessage(role: .user, content: text)
 
         let request = OpenAIRequest(
             messages: [prompt, message], model: "gpt-4o", temperature: 0.2, maxTokens: nil)
         let result = try await OpenAI.request(params: request)
-        let translation = result.choices.first?.message.content
-        let translationStripped = translation?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .trimmingCharacters(in: .punctuationCharacters)
-            .lowercased()
-        if translationStripped?.count == 0
-            || translationStripped == "no translation" {
+
+        guard var jsonString = result.choices.first?.message.content else {
             return nil
         }
-        return result.choices.first?.message.content
+        
+        // Strip markdown code blocks if present
+        if jsonString.contains("```") {
+            // Remove ```json or ``` at the start
+            jsonString = jsonString.replacingOccurrences(of: "```json\n", with: "")
+            jsonString = jsonString.replacingOccurrences(of: "```\n", with: "")
+            // Remove ``` at the end
+            jsonString = jsonString.replacingOccurrences(of: "\n```", with: "")
+            jsonString = jsonString.replacingOccurrences(of: "```", with: "")
+        }
+
+        do {
+            let jsonData = Data(jsonString.utf8)
+            let decoder = JSONDecoder()
+            let translationResponse = try decoder.decode(TranslationResponse.self, from: jsonData)
+
+            print("source language: \(translationResponse.sourceLanguage) confidence: \(translationResponse.confidence)")
+            // If source language matches target language and confidence is high, don't translate
+            if translationResponse.sourceLanguage == targetCode
+                && translationResponse.confidence > 0.8
+            {
+                return nil
+            }
+            if translationResponse.translatedText == text {
+                return nil
+            }
+
+            // Only return translation if confidence is reasonable
+            if translationResponse.confidence > 0.5 {
+                return translationResponse.translatedText
+            }
+
+            return nil
+        } catch {
+            // If JSON parsing fails, fallback to old behavior
+            let translationStripped =
+                jsonString
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: .punctuationCharacters)
+                .lowercased()
+            if translationStripped.count == 0 || translationStripped == "no translation" {
+                return nil
+            }
+            return jsonString
+        }
     }
 
     @AsyncEventListener<IRCChannelMessageNotification>
@@ -336,8 +408,10 @@ class Translate: IRCBotModule {
             // Do not interpret commands from playback of old messages
             return
         }
-        guard let (caseId, rescue) = await board.findRescue(
-            withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true) else {
+        guard
+            let (caseId, rescue) = await board.findRescue(
+                withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true)
+        else {
             return
         }
         guard rescue.clientLanguage?.languageCode != "en" else {
@@ -354,18 +428,20 @@ class Translate: IRCBotModule {
     }
 }
 
-func notifyTranslateSubscribers (client: IRCClient, channel: String, contents: String) {
+func notifyTranslateSubscribers(client: IRCClient, channel: String, contents: String) {
     for (subscriber, subType) in Translate.clientTranslationSubscribers {
         switch subType {
-            case .Notice:
-                client.send("CNOTICE", parameters: [
+        case .Notice:
+            client.send(
+                "CNOTICE",
+                parameters: [
                     subscriber,
                     channel,
-                    contents
+                    contents,
                 ])
 
-            case .PrivateMessage:
-                client.sendMessage(toTarget: subscriber, contents: contents)
+        case .PrivateMessage:
+            client.sendMessage(toTarget: subscriber, contents: contents)
         }
     }
 }
