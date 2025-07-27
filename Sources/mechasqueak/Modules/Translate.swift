@@ -66,8 +66,7 @@ class Translate: IRCBotModule {
         }
         do {
             if let translation = try await Translate.translate(
-                command.parameters[0], locale: command.locale)
-            {
+                command.parameters[0], locale: command.locale) {
                 command.message.reply(message: translation)
             }
         } catch {
@@ -124,8 +123,7 @@ class Translate: IRCBotModule {
 
         do {
             if let translation = try await Translate.translate(
-                command.parameters[1], locale: locale)
-            {
+                command.parameters[1], locale: locale) {
                 let destination = rescue.channel ?? mecha.rescueChannel
                 command.message.client.send(
                     "MSGAS",
@@ -137,17 +135,17 @@ class Translate: IRCBotModule {
                 let contents = "<\(command.message.user.nickname)> \(command.parameters[1])"
                 for (subscriber, subType) in Translate.clientTranslationSubscribers {
                     switch subType {
-                    case .Notice:
+                        case .Notice:
                         command.message.client.send(
                             "CNOTICE",
                             parameters: [
                                 subscriber,
                                 destination?.name ?? "",
-                                contents,
+                                contents
                             ])
 
-                    case .PrivateMessage:
-                        command.message.client.sendMessage(toTarget: subscriber, contents: contents)
+                        case .PrivateMessage:
+                            command.message.client.sendMessage(toTarget: subscriber, contents: contents)
                     }
                 }
             }
@@ -161,7 +159,7 @@ class Translate: IRCBotModule {
         [
             .param("channel", "#fuelrats"),
             .param("language code", "fr"),
-            .param("message", "Help is on the way!", .continuous),
+            .param("message", "Help is on the way!", .continuous)
         ],
         category: .utility,
         description:
@@ -219,8 +217,7 @@ class Translate: IRCBotModule {
 
         do {
             if let translation = try await Translate.translate(
-                message, locale: locale)
-            {
+                message, locale: locale) {
                 command.message.client.send(
                     "MSGAS",
                     parameters: [
@@ -431,17 +428,17 @@ class Translate: IRCBotModule {
 func notifyTranslateSubscribers(client: IRCClient, channel: String, contents: String) {
     for (subscriber, subType) in Translate.clientTranslationSubscribers {
         switch subType {
-        case .Notice:
+            case .Notice:
             client.send(
                 "CNOTICE",
                 parameters: [
                     subscriber,
                     channel,
-                    contents,
+                    contents
                 ])
 
-        case .PrivateMessage:
-            client.sendMessage(toTarget: subscriber, contents: contents)
+            case .PrivateMessage:
+                client.sendMessage(toTarget: subscriber, contents: contents)
         }
     }
 }
