@@ -386,16 +386,10 @@ class Translate: IRCBotModule {
 
             return nil
         } catch {
-            // If JSON parsing fails, fallback to old behavior
-            let translationStripped =
-                jsonString
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .trimmingCharacters(in: .punctuationCharacters)
-                .lowercased()
-            if translationStripped.count == 0 || translationStripped == "no translation" {
-                return nil
-            }
-            return jsonString
+            // If JSON parsing fails, log the error and return nil
+            print("Failed to parse translation JSON response: \(jsonString)")
+            print("Error: \(error)")
+            return nil
         }
     }
 
