@@ -389,7 +389,6 @@ class Translate: IRCBotModule {
             // If JSON parsing fails, log the error and return nil
             print("Failed to parse translation JSON response: \(jsonString)")
             print("Error: \(error)")
-            return nil
         }
     }
 
