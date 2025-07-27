@@ -382,7 +382,7 @@ private func buildFailedAssignErrorMessage(
                 "universe": universe
             ])
         } else if rescue.platform == .PC {
-            errorMessage += lingo.localize("board.assign.invalidcmdr", locale: "en", interpolations: [
+            errorMessage += lingo.localize("board.assign.invalidcmdrpc", locale: "en", interpolations: [
                 "rats": unidentified.joined(separator: ", "),
                 "platform": rescue.platform.ircRepresentable,
                 "expansion": rescue.expansion.ircRepresentable
