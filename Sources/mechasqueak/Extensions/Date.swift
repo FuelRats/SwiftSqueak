@@ -25,28 +25,13 @@
 import Foundation
 
 extension Date {
-    var timeAgo: String {
-        let calendar = Calendar.current
-        let minuteAgo = calendar.date(byAdding: .minute, value: -1, to: Date())!
-        let hourAgo = calendar.date(byAdding: .hour, value: -1, to: Date())!
-        let dayAgo = calendar.date(byAdding: .day, value: -1, to: Date())!
-        let weekAgo = calendar.date(byAdding: .day, value: -7, to: Date())!
-
-        if minuteAgo < self {
-        let diff = Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0
-            return "\(diff) seconds"
-        } else if hourAgo < self {
-            let diff = Calendar.current.dateComponents([.minute], from: self, to: Date()).minute ?? 0
-            return "\(diff) minutes"
-        } else if dayAgo < self {
-            let diff = Calendar.current.dateComponents([.hour], from: self, to: Date()).hour ?? 0
-            return "\(diff) hours"
-        } else if weekAgo < self {
-            let diff = Calendar.current.dateComponents([.day], from: self, to: Date()).day ?? 0
-            return "\(diff) days"
-        }
-        let diff = Calendar.current.dateComponents([.weekOfYear], from: self, to: Date()).weekOfYear ?? 0
-        return "\(diff) weeks"
+    func timeAgo(
+        components: [TimeUnit] = [.year, .month, .day, .hour, .minute, .second],
+        maximumUnits: UInt? = nil
+    ) -> String {
+        let seconds = Double(
+            Calendar.current.dateComponents([.second], from: self, to: Date()).second ?? 0)
+        return seconds.timeSpan(components: components, maximumUnits: maximumUnits)
     }
 
     var ircRepresentable: String {
@@ -67,7 +52,7 @@ extension Date {
 }
 
 extension TimeInterval {
-    static func from (string: String) -> TimeInterval? {
+    static func from(string: String) -> TimeInterval? {
         var string = string
 
         if string == "0" {
@@ -97,7 +82,7 @@ extension TimeInterval {
                 return seconds * 604800
 
             case "y":
-                return seconds * 220903200
+                return seconds * 220_903_200
 
             default:
                 return nil

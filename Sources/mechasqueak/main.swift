@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -22,84 +22,96 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
-import Lingo
-import IRCKit
 import AsyncHTTPClient
+import Backtrace
+import Foundation
+import IRCKit
+import Lingo
 import NIO
+import SQLKit
 
-let lingo = try! Lingo(rootPath: "\(FileManager.default.currentDirectoryPath)/localisation", defaultLocale: "en")
-let httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(
-    redirectConfiguration: .none,
-    timeout: .init(connect: .seconds(5), read: .seconds(60))
-))
+Backtrace.install()
 
-func loadConfiguration () -> MechaConfiguration {
-    var configPath = URL(
-        fileURLWithPath: FileManager.default.currentDirectoryPath
-    ).appendingPathComponent("config.json")
-    if CommandLine.arguments.count > 1 {
-        configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-    }
+let processId = ProcessInfo.processInfo.processIdentifier
+try "\(processId)".write(
+    toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true,
+    encoding: .utf8)
 
+let httpClient = HTTPClient(
+    eventLoopGroupProvider: .singleton,
+    configuration: .init(
+        redirectConfiguration: .none,
+        timeout: .init(connect: .seconds(5), read: .seconds(180))
+    ))
+
+var configPath = URL(
+    fileURLWithPath: FileManager.default.currentDirectoryPath
+).appendingPathComponent("config.json")
+if CommandLine.arguments.count > 1 {
+    configPath = URL(fileURLWithPath: CommandLine.arguments[1])
+}
+
+func loadConfiguration() throws -> MechaConfiguration {
     guard let configData = try? Data(contentsOf: configPath) else {
         fatalError("Could not locate configuration file in \(configPath.absoluteString)")
     }
 
     let configDecoder = JSONDecoder()
-    return try! configDecoder.decode(MechaConfiguration.self, from: configData)
+    return try configDecoder.decode(MechaConfiguration.self, from: configData)
 }
 
-func debug (_ output: String) {
+func debug(_ output: String) {
     if configuration.general.debug == true {
         print(output)
     }
 }
 
-let configuration = loadConfiguration()
+var configuration = try loadConfiguration()
+let lingo = try Lingo(
+    rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 class MechaSqueak {
     let configPath: URL
     static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
     static let accounts = NicknameLookupManager()
-    let commands: [IRCBotModule]
+    var commands: [IRCBotModule]
     let connections: [IRCClient]
-    let rescueBoard: RescueBoard
+    var rescueChannel: IRCChannel?
     var reportingChannel: IRCChannel?
     let helpModule: HelpCommands
     let startupTime: Date
     let version = "3.0.0"
+    var landmarks: [SystemsAPI.LandmarkListDocument.LandmarkListEntry] = []
+    var sectors: [StarSector] = []
+    var groups: [Group] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
-    static var lastDeltaMessageTime: Date? = nil
-    //let ratSocket: RatSocket?
+    static var lastDeltaMessageTime: Date?
+    let ratSocket: RatSocket?
+    var webServer: WebServer?
+    var sqliteDatabase: SQLDatabase?
 
-    init () {
+    init() {
         var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         if CommandLine.arguments.count > 1 {
             configPath = URL(fileURLWithPath: CommandLine.arguments[1])
         }
         self.configPath = configPath
 
-        if configuration.general.drillMode == false {
-            //ratSocket = RatSocket()
-        } else {
-            //ratSocket = nil
-        }
-
         self.startupTime = Date()
-        self.rescueBoard = RescueBoard()
 
         self.connections = configuration.connections.map({
             let client = IRCClient(configuration: $0)
             if let operLogin = configuration.general.operLogin {
-                client.connectCommands = [ { client in
-                    client.send(command: .OPER, parameters: operLogin)
-                }]
+                client.connectCommands = [
+                    { client in
+                        client.send(command: .OPER, parameters: operLogin)
+                        client.send(command: .MODE, parameters: [client.currentNick, "+B"])
+                    }
+                ]
             }
             return client
         })
-        
 
         self.moduleManager = IRCBotModuleManager()
         self.helpModule = HelpCommands(moduleManager)
@@ -118,139 +130,221 @@ class MechaSqueak {
             TweetCommands(moduleManager),
             ManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
-            AccountCommands(moduleManager)
+            AccountCommands(moduleManager),
+            SessionLogger(moduleManager),
+            Translate(moduleManager)
         ]
-    }
 
+        if configuration.queue != nil {
+            commands.append(QueueCommands(moduleManager))
+        }
+
+        ratSocket = RatSocket()
+
+        Task {
+            if let webServerConfiguration = configuration.webServer {
+                do {
+                    self.webServer = try await WebServer(configuration: webServerConfiguration)
+                    try await self.webServer?.start()
+                } catch {
+                    print("Failed to start web server: \(error)")
+                }
+            }
+            self.landmarks = try await SystemsAPI.fetchLandmarkList()
+            self.sectors = try await SystemsAPI.fetchSectorList()
+            self.groups = try await Group.getList().body.data?.primary.values ?? []
+            if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
+                self.sqliteDatabase = database
+                for command in MechaSqueak.commands {
+                    try await insertCommand(command, on: database)
+                }
+            }
+        }
+    }
 
     @EventListener<IRCUserAccountChangeNotification>
     var onAccountChange = { accountChange in
         let user = accountChange.user
 
-        guard user.account != nil else {
-            accounts.mapping[user.nickname] = nil
+        guard let account = user.account else {
+            if let oldValue = accountChange.oldValue {
+                accounts.mapping[oldValue] = nil
+            }
             return
         }
 
-        if accountChange.oldValue != user.account || accounts.mapping[user.nickname] == nil {
-            accounts.lookupIfNotExists(user: user)
-        }
+        accounts.lookup(user: user)
     }
 
-    @EventListener<IRCUserJoinedChannelNotification>
+    @AsyncEventListener<IRCUserJoinedChannelNotification>
     var onUserJoin = { userJoin in
         let client = userJoin.raw.client
         if userJoin.raw.sender!.isCurrentUser(client: client)
-            && userJoin.channel.name.lowercased() == configuration.general.reportingChannel.lowercased() {
+            && userJoin.channel.name.lowercased()
+                == configuration.general.rescueChannel.lowercased() {
+            mecha.rescueChannel = userJoin.channel
+        }
+        if userJoin.raw.sender!.isCurrentUser(client: client)
+            && userJoin.channel.name.lowercased()
+                == configuration.general.reportingChannel.lowercased() {
             mecha.reportingChannel = userJoin.channel
-            mecha.rescueBoard.syncBoard()
-        } else {
+            Task {
+                await board.performSyncUntilSuccess()
+            }
 
-            accounts.lookupIfNotExists(user: userJoin.user)
-            if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userJoin.user.nickname) {
-                    rescue.quotes.removeAll(where: {
-                        $0.message.starts(with: "Client rejoined the rescue channel")
-                    })
-                    rescue.quotes.append(RescueQuote(
+            let gitDir = configuration.sourcePath
+            let release = shell(
+                "/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let releaseName = release, releaseName.count > 0 {
+                mecha.reportingChannel?.send(key: "update", map: [
+                    "release": releaseName
+                ])
+            }
+        } else {
+            accounts.lookup(user: userJoin.user)
+            if let (caseId, rescue) = await board.findRescue(
+                withCaseIdentifier: userJoin.user.nickname) {
+                rescue.clientLastHostName = userJoin.user.hostmask
+
+                var quotes = rescue.quotes
+                quotes.removeAll(where: {
+                    $0.message.starts(with: "Client rejoined the rescue channel")
+                })
+                quotes.append(
+                    RescueQuote(
                         author: userJoin.raw.client.currentNick,
                         message: "Client rejoined the rescue channel",
                         createdAt: Date(),
                         updatedAt: Date(),
                         lastAuthor: userJoin.raw.client.currentNick)
-                    )
-                    rescue.syncUpstream()
-
-                rescue.clientHost = userJoin.user.hostmask
-                userJoin.channel.send(key: "board.clientjoin", map: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.clientDescription
-                ])
-            } else if let rescue = mecha.rescueBoard.rescues.first(where: {
-                $0.clientHost == userJoin.user.hostmask
-            }) {
-                rescue.quotes.removeAll(where: {
-                    $0.message.starts(with: "Client rejoined the rescue channel")
-                })
-                rescue.quotes.append(RescueQuote(
-                    author: userJoin.raw.client.currentNick,
-                    message: "Client rejoined the rescue channel as \(userJoin.user.nickname)",
-                    createdAt: Date(),
-                    updatedAt: Date(),
-                    lastAuthor: userJoin.raw.client.currentNick)
                 )
-                rescue.syncUpstream()
 
-                rescue.clientNick = userJoin.user.nickname
-                userJoin.channel.send(key: "board.clientjoinhost", map: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.clientDescription,
-                    "nick": userJoin.user.nickname
-                ])
+                rescue.setQuotes(quotes)
+                try? rescue.save(nil)
+
+                var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
+                userJoin.channel.send(
+                    key: key,
+                    map: [
+                        "caseId": caseId,
+                        "client": rescue.clientDescription,
+                        "platform": rescue.platform.ircRepresentable,
+                        "system": rescue.system.description
+                    ])
             }
         }
     }
 
-    @EventListener<IRCUserLeftChannelNotification>
+    @AsyncEventListener<IRCUserLeftChannelNotification>
     var onUserPart = { userPart in
-        if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: userPart.user.nickname) {
-            guard userPart.channel.name.lowercased() == rescue.channelName.lowercased() else {
+        if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: userPart.user.nickname) {
+            guard rescue.channel == userPart.channel else {
                 return
             }
-            if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
-                prepTimer?.cancel()
-                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-            }
+            await board.cancelPrepTimer(forRescue: rescue)
 
-            rescue.quotes.removeAll(where: {
+            var quotes = rescue.quotes
+            quotes.removeAll(where: {
                 $0.message == "Client left the rescue channel"
             })
-            rescue.quotes.append(RescueQuote(
-                author: userPart.raw.client.currentNick,
-                message: "Client left the rescue channel",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: userPart.raw.client.currentNick)
+            quotes.append(
+                RescueQuote(
+                    author: userPart.raw.client.currentNick,
+                    message: "Client left the rescue channel",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: userPart.raw.client.currentNick)
             )
-            rescue.syncUpstream()
+            rescue.setQuotes(quotes)
+            try? rescue.save(nil)
 
-            userPart.channel.send(key: "board.clientquit", map: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.clientDescription
-            ])
+            userPart.channel.send(
+                key: "board.clientquit",
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ])
         }
 
     }
 
-    @EventListener<IRCUserQuitNotification>
+    @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
-        accounts.mapping.removeValue(forKey: userQuit.sender!.nickname)
+        if let subscription = Translate.clientTranslationSubscribers[
+            userQuit.raw.sender?.nickname ?? ""] {
+            Translate.clientTranslationSubscribers[userQuit.raw.sender?.nickname ?? ""] = nil
+        }
 
-        if
-            let sender = userQuit.sender,
-            let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname)
-        {
-            if let prepTimer = mecha.rescueBoard.prepTimers[rescue.id] {
-                prepTimer?.cancel()
-                mecha.rescueBoard.prepTimers.removeValue(forKey: rescue.id)
-            }
-            rescue.quotes.removeAll(where: {
+        try? await Task.sleep(nanoseconds: 2 * 10 ^ 8)  // 200ms
+        if let sender = userQuit.raw.sender,
+            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
+            await board.cancelPrepTimer(forRescue: rescue)
+            var quotes = rescue.quotes
+            quotes.removeAll(where: {
                 $0.message == "Client left the rescue channel"
             })
-            rescue.quotes.append(RescueQuote(
-                author: userQuit.client.currentNick,
-                message: "Client left the rescue channel",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: userQuit.client.currentNick)
-            )
-            rescue.syncUpstream()
 
-            userQuit.client.sendMessage(
-                toChannelName: rescue.channelName,
-                withKey: "board.clientquit", mapping: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.clientDescription
-            ])
+            if let quitMessage = userQuit.raw.parameters.first,
+                quitMessage.starts(with: "Banned ") || quitMessage.starts(with: "Killed ") {
+                if rescue.rats.count > 0 {
+                    rescue.notes = "Client was banned"
+                    let url =
+                        "https://fuelrats.com/paperwork/\(rescue.id.uuidString.lowercased())/edit"
+
+                    do {
+                        try await rescue.close(command: nil)
+
+                        mecha.reportingChannel?.send(
+                            key: "board.bannedclose",
+                            map: [
+                                "caseId": caseId,
+                                "link": url,
+                                "client": rescue.clientDescription
+                            ])
+                        await board.remove(id: caseId)
+                    } catch {
+
+                    }
+                } else {
+                    do {
+                        var banDueToVpn = quitMessage.contains("banned VPN network")
+                        try await rescue.trash(reason: "Client was banned", command: nil)
+
+                        mecha.reportingChannel?.send(
+                            key: banDueToVpn ? "board.bannedvpn" : "board.bannedmd",
+                            map: [
+                                "caseId": caseId,
+                                "client": rescue.clientDescription
+                            ])
+                        await board.remove(id: caseId)
+                    } catch {
+
+                    }
+                }
+                return
+            }
+
+            rescue.appendQuote(
+                RescueQuote(
+                    author: userQuit.raw.client.currentNick,
+                    message: "Client left the rescue channel",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: userQuit.raw.client.currentNick)
+            )
+
+            try? rescue.save(nil)
+
+            let quitChannels = userQuit.previousChannels
+            for channel in quitChannels {
+                channel.send(
+                    key: "board.clientquit",
+                    map: [
+                        "caseId": caseId,
+                        "client": rescue.clientDescription
+                    ])
+            }
         }
     }
 
@@ -260,62 +354,100 @@ class MechaSqueak {
             return
         }
 
-        if channelMessage.destination.name.lowercased() == configuration.general.rescueChannel.lowercased() {
-            // mecha.ratSocket?.broadcast(event: .channelMessage, payload: ChannelMessageEventPayload(channelMessage: channelMessage))
+        if channelMessage.destination.name.lowercased()
+            == configuration.general.rescueChannel.lowercased() {
+            mecha.ratSocket?.broadcast(
+                event: .channelMessage,
+                payload: ChannelMessageEventPayload(channelMessage: channelMessage))
         }
 
         if channelMessage.user.nickname.starts(with: "Delta_RC_2526")
-            && channelMessage.destination.name.lowercased() != configuration.general.rescueChannel.lowercased() {
-            if let deltaInterval = lastDeltaMessageTime, Date().timeIntervalSince(deltaInterval) < 0.5 {
+            && channelMessage.destination.name.lowercased()
+                != configuration.general.rescueChannel.lowercased() {
+            if let deltaInterval = lastDeltaMessageTime,
+                Date().timeIntervalSince(deltaInterval) < 0.5 {
                 lastDeltaMessageTime = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
-                    channelMessage.client.sendActionMessage(toChannel: channelMessage.destination, contents: "drinks")
-                })
-            } else if channelMessage.message.count > 410 {
+                DispatchQueue.main.asyncAfter(
+                    deadline: .now() + .seconds(1),
+                    execute: {
+                        channelMessage.client.sendActionMessage(
+                            toChannel: channelMessage.destination, contents: "drinks")
+                    })
+            } else if channelMessage.message.count > 405 {
                 lastDeltaMessageTime = Date()
             }
         }
     }
 
-    @EventListener<IRCUserChangedNickNotification>
-    var onUserNickChange = { nickChange in
-        let sender = nickChange.raw.sender!
-
-        if let rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: sender.nickname) {
-            rescue.clientNick = nickChange.newNick
-            rescue.syncUpstream()
-
-            nickChange.raw.client.sendMessage(
-                toChannelName: rescue.channelName,
-                withKey: "board.clientnick", mapping: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.clientDescription,
-                    "newNick": nickChange.newNick
-            ])
+    @EventListener<IRCEchoMessageNotification>
+    var onEchoMessage = { echoMessage in
+        guard echoMessage.raw.messageTags["batch"] == nil else {
+            return
         }
 
-        if let apiNickname = accounts.mapping[sender.nickname] {
-            accounts.mapping.removeValue(forKey: sender.nickname)
-            accounts.mapping[nickChange.newNick] = apiNickname
+        if echoMessage.destination.name.lowercased()
+            == configuration.general.rescueChannel.lowercased() {
+            mecha.ratSocket?.broadcast(
+                event: .channelMessage,
+                payload: ChannelMessageEventPayload(channelMessage: echoMessage))
         }
     }
 
+    @AsyncEventListener<IRCUserChangedNickNotification>
+    var onUserNickChange = { nickChange in
+        let sender = nickChange.raw.sender!
+
+        if let subscription = Translate.clientTranslationSubscribers[sender.nickname] {
+            Translate.clientTranslationSubscribers[sender.nickname] = nil
+            Translate.clientTranslationSubscribers[nickChange.newNick] = subscription
+        }
+
+        if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
+            rescue.clientNick = nickChange.newNick
+
+            rescue.channel?.send(
+                key: "board.clientnick",
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "newNick": nickChange.newNick
+                ])
+        }
+    }
 
     @EventListener<IRCUserHostChangeNotification>
     var onUserHostChange = { hostChange in
         let sender = hostChange.sender!
-        accounts.mapping.removeValue(forKey: sender.nickname)
 
-        guard let user = hostChange.client.channels.first(where: {
-            $0.member(named: sender.nickname) != nil
-        })?.member(named: sender.nickname) else {
+        guard
+            let user = hostChange.client.channels.first(where: {
+                $0.member(named: sender.nickname) != nil
+            })?.member(named: sender.nickname)
+        else {
             return
         }
-        accounts.lookupIfNotExists(user: user)
+        accounts.lookup(user: user)
     }
 }
 
+signal(SIGTERM, SIG_IGN)
+
+let sigtermSrc = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+sigtermSrc.setEventHandler {
+    mecha.reportingChannel?.send(
+        message: IRCFormat.bold("Performing a planned restart, I will be back in a jiffy"))
+    mecha.reportingChannel?.client.sendQuit(message: "Restarting..")
+    exit(0)
+}
+sigtermSrc.resume()
+
+let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount * 2)
+
+func makePromise<T>(of type: T.Type = T.self) -> EventLoopPromise<T> {
+    return loop.next().makePromise(of: type)
+}
 let mecha = MechaSqueak()
-let loop = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+let board = RescueBoard()
+board.startUpRoutines()
 
 RunLoop.main.run()

@@ -1,0 +1,24 @@
+.fact-section summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    cursor: pointer;
+    outline: none;
+    padding: 0.25rem 0;
+}
+
+.fact-section summary::before {
+    content: "▸";
+    font-size: 2rem;
+    line-height: 1;
+    margin-right: 0.5rem;
+    transition: transform 0.2s ease;
+}
+
+.fact-section[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.fact-list {
+    padding-top: 0.5rem;
+}

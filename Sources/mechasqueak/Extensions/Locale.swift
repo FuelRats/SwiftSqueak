@@ -27,11 +27,15 @@ import Foundation
 extension Locale {
     var englishDescription: String {
         let englishLocale = Locale(identifier: "en-GB")
-        return englishLocale.localizedString(forIdentifier: self.identifier) ?? "u\u{200B}nknown locale"
+        return englishLocale.localizedString(forIdentifier: self.identifier) ?? "unknown locale"
     }
 
     var isValid: Bool {
         let englishLocale = Locale(identifier: "en-GB")
         return englishLocale.localizedString(forIdentifier: self.identifier) != nil
+    }
+
+    var short: String {
+        return String(self.identifier.prefix(2))
     }
 }

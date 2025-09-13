@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -28,7 +28,7 @@ import IRCKit
 class GeneralCommands: IRCBotModule {
     static let factors: [String: Double] = [
         "ls": 1,
-        "ly": 365 * 24 * 60 * 60,
+        "ly": 365.25 * 24 * 60 * 60,
         "pc": 3.262 * 365 * 24 * 60 * 60,
         "parsec": 3.262 * 365 * 24 * 60 * 60,
         "parsecs": 3.262 * 365 * 24 * 60 * 60,
@@ -37,7 +37,7 @@ class GeneralCommands: IRCBotModule {
         "banana": 5.9 * pow(10, -10),
         "bananas": 5.9 * pow(10, -10),
         "smoot": 5.67 * pow(10, -9),
-        "smoots":  5.67 * pow(10, -9),
+        "smoots": 5.67 * pow(10, -9),
         "snickers": 6.471 * pow(10, -10)
     ]
 
@@ -64,24 +64,25 @@ class GeneralCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-
     @BotCommand(
         ["needsrats", "needrats", "nr"],
-        parameters: 0...0,
         category: .utility,
         description: "Get a list of cases that currently require rats to call jumps",
+        tags: ["needs", "needed", "unassigned"],
         permission: .DispatchRead,
-        allowedDestinations: .PrivateMessage
+        cooldown: .seconds(300)
     )
     var needsRatsCommand = { command in
-        let needsRats = mecha.rescueBoard.rescues.filter({ rescue in
+        let needsRats = await board.getRescues().filter({ (_, rescue) in
             guard rescue.system != nil && rescue.status == .Open else {
                 return false
             }
             if rescue.codeRed {
-                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls < 1
+                return rescue.rats.count < 2 && rescue.unidentifiedRats.count < 1
+                    && rescue.jumpCalls.count < 1
             }
-            return rescue.rats.count < 1 && rescue.unidentifiedRats.count < 1 && rescue.jumpCalls < 1
+            return rescue.rats.count < 1 && rescue.unidentifiedRats.count < 1
+                && rescue.jumpCalls.count < 1
         })
 
         guard needsRats.count > 0 else {
@@ -89,72 +90,84 @@ class GeneralCommands: IRCBotModule {
             return
         }
 
-        var formattedCases = needsRats.map({ (rescue: LocalRescue) -> String in
+        var formattedCases = needsRats.map({ (caseId: Int, rescue: Rescue) -> String in
             var format = "needsrats.case"
 
             if rescue.codeRed {
                 format += "cr"
             }
 
-            return lingo.localize(format, locale: "en-GB", interpolations: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.client ?? "?",
-                "platform": rescue.platform.ircRepresentable,
-                "systemInfo": rescue.systemInfoDescription
-            ])
+            return lingo.localize(
+                format, locale: "en-GB",
+                interpolations: [
+                    "caseId": caseId,
+                    "client": rescue.client ?? "?",
+                    "platform": rescue.platformExpansion,
+                    "systemInfo": rescue.system.description
+                ])
         })
 
-        command.message.reply(key: "needsrats.message", fromCommand: command, map: [
-            "cases": formattedCases.joined(separator: ", ")
-        ])
+        command.message.reply(
+            key: "needsrats.message", fromCommand: command,
+            map: [
+                "cases": formattedCases.joined(separator: ", ")
+            ])
     }
 
     @BotCommand(
         ["sysstats", "syscount", "systems"],
-        parameters: 0...0,
         category: .utility,
         description: "See statistics about the systems API.",
-        permission: nil
+        tags: ["stats", "system", "count"],
+        permission: nil,
+        cooldown: .seconds(300)
     )
     var didReceiveSystemStatisticsCommand = { command in
-        SystemsAPI.performStatisticsQuery(onComplete: { results in
+        do {
+            let results = try await SystemsAPI.getStatistics()
+
             let result = results.data[0]
-            guard let date = try? Double(value: result.id) else {
+            guard let date = Double(result.id) else {
                 return
             }
 
             let numberFormatter = NumberFormatter.englishFormatter()
 
-            command.message.reply(key: "sysstats.message", fromCommand: command, map: [
-                "date": Date(timeIntervalSince1970: date).timeAgo,
-                "systems": numberFormatter.string(from: result.attributes.syscount)!,
-                "stars": numberFormatter.string(from: result.attributes.starcount)!,
-                "bodies": numberFormatter.string(from: result.attributes.bodycount)!
-            ])
-        }, onError: { _ in
+            command.message.reply(
+                key: "sysstats.message", fromCommand: command,
+                map: [
+                    "date": Date(timeIntervalSince1970: date).timeAgo(maximumUnits: 1),
+                    "systems": numberFormatter.string(from: result.attributes.syscount)!,
+                    "stars": numberFormatter.string(from: result.attributes.starcount)!,
+                    "bodies": numberFormatter.string(from: result.attributes.bodycount)!
+                ])
+        } catch {
             command.message.error(key: "sysstats.error", fromCommand: command)
-        })
+        }
     }
 
     @BotCommand(
         ["sctime", "sccalc", "traveltime"],
-        parameters: 1...,
-        options: ["g"],
+        [.param("distance", "2500ls", .continuous), .argument("sco", "max speed", example: "7000")],
         category: .utility,
         description: "Calculate supercruise travel time.",
-        paramText: "<distance>",
-        example: "2500ls",
-        permission: nil
+        tags: ["super", "cruise", "time", "calc", "calculator", "calculate"],
+        permission: nil,
+        cooldown: .seconds(30)
     )
     var didReceiveTravelTimeCommand = { command in
         var params = command.parameters
-        var destinationGravity = command.options.contains("g")
 
         var distanceString = params.joined(separator: " ").trimmingCharacters(in: .whitespaces)
-        guard let unit = factors.first(where: {
-            distanceString.lowercased().hasSuffix($0.key)
-        }) else {
-            guard var unit = distanceString.components(separatedBy: CharacterSet.letters.inverted).last, unit.count > 0 else {
+        guard
+            let unit = factors.first(where: {
+                distanceString.lowercased().hasSuffix($0.key)
+            })
+        else {
+            guard
+                var unit = distanceString.components(separatedBy: CharacterSet.letters.inverted)
+                    .last, unit.count > 0
+            else {
                 command.message.reply(key: "sctime.uniterror", fromCommand: command)
                 return
             }
@@ -163,172 +176,643 @@ class GeneralCommands: IRCBotModule {
                 unit.removeLast()
             }
 
-            command.message.reply(key: "sctime.unknownunit", fromCommand: command, map: [
-                "unit": unit.trimmingCharacters(in: .whitespaces)
-            ])
+            command.message.reply(
+                key: "sctime.unknownunit", fromCommand: command,
+                map: [
+                    "unit": unit.trimmingCharacters(in: .whitespaces)
+                ])
             return
+        }
+        
+        var sco: Double?
+        if let scoStr = command.arguments["sco"] {
+            guard let speed = Double(scoStr ?? "") else {
+                return
+            }
+            sco = speed
         }
         distanceString.removeLast(unit.key.count)
         var factor = unit.value
         distanceString = distanceString.trimmingCharacters(in: .whitespaces)
 
-        for prefix in SIprefixes {
-            if distanceString.hasSuffix(prefix.key) {
-                factor = factor * prefix.value
-            }
+        for prefix in SIprefixes where distanceString.hasSuffix(prefix.key) {
+            factor *= prefix.value
         }
 
-        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted
+        let nonNumberCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".,"))
+            .inverted
 
         distanceString = distanceString.components(separatedBy: nonNumberCharacters).joined()
         distanceString = distanceString.trimmingCharacters(in: nonNumberCharacters)
-        guard var distance = Double(distanceString) else {
+
+        let numberParser = NumberFormatter()
+        numberParser.locale = Locale(identifier: "en-GB")
+        numberParser.numberStyle = .decimal
+
+        if distanceString.contains(",") && distanceString.contains(".") == false {
+            numberParser.decimalSeparator = ","
+        }
+
+        guard var number = numberParser.number(from: distanceString),
+            var distance = Double(exactly: number)
+        else {
             command.message.reply(key: "sctime.error", fromCommand: command)
             return
         }
 
-        distance = distance * factor
+        distance *= factor
         let displayDistance = distance
-        if destinationGravity {
-            distance = distance / 2
-        }
 
-        var seconds = 0.0
-        if distance < 308639 {
-            seconds = 4.4708*pow(distance, 0.3899)
-        } else if distance > 579427 {
-            seconds = (distance - 5100000.0) / 2001 + 3420
-        }
-        else {
-            /*
-                Thank you to RadLock for creating the original equation.
-             */
-           let part1 = 33.7+1.87*pow(10 as Double, -3)*Double(distance)
-           let part2 = -8.86*pow(10 as Double, -10) * pow(Double(distance), 2)
-           let part3 = 2.37*pow(10 as Double, -16) * pow(Double(distance), 3)
-           let part4 = -2.21*pow(10 as Double, -23) * pow(Double(distance), 4)
-           seconds = part1 + part2 + part3 + part4
-        }
+        var seconds = distance.distanceToSeconds(destinationGravity: false, sco: sco)
+        var secondsGravity = distance.distanceToSeconds(destinationGravity: true, sco: sco)
 
-        var time = ""
-        if seconds < 0 {
-            return
-        }
-
-        if destinationGravity {
-            seconds = seconds * 2
-        }
-
-        let formatter = NumberFormatter.englishFormatter()
-        formatter.maximumFractionDigits = 2
-        let yearFormatter = NumberFormatter.englishFormatter()
-        yearFormatter.maximumFractionDigits = 0
-        if seconds > 31536000 {
-            let years = seconds / 31536000
-            let days = seconds.truncatingRemainder(dividingBy: 31536000) / 86400
-            time = "\(yearFormatter.string(from: years) ?? "\(years)") years, and \(days.clean) days"
-        } else if seconds > 86400 {
-            let days = seconds / 86400
-            let hours = seconds.truncatingRemainder(dividingBy: 86400) / 3600
-            time = "\(days.clean) days, and \(hours.clean) hours"
-        } else if seconds > 3600 {
-            let hours = seconds / 3600
-            let minutes = seconds.truncatingRemainder(dividingBy: 3600) / 60
-            time = "\(hours.clean) hours, and \(minutes.clean) minutes"
-        } else if seconds > 60 {
-            let minutes = seconds / 60
-            let seconds = (seconds.truncatingRemainder(dividingBy: 60))
-            time = "\(minutes.clean) minutes, and \(seconds.clean) seconds"
-        } else {
-            time = "\(seconds.clean) seconds"
-        }
-
-        let lightYears = displayDistance / 60/60/24/365
-        var formattedDistance = (formatter.string(from: displayDistance) ?? "\(displayDistance)") + "ls"
-        let scientificFormatter = NumberFormatter()
-        scientificFormatter.numberStyle = .scientific
-        scientificFormatter.positiveFormat = "0.###E+0"
-        scientificFormatter.exponentSymbol = "E"
-
-        if displayDistance > 3.1*pow(10, 13) {
-            formattedDistance = "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
-        } else if displayDistance > 3.6*pow(10, 6) {
-            formattedDistance = (formatter.string(from: lightYears)  ?? "\(lightYears)") + "ly"
-        } else if displayDistance < 1 {
-            formattedDistance = "\(scientificFormatter.string(from: distance) ?? "\(displayDistance)")ls"
-        }
-
-        let responseKey = destinationGravity ? "sctime.response.g" : "sctime.response"
-        command.message.reply(key: responseKey, fromCommand: command, map: [
-            "distance": formattedDistance,
-            "time": time
-        ])
+        command.message.reply(
+            key: "sctime.response", fromCommand: command,
+            map: [
+                "distance": displayDistance.eliteDistance,
+                "time": seconds.timeSpan(maximumUnits: 2),
+                "timeGravity": secondsGravity.timeSpan(maximumUnits: 2)
+            ])
     }
 
     @BotCommand(
         ["version", "uptime"],
-        parameters: 0...0,
         category: .utility,
         description: "See version information about the bot.",
-        permission: nil
+        tags: ["info"],
+        permission: nil,
+        cooldown: .seconds(120)
     )
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
 
-        command.message.reply(key: replyKey, fromCommand: command, map: [
-            "version": mecha.version,
-            "uptime": mecha.startupTime.timeAgo,
-            "startup": mecha.startupTime.description
+        let gitDir = configuration.sourcePath
+        let version =
+            shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        command.message.reply(
+            key: replyKey, fromCommand: command,
+            map: [
+                "version": "3 (Update \(version))",
+                "uptime": mecha.startupTime.timeAgo(maximumUnits: 2),
+                "startup": mecha.startupTime.description
+            ])
+    }
+
+    @BotCommand(
+        ["gametime", "utc"],
+        category: .utility,
+        description: "See the current time in game time / UTC",
+        tags: ["game", "GMT"],
+        permission: nil,
+        cooldown: .seconds(300)
+    )
+    var didReceiveGameTimeCommand = { command in
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
+
+        let time = timeFormatter.string(from: Date())
+        let date = Date().eliteFormattedString
+
+        command.message.reply(
+            key: "gametime", fromCommand: command,
+            map: [
+                "date": date,
+                "time": time
+            ])
+    }
+
+    @BotCommand(
+        ["timezone", "tz"],
+        [.param("time in timezone", "3pm EST in CET", .continuous)],
+        category: .utility,
+        description: "Convert a time to another timezone",
+        tags: ["time", "zone", "zones", "calculate", "conversion"],
+        permission: nil,
+        cooldown: .seconds(300)
+    )
+    var didReceiveTimeZoneCommand = { command in
+        guard let chrono = configuration.chrono else {
+            return
+        }
+        var components = command.param1?.components(separatedBy: " ") ?? []
+        guard components.count > 2,
+            let index = components.firstIndex(of: "in") ?? components.firstIndex(of: "to")
+        else {
+            command.message.reply(
+                message:
+                    "Error: Could not understand the request, " +
+                    "usage: !timezone <time> in <timezone>. e.g !timezone 3pm EST in CET"
+            )
+            return
+        }
+        let timeZoneIdentifier = components[components.index(after: index)..<components.endIndex]
+            .joined(separator: " ")
+        components = Array(components[components.startIndex..<index])
+        let timeInput = components.joined(separator: " ")
+        var offsetTimeZone: TimeZone?
+        if var tzOffset = Double(timeZoneIdentifier) {
+            offsetTimeZone = TimeZone(secondsFromGMT: Int(tzOffset * 60 * 60))
+        }
+        guard
+            let timeZone: TimeZone = offsetTimeZone ?? TimeZone(
+                abbreviation: timeZoneIdentifier.uppercased()) ?? TimeZone(
+                    identifier: timeZoneIdentifier)
+                ?? timeZoneAbbreviations[timeZoneIdentifier.uppercased()]
+        else {
+            command.message.reply(message: "Error: Could not interpret time zone")
+            return
+        }
+
+        let output = shell(
+            chrono.nodePath,
+            [
+                chrono.file,
+                timeInput
+            ])
+        guard
+            let interpretedDate = DateFormatter.iso8601Full.date(
+                from: output?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
+        else {
+            command.message.reply(message: "Error: Could not interpret date/time value")
+            return
+        }
+
+        let outputFormatter = DateFormatter()
+        outputFormatter.timeZone = timeZone
+        outputFormatter.dateFormat = "EEEE, MMMM d, yyyy 'at' HH:mm"
+
+        let tzName =
+            timeZone.localizedName(for: .standard, locale: Locale.current) ?? timeZone.description
+        command.message.reply(
+            message: "\(outputFormatter.string(from: interpretedDate)) in \(tzName)")
+    }
+
+    @BotCommand(
+        ["roll", "dice"],
+        [.param("dices", "2d8")],
+        category: .utility,
+        description: "Roll a dice",
+        tags: ["D&D"],
+        permission: nil,
+        cooldown: .seconds(90)
+    )
+    var didReceiveDiceRollCommand = { command in
+        guard
+            let diceParam = "(?<num>[0-9]{1})?d(?<value>[0-9]{1,3})(\\+(?<add>[0-9]{1,4}))?".r!
+                .findFirst(in: command.parameters[0])
+        else {
+            return
+        }
+
+        let diceValue = Int(diceParam.group(at: 2) ?? "") ?? 20
+        let diceNum = Int(diceParam.group(at: 1) ?? "1") ?? 1
+        let add = Int(diceParam.group(at: 4) ?? "0") ?? 0
+
+        guard diceValue > 1 && diceNum > 0 else {
+            return
+        }
+
+        var value = 0
+        for roll in 1...diceNum {
+            value += Int.random(in: 1...diceValue)
+        }
+        var unmodified = value
+        value += add
+        var output = String(value)
+        if diceValue >= 6 {
+            if unmodified == diceNum * diceValue {
+                output = IRCFormat.color(.Green, output)
+            } else if unmodified == diceNum {
+                output = IRCFormat.color(.LightRed, output)
+            }
+        }
+        if add > 0 {
+            command.message.reply(message: "\(diceNum)d\(diceValue)+\(add) = \(output)")
+        } else {
+            command.message.reply(message: "\(diceNum)d\(diceValue) = \(output)")
+        }
+    }
+
+    @BotCommand(
+        ["announce"],
+        [
+            .argument("cr"),
+            .argument("lang", "language code", example: "ru"),
+            .param("channel", "#drillrats"),
+            .param("client name", "Space Dawg"),
+            .param("client nick", "SpaceDawg"),
+            .param("PC/XB/PS", "PC"),
+            .param("system", "NLTT 48288", .continuous),
+            .argument("mode", "game version", example: "h")
+        ],
+        category: .utility,
+        description: "Create a rescue announcement in a drill channel",
+        tags: ["training", "drill", "ratmamma"],
+        permission: .AnnouncementWrite
+    )
+    var didReceiveAnnounceCommand = { command in
+        var channel = command.parameters[0].lowercased()
+        if channel.starts(with: "#") == false {
+            channel = "#" + channel
+        }
+
+        guard configuration.general.drillChannels.contains(channel) else {
+            command.message.error(key: "announce.invalidchannel", fromCommand: command)
+            return
+        }
+
+        let clientName = command.parameters[1]
+        let clientNick = command.parameters[2]
+        var platformString = command.parameters[3]
+        guard let platform = GamePlatform.parsedFromText(text: platformString) else {
+            command.message.error(key: "announce.invalidplatform", fromCommand: command)
+            return
+        }
+        let system = command.parameters[4]
+        let crStatus = command.has(argument: "cr") ? "NOT OK" : "OK"
+        var expansion: GameMode = .legacy
+        if let expansionString = command.argumentValue(for: "mode") {
+            guard let parsedExpansion = GameMode.parsedFromText(text: expansionString) else {
+                command.message.error(key: "announce.invalidexpansion", fromCommand: command)
+                return
+            }
+            expansion = parsedExpansion
+        }
+
+        var key = "announcement"
+        if platform == .PC {
+            key += ".pc"
+        }
+
+        var locale = Locale(identifier: "en")
+        if let langCode = command.argumentValue(for: "lang") {
+            locale = Locale(identifier: langCode)
+        }
+
+        command.message.reply(
+            key: "announce.success", fromCommand: command,
+            map: [
+                "channel": channel,
+                "client": clientName,
+                "system": system,
+                "platform": platform.ircRepresentable,
+                "expansion": expansion.englishDescription,
+                "crStatus": crStatus
+            ])
+
+        let announcement = lingo.localize(
+            key, locale: "en-GB",
+            interpolations: [
+                "client": clientName,
+                "system": system,
+                "platform": platform.rawValue.uppercased(),
+                "expansion": expansion.announcerDescription,
+                "crStatus": crStatus,
+                "nick": clientNick,
+                "language": locale.englishDescription,
+                "langCode": locale.identifier
+            ])
+
+        command.message.client.sendMessage(
+            toTarget: "BotServ", contents: "SAY \(channel) \(announcement)")
+    }
+
+    @BotCommand(
+        ["xbl", "gamertag"],
+        [.param("case id/gamertag", "SpaceDawg", .continuous)],
+        category: .utility,
+        description: "See information about an xbox gamertag",
+        tags: ["xbox", "live", "gamer", "tag"],
+        permission: nil,
+        cooldown: .seconds(30)
+    )
+    var didReceiveXboxLiveCommand = { command in
+        var gamertag = command.parameters[0]
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: gamertag, includingRecentlyClosed: true
+        ), rescue.platform == .Xbox {
+            gamertag = rescue.client ?? gamertag
+        }
+
+        let profileLookup = await XboxLive.performLookup(gamertag: gamertag)
+        guard case let .found(profile) = profileLookup else {
+            if case .notFound = profileLookup {
+                command.message.error(key: "xbl.notfound", fromCommand: command)
+                return
+            }
+            command.message.error(key: "xbl.error", fromCommand: command)
+            return
+        }
+
+        let privacy =
+            profile.privacy.isAllowed
+            ? IRCFormat.color(.LightGreen, "OK")
+            : IRCFormat.color(.LightRed, "Communication Blocked")
+
+        guard let currentActivity = profileLookup.currentActivity else {
+            if profile.presence.state == .Online {
+                command.message.reply(
+                    message:
+                        "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")). Privacy Settings: \(privacy)"
+                )
+            } else {
+                command.message.reply(
+                    message:
+                        "\(gamertag) \(IRCFormat.color(.LightGrey, "(Offline)")). Privacy Settings: \(privacy)"
+                )
+            }
+            return
+        }
+        command.message.reply(
+            message:
+                "\(gamertag) \(IRCFormat.color(.LightGreen, "(Online)")) playing \(currentActivity). Privacy Settings: \(privacy)"
+        )
+    }
+
+    @BotCommand(
+        ["psn"],
+        [.param("case id/username", "SpaceDawg", .continuous)],
+        category: .utility,
+        description: "See information about a playstation user",
+        tags: ["playstation", "play", "station", "plus", "PS+"],
+        permission: nil,
+        cooldown: .seconds(30)
+    )
+    var didReceivePSNCommand = { command in
+        var username = command.parameters[0]
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: username, includingRecentlyClosed: true
+        ), rescue.platform == .PS {
+            username = rescue.client ?? username
+        }
+
+        let (profileLookup, presence) = await PSN.performLookup(name: username)
+        guard case let .found(profile) = profileLookup else {
+            if case .notFound = profileLookup {
+                command.message.error(key: "psn.notfound", fromCommand: command)
+                return
+            }
+            command.message.error(key: "psn.error", fromCommand: command)
+            return
+        }
+
+        guard let presence = presence else {
+            command.message.reply(key: "psn.noactivity", fromCommand: command, map: [
+                "id": profile.onlineId,
+                "status": IRCFormat.color(.LightGrey, "(Offline)"),
+                "psplus": profile.psPlusStatus,
+                "privacy": IRCFormat.color(.LightRed, "Communication Blocked")
+            ])
+            return
+        }
+
+        guard let currentActivity = presence.currentActivity else {
+            command.message.reply(key: "psn.noactivity", fromCommand: command, map: [
+                "id": profile.onlineId,
+                "status": presence.status,
+                "psplus": profile.psPlusStatus,
+                "privacy": IRCFormat.color(.LightGreen, "OK")
+            ])
+            return
+        }
+        
+        command.message.reply(key: "psn.activity", fromCommand: command, map: [
+            "id": profile.onlineId,
+            "status": presence.status,
+            "activity": currentActivity,
+            "psplus": profile.psPlusStatus,
+            "privacy": IRCFormat.color(.LightGreen, "OK")
         ])
     }
 
-//    @BotCommand(
-//        ["announce"],
-//        parameters: 4...4,
-//        lastParameterIsContinous: true,
-//        namedOptions: ["cr"],
-//        category: .utility,
-//        description: "Create a rescue announcement in a drill channel",
-//        paramText: "<channel> <client name> <PC/XB/PS> <system>",
-//        example: "#drillrats3 SpaceDawg PC NLTT 48288",
-//        permission: .AnnouncementWrite
-//    )
-//    var didReceiveAnnounceCommand = { command in
-//        var channel = command.parameters[0].lowercased()
-//        if channel.starts(with: "#") == false {
-//            channel = "#" + channel
-//        }
-//
-//        guard configuration.general.drillChannels.contains(channel) else {
-//            command.message.error(key: "announce.invalidchannel", fromCommand: command)
-//            return
-//        }
-//
-//        let clientName = command.parameters[1]
-//        var platformString = command.parameters[2]
-//        guard let platform = GamePlatform.parsedFromText(text: platformString) else {
-//            command.message.error(key: "announce.invalidplatform", fromCommand: command)
-//            return
-//        }
-//        let system = command.parameters[3]
-//        let crStatus = command.namedOptions.contains("cr") ? "NOT OK" : "OK"
-//
-//        command.message.reply(key: "announce.success", fromCommand: command, map: [
-//            "channel": channel,
-//            "client": clientName,
-//            "system": system,
-//            "platform": platform.ircRepresentable,
-//            "crStatus": crStatus
-//        ])
-//
-//        let announcement = lingo.localize("announcement", locale: "en-GB", interpolations: [
-//            "client": clientName,
-//            "system": system,
-//            "platform": platform.rawValue.uppercased(),
-//            "crStatus": crStatus
-//        ])
-//
-//
-//        command.message.client.sendMessage(toChannelName: "BotServ", contents: "SAY \(channel) \(announcement)")
-//    }
+    @BotCommand(
+        ["meow"],
+        category: nil,
+        description: "Meow"
+    )
+    var didReceiveMeowCommand = { command in
+        guard command.message.user.account == "Calomiriel[PC]" else {
+            return
+        }
+        command.message.client.sendActionMessage(
+            toChannel: command.message.destination, contents: "meows")
+    }
 }
+
+func shell(_ command: String, arguments: [String] = []) -> String? {
+    let task = Process()
+    let pipe = Pipe()
+
+    task.standardOutput = pipe
+    task.standardError = pipe
+    task.arguments = arguments
+    task.launchPath = command
+    task.launch()
+
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    return String(data: data, encoding: .utf8)
+}
+
+let timeZoneAbbreviations: [String: TimeZone] = [
+    "ACDT": TimeZone(secondsFromGMT: Int(+10.5 * 60 * 60))!,
+    "ACST": TimeZone(secondsFromGMT: Int(+9.5 * 60 * 60))!,
+    "ACT": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "ACWST": TimeZone(secondsFromGMT: Int(+8.75 * 60 * 60))!,
+    "ADT": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "AEDT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "AEST": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "AET": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "AFT": TimeZone(secondsFromGMT: Int(+4.5 * 60 * 60))!,
+    "AKDT": TimeZone(secondsFromGMT: Int(-8 * 60 * 60))!,
+    "AKST": TimeZone(secondsFromGMT: Int(-9 * 60 * 60))!,
+    "ALMT": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "AMST": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "AMT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "ANAST": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "ANAT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "AQTT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "ART": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "AST": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "AT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "AWDT": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "AWST": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "AZOST": TimeZone(secondsFromGMT: Int(+0 * 60 * 60))!,
+    "AZOT": TimeZone(secondsFromGMT: Int(-1 * 60 * 60))!,
+    "AZST": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "AZT": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "AOE": TimeZone(secondsFromGMT: Int(-12 * 60 * 60))!,
+    "BNT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "BOT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "BRST": TimeZone(secondsFromGMT: Int(-2 * 60 * 60))!,
+    "BRT": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "BST": TimeZone(secondsFromGMT: Int(+1 * 60 * 60))!,
+    "CAST": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "CAT": TimeZone(secondsFromGMT: Int(+2 * 60 * 60))!,
+    "CCT": TimeZone(secondsFromGMT: Int(+6.5 * 60 * 60))!,
+    "CDT": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "CEST": TimeZone(secondsFromGMT: Int(+2 * 60 * 60))!,
+    "CET": TimeZone(secondsFromGMT: Int(+1 * 60 * 60))!,
+    "CHADT": TimeZone(secondsFromGMT: Int(+13.75 * 60 * 60))!,
+    "CHAST": TimeZone(secondsFromGMT: Int(+12.75 * 60 * 60))!,
+    "CHOST": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "CHOT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "CHUT": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "CIDST": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "CIST": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "CKT": TimeZone(secondsFromGMT: Int(-10 * 60 * 60))!,
+    "CLST": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "CLT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "COT": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "CST": TimeZone(secondsFromGMT: Int(-6 * 60 * 60))!,
+    "CT": TimeZone(secondsFromGMT: Int(-6 * 60 * 60))!,
+    "CVT": TimeZone(secondsFromGMT: Int(-1 * 60 * 60))!,
+    "CXT": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "CHST": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "DAVT": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "DDUT": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "EASST": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "EAST": TimeZone(secondsFromGMT: Int(-6 * 60 * 60))!,
+    "EAT": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "ECT": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "EDT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "EEST": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "EET": TimeZone(secondsFromGMT: Int(+2 * 60 * 60))!,
+    "EGST": TimeZone(secondsFromGMT: Int(+0 * 60 * 60))!,
+    "EGT": TimeZone(secondsFromGMT: Int(-1 * 60 * 60))!,
+    "EST": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "ET": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "FET": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "FJST": TimeZone(secondsFromGMT: Int(+13 * 60 * 60))!,
+    "FJT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "FKST": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "FKT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "FNT": TimeZone(secondsFromGMT: Int(-2 * 60 * 60))!,
+    "GALT": TimeZone(secondsFromGMT: Int(-6 * 60 * 60))!,
+    "GAMT": TimeZone(secondsFromGMT: Int(-9 * 60 * 60))!,
+    "GET": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "GFT": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "GILT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "GST": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "GYT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "HDT": TimeZone(secondsFromGMT: Int(-9 * 60 * 60))!,
+    "HKT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "HOVST": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "HOVT": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "HST": TimeZone(secondsFromGMT: Int(-10 * 60 * 60))!,
+    "ICT": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "IDT": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "IOT": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "IRDT": TimeZone(secondsFromGMT: Int(+4.5 * 60 * 60))!,
+    "IRKST": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "IRKT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "IRST": TimeZone(secondsFromGMT: Int(+3.5 * 60 * 60))!,
+    "IST": TimeZone(secondsFromGMT: Int(+5.5 * 60 * 60))!,
+    "JST": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "KGT": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "KOST": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "KRAST": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "KRAT": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "KST": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "KUYT": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "LHDT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "LHST": TimeZone(secondsFromGMT: Int(+10.5 * 60 * 60))!,
+    "LINT": TimeZone(secondsFromGMT: Int(+14 * 60 * 60))!,
+    "MAGST": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "MAGT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "MART": TimeZone(secondsFromGMT: Int(-9.5 * 60 * 60))!,
+    "MAWT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "MDT": TimeZone(secondsFromGMT: Int(-6 * 60 * 60))!,
+    "MHT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "MMT": TimeZone(secondsFromGMT: Int(+6.5 * 60 * 60))!,
+    "MSD": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "MSK": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "MST": TimeZone(secondsFromGMT: Int(-7 * 60 * 60))!,
+    "MT": TimeZone(secondsFromGMT: Int(-7 * 60 * 60))!,
+    "MUT": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "MVT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "MYT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "NCT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "NDT": TimeZone(secondsFromGMT: Int(-2.5 * 60 * 60))!,
+    "NFT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "NOVST": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "NOVT": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "NPT": TimeZone(secondsFromGMT: Int(+5.75 * 60 * 60))!,
+    "NRT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "NST": TimeZone(secondsFromGMT: Int(-3.5 * 60 * 60))!,
+    "NUT": TimeZone(secondsFromGMT: Int(-11 * 60 * 60))!,
+    "NZDT": TimeZone(secondsFromGMT: Int(+13 * 60 * 60))!,
+    "NZST": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "OMSST": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "OMST": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "ORAT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "PDT": TimeZone(secondsFromGMT: Int(-7 * 60 * 60))!,
+    "PET": TimeZone(secondsFromGMT: Int(-5 * 60 * 60))!,
+    "PETST": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "PETT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "PGT": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "PHOT": TimeZone(secondsFromGMT: Int(+13 * 60 * 60))!,
+    "PHT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "PKT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "PMDT": TimeZone(secondsFromGMT: Int(-2 * 60 * 60))!,
+    "PMST": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "PONT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "PST": TimeZone(secondsFromGMT: Int(-8 * 60 * 60))!,
+    "PT": TimeZone(secondsFromGMT: Int(-8 * 60 * 60))!,
+    "PWT": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "PYST": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "PYT": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "QYZT": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "RET": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "ROTT": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "SAKT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "SAMT": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "SAST": TimeZone(secondsFromGMT: Int(+2 * 60 * 60))!,
+    "SBT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "SCT": TimeZone(secondsFromGMT: Int(+4 * 60 * 60))!,
+    "SGT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "SRET": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "SRT": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "SST": TimeZone(secondsFromGMT: Int(-11 * 60 * 60))!,
+    "SYOT": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "TAHT": TimeZone(secondsFromGMT: Int(-10 * 60 * 60))!,
+    "TFT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "TJT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "TKT": TimeZone(secondsFromGMT: Int(+13 * 60 * 60))!,
+    "TLT": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "TMT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "TOST": TimeZone(secondsFromGMT: Int(+14 * 60 * 60))!,
+    "TOT": TimeZone(secondsFromGMT: Int(+13 * 60 * 60))!,
+    "TRT": TimeZone(secondsFromGMT: Int(+3 * 60 * 60))!,
+    "TVT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "ULAST": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "ULAT": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "UYST": TimeZone(secondsFromGMT: Int(-2 * 60 * 60))!,
+    "UYT": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "UZT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!,
+    "VET": TimeZone(secondsFromGMT: Int(-4 * 60 * 60))!,
+    "VLAST": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "VLAT": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "VOST": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "VUT": TimeZone(secondsFromGMT: Int(+11 * 60 * 60))!,
+    "WAKT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "WARST": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "WAST": TimeZone(secondsFromGMT: Int(+2 * 60 * 60))!,
+    "WAT": TimeZone(secondsFromGMT: Int(+1 * 60 * 60))!,
+    "WEST": TimeZone(secondsFromGMT: Int(+1 * 60 * 60))!,
+    "WET": TimeZone(secondsFromGMT: Int(+0 * 60 * 60))!,
+    "WFT": TimeZone(secondsFromGMT: Int(+12 * 60 * 60))!,
+    "WGST": TimeZone(secondsFromGMT: Int(-2 * 60 * 60))!,
+    "WGT": TimeZone(secondsFromGMT: Int(-3 * 60 * 60))!,
+    "WIB": TimeZone(secondsFromGMT: Int(+7 * 60 * 60))!,
+    "WIT": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "WITA": TimeZone(secondsFromGMT: Int(+8 * 60 * 60))!,
+    "WST": TimeZone(secondsFromGMT: Int(+13 * 60 * 60))!,
+    "WT": TimeZone(secondsFromGMT: Int(+0 * 60 * 60))!,
+    "YAKST": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "YAKT": TimeZone(secondsFromGMT: Int(+9 * 60 * 60))!,
+    "YAPT": TimeZone(secondsFromGMT: Int(+10 * 60 * 60))!,
+    "YEKST": TimeZone(secondsFromGMT: Int(+6 * 60 * 60))!,
+    "YEKT": TimeZone(secondsFromGMT: Int(+5 * 60 * 60))!
+]

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -33,17 +33,18 @@ class BoardAttributeCommands: IRCBotModule {
 
     @BotCommand(
         ["active", "inactive", "activate", "deactivate"],
-        parameters: 1...2,
-        lastParameterIsContinous: true,
+        [
+            .param("case id/client", "4"),
+            .param("message", "client left irc", .continuous, .optional)
+        ],
         category: .board,
-        description: "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
-        paramText: "<case id/client> [message]",
-        example: "4 client left irc",
-        permission: .RescueWriteOwn,
+        description:
+            "Toggle a case between active or inactive, add an optional message that gets inserted into quotes.",
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveToggleCaseActiveCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
@@ -51,6 +52,13 @@ class BoardAttributeCommands: IRCBotModule {
             rescue.status = .Open
         } else {
             rescue.status = .Inactive
+            await board.cancelPrepTimer(forRescue: rescue)
+            let activeCases = await board.activeCases
+            if activeCases < QueueCommands.maxClientsCount, configuration.queue != nil {
+                Task {
+                    try? await QueueAPI.dequeue()
+                }
+            }
         }
 
         let status = String(describing: rescue.status)
@@ -58,322 +66,485 @@ class BoardAttributeCommands: IRCBotModule {
         var message = ""
         if command.parameters.count > 1 {
             message = command.parameters[1]
-            rescue.quotes.append(RescueQuote(
-                author: command.message.user.nickname,
-                message: "(Set \(status)) \(message)",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: command.message.user.nickname
-            ))
+            rescue.quotes.append(
+                RescueQuote(
+                    author: command.message.user.nickname,
+                    message: "(Set \(status)) \(message)",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.user.nickname
+                ))
         }
+        try? rescue.save(command)
 
         let key = command.parameters.count > 1 ? "board.toggleactive" : "board.toggleactivemsg"
 
-        command.message.reply(key: "board.toggleactive", fromCommand: command, map: [
-            "status": status,
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.client!,
-            "message": message
-        ])
-
-        rescue.syncUpstream()
-    }
-
-    @BotCommand(
-        ["queue"],
-        parameters: 1...1,
-        category: .board,
-        description: "Add a rescue to the queue list, informing the client.",
-        paramText: "<case id/client>",
-        example: "4",
-        permission: .RescueWriteOwn,
-        allowedDestinations: .Channel
-    )
-    var didReceiveQueueCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
-            return
-        }
-
-        guard rescue.status != .Queued else {
-            command.message.error(key: "board.queue.already", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
+        command.message.reply(
+            key: "board.toggleactive", fromCommand: command,
+            map: [
+                "status": status,
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "message": message
             ])
-            return
-        }
-        rescue.status = .Queued
-
-        Fact.getWithFallback(name: "pqueue", forLcoale: command.locale).whenSuccess { fact in
-            guard let fact = fact else {
-                return
-            }
-
-            let target = rescue.clientNick ?? ""
-            command.message.reply(message: "\(target): \(fact.message)")
-        }
-
-        rescue.syncUpstream()
-    }
-
-    @BotCommand(
-        ["dequeue", "unqueue"],
-        parameters: 1...1,
-        category: .board,
-        description: "Remove a rescue from the queue list, informing the client.",
-        paramText: "<case id/client>",
-        example: "4",
-        permission: .RescueWriteOwn,
-        allowedDestinations: .Channel
-    )
-    var didReceiveDequeueCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
-            return
-        }
-
-        guard rescue.status == .Queued else {
-            command.message.error(key: "board.dequeue.already", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier
-            ])
-            return
-        }
-        rescue.status = .Open
-
-        command.message.reply(key: "board.dequeue.response", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.client!
-        ])
-
-        rescue.syncUpstream()
     }
 
     @BotCommand(
         ["system", "sys", "loc", "location"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [
+            .options(["f"]), .param("case id/client", "4"),
+            .param("system name", "NLTT 48288", .continuous)
+        ],
         category: .utility,
         description: "Change the star system of this rescue to a different one.",
-        paramText: "<case id/client> <system name>",
-        example: "4 NLTT 48288",
-        permission: .RescueWriteOwn,
+        tags: ["edsm", "spansh", "eddb"],
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveSystemChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
-        var system = command.parameters[1].uppercased()
-        if system.hasSuffix(" SYSTEM") {
-            system.removeLast(7)
+        var systemName = command.parameters[1].uppercased()
+        if systemName == rescue.system?.name {
+            command.message.error(
+                key: "board.syschange.nochange", fromCommand: command,
+                map: [
+                    "caseId": caseId
+                ])
+            return
         }
 
-        rescue.system = system
+        var key = "board.syschange"
+        
+        if let correction = ProceduralSystem.correct(system: systemName),
+            command.forceOverride == false && configuration.general.drillMode == false {
+            key += ".autocorrect"
+            systemName = correction
+        }
 
-        SystemsAPI.performSearchAndLandmarkCheck(
-            forSystem: system,
-            onComplete: { searchResult, landmarkResult, _ in
-                guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
-                    command.message.reply(key: "board.syschange.notindb", fromCommand: command, map: [
-                        "caseId": rescue.commandIdentifier,
-                        "client": rescue.client!,
-                        "system": system
-                    ])
-                    return
-                }
-
-                let format = searchResult.permitRequired ? "board.syschange.permit" : "board.syschange.landmark"
-
-                let distance = NumberFormatter.englishFormatter().string(
-                    from: NSNumber(value: landmarkResult.distance)
-                )!
-                command.message.reply(key: format, fromCommand: command, map: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.client!,
-                    "system": rescue.systemInfoDescription
-                ])
+        do {
+            let system = try await SystemsAPI.performSystemCheck(forSystem: systemName)
+            if rescue.system != nil {
+                rescue.system?.merge(system)
+            } else {
+                rescue.system = system
             }
-        )
-        rescue.systemManuallyCorrected = true
-        rescue.syncUpstream()
+            rescue.system?.manuallyCorrected = true
+        } catch {
+            rescue.system = StarSystem(
+                name: systemName,
+                manuallyCorrected: true
+            )
+        }
+
+        if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
+            command.message.reply(
+                message: lingo.localize(
+                    "board.systemattack", locale: "en",
+                    interpolations: [
+                        "system": system.name
+                    ]))
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick)
+            )
+        }
+        
+        if let system = rescue.system, system.isUnobtainablePermitSystem {
+            command.message.reply(
+                message: lingo.localize(
+                    "board.unobtainablepermit", locale: "en",
+                    interpolations: [
+                        "system": system.name
+                    ]))
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "CAUTION: \(system.name) has an unobtainable permit - no player can access this system",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick)
+            )
+        }
+        try? rescue.save(command)
+
+        if let distance = rescue.system?.landmark?.distance, distance > 2500,
+            let plotUrl = try? await generateSpanshRoute(from: "Sol", to: systemName) {
+            command.message.reply(
+                key: key + ".spansh", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "systemInfo": rescue.system.description,
+                    "plotUrl": plotUrl.absoluteString
+                ])
+            return
+        }
+
+        command.message.reply(
+            key: key, fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "systemInfo": rescue.system.description
+            ])
     }
 
     @BotCommand(
         ["cmdr", "client", "commander"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("new name", "SpaceDawg", .continuous)],
         category: .board,
         description: "Change the CMDR name of the client of this rescue.",
-        paramText: "<case id/client> <new name>",
-        example: "4 SpaceDawg",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveClientChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
-        let oldClient = rescue.client!
+        let oldClient = rescue.clientDescription
         let client = command.parameters[1]
 
-        rescue.client = client
-
-        command.message.reply(key: "board.clientchange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
-            "oldClient": oldClient,
-            "client": client
-        ])
-
-
-        if let existingCase = mecha.rescueBoard.rescues.first(where: {
-            $0.client?.lowercased() == client.lowercased() && $0.id != rescue.id
+        if let existingCase = await board.getRescues().first(where: {
+            $0.1.client?.lowercased() == client.lowercased() && $0.1.id != rescue.id
         }) {
-            command.message.error(key: "board.clientchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.commandIdentifier,
-                "client": client
-            ])
+            command.message.error(
+                key: "board.clientchange.exists", fromCommand: command,
+                map: [
+                    "caseId": existingCase.key,
+                    "client": client
+                ])
+            return
         }
 
-        rescue.syncUpstream()
+        rescue.client = client
+        if configuration.queue != nil {
+            _ = try? await QueueAPI.fetchQueue().first(where: { $0.client.name == oldClient })?
+                .changeName(name: client)
+        }
+
+        if rescue.platform == .Xbox {
+            rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
+
+            if case let .found(xboxProfile) = rescue.xboxProfile,
+                xboxProfile.privacy.isAllowed == false {
+                command.message.reply(
+                    message: lingo.localize(
+                        "board.xboxprivacy", locale: "en",
+                        interpolations: [
+                            "caseId": caseId,
+                            "client": rescue.clientDescription
+                        ]))
+            }
+        }
+
+        if rescue.platform == .PS {
+            rescue.psnProfile = await PSN.performLookup(name: client)
+
+            if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
+                command.message.reply(
+                    message: lingo.localize(
+                        "board.psplusmissing", locale: "en",
+                        interpolations: [
+                            "caseId": caseId,
+                            "client": rescue.clientDescription
+                        ]))
+            }
+        }
+
+        var clientName = rescue.clientDescription
+        if let onlineStatus = rescue.onlineStatus {
+            clientName += " \(onlineStatus)"
+        }
+        command.message.reply(
+            key: "board.clientchange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "oldClient": oldClient,
+                "client": clientName
+            ])
+
+        try? rescue.save(command)
     }
 
     @BotCommand(
         ["nick", "ircnick", "nickname"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("new nick", "SpaceDawg")],
         category: .board,
         description: "Change the IRC nick associated with the client of this rescue.",
-        paramText: "<case id/client> <new nick>",
-        example: "4 SpaceDawg",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveClientNickChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         let nick = command.parameters[1]
         rescue.clientNick = nick
+        try? rescue.save(command)
 
-        command.message.reply(key: "board.nickchange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.client!,
-            "nick": nick
-        ])
-
-
-        if let existingCase = mecha.rescueBoard.rescues.first(where: {
-            $0.clientNick?.lowercased() == nick.lowercased() && $0.id != rescue.id
-        }) {
-            command.message.error(key: "board.nickchange.exists", fromCommand: command, map: [
-                "caseId": existingCase.commandIdentifier,
+        command.message.reply(
+            key: "board.nickchange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
                 "nick": nick
             ])
-        }
 
-        rescue.syncUpstream()
+        if let existingCase = await board.getRescues().first(where: {
+            $0.1.clientNick?.lowercased() == nick.lowercased() && $0.1.id != rescue.id
+        }) {
+            command.message.error(
+                key: "board.nickchange.exists", fromCommand: command,
+                map: [
+                    "caseId": existingCase.key,
+                    "nick": nick
+                ])
+        }
     }
 
     @BotCommand(
         ["lang", "language"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("language code", "de")],
         category: .board,
         description: "Change the language of the client of this rescue.",
-        paramText: "<case id/client> <language code>",
-        example: "4 de",
-        permission: .RescueWriteOwn,
+        tags: ["locale"],
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveLanguageChangeCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         let newLanguage = Locale(identifier: command.parameters[1])
         guard newLanguage.isValid else {
-            command.message.error(key: "board.languagechange.error", fromCommand: command, map: [
-                "language": command.parameters[1]
-            ])
+            command.message.error(
+                key: "board.languagechange.error", fromCommand: command,
+                map: [
+                    "language": command.parameters[1]
+                ])
             return
         }
 
         rescue.clientLanguage = newLanguage
+        try? rescue.save(command)
 
-        command.message.reply(key: "board.languagechange", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.client!,
-            "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
-        ])
-
-        rescue.syncUpstream()
+        command.message.reply(
+            key: "board.languagechange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "language": "\(newLanguage.identifier) (\(newLanguage.englishDescription))"
+            ])
     }
 
     @BotCommand(
         ["cr", "codered", "casered"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Toggle the case between code red (on emergency oxygen) status or not.",
-        paramText: "<case id/client>",
-        example: "4",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveCodeRedToggleCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         if rescue.codeRed == true {
             rescue.codeRed = false
-            command.message.reply(key: "board.codered.no", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.client!
-            ])
+            command.message.reply(
+                key: "board.codered.no", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ])
         } else {
             rescue.codeRed = true
-            command.message.reply(key: "board.codered.active", fromCommand: command, map: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.client!
-            ])
+            command.message.reply(
+                key: "board.codered.active", fromCommand: command,
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ])
 
             if rescue.rats.count > 0 {
                 let rats = rescue.rats.map({
-                    $0.currentNick(inIRCChannel: command.message.destination) ?? $0.attributes.name.value
+                    $0.currentNick(inIRCChannel: command.message.destination)
+                        ?? $0.attributes.name.value
                 }).joined(separator: ", ")
 
-                command.message.reply(key: "board.codered.attention", fromCommand: command, map: [
-                    "rats": rats
-                ])
+                command.message.reply(
+                    key: "board.codered.attention", fromCommand: command,
+                    map: [
+                        "rats": rats
+                    ])
             }
         }
-        rescue.syncUpstream()
+        try? rescue.save(command)
     }
 
     @BotCommand(
         ["title", "operation"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("case id/client", "4"), .param("operation title", "Beyond the Void", .continuous)],
         category: .board,
-        description: "Set the operations title of this rescue, used to give a unique name to special rescues",
-        paramText: "<case id/client> <operation title>",
-        example: "4 Beyond the Void",
-        permission: .RescueWriteOwn,
+        description:
+            "Set the operations title of this rescue, used to give a unique name to special rescues",
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveSetTitleCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         let title = command.parameters[1]
         rescue.title = title
+        try? rescue.save(command)
 
-        command.message.reply(key: "board.title.set", fromCommand: command, map: [
-            "caseId": rescue.commandIdentifier,
-            "title": title
-        ])
+        command.message.reply(
+            key: "board.title.set", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "title": title
+            ])
+    }
 
-        rescue.syncUpstream()
+    @BotCommand(
+        ["mode"],
+        [.param("case id/client", "4"), .param("game version", "3h / 4h / o")],
+        category: .board,
+        description: "Changes the PC expansion of a case",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveExpansionCommand = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        guard let expansion = GameMode.parsedFromText(text: command.parameters[1]) else {
+            command.message.error(
+                key: "board.expansion.invalid", fromCommand: command,
+                map: [
+                    "expansion": command.parameters[1]
+                ])
+            return
+        }
+
+        if expansion != .legacy && rescue.platform != .PC {
+            command.message.error(key: "board.expansion.platform", fromCommand: command)
+            return
+        }
+
+        rescue.expansion = expansion
+        try? rescue.save(command)
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable
+            ])
+    }
+
+    @BotCommand(
+        ["legacy", "leg", "horizons3", "h3"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Changes a PC case to use legacy mode",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveHorizons3Command = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        let expansion: GameMode = .legacy
+        rescue.expansion = expansion
+        try? rescue.save(command)
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable
+            ])
+    }
+
+    @BotCommand(
+        ["horizons", "hor", "h", "live", "horizons4", "h4"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Changes a PC case to use the live Horizons expansion",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveHorizons4Command = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        if rescue.platform != .PC {
+            command.message.error(key: "board.expansion.platform", fromCommand: command)
+            return
+        }
+        let expansion: GameMode = .horizons
+        rescue.expansion = expansion
+        try? rescue.save(command)
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable
+            ])
+    }
+
+    @BotCommand(
+        ["odyssey", "ody", "o"],
+        [.param("case id/client", "4")],
+        category: .board,
+        description: "Changes a PC case to use the Odyssey expansion",
+        tags: ["game mode", "mode", "horizons", "odyssey", "legacy"],
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveOdysseyCommand = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        if rescue.platform != .PC {
+            command.message.error(key: "board.expansion.platform", fromCommand: command)
+            return
+        }
+        let expansion: GameMode = .odyssey
+        rescue.expansion = expansion
+        try? rescue.save(command)
+
+        command.message.reply(
+            key: "board.expansion.success", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "expansion": expansion.ircRepresentable
+            ])
     }
 }

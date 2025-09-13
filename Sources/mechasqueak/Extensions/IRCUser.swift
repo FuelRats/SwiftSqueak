@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -27,22 +27,79 @@ import IRCKit
 
 extension IRCUser {
     var associatedAPIData: NicknameSearchDocument? {
-        return MechaSqueak.accounts.mapping[self.nickname]
+        guard let account = self.account else {
+            return nil
+        }
+        return MechaSqueak.accounts.mapping[account]
     }
 
-    var assignedRescue: LocalRescue? {
+    var settings: UserDataObject? {
+        return self.associatedAPIData?.user?.attributes.data.value
+    }
+
+    func getAssignedRescue() async -> (Int, Rescue)? {
         guard let userId = self.associatedAPIData?.user?.id.rawValue else {
             return nil
         }
-        return mecha.rescueBoard.rescues.first(where: {
-            $0.rats.contains(where: {
+        return await board.first(where: {
+            return $0.value.rats.contains(where: {
                 return $0.relationships.user?.id?.rawValue == userId
-            }) ||
-            $0.unidentifiedRats.contains(self.nickname)
+            }) || $0.value.unidentifiedRats.contains(self.nickname)
         })
     }
 
-    func hasPermission (permission: AccountPermission) -> Bool {
+    var platform: GamePlatform? {
+        let nickname = self.nickname.lowercased()
+
+        if nickname.hasSuffix("[pc]") {
+            return .PC
+        }
+
+        if nickname.hasSuffix("[xb]") || nickname.hasSuffix("[xb1]") {
+            return .Xbox
+        }
+
+        if nickname.contains("[ps]") || nickname.contains("[ps4]]") || nickname.contains("[ps5]") {
+            return .PS
+        }
+
+        return nil
+    }
+
+    var currentRat: Rat? {
+        guard let apiData = self.associatedAPIData, let user = apiData.user else {
+            return nil
+        }
+
+        var rats = apiData.ratsBelongingTo(user: user)
+        if let platform = self.platform {
+            rats = rats.filter({
+                $0.attributes.platform.value == platform
+            })
+        }
+
+        var nickname = self.nickname.lowercased()
+        nickname = nickname.replacingOccurrences(
+            of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
+
+        rats.sort(by: {
+            nickname.levenshtein($0.attributes.name.value.lowercased())
+                < nickname.levenshtein($1.attributes.name.value.lowercased())
+        })
+
+        return rats.first
+    }
+
+    func flush() {
+        if let mapping = MechaSqueak.accounts.mapping.first(where: {
+            $0.key == self.account
+        }) {
+            MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
+        }
+        MechaSqueak.accounts.lookupIfNotExists(user: self)
+    }
+
+    func hasPermission(permission: AccountPermission) -> Bool {
         guard let permissions = self.associatedAPIData?.permissions else {
             return self.hostPermissions().contains(permission)
         }
@@ -50,7 +107,7 @@ extension IRCUser {
         return permissions.contains(permission)
     }
 
-    func getRatRepresenting (platform: GamePlatform?) -> Rat? {
+    func getRatRepresenting(platform: GamePlatform?) -> Rat? {
         guard let apiData = self.associatedAPIData, let user = apiData.user else {
             return nil
         }
@@ -61,29 +118,35 @@ extension IRCUser {
         })
 
         var nickname = self.nickname.lowercased()
-        nickname = nickname.replacingOccurrences(of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
+        nickname = nickname.replacingOccurrences(
+            of: "(\\[[A-Za-z0-9]+\\])", with: "", options: .regularExpression)
 
         rats.sort(by: {
-            nickname.levenshtein($0.attributes.name.value.lowercased()) < nickname.levenshtein($1.attributes.name.value.lowercased())
+            nickname.levenshtein($0.attributes.name.value.lowercased())
+                < nickname.levenshtein($1.attributes.name.value.lowercased())
         })
 
         return rats.first
     }
 
-    func isAssignedTo(rescue: LocalRescue) -> Bool {
-        guard let user = self.associatedAPIData?.user, let rats = self.associatedAPIData?.ratsBelongingTo(user: user) else {
+    func isAssignedTo(rescue: Rescue) async -> Bool {
+        guard let user = self.associatedAPIData?.user,
+            let rats = self.associatedAPIData?.ratsBelongingTo(user: user)
+        else {
             return false
         }
-        return rescue.rats.contains(where: { assigned in
+        let rescueRats = rescue.rats
+        return rescueRats.contains(where: { assigned in
             return rats.contains(where: { $0.id.rawValue == assigned.id.rawValue })
         })
     }
 
-    func isAssociatedWith (rescue: LocalRescue) -> Bool {
-        return isAssignedTo(rescue: rescue) || rescue.clientNick == self.nickname
+    func isAssociatedWith(rescue: Rescue) async -> Bool {
+        let clientNick = rescue.clientNick
+        return await isAssignedTo(rescue: rescue) || clientNick == self.nickname
     }
 
-    func hostPermissions () -> [AccountPermission] {
+    func hostPermissions() -> [AccountPermission] {
         if self.hostmask.hasSuffix("i.see.all")
             || self.hostmask.hasSuffix("netadmin.fuelrats.com")
             || self.hostmask.hasSuffix("admin.fuelrats.com") {
@@ -107,7 +170,8 @@ extension IRCUser {
             ]
         }
 
-        if self.hostmask.hasSuffix("overseer.fuelrats.com") || self.hostmask.hasSuffix("techrat.fuelrats.com") {
+        if self.hostmask.hasSuffix("overseer.fuelrats.com")
+            || self.hostmask.hasSuffix("techrat.fuelrats.com") {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
@@ -126,6 +190,22 @@ extension IRCUser {
             ]
         }
 
+        if self.hostmask.hasSuffix("trainer.fuelrats.com") {
+            return [
+                .UserReadOwn,
+                .UserWriteOwn,
+                .RatReadOwn,
+                .RatWriteOwn,
+                .RescueRead,
+                .RescueReadOwn,
+                .RescueWriteOwn,
+                .DispatchRead,
+                .DispatchWrite,
+                .TwitterWrite,
+                .AnnouncementWrite
+            ]
+        }
+
         if self.hostmask.hasSuffix("rat.fuelrats.com") {
             return [
                 .UserReadOwn,
@@ -136,7 +216,8 @@ extension IRCUser {
                 .RescueReadOwn,
                 .RescueWriteOwn,
                 .DispatchRead,
-                .DispatchWrite
+                .DispatchWrite,
+                .TwitterWrite
             ]
         }
 

@@ -22,41 +22,88 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import NIO
-import AsyncHTTPClient
 
 struct QueueParticipant: Codable, Hashable {
     let uuid: UUID
     let arrivalTime: Date
-    let pending: Bool
-    let client: QueueClient
+    var pending: Bool
+    var inProgress: Bool
+    var client: QueueClient
 
     struct QueueClient: Codable, Hashable {
         private enum CodingKeys: String, CodingKey {
             case id
-            case name = "client_name"
-            case system = "client_system"
+            case name = "clientName"
+            case system = "clientSystem"
             case platform
             case locale
-            case o2Status = "o2_status"
+            case o2Status = "o2Status"
+            case expansion = "odyssey"
         }
         let id: Int
-        let name: String
-        let system: String
-        let platform: GamePlatform
-        let locale: Locale
-        let o2Status: Bool
+        var name: String
+        var system: String
+        var platform: GamePlatform
+        var locale: String
+        var o2Status: Bool
+        var expansion: GameMode?
     }
 
-    func dequeue () -> EventLoopFuture<QueueParticipant> {
-        var requestUrl = configuration.queue.url!.appendingPathComponent("/queue")
-        requestUrl.appendPathComponent(self.uuid.uuidString)
-        requestUrl.appendPathComponent("/dequeue")
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        var request = try! HTTPClient.Request(url: requestUrl, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        self.uuid = try container.decode(UUID.self, forKey: .uuid)
+        if let arrivalTime = try? container.decode(Date.self, forKey: .arrivalTime) {
+            self.arrivalTime = arrivalTime
+        } else {
+            let arrivalTimeString = try container.decode(String.self, forKey: .arrivalTime)
+            if let shortArrivalTime = DateFormatter.iso8601Short.date(from: arrivalTimeString) {
+                self.arrivalTime = shortArrivalTime
+            } else {
+                throw DecodingError.dataCorrupted(
+                    DecodingError.Context(
+                        codingPath: decoder.codingPath, debugDescription: "No valid date found"))
+            }
+        }
+        self.pending = try container.decode(Bool.self, forKey: .pending)
+        self.inProgress = try container.decode(Bool.self, forKey: .inProgress)
+        self.client = try container.decode(QueueClient.self, forKey: .client)
+    }
 
-        return httpClient.execute(request: request, forDecodable: QueueParticipant.self)
+    @discardableResult
+    func setInProgress() async throws -> QueueParticipant {
+        var request = try HTTPClient.Request(
+            queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+
+        var queueItem = self
+        queueItem.inProgress = true
+        request.body = try .data(QueueAPI.encoder.encode(queueItem))
+
+        return try await httpClient.execute(
+            request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+    }
+
+    @discardableResult
+    func changeName(name: String) async throws -> QueueParticipant {
+        var request = try HTTPClient.Request(
+            queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .PUT)
+
+        var queueItem = self
+        queueItem.client.name = name
+        request.body = try .data(QueueAPI.encoder.encode(queueItem))
+
+        return try await httpClient.execute(
+            request: request, forDecodable: QueueParticipant.self, withDecoder: QueueAPI.decoder)
+    }
+
+    @discardableResult
+    func delete() async throws -> HTTPClient.Response {
+        let request = try HTTPClient.Request(
+            queuePath: "/queue/uuid/\(self.uuid.uuidString.lowercased())", method: .DELETE)
+
+        return try await httpClient.execute(request: request, deadline: nil, expecting: 204)
     }
 }

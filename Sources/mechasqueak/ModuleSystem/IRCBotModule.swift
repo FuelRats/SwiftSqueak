@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -24,7 +24,7 @@
 
 import Foundation
 import IRCKit
-
+import HTMLKit
 
 enum AllowedCommandDestination {
     case Channel
@@ -32,40 +32,45 @@ enum AllowedCommandDestination {
     case All
 }
 
-typealias BotCommandFunction = (IRCBotCommand) -> Void
+typealias BotCommandFunction = (IRCBotCommand) async -> Void
+
 @propertyWrapper struct BotCommand {
     var wrappedValue: BotCommandFunction
 
-    init <T: AnyRange> (
+    init(
         wrappedValue value: @escaping BotCommandFunction,
         _ commands: [String],
-        parameters: T,
-        lastParameterIsContinous: Bool = false,
-        options: OrderedSet<Character> = [],
-        namedOptions: OrderedSet<String> = [],
+        _ body: [CommandBody] = [],
         category: HelpCategory?,
         description: String,
-        paramText: String? = nil,
-        example: String? = nil,
+        tags: [String] = [],
+        helpLocale: String? = nil,
         permission: AccountPermission? = nil,
-        allowedDestinations: AllowedCommandDestination = .All
+        allowedDestinations: AllowedCommandDestination = .All,
+        cooldown: DispatchTimeInterval? = nil,
+        cooldownOverride: AccountPermission? = .RescueWrite,
+        helpExtra: (() -> String)? = nil,
+        helpView: (() -> Content)? = nil,
     ) {
         self.wrappedValue = value
 
         let declaration = IRCBotCommandDeclaration(
             commands: commands,
-            minParameters: parameters.lower as? Int ?? 0,
             onCommand: self.wrappedValue,
-            maxParameters: parameters.upper as? Int,
-            lastParameterIsContinous: lastParameterIsContinous,
-            options: options,
-            namedOptions: namedOptions,
+            parameters: body.parameters,
+            options: body.options,
+            arguments: body.arguments,
+            helpArguments: body.helpArguments,
+            helpExtra: helpExtra,
+            helpView: helpView,
             category: category,
             description: description,
-            paramText: paramText,
-            example: example,
+            tags: tags,
+            helpLocale: helpLocale,
             permission: permission,
-            allowedDestinations: allowedDestinations
+            allowedDestinations: allowedDestinations,
+            cooldown: TimeInterval(dispatchTimeInterval: cooldown),
+            cooldownOverride: cooldownOverride
         )
 
         MechaSqueak.commands.append(declaration)
@@ -74,84 +79,156 @@ typealias BotCommandFunction = (IRCBotCommand) -> Void
 
 struct IRCBotCommandDeclaration {
     let commands: [String]
-    let minimumParameters: Int
-    let maximumParameters: Int?
     let options: OrderedSet<Character>
-    let namedOptions: OrderedSet<String>
+    let arguments: [String: String?]
+    let helpArguments: [(String, String?, String?)]
     let permission: AccountPermission?
-    let lastParameterIsContinous: Bool
     let allowedDestinations: AllowedCommandDestination
+    let cooldown: TimeInterval?
+    let cooldownOverride: AccountPermission?
     let category: HelpCategory?
     let description: String
-    var paramText: String?
-    var example: String?
+    let tags: [String]
+    let helpLocale: String?
+    var parameters: [CommandBody]
+    let helpExtra: (() -> String)?
+    let helpView: (() -> Content)?
 
     var onCommand: BotCommandFunction?
 
-    init (
+    init(
         commands: [String],
-        minParameters: Int,
-        onCommand: BotCommandFunction?,
-        maxParameters: Int? = nil,
-        lastParameterIsContinous: Bool = false,
+        onCommand: BotCommandFunction? = nil,
+        parameters: [CommandBody],
         options: OrderedSet<Character> = [],
-        namedOptions: OrderedSet<String> = [],
+        arguments: [String: String?] = [:],
+        helpArguments: [(String, String?, String?)] = [],
+        helpExtra: (() -> String)? = nil,
+        helpView: (() -> Content)? = nil,
         category: HelpCategory?,
         description: String,
-        paramText: String? = nil,
-        example: String? = nil,
+        tags: [String] = [],
+        helpLocale: String? = nil,
         permission: AccountPermission? = nil,
-        allowedDestinations: AllowedCommandDestination = .All) {
-
+        allowedDestinations: AllowedCommandDestination = .All,
+        cooldown: TimeInterval? = nil,
+        cooldownOverride: AccountPermission?
+    ) {
         self.commands = commands
-        self.minimumParameters = minParameters
-        self.maximumParameters = maxParameters
+        self.parameters = parameters
         self.options = options
-        self.namedOptions = namedOptions
-        self.lastParameterIsContinous = lastParameterIsContinous
+        self.arguments = arguments
+        self.helpArguments = helpArguments
+        self.helpLocale = helpLocale
         self.permission = permission
         self.onCommand = onCommand
         self.allowedDestinations = allowedDestinations
         self.category = category
         self.description = description
-        self.paramText = paramText
-        self.example = example
+        self.tags = tags
+        self.cooldown = cooldown
+        self.cooldownOverride = cooldownOverride
+        self.helpExtra = helpExtra
+        self.helpView = helpView
     }
 
-    func usageDescription (command: IRCBotCommand?) -> String {
+    func usageDescription(command: IRCBotCommand?) -> String {
         var usage = "!" + (command?.command ?? self.commands[0])
+        if helpLocale != nil {
+            usage += "-<lang>"
+        }
 
         if self.options.count > 0 {
             usage += " [-\(String(self.options))]"
         }
 
-        if self.namedOptions.count > 0 {
-            usage += " " + Array(self.namedOptions).map({ "[--\($0)]" }).joined(separator: " ")
-        }
+        usage += " \(paramText)"
 
-        if let paramText = self.paramText {
-            usage += " \(paramText)"
+        for (argument, valueDesc, _) in helpArguments {
+            if let valueDesc = valueDesc {
+                usage += " [--\(argument) <\(valueDesc)>]"
+            } else {
+                usage += " [--\(argument)]"
+            }
         }
         return usage
     }
 
-    func exampleDescription (command: IRCBotCommand?) -> String {
-        return "!\(command?.command ?? self.commands[0]) \(self.example ?? "")"
+    func exampleDescription(command: IRCBotCommand?) -> String {
+        return "!\(command?.command ?? self.commands[0]) \(self.example)"
     }
 
     var isDispatchingCommand: Bool {
-        return self.category == .board && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
+        return self.category == .board
+            && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
+    }
+
+    var example: String {
+        var example = ""
+        if let option = options.first {
+            example += "-\(option) "
+        }
+        
+        example += self.parameters.example
+
+        if let exampleArgNoParam = helpArguments.first(where: { $0.2 == nil }) {
+            let (name, _, _) = exampleArgNoParam
+            example += " --\(name)"
+        }
+        for exampleArgParam in helpArguments.filter({ $0.2 != nil }) {
+            let (name, _, _) = exampleArgParam
+            if let exampleVal = exampleArgParam.2 {
+                example += " --\(name) \(exampleVal)"
+            }
+        }
+        return example
+    }
+
+    var paramText: String {
+        return self.parameters.paramText
+    }
+
+    var minimumParameters: Int {
+        return self.parameters.requiredParameters.count
+    }
+
+    var maximumParameters: Int? {
+        if case .param(_, _, let type, _) = parameters.last {
+            if type == .multiple {
+                return nil
+            }
+        }
+        return self.parameters.count
+    }
+
+    var lastParameterIsContinous: Bool {
+        if case .param(_, _, let type, _) = parameters.last {
+            if type == .continuous {
+                return true
+            }
+        }
+        return false
     }
 }
-
-
 
 @propertyWrapper struct EventListener<T: NotificationDescriptor> {
     var wrappedValue: (T.Payload) -> Void
     let token: NotificationToken
 
-    init (wrappedValue value: @escaping (T.Payload) -> Void) {
+    init(wrappedValue value: @escaping (T.Payload) -> Void) {
         self.wrappedValue = value
-        self.token = NotificationCenter.default.addObserver(descriptor: T(), using: self.wrappedValue)
+        self.token = NotificationCenter.default.addObserver(
+            descriptor: T(), using: self.wrappedValue)
+    }
+}
+
+@propertyWrapper struct AsyncEventListener<T: NotificationDescriptor> {
+    var wrappedValue: (T.Payload) async -> Void
+    let token: NotificationToken
+
+    init(wrappedValue value: @escaping (T.Payload) async -> Void) {
+        self.wrappedValue = value
+        self.token = NotificationCenter.default.addAsyncObserver(
+            descriptor: T(), using: self.wrappedValue)
     }
 }

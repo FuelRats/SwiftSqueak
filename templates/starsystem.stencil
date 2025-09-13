@@ -1,0 +1,34 @@
+"{{ system.name }}"
+{% if system|isUnderAttack %}
+ ⚠️
+{% endif %}
+{% filter italic %}
+ (
+{% if landmark %}
+{% if system|mainStarInfo %}
+{{ system|mainStarInfo }}
+ {% endif %}
+{% if region and region.name != "The Inner Orion Spur" %}
+ in {{ region.name }}
+ {% endif %}
+{% include "landmark.stencil" %}
+{% elif system|proceduralInfo %}
+{{ system|proceduralInfo }}
+{% elif unobtainablePermit %}
+{{ "🚫 Unobtainable permit system"|color:8 }}
+{% elif invalid %}
+{{ "Invalid system name"|color:8 }}
+{% else %}
+{{ "Unconfirmed"|color:10 }}
+{% endif %}
+)
+{% endfilter %}
+{% if system.permit %}
+ {% filter color:7 %}
+{% if system.permit.name %}
+({{ system.permit.name }} Permit Required)
+{% else %}
+(Permit Required)
+{% endif %}
+{% endfilter %}
+{% endif %}

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -23,105 +23,302 @@
  */
 
 import Foundation
+@preconcurrency import IRCKit
 import NIO
-import IRCKit
 import Regex
 
-class RescueBoard {
-    var rescues: [LocalRescue] = []
-    let queue = OperationQueue()
+struct PlatformExpansion: Codable, Hashable {
+    let platform: GamePlatform
+    let expansion: GameMode
+}
+
+actor RescueBoard {
+    private var rescues: [Int: Rescue] = [:]
+    private let queue = OperationQueue()
     private var isSynced = true
-    var syncTimer: RepeatedTask?
-    private let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-    private let distanceFormatter: NumberFormatter
-    var lastSignalReceived: Date?
-    var prepTimers: [UUID: Scheduled<()>?] = [:]
-    var recentIdentifiers: [Int] = []
-    private let systemBodiesPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
-    var recentlyClosed = [Int: UUID]()
+    private var syncTimer: RepeatedTask?
+    private var lastSignalsReceived: [PlatformExpansion: Date] = [:]
+    private var prepTimers: [UUID: Scheduled<()>?] = [:]
+    private var recentIdentifiers: [Int] = []
+    private var recentlyClosed = [Int: Rescue]()
+    private var pendingClientJoins: [String: (EventLoopPromise<Void>, Rescue)] = [:]
 
-    init () {
-        self.queue.maxConcurrentOperationCount = 1
-        self.distanceFormatter = NumberFormatter()
-        self.distanceFormatter.numberStyle = .decimal
-        self.distanceFormatter.groupingSize = 3
-        self.distanceFormatter.maximumFractionDigits = 1
-        self.distanceFormatter.roundingMode = .halfUp
+    private var lastPaperworkReminder: [UUID: Date] = [:]
 
-        FuelRatsAPI.getLastRescue(complete: { result in
-            guard let rescues = result.body.primaryResource, rescues.values.count > 0 else {
+    nonisolated func startUpRoutines() {
+        if configuration.general.drillMode == false {
+            loop.next().scheduleRepeatedTask(
+                initialDelay: .minutes(15), delay: .minutes(15), { @Sendable task in
+                    self.checkElapsedPaperwork(task: task)
+                }
+            )
+        }
+
+        Task {
+            guard let rescues = try? await FuelRatsAPI.getLastRescues().body.primaryResource,
+                rescues.values.count > 0
+            else {
                 return
             }
 
-            let createdAt = rescues.values[0].attributes.createdAt.value
-            if self.lastSignalReceived == nil || createdAt > self.lastSignalReceived! {
-                self.lastSignalReceived = createdAt
+            for platform in GamePlatform.allCases {
+                if platform != .PC {
+                    guard
+                        let createdAt = rescues.values.first(where: {
+                            $0.platform == platform && $0.outcome != .Purge
+                        })?.createdAt
+                    else {
+                        continue
+                    }
+                    let lastSignalReceived = await self.lastSignalsReceived[
+                        PlatformExpansion(platform: platform, expansion: .legacy)]
+                    if lastSignalReceived == nil || createdAt > lastSignalReceived! {
+                        await self.setLastSignalReceived(
+                            platform: platform, expansion: .legacy, createdAt)
+                    }
+                    continue
+                }
+
+                for expansion in GameMode.allCases {
+                    guard
+                        let createdAt = rescues.values.first(where: {
+                            $0.platform == platform && $0.expansion == expansion
+                                && $0.outcome != .Purge
+                        })?.createdAt
+                    else {
+                        continue
+                    }
+                    let lastSignalReceived = await self.lastSignalsReceived[
+                        PlatformExpansion(platform: platform, expansion: expansion)]
+                    if lastSignalReceived == nil || createdAt > lastSignalReceived! {
+                        await self.setLastSignalReceived(
+                            platform: platform, expansion: expansion, date: createdAt)
+                    }
+                }
             }
-        }, error: { error in
-            debug(error.debugDescription)
-        })
+        }
+    }
+    
+    nonisolated func getIsSynced() async -> Bool {
+        return await self.isSynced
+    }
+    
+    nonisolated func getRescues () async -> [Int: Rescue] {
+        return await self.rescues
+    }
+    
+    nonisolated func getLastSignalsRecieved() async -> [PlatformExpansion: Date] {
+        return await self.lastSignalsReceived
+    }
+    
+    nonisolated func getRecentlyClosed() async -> [Int: Rescue] {
+        return await self.recentlyClosed
+    }
+    
+    nonisolated func getPendingClientJoins() async -> [String: (EventLoopPromise<Void>, Rescue)] {
+        return await self.pendingClientJoins
+    }
+    
+    nonisolated func getPrepTimers() async -> [UUID: Scheduled<()>?] {
+        return await self.prepTimers
+    }
+    
+    nonisolated func addSyncOperation(_ operation: Operation) async {
+        queue.addOperation(operation)
+    }
+    
+    func addPendingClientJoin(key: String, promise: EventLoopPromise<Void>, rescue: Rescue) async {
+        pendingClientJoins[key] = (promise, rescue)
+    }
+    
+    func removePendingJoin(key: String) async {
+        pendingClientJoins.removeValue(forKey: key)
     }
 
-    var synced: Bool {
-        get {
-            return self.isSynced
+    func setIsSynced(_ synced: Bool) {
+        self.isSynced = synced
+    }
+
+    func sync() async throws {
+        self.queue.cancelAllOperations()
+        guard configuration.general.drillMode == false else {
+            return
         }
+        let remoteRescues = try await FuelRatsAPI.getOpenRescues().convertToLocalRescues()
 
-        set {
-            if newValue == false {
-                guard self.isSynced == true && self.syncTimer == nil else {
-                    return
+        var upload = 0
+        var download = 0
+        var updateRemote = 0
+        var updateLocal = 0
+        var conflicts = 0
+
+        for remoteRescue in remoteRescues {
+            if let (localKey, localRescue) = rescues.first(where: {
+                $0.value.id == remoteRescue.1.id
+            }) {
+                if localRescue.updatedAt > remoteRescue.1.updatedAt {
+                    updateRemote += 1
+                    try? await localRescue.saveAndWait(nil)
+                } else if remoteRescue.1.updatedAt > localRescue.updatedAt {
+                    updateLocal += 1
+                    self.rescues.removeValue(forKey: localKey)
+                    let caseId = await self.insert(
+                        rescue: remoteRescue.1, preferringIdentifier: remoteRescue.0)
+                    if caseId != remoteRescue.0 {
+                        conflicts += 1
+                    }
                 }
-                MechaSqueak.accounts.lookupServiceAvailable = false
-
-                if let channel = mecha.reportingChannel {
-                    channel.send(key: "board.syncfailed")
-                }
-
-                self.syncTimer = group.next().scheduleRepeatedTask(
-                    initialDelay: .seconds(30),
-                    delay: .seconds(30), { _ in
-                    self.syncBoard()
-                })
-                self.isSynced = false
-
             } else {
-                guard self.isSynced == false else {
-                    return
+                download += 1
+                let caseId = await self.insert(
+                    rescue: remoteRescue.1, preferringIdentifier: remoteRescue.0)
+                if caseId != remoteRescue.0 {
+                    conflicts += 1
                 }
-
-                MechaSqueak.accounts.lookupServiceAvailable = true
-                self.isSynced = true
-                if let timer = self.syncTimer {
-                    timer.cancel()
-                }
-                self.syncTimer = nil
             }
+        }
+
+        for (_, localRescue) in self.rescues where
+            remoteRescues.contains(where: { $0.1.id == localRescue.id }) == false {
+            upload += 1
+            localRescue.uploaded = false
+            try? await localRescue.saveAndWait(nil)
+        }
+
+        var updates = [String]()
+
+        if download > 0 {
+            updates.append(
+                lingo.localize(
+                    "board.synced.downstreamNew", locale: "en-GB",
+                    interpolations: [
+                        "count": download
+                    ]))
+        }
+
+        if upload > 0 {
+            updates.append(
+                lingo.localize(
+                    "board.synced.upstreamNew", locale: "en-GB",
+                    interpolations: [
+                        "count": upload
+                    ]))
+        }
+
+        if updateRemote > 0 {
+            updates.append(
+                lingo.localize(
+                    "board.synced.upstreamUpdate", locale: "en-GB",
+                    interpolations: [
+                        "count": updateRemote
+                    ]))
+        }
+
+        if updateLocal > 0 {
+            updates.append(
+                lingo.localize(
+                    "board.synced.downstreamUpdate", locale: "en-GB",
+                    interpolations: [
+                        "count": updateLocal
+                    ]))
+        }
+
+        if conflicts > 0 {
+            updates.append(
+                lingo.localize(
+                    "board.synced.conflicts", locale: "en-GB",
+                    interpolations: [
+                        "count": conflicts
+                    ]))
+        }
+
+        let syncMessage = lingo.localize(
+            "board.synced", locale: "en-GB",
+            interpolations: [
+                "api": configuration.api.url,
+                "updates": updates.englishList
+            ])
+        isSynced = true
+        mecha.reportingChannel?.send(message: syncMessage)
+    }
+
+    func getId(forRescue rescue: Rescue) -> Int? {
+        return self.rescues.first(where: { $0.value.id == rescue.id })?.key
+    }
+
+    func getRescue(byCommandIdentifier identifier: Int) async -> Rescue? {
+        return self.rescues[identifier]
+    }
+
+    nonisolated var activeCases: Int {
+        get async {
+            return await self.rescues.filter({ $0.value.status == .Open }).count
         }
     }
 
-    func findRescue (withCaseIdentifier caseIdentifier: String) -> LocalRescue? {
+    func findRescue(
+        withCaseIdentifier caseIdentifier: String, includingRecentlyClosed: Bool = false
+    ) async -> (Int, Rescue)? {
         var caseIdentifier = caseIdentifier
         if caseIdentifier.starts(with: "#") {
-            caseIdentifier = String(caseIdentifier.suffix(
-                from: caseIdentifier.index(caseIdentifier.startIndex, offsetBy: 1)
-            ))
+            caseIdentifier = String(
+                caseIdentifier.suffix(
+                    from: caseIdentifier.index(caseIdentifier.startIndex, offsetBy: 1)
+                ))
         }
 
-        if let caseIdNumber = Int(caseIdentifier) {
-            return self.rescues.first(where: {
-                $0.commandIdentifier == caseIdNumber
-            })
+        if let caseIdNumber = Int(caseIdentifier), let rescue = self.rescues[caseIdNumber] {
+            return (key: caseIdNumber, value: rescue)
         }
 
-        return self.rescues.first(where: {
-            $0.client?.lowercased() == caseIdentifier.lowercased()
-                || $0.clientNick?.lowercased() == caseIdentifier.lowercased()
-        })
+        if let (caseId, rescue) = await self.first(where: { (_, rescue) in
+            let client = rescue.client?.lowercased()
+            let clientNick = rescue.clientNick?.lowercased()
+            return client == caseIdentifier.lowercased()
+                || clientNick == caseIdentifier.lowercased()
+        }) {
+            return (key: caseId, value: rescue)
+        }
+        if includingRecentlyClosed {
+            if let caseIdNumber = Int(caseIdentifier),
+                let rescue = self.recentlyClosed[caseIdNumber] {
+                return (key: caseIdNumber, value: rescue)
+            }
+            if let (caseId, rescue) = self.recentlyClosed.first(where: { (_, rescue) in
+                return rescue.client?.lowercased() == caseIdentifier.lowercased()
+                    || rescue.clientNick?.lowercased() == caseIdentifier.lowercased()
+            }) {
+                return (key: caseId, value: rescue)
+            }
+        }
+        return nil
     }
 
-    func fuzzyFindRescue (forChannelMember member: IRCUser) -> LocalRescue? {
-        return self.rescues.first(where: { rescue in
+    nonisolated func findMentionedCasesIn(message: IRCPrivateMessage) async -> ([(Int, Rescue)], Set<Int>) {
+        let caseIds = MessageScanner.caseMentionExpression.findAll(in: message.message).compactMap(
+            { (match: Match) -> Int? in
+            if let id = match.group(at: 1) {
+                return Int(id)
+            }
+            return nil
+        })
+        
+        let rescues = await self.getRescues()
+        let (validCases, invalidCaseIds): ([(Int, Rescue)], Set<Int>) = caseIds.reduce(
+            into: ([], [])
+        ) { result, caseId in
+            if let rescue = rescues[caseId] {
+                result.0.append((caseId, rescue))
+            } else {
+                result.1.insert(caseId)
+            }
+        }
+        
+        return (validCases, invalidCaseIds)
+    }
+
+    func fuzzyFindRescue(forChannelMember member: IRCUser) async -> (Int, Rescue)? {
+        return await self.first(where: { (_, rescue) in
             let memberString = member.nickname.lowercased()
             guard let client = rescue.client else {
                 return false
@@ -129,72 +326,136 @@ class RescueBoard {
             guard let nickname = rescue.clientNick else {
                 return client.lowercased().levenshtein(memberString) < 3
             }
-            return client.lowercased().levenshtein(memberString) < 3 || nickname.lowercased().levenshtein(memberString) < 3
+            return client.lowercased().levenshtein(memberString) < 3
+                || nickname.lowercased().levenshtein(memberString) < 3
         })
     }
+    
+    func restoreRecentlyClosed (id: UUID) async -> Int? {
+        guard let result = try? await FuelRatsAPI.getRescue(id: id) else {
+            return nil
+        }
 
-    func add (
-        rescue: LocalRescue,
-        fromMessage message: IRCPrivateMessage,
-        initiated: RescueInitiationType
-    ) {
-        if let existingRescue = self.rescues.first(where: {
-            $0.client?.lowercased() == rescue.client?.lowercased() || ($0.clientNick != nil && $0.clientNick?.lowercased() == rescue.clientNick?.lowercased())
+        let apiRescue = result.body.data!.primary.value
+        let rats = result.assignedRats()
+        let (lastEditUser, _) = result.lastEditUser()
+        let firstLimpet = result.firstLimpet()
+
+        let rescue = Rescue(
+            fromAPIRescue: apiRescue,
+            withRats: rats,
+            firstLimpet: firstLimpet,
+            lastEditUser: lastEditUser,
+            onBoard: board
+        )
+        rescue.outcome = nil
+        rescue.status = .Open
+
+        let caseId = await board.insert(
+            rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier)
+        
+        try? rescue.save(nil)
+        return caseId
+    }
+
+    func insert(
+        rescue: Rescue,
+        preferringIdentifier preferredIdentifier: Int? = nil,
+        preferringEvenness: Bool? = nil
+    ) async -> Int {
+        var identifier = preferredIdentifier ?? getNewIdentifier(even: preferringEvenness)
+        if self.rescues[identifier] != nil {
+            identifier = getNewIdentifier()
+        }
+        self.rescues[identifier] = rescue
+        return identifier
+    }
+
+    private func insert(rescue: Rescue, withIdentifier identifier: Int) async {
+        if self.rescues[identifier] != nil {
+            return
+        }
+        self.rescues[identifier] = rescue
+    }
+
+    func insert(
+        rescue: Rescue, fromMessage message: IRCPrivateMessage, initiated: RescueInitiationType,
+        force: Bool = false
+    ) async throws {
+        let clientName = rescue.client?.lowercased()
+        let clientNick = rescue.clientNick?.lowercased()
+
+        if let (_, existingRescue) = await self.first(where: {
+            let currentClientName = $0.value.client?.lowercased()
+            let currentClientNick = $0.value.clientNick?.lowercased()
+            return currentClientName == clientName
+                || (currentClientNick != nil && currentClientNick == clientNick)
         }) {
-            let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
-            if initiated == .signal {
-                message.reply(message: lingo.localize("board.signal.helpyou", locale: "en", interpolations: [
-                    "client": rescue.clientNick ?? rescue.client ?? ""
-                ]))
-            } else if initiated == .insertion {
-                message.reply(message: lingo.localize("board.signal.exists", locale: "en", interpolations: [
-                    "client": existingRescue.clientDescription,
-                    "system": existingRescue.systemDescription,
-                    "caseId": existingRescue.commandIdentifier,
-                    "platform": existingRescue.platform.ircRepresentable,
-                    "cr": crStatus
-                ]))
-            }
-
-            var changes: [String] = []
-            if rescue.platform != existingRescue.platform && rescue.platform != nil {
-                changes.append("\(IRCFormat.bold("Platform:")) \(existingRescue.platform.ircRepresentable) -> \(rescue.platform.ircRepresentable)")
-            }
-            if rescue.system != existingRescue.system && rescue.system != nil {
-                changes.append("\(IRCFormat.bold("System:")) \(existingRescue.system ?? "u\u{200B}nknown") -> \(rescue.system ?? "u\u{200B}nknown")")
-                if let system = rescue.system {
-                    SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { searchResult, landmarkResult, _ in
-                        guard let searchResult = searchResult, let landmarkResult = landmarkResult else {
-                            return
-                        }
-
-                        existingRescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
-                        existingRescue.syncUpstream()
-
-                        message.reply(message: lingo.localize("board.syschange", locale: "en-GB", interpolations: [
-                            "caseId": existingRescue.commandIdentifier,
-                            "client": rescue.client!,
-                            "systemInfo": rescue.systemInfoDescription
-                        ]))
-                    })
-                }
-            }
-            if rescue.codeRed != existingRescue.codeRed && rescue.codeRed == true {
-                changes.append("\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)")
-            }
-            if changes.count > 0 {
-                message.reply(message: lingo.localize("board.signal.changes", locale: "en-GB", interpolations: [
-                    "caseId": existingRescue.commandIdentifier,
-                    "changes": changes.joined(separator: ", ")
-                ]))
-            }
-
+            try? await announceExistingRescue(
+                existingRescue, conflictingWith: rescue, initiated: initiated, inMessage: message)
             return
         }
 
-        let crStatus = rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
+        if force == false {
+            do {
+                try await anticipateClientJoin(
+                    name: clientNick ?? clientName ?? "", forRescue: rescue, initiated: initiated)
+            } catch {
+                message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
+                return
+            }
 
-        var even: Bool? = nil
+        }
+        if let lastHostname = rescue.clientLastHostName {
+            if let (_, existingRescue) = await self.first(where: {
+                $0.value.clientLastHostName == lastHostname
+            }) {
+                try? await announceExistingRescue(
+                    existingRescue, conflictingWith: rescue, initiated: initiated,
+                    inMessage: message)
+                return
+            }
+        }
+
+        if initiated == .announcer && configuration.queue != nil {
+            if let promise = QueueAPI.pendingQueueJoins.first(where: {
+                $0.key.lowercased() == clientName
+            }) {
+                promise.value.succeed(())
+                QueueAPI.pendingQueueJoins.removeValue(forKey: clientName ?? "")
+            }
+
+            _ = try? await QueueAPI.fetchQueue().first(where: {
+                $0.client.name.lowercased() == rescue.client?.lowercased()
+            })?.setInProgress()
+        }
+
+        let recentlyClosed = Array(self.recentlyClosed)
+
+        if let (_, recentRescue) = recentlyClosed.first(where: {
+            let currentClient = $0.value.client
+            let updatedAt = $0.value.updatedAt
+
+            return currentClient == clientName && Date().timeIntervalSince(updatedAt) < 900
+        }), configuration.general.drillMode == false, initiated != .insertion {
+            if recentRescue.quotes.contains(where: { $0.message.lowercased().contains("fuel+") })
+                == false {
+                if let caseId = await restoreRecentlyClosed(id: recentRescue.id) {
+                    message.reply(
+                        message: lingo.localize(
+                            "rescue.reopen.opened", locale: "en-GB",
+                            interpolations: [
+                                "id": recentRescue.id.ircRepresentation,
+                                "caseId": caseId
+                            ]
+                        )
+                    )
+                    return
+                }
+            }
+        }
+
+        var even: Bool?
         if initiated == .insertion {
             if message.user.nickname.lowercased().contains("even") {
                 even = true
@@ -203,183 +464,170 @@ class RescueBoard {
             }
         }
 
-        let identifier = self.getNewIdentifier(even: even)
-        rescue.commandIdentifier = identifier
+        let identifier = await self.insert(rescue: rescue, preferringEvenness: even)
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
-        self.lastSignalReceived = Date()
 
-        if rescue.codeRed == false && configuration.general.drillMode == false && initiated != .insertion {
-            prepTimers[rescue.id] = group.next().scheduleTask(in: .seconds(180), {
-                if rescue.codeRed == false || rescue.status == .Inactive {
-                    message.reply(message: lingo.localize("board.notprepped", locale: "en-GB", interpolations: [
-                        "caseId": rescue.commandIdentifier
-                    ]))
-                }
-            })
+        if rescue.codeRed == false && configuration.general.drillMode == false
+            && initiated != .insertion {
+            schedulePrepTimer(rescue: rescue)
         }
 
-        self.rescues.append(rescue)
+        if configuration.general.drillMode == false {
+            Task {
+                try? await self.checkClientFrequentFlier(rescue: rescue)
+            }
+        }
 
-        let caseId = String(rescue.commandIdentifier)
+        var systemChangedByXboxLive = false
+        if rescue.platform == .Xbox {
+            systemChangedByXboxLive = await performXboxProfileCheck(rescue: rescue)
+        }
+        if rescue.platform == .PS, let name = rescue.client {
+            rescue.psnProfile = await PSN.performLookup(name: name)
+        }
+        
+        if rescue.system != nil {
+            try? await rescue.validateSystem()
+        }
 
-        let announceType = initiated == .signal ? "signal" : "announce"
+        try? rescue.save(nil)
+        let signal = try generateSignal(caseId: identifier, rescue: rescue, initiated: initiated)
+        message.reply(message: signal)
 
+        await rescue.prep(message: message, initiated: initiated)
+
+        checkSystemBodyInClientMessage(caseId: identifier, rescue: rescue)
+
+        if systemChangedByXboxLive {
+            notifyXboxSystemCorrection(caseId: identifier, rescue: rescue)
+        }
+        
+        checkThargoidSystemState(caseId: identifier, rescue: rescue)
+        checkUnobtainablePermitSystem(caseId: identifier, rescue: rescue)
+        checkXboxPrivacy(caseId: identifier, rescue: rescue)
+        checkPSPlusMissing(caseId: identifier, rescue: rescue)
+        try? rescue.save(nil)
+    }
+    
+    func generateSignal (caseId: Int, rescue: Rescue, initiated: RescueInitiationType) throws -> String {
         let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
-
-        guard var system = rescue.system else {
-            message.reply(message: lingo.localize("board.\(announceType).nosystem", locale: "en", interpolations: [
-                "signal": configuration.general.signal.uppercased(),
-                "client": rescue.client ?? "u\u{200B}nknown",
-                "platform": rescue.platform.ircRepresentable,
-                "oxygen": rescue.ircOxygenStatus,
-                "caseId": caseId,
-                "platformSignal": rescue.platform?.signal ?? "",
-                "cr": crStatus,
-                "language": language,
-                "langCode": languageCode
-            ]))
-            rescue.createUpstream()
-            return
-        }
-
-        if let systemBodiesMatches = systemBodiesPattern.findFirst(in: system) {
-            system.removeLast(systemBodiesMatches.matched.count)
-            rescue.system = system
-            let body = systemBodiesMatches.matched.trimmingCharacters(in: .whitespaces)
-            rescue.systemBody = body
-            rescue.quotes.append(RescueQuote(
-                author: message.client.currentNick,
-                message: "Client indicated location in system near body \"\(body)\"",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: message.client.currentNick)
+        guard rescue.system != nil else {
+            return try stencil.renderLine(
+                name: "ratsignal.stencil",
+                context: [
+                    "caseId": caseId,
+                    "signal": configuration.general.signal.uppercased(),
+                    "platform": rescue.platform.ircRepresentable,
+                    "expansion": rescue.platform == .PC
+                        ? rescue.expansion.shortIRCRepresentable : "",
+                    "rescue": rescue,
+                    "system": rescue.system as Any,
+                    "landmark": rescue.system?.landmark as Any,
+                    "language": language,
+                    "platformSignal": rescue.signal,
+                    "initiated": initiated,
+                    "langCode": languageCode
+                ]
             )
         }
 
-        SystemsAPI.performCaseLookup(
-            forSystem: system,
-            inRescue: rescue,
-            onComplete: { searchResult, landmarkResult, correction in
-                if let searchResult = searchResult, let landmarkResult = landmarkResult {
-                    rescue.setSystemData(searchResult: searchResult, landmark: landmarkResult)
+        return try stencil.renderLine(
+            name: "ratsignal.stencil",
+            context: [
+                "caseId": caseId,
+                "signal": configuration.general.signal.uppercased(),
+                "platform": rescue.platform.ircRepresentable,
+                "expansion": rescue.platform == .PC ? rescue.expansion.shortIRCRepresentable : "",
+                "rescue": rescue,
+                "system": rescue.system as Any,
+                "landmark": rescue.system?.landmark as Any,
+                "language": language,
+                "platformSignal": rescue.signal,
+                "initiated": initiated,
+                "langCode": languageCode,
+                "invalid": rescue.system?.isInvalid ?? false
+            ]
+        )
+    }
+    
+    func reopenRecentlyClosed(recentRescue: Rescue) async throws -> Int? {
+        guard let result = try await FuelRatsAPI.getRescue(id: recentRescue.id) else {
+            return nil
+        }
 
-                    message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
-                        "signal": configuration.general.signal.uppercased(),
-                        "client": rescue.client ?? "u\u{200B}nknown",
-                        "platform": rescue.platform.ircRepresentable,
-                        "oxygen": rescue.ircOxygenStatus,
-                        "caseId": caseId,
-                        "systemInfo": rescue.systemInfoDescription,
-                        "platformSignal": rescue.platform?.signal ?? "",
-                        "cr": crStatus,
-                        "language": language,
-                        "langCode": languageCode
-                    ]))
-                } else {
-                    message.reply(message: lingo.localize("board.\(announceType)", locale: "en", interpolations: [
-                        "signal": configuration.general.signal.uppercased(),
-                        "client": rescue.client ?? "u\u{200B}nknown",
-                        "platform": rescue.platform.ircRepresentable,
-                        "oxygen": rescue.ircOxygenStatus,
-                        "caseId": caseId,
-                        "systemInfo": rescue.systemInfoDescription,
-                        "platformSignal": rescue.platform?.signal ?? "",
-                        "cr": crStatus,
-                        "language": language,
-                        "langCode": languageCode
-                    ]))
+        let apiRescue = result.body.data!.primary.value
+        let rats = result.assignedRats()
+        let (lastEditUser, _) = result.lastEditUser()
+        let firstLimpet = result.firstLimpet()
 
-//                    if let correction = correction {
-//                        message.reply(message: lingo.localize("autocorrect.correction", locale: "en-GB", interpolations: [
-//                            "system": system,
-//                            "correction": correction
-//                        ]))
-//                    }
-                }
-                if let systemBody = rescue.systemBody {
-                    message.reply(message: lingo.localize("board.systembody", locale: "en", interpolations: [
-                        "body": systemBody
-                    ]))
-                }
-                self.prepClient(rescue: rescue, message: message, initiated: initiated)
-        })
+        let rescue = Rescue(
+            fromAPIRescue: apiRescue,
+            withRats: rats,
+            firstLimpet: firstLimpet,
+            lastEditUser: lastEditUser,
+            onBoard: board
+        )
+        rescue.outcome = nil
+        rescue.status = .Open
 
-        rescue.createUpstream()
+        let caseId = await board.insert(
+            rescue: rescue, preferringIdentifier: apiRescue.commandIdentifier
+        )
+        try rescue.save(nil)
+        return caseId
     }
 
-    func prepClient (rescue: LocalRescue, message: IRCPrivateMessage, initiated: RescueInitiationType) {
-        if initiated == .signal && rescue.codeRed == false {
-            message.reply(message: lingo.localize("board.signal.oxygen", locale: "en-GB", interpolations: [
-                "client": rescue.clientNick ?? rescue.client ?? ""
-            ]))
-        } else if initiated != .insertion && rescue.codeRed == true {
-            let factKey = rescue.platform != nil ? "\(rescue.platform!.factPrefix)quit" : "prepcr"
-            let locale = rescue.clientLanguage ?? Locale(identifier: "en")
-
-            Fact.get(name: factKey, forLocale: locale).flatMap({ (fact) -> EventLoopFuture<Fact?> in
-                guard let fact = fact else {
-                    return Fact.get(name: factKey, forLocale: rescue.clientLanguage ?? Locale(identifier: "en"))
+    @discardableResult
+    func remove(id: Int) async -> Bool {
+        if let rescue = self.rescues.removeValue(forKey: id) {
+            await self.cancelPrepTimer(forRescue: rescue)
+            self.recentlyClosed[id] = rescue
+            return true
+        }
+        return false
+    }
+    
+    func schedulePrepTimer (rescue: Rescue) {
+        let rescueId = rescue.id
+        self.prepTimers[rescue.id] = loop.next().scheduleTask(
+            in: .seconds(180), { @Sendable in
+                Task {
+                    guard let (caseId, rescue) = await self.rescues.first(where: { $0.value.id == rescueId }) else {
+                        return
+                    }
+                    if rescue.codeRed == false || rescue.status == .Inactive {
+                        rescue.channel?.send(key: "board.notprepped", map: [
+                            "caseId": caseId
+                        ])
+                    }
                 }
-
-                return loop.next().makeSucceededFuture(fact)
-            }).flatMap { (fact) -> EventLoopFuture<Fact?> in
-                if let fact = fact {
-                    return loop.next().makeSucceededFuture(fact)
-                } else if rescue.clientLanguage != nil && rescue.platform != nil {
-                    // If platform specific quit is not available in this language, try !prepcr in this language
-                    return Fact.get(name: "prepcr", forLocale: rescue.clientLanguage!)
-                } else {
-                    return loop.next().makeSucceededFuture(nil)
-                }
-            }.flatMap { (fact) -> EventLoopFuture<Fact?> in
-                if let fact = fact {
-                    return loop.next().makeSucceededFuture(fact)
-                } else if rescue.clientLanguage != nil && rescue.platform != nil {
-                    // If neiher quit or prepcr is available in this language, fall back to English.
-                    return Fact.get(name: factKey, forLocale: Locale(identifier: "en"))
-                } else {
-                    return loop.next().makeSucceededFuture(nil)
-                }
-            }.whenSuccess { fact in
-                guard fact != nil else {
-                    return
-                }
-
-                let client = rescue.clientNick ?? rescue.client ?? ""
-                message.reply(message: "\(client) \(fact!.message)")
             }
-        }
+        )
     }
 
-    func syncBoard () {
-        if configuration.general.drillMode {
-            self.synced = true
-            return
-        }
-        FuelRatsAPI.getOpenRescues(complete: { rescueDocument in
-            self.merge(rescueDocument: rescueDocument)
-        }, error: { error in
-            debug(String(describing: error))
-            self.synced = false
-        })
+    func setLastSignalReceived(platform: GamePlatform, expansion: GameMode, date: Date) {
+        self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)] = date
     }
 
-    func getNewIdentifier (even: Bool? = nil) -> Int {
+    func getNewIdentifier(even: Bool? = nil) -> Int {
         /* Get the first 10 identifiers not currently being used by a case, this method lets us generally stay between
          0 and 15 re-using a recent number if we need to without the case ID becoming something ridicolous like #32 */
-        let fetchCount = self.rescues.count > 9 ? 1 : max(10 - self.rescues.count, 4)
+        let fetchCount = self.rescues.count > 9 ? 1 : Swift.max(10 - self.rescues.count, 4)
         let generatedIdentifiers = generateAvailableIdentifiers(count: fetchCount)
 
         // Create a map of identifiers to the identifier's index in the the recently used list
         let identifierMap = generatedIdentifiers.reduce(
-            [:], { (identifiers: [Int: Int], identifier: Int) -> [Int: Int] in
+            [:],
+            { (identifiers: [Int: Int], identifier: Int) -> [Int: Int] in
                 var identifiers = identifiers
                 var index = 0
 
                 if let firstIndex = recentIdentifiers.firstIndex(of: identifier) {
-                    index = recentIdentifiers.distance(from: recentIdentifiers.startIndex, to: firstIndex) + 1
+                    index =
+                        recentIdentifiers.distance(
+                            from: recentIdentifiers.startIndex, to: firstIndex) + 1
                 }
 
                 identifiers[identifier] = index
@@ -393,13 +641,26 @@ class RescueBoard {
             return identifierMap[$0]! < identifierMap[$1]!
         })
 
-        let evenCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven && $0.codeRed == false }).count
-        let evenCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven && $0.codeRed == true }).count
-        let oddCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == false }).count
-        let oddCRCases = mecha.rescueBoard.rescues.filter({ $0.status != .Inactive && $0.commandIdentifier.isEven == false && $0.codeRed == true }).count
+        let evenCases = self.rescues.filter({
+            $0.1.status != .Inactive && $0.0.isEven && $0.value.codeRed == false
+        }).count
+        let evenCRCases = self.rescues.filter({
+            $0.1.status != .Inactive && $0.0.isEven && $0.value.codeRed == true
+        }).count
+        let oddCases = self.rescues.filter({
+            $0.1.status != .Inactive && $0.0.isEven == false && $0.value.codeRed == false
+        }).count
+        let oddCRCases = self.rescues.filter({
+            $0.1.status != .Inactive && $0.0.isEven == false && $0.value.codeRed == true
+        }).count
         var expectedEvenness = even
         if expectedEvenness == nil {
-            expectedEvenness = (evenCases + (evenCRCases * 3)) <= oddCases + (oddCRCases * 3)
+            let evenWeight = (evenCases + (evenCRCases * 3))
+            let oddWeight = oddCases + (oddCRCases * 3)
+            if evenWeight == oddWeight {
+                expectedEvenness = Bool.random()
+            }
+            expectedEvenness = evenWeight < oddWeight
         }
 
         // Return the best scoring identifier that is the opposite evenness of the last case identifier
@@ -408,11 +669,11 @@ class RescueBoard {
         }) ?? sortedIdentifiers[0]
     }
 
-    func generateAvailableIdentifiers (count: Int) -> [Int] {
+    func generateAvailableIdentifiers(count: Int) -> [Int] {
         var identifiers = [Int]()
         var currentIdentifier = 0
         while identifiers.count < count {
-            if (rescues.first(where: { $0.commandIdentifier == currentIdentifier }) == nil) {
+            if rescues.first(where: { $0.0 == currentIdentifier }) == nil {
                 identifiers.append(currentIdentifier)
             }
             currentIdentifier += 1
@@ -423,119 +684,338 @@ class RescueBoard {
 
     var firstAvailableIdentifier: Int {
         var identifier = 0
-        while (rescues.first(where: { $0.commandIdentifier == identifier }) != nil) {
+        while rescues.first(where: { $0.0 == identifier }) != nil {
             identifier += 1
         }
 
         return identifier
     }
 
-    func checkSynced () {
-        self.synced = self.rescues.contains(where: {
-            $0.synced == false
-        }) == false
+    func setLastSignalReceived(platform: GamePlatform, expansion: GameMode, _ lastReceived: Date)
+        async {
+        self.lastSignalsReceived[PlatformExpansion(platform: platform, expansion: expansion)] =
+            lastReceived
     }
 
-    func merge (rescueDocument: RescueSearchDocument) {
-        let apiRescues = rescueDocument.convertToLocalRescues(onBoard: self)
+    func setLastPaperworkReminder(forUser userId: UUID, toDate date: Date) async {
+        self.lastPaperworkReminder[userId] = Date()
+    }
 
-        var pendingDownstream: [LocalRescue] = []
+    nonisolated func checkElapsedPaperwork(task: RepeatedTask) {
+        Task {
+            let results = try await FuelRatsAPI.getUnfiledRescues()
 
-        let pendingUpstreamNew = self.rescues.filter({ localRescue in
-            return apiRescues.contains(where: { apiRescue in
-                apiRescue.id == localRescue.id
-            }) == false
-        })
+            let cases =
+                results.body.data?.primary.values.filter({
+                    $0.attributes.status.value == .Closed
+                        && Date().timeIntervalSince($0.attributes.updatedAt.value) > 7200.0
+                }) ?? []
 
-        var pendingUpstreamUpdate = self.rescues.filter({ localRescue in
-            return apiRescues.contains(where: { apiRescue in
-                apiRescue.id == localRescue.id
-            })
-        })
+            let casesPerUser = cases.reduce(
+                [UUID: [RemoteRescue]](),
+                { caseMap, rescue -> [UUID: [RemoteRescue]] in
+                    var caseMap = caseMap
+                    var firstLimpet = results.body.includes![Rat.self].first(where: {
+                        $0.id.rawValue == rescue.relationships.firstLimpet?.id.rawValue
+                    })
+                    if firstLimpet == nil {
+                        firstLimpet = results.assignedRatsFor(rescue: rescue).first
+                    }
 
-        let novelRescues = apiRescues.filter({ apiRescue in
-            return self.rescues.contains(where: { localRescue in
-                localRescue.id == apiRescue.id
-            }) == false
-        })
+                    if let userId = firstLimpet?.relationships.user?.id.rawValue {
+                        if caseMap[userId] == nil {
+                            caseMap[userId] = []
+                        }
+                        caseMap[userId]?.append(rescue)
+                    }
+                    return caseMap
+                })
 
-        pendingDownstream.append(contentsOf: novelRescues)
+            for (userId, rescues) in casesPerUser {
+                if let lastReminder = await self.lastPaperworkReminder[userId],
+                    Date().timeIntervalSince(lastReminder) < 21600 {
+                    continue
+                }
 
-//        let updatedDownstreamRescues = apiRescues.filter({ apiRescue in
-//            let matchingLocal = self.rescues.first(where: { localRescue in
-//                localRescue.id == apiRescue.id
-//            })
-//
-//            return matchingLocal != nil && matchingLocal!.updatedAt < apiRescue.updatedAt
-//        })
-//
-//        pendingDownstream.append(contentsOf: updatedDownstreamRescues)
+                var presentNicks =
+                    mecha.reportingChannel?.members.filter({
+                        return $0.associatedAPIData?.user?.id.rawValue == userId
+                            && $0.lastMessage != nil
+                    }) ?? []
 
-        var requiredIdChange = 0
+                presentNicks.sort(by: { $0.lastMessage!.raw.time > $1.lastMessage!.raw.time })
+                guard let latestNick = presentNicks.first else {
+                    continue
+                }
+                if await latestNick.getAssignedRescue() != nil {
+                    continue
+                }
+                await self.setLastPaperworkReminder(forUser: userId, toDate: Date())
 
-        for novelRescue in pendingDownstream {
-            if novelRescue.hasConflictingId(inBoard: self) {
-                novelRescue.commandIdentifier = self.getNewIdentifier()
-                requiredIdChange += 1
-                pendingUpstreamUpdate.append(novelRescue)
+                var rescueLinks: [UUID: URL] = [:]
+                try await withThrowingTaskGroup(of: (UUID, URL).self) { group in
+                    for rescue in rescues {
+                        group.addTask {
+                            return (
+                                rescue.id.rawValue,
+                                await URLShortener.attemptShorten(url: rescue.editLink)
+                            )
+                        }
+                    }
+
+                    for try await (id, url) in group {
+                        rescueLinks[id] = url
+                    }
+                }
+
+                let rescueStrings = rescues.map({ rescue -> String in
+                    return lingo.localize(
+                        "rescue.pwreminder.rescue", locale: "en-GB",
+                        interpolations: [
+                            "client": rescue.attributes.client.value ?? "unknown client",
+                            "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                            "link": rescueLinks[rescue.id.rawValue] ?? "Link Unavailable"
+                        ])
+                })
+
+                let key = "rescue.pwreminder.meme"
+
+                mecha.reportingChannel?.client.sendMessage(
+                    toTarget: latestNick.nickname,
+                    contents: lingo.localize(
+                        key, locale: "en-GB",
+                        interpolations: [
+                            "nick": latestNick.nickname,
+                            "rescues": rescueStrings.joined(separator: ", ")
+                        ]))
+                if rescues.count > 0 {
+                    let snickersCalculation = ceil(
+                        rescues.reduce(
+                            0,
+                            { acc, rescue in
+                                return
+                                    (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
+                            }) * 10)
+                    mecha.reportingChannel?.send(
+                        key: "rescue.pwreminder.special",
+                        map: [
+                            "nick": latestNick.nickname,
+                            "snickers": Swift.max(Int(snickersCalculation), 1)
+                        ])
+                    return
+                }
             }
+        }
+    }
 
-            self.rescues.removeAll(where: {
-                $0.id == novelRescue.id
-            })
-
-            if self.lastSignalReceived == nil || novelRescue.createdAt > self.lastSignalReceived! {
-                self.lastSignalReceived = novelRescue.createdAt
-            }
-
-            self.recentIdentifiers.removeAll(where: { $0 == novelRescue.commandIdentifier })
-            self.recentIdentifiers.append(novelRescue.commandIdentifier)
-
-            self.rescues.append(novelRescue)
+    func awaitClientJoin(
+        name clientName: String, forRescue rescue: Rescue, initiated: RescueInitiationType
+    ) async -> EventLoopFuture<Void> {
+        let future = loop.next().makePromise(of: Void.self)
+        guard rescue.channel != nil else {
+            future.fail(ClientJoinError.joinFailed)
+            return future.futureResult
         }
 
-        var futures = pendingUpstreamNew.map({
-            $0.createUpstream()
+        // Immedately resolve if client is already in the channel
+        if rescue.channel?.member(named: clientName) != nil || configuration.general.drillMode
+            || initiated == .insertion {
+            future.succeed(())
+        }
+
+        // Add a reference of pending client joins
+        await board.addPendingClientJoin(key: clientName.lowercased(), promise: future, rescue: rescue)
+
+        // Make a 5 second timeout where mecha will give up on the client joining
+        loop.next().scheduleTask(
+            in: .seconds(5),
+            {
+                Task {
+                    if let (promise, _) = await board.getPendingClientJoins()[clientName.lowercased()] {
+                        promise.fail(ClientJoinError.joinFailed)
+                        await board.removePendingJoin(key: clientName.lowercased())
+                    }
+                }
+            })
+
+        return future.futureResult
+    }
+
+    func anticipateClientJoin(
+        name clientName: String, forRescue rescue: Rescue, initiated: RescueInitiationType
+    ) async throws {
+        return try await withCheckedThrowingContinuation({ continuation in
+            Task {
+                await awaitClientJoin(name: clientName, forRescue: rescue, initiated: initiated).whenComplete(
+                    { result in
+                        switch result {
+                            case .failure(let error):
+                                continuation.resume(throwing: error)
+
+                            case .success:
+                                continuation.resume(returning: ())
+                    }
+                })
+            }
         })
+    }
 
-        futures.append(contentsOf: pendingUpstreamUpdate.map({
-            $0.syncUpstream()
-        }))
+    func announceExistingRescue(
+        _ existingRescue: Rescue, conflictingWith rescue: Rescue, initiated: RescueInitiationType,
+        inMessage message: IRCPrivateMessage
+    ) async throws {
+        let caseId = await board.getId(forRescue: existingRescue) ?? 0
+        let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
+        if initiated == .signal {
+            message.reply(
+                message: lingo.localize(
+                    "board.signal.helpyou", locale: "en",
+                    interpolations: [
+                        "client": rescue.clientNick ?? rescue.client ?? ""
+                    ]
+                )
+            )
+        } else if initiated == .insertion {
+            message.reply(
+                message: lingo.localize(
+                    "board.signal.exists", locale: "en",
+                    interpolations: [
+                        "client": existingRescue.clientDescription,
+                        "system": existingRescue.system.description,
+                        "caseId": caseId,
+                        "platform": existingRescue.platform.ircRepresentable,
+                        "cr": crStatus
+                    ]
+                )
+            )
+        }
 
-        EventLoopFuture.whenAllSucceed(futures, on: loop.next()).whenSuccess { _ in
-            mecha.rescueBoard.synced = true
-            if let rescueChannel = mecha.reportingChannel {
-                var updates = [String]()
+        var changes: [String] = []
+        if rescue.clientNick?.lowercased() != existingRescue.clientNick?.lowercased() {
+            changes.append(
+                "\(IRCFormat.bold("IRC Nick:")) \(existingRescue.clientNick ?? "?") -> \(rescue.clientNick ?? "?")"
+            )
+            existingRescue.clientNick = rescue.clientNick
+            try? existingRescue.save(nil)
+        }
 
-                if novelRescues.count > 0 {
-                    updates.append(lingo.localize("board.synced.downstreamNew", locale: "en-GB", interpolations: [
-                        "count": novelRescues.count
-                    ]))
+        let platform = rescue.platform
+        if platform != existingRescue.platform && platform != nil, platform != .PC {
+            let oldPlatform = existingRescue.platform.ircRepresentable
+            let newPlatform = rescue.platform.ircRepresentable
+            changes.append(
+                "\(IRCFormat.bold("Platform:")) \(oldPlatform) -> \(newPlatform)"
+            )
+        }
+
+        if rescue.expansion != existingRescue.expansion && initiated == .announcer {
+            let oldExpansion = existingRescue.expansion.englishDescription
+            let newExpansion = rescue.expansion.englishDescription
+            changes.append(
+                "\(IRCFormat.bold("Expansion:")) \(oldExpansion) -> \(newExpansion)"
+            )
+        }
+        if rescue.system != nil && rescue.system?.name != existingRescue.system?.name {
+            changes.append(
+                "\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)"
+            )
+            if let system = rescue.system, rescue.system?.isConfirmed == false {
+                let result = try await SystemsAPI.performSystemCheck(forSystem: system.name)
+                guard result.isConfirmed else {
+                    return
                 }
 
-                if pendingUpstreamNew.count > 0 {
-                    updates.append(lingo.localize("board.synced.upstreamNew", locale: "en-GB", interpolations: [
-                        "count": pendingUpstreamNew.count
-                    ]))
-                }
+                existingRescue.system = result
+                try? existingRescue.save(nil)
 
-                if pendingUpstreamUpdate.count > 0 {
-                    updates.append(lingo.localize("board.synced.upstreamUpdate", locale: "en-GB", interpolations: [
-                        "count": pendingUpstreamUpdate.count
-                    ]))
-                }
+                message.reply(
+                    message: lingo.localize(
+                        "board.syschange", locale: "en-GB",
+                        interpolations: [
+                            "caseId": caseId,
+                            "client": rescue.client!,
+                            "systemInfo": existingRescue.system.description
+                        ]))
 
-                if requiredIdChange > 0 {
-                    updates.append(lingo.localize("board.synced.conflicts", locale: "en-GB", interpolations: [
-                        "count": requiredIdChange
-                    ]))
-                }
+                checkThargoidSystemState(caseId: caseId, rescue: rescue)
+                checkUnobtainablePermitSystem(caseId: caseId, rescue: rescue)
 
-                let syncMessage = lingo.localize("board.synced", locale: "en-GB", interpolations: [
-                    "api": configuration.api.url,
-                    "updates": updates.englishList
-                ])
-                rescueChannel.send(message: syncMessage)
+            }
+        }
+        if rescue.codeRed != existingRescue.codeRed && rescue.codeRed == true {
+            changes.append(
+                "\(IRCFormat.bold("O2:")) \(existingRescue.ircOxygenStatus) -> \(rescue.ircOxygenStatus)"
+            )
+            await rescue.prep(message: message, initiated: initiated)
+        }
+        if changes.count > 0 {
+            message.reply(
+                message: lingo.localize(
+                    "board.signal.changes", locale: "en-GB",
+                    interpolations: [
+                        "caseId": caseId,
+                        "changes": changes.joined(separator: ", ")
+                    ]))
+        }
+    }
+
+    func checkClientFrequentFlier(rescue: Rescue) async throws {
+        guard let clientName = rescue.client else {
+            return
+        }
+        let result = try await FuelRatsAPI.getRescues(forClient: clientName)
+        let recencyDate = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
+        let recentRescues =
+            result.body.data?.primary.values.filter({
+                $0.attributes.createdAt.value > recencyDate && $0.attributes.outcome.value != .Purge
+            }) ?? []
+        if recentRescues.count >= 3 {
+            let caseId = self.getId(forRescue: rescue) ?? 0
+            mecha.reportingChannel?.client.sendMessage(
+                toChannelName: "#operations",
+                withKey: "board.frequentclient",
+                mapping: [
+                    "client": clientName,
+                    "caseId": caseId,
+                    "count": recentRescues.count
+                ]
+            )
+        }
+    }
+
+    @discardableResult
+    func cancelPrepTimer(forRescue rescue: Rescue) async -> Bool {
+        if let prepTimer = self.prepTimers[rescue.id] {
+            prepTimer?.cancel()
+            self.prepTimers.removeValue(forKey: rescue.id)
+            return true
+        } else {
+            return false
+        }
+    }
+
+    func performSyncUntilSuccess(reported: Bool = false) async {
+        do {
+            try await self.sync()
+        } catch {
+            debug(String(describing: error))
+            if reported == false {
+                mecha.reportingChannel?.send(key: "board.syncfailed")
+            }
+            try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+            await performSyncUntilSuccess(reported: true)
+        }
+    }
+
+    @EventListener<IRCUserJoinedChannelNotification>
+    var onJoinChannel = { joinEvent in
+        // Check if joining user is a client of a pending announcement
+        Task {
+            if let (promise, rescue) = await board.getPendingClientJoins()[joinEvent.user.nickname.lowercased()],
+                joinEvent.channel == rescue.channel {
+                rescue.clientLastHostName = joinEvent.user.hostmask
+                promise.succeed(())
+                await board.removePendingJoin(key: joinEvent.user.nickname.lowercased())
             }
         }
     }
@@ -543,60 +1023,71 @@ class RescueBoard {
     @EventListener<RatSocketRescueCreatedNotification>
     var onRemoteRescueCreated = { rescueCreation in
         guard
-            rescueCreation.sender != configuration.api.userId,
+            configuration.general.drillMode == false,
+            rescueCreation.sender.uuidString != configuration.api.userId.uuidString,
             let remoteRescue = rescueCreation.body?.body.data?.primary.value
         else {
             return
         }
-        mecha.reportingChannel?.send(key: "board.remotecreation", map: [
-            "caseId": remoteRescue.attributes.commandIdentifier.value,
-            "client": remoteRescue.attributes.client.value ?? "?"
-        ])
-        mecha.rescueBoard.syncBoard()
+        mecha.reportingChannel?.send(
+            key: "board.remotecreation",
+            map: [
+                "caseId": remoteRescue.attributes.commandIdentifier.value,
+                "client": remoteRescue.attributes.client.value ?? "?"
+            ])
     }
 
-    @EventListener<RatSocketRescueUpdatedNotification>
+    @AsyncEventListener<RatSocketRescueUpdatedNotification>
     var onRemoteRescueUpdated = { rescueUpdate in
         guard
-            rescueUpdate.sender != configuration.api.userId,
+            configuration.general.drillMode == false,
+            rescueUpdate.sender.uuidString != configuration.api.userId.uuidString,
             let remoteRescue = rescueUpdate.body?.body.data?.primary.value
         else {
             return
         }
 
         if remoteRescue.attributes.status.value == .Closed {
-            if let rescue = mecha.rescueBoard.rescues.first(where: { $0.id == remoteRescue.id.rawValue }) {
-                mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescue.id })
-                mecha.reportingChannel?.send(key: "board.remoteclose", map: [
-                    "caseId": rescue.commandIdentifier,
-                    "client": rescue.clientDescription
-                ])
+            if let (caseId, rescue) = await board.getRescues().first(where: {
+                $0.1.id == remoteRescue.id.rawValue
+            }) {
+                await board.remove(id: caseId)
+                mecha.reportingChannel?.send(
+                    key: "board.remoteclose",
+                    map: [
+                        "caseId": caseId,
+                        "client": rescue.clientDescription
+                    ])
             }
             return
         }
-        mecha.reportingChannel?.send(key: "board.remoteupdate", map: [
-            "caseId": remoteRescue.attributes.commandIdentifier.value,
-            "client": remoteRescue.attributes.client.value ?? "?"
-        ])
-        mecha.rescueBoard.syncBoard()
+        mecha.reportingChannel?.send(
+            key: "board.remoteupdate",
+            map: [
+                "caseId": remoteRescue.attributes.commandIdentifier.value,
+                "client": remoteRescue.attributes.client.value ?? "?"
+            ])
     }
 
-    @EventListener<RatSocketRescueDeletedNotification>
+    @AsyncEventListener<RatSocketRescueDeletedNotification>
     var onRemoteRescueDeleted = { rescueDeletion in
         guard
-            rescueDeletion.sender != configuration.api.userId,
+            configuration.general.drillMode == false,
+            rescueDeletion.sender.uuidString != configuration.api.userId.uuidString,
             let rescueIdString = rescueDeletion.resourceIdentifier,
             let rescueId = UUID(uuidString: rescueIdString)
         else {
             return
         }
 
-        if let rescue = mecha.rescueBoard.rescues.first(where: { $0.id == rescueId }) {
-            mecha.rescueBoard.rescues.removeAll(where: { $0.id == rescueId })
-            mecha.reportingChannel?.send(key: "board.remotedeletion", map: [
-                "caseId": rescue.commandIdentifier,
-                "client": rescue.clientDescription
-            ])
+        if let (caseId, rescue) = await board.getRescues().first(where: { $0.1.id == rescueId }) {
+            await board.remove(id: caseId)
+            mecha.reportingChannel?.send(
+                key: "board.remotedeletion",
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ])
         }
     }
 }
@@ -605,4 +1096,180 @@ enum RescueInitiationType {
     case announcer
     case signal
     case insertion
+}
+
+enum ClientJoinError: Error {
+    case joinFailed
+}
+
+extension RescueBoard: AsyncSequence {
+    typealias Element = (key: Int, value: Rescue)
+
+    nonisolated func makeAsyncIterator() -> AsyncIterator {
+        return AsyncIterator(board: self)
+    }
+
+    struct AsyncIterator: AsyncIteratorProtocol {
+        var board: RescueBoard
+        var index = 0
+        var iterator: EnumeratedSequence<[Int: Rescue]>.Iterator?
+
+        mutating func next() async -> (key: Int, value: Rescue)? {
+            if iterator == nil {
+                iterator = await board.rescues.enumerated().makeIterator()
+            }
+            return iterator!.next()?.element
+        }
+    }
+}
+
+extension AsyncSequence {
+    func getAllResults() async throws -> [Element] {
+        var results: [Element] = []
+        for try await element in self {
+            results.append(element)
+        }
+        return results
+    }
+}
+
+func performXboxProfileCheck (rescue: Rescue) async -> Bool {
+    rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
+    if let systemName = rescue.xboxProfile?.systemName,
+        systemName.lowercased() != rescue.system.name.lowercased() {
+        rescue.system = StarSystem(name: systemName)
+        return true
+    }
+    return false
+}
+
+func notifyXboxSystemCorrection (caseId: Int, rescue: Rescue) {
+    rescue.channel?.send(key:
+        "board.xboxsyschange",
+        map: [
+            "caseId": caseId,
+            "client": rescue.clientDescription
+        ]
+    )
+    
+    let xboxCorrected = lingo.localize("board.xboxcorrected", locale: "en")
+
+    rescue.appendQuote(
+        RescueQuote(
+            author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+            message: xboxCorrected,
+            createdAt: Date(),
+            updatedAt: Date(),
+            lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+        )
+    )
+}
+
+func checkSystemBodyInClientMessage (caseId: Int, rescue: Rescue) {
+    if let system = rescue.system, let systemBody = rescue.system?.clientProvidedBody {
+        let bodyDescription = system.systemBodyDescription(forBody: systemBody)
+        rescue.channel?.send(key:
+            "board.systembody",
+            map: [
+                "bodyDescription": bodyDescription
+            ]
+        )
+        rescue.appendQuote(
+            RescueQuote(
+                author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+                message: "Client indicated location in system near body \(bodyDescription)",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+            )
+        )
+    }
+}
+
+func checkThargoidSystemState (caseId: Int, rescue: Rescue) {
+    if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
+        rescue.channel?.send(key:
+            "board.systemattack",
+            map: [
+                "system": system.name
+            ]
+        )
+        rescue.appendQuote(
+            RescueQuote(
+                author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+                message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+            )
+        )
+    }
+}
+
+func checkUnobtainablePermitSystem (caseId: Int, rescue: Rescue) {
+    if let system = rescue.system, system.isUnobtainablePermitSystem {
+        rescue.channel?.send(key:
+            "board.unobtainablepermit",
+            map: [
+                "system": system.name
+            ]
+        )
+        rescue.appendQuote(
+            RescueQuote(
+                author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+                message: "CAUTION: \(system.name) has an unobtainable permit - no player can access this system",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+            )
+        )
+    }
+}
+
+func checkXboxPrivacy (caseId: Int, rescue: Rescue) {
+    if case let .found(xboxProfile) = rescue.xboxProfile {
+        if xboxProfile.privacy.isAllowed == false {
+            
+            rescue.channel?.send(key:
+                "board.xboxprivacy",
+                map: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription
+                ]
+            )
+
+            rescue.appendQuote(
+                RescueQuote(
+                    author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+                    message:
+                        "WARNING: This client's Xbox Live privacy settings may prevent them from joining a team",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+                )
+            )
+        }
+    }
+}
+
+func checkPSPlusMissing (caseId: Int, rescue: Rescue) {
+    if case .found = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
+        if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
+            rescue.channel?.send(key: "board.psplusmissing", map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription
+            ])
+            
+            rescue.appendQuote(
+                RescueQuote(
+                    author: mecha.rescueChannel?.client.currentNick ?? "Unknown",
+                    message:
+                        "WARNING: This client may be missing a PS Plus subscription",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: mecha.rescueChannel?.client.currentNick ?? "Unknown"
+                )
+            )
+        }
+    }
 }

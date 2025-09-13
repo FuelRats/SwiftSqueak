@@ -28,22 +28,23 @@ import IRCKit
 protocol IRCBotModule {
     var name: String { get }
 
-    init (_ moduleManager: IRCBotModuleManager)
+    init(_ moduleManager: IRCBotModuleManager)
 }
 
 class IRCBotModuleManager {
     private var registeredModules: [IRCBotModule] = []
-    static var blacklist = configuration.general.dispatchBlacklist
+    public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 250)
+    static var denylist = configuration.general.dispatchDenylist
 
-    func register (module: IRCBotModule) {
+    func register(module: IRCBotModule) {
         self.registeredModules.append(module)
     }
 
-    func register (command: IRCBotCommandDeclaration) {
+    func register(command: IRCBotCommandDeclaration) {
         MechaSqueak.commands.append(command)
     }
 
-    @EventListener<IRCChannelMessageNotification>
+    @AsyncEventListener<IRCChannelMessageNotification>
     var onChannelMessage = { channelMessage in
         guard channelMessage.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
@@ -53,11 +54,10 @@ class IRCBotModuleManager {
             return
         }
 
-        handleIncomingCommand(ircBotCommand: ircBotCommand)
+        await handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
-
-    @EventListener<IRCPrivateMessageNotification>
+    @AsyncEventListener<IRCPrivateMessageNotification>
     var onPrivateMessage = { privateMessage in
         guard privateMessage.raw.messageTags["batch"] == nil else {
             // Do not interpret commands from playback of old messages
@@ -67,118 +67,212 @@ class IRCBotModuleManager {
             return
         }
 
-        handleIncomingCommand(ircBotCommand: ircBotCommand)
+        await handleIncomingCommand(ircBotCommand: ircBotCommand)
     }
 
-    static func handleIncomingCommand (ircBotCommand: IRCBotCommand) {
+    static func handleIncomingCommand(ircBotCommand: IRCBotCommand) async {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
 
-        guard let command = MechaSqueak.commands.first(where: {
-            $0.commands.contains(ircBotCommand.command)
-        }) else {
+        guard let command = await findAndMaybeHandleHelp(for: ircBotCommand) else {
             return
         }
 
-        if ircBotCommand.options.contains("h") {
-            var helpCommand = ircBotCommand
-            helpCommand.command = "!help"
-            helpCommand.parameters = ["!\(ircBotCommand.command)"]
-            mecha.helpModule.didReceiveHelpCommand(helpCommand)
+        guard checkIllegalOptions(command, ircBotCommand) == false else {
             return
         }
 
-        let illegalNamedOptions = ircBotCommand.namedOptions.subtracting(command.namedOptions)
-        if illegalNamedOptions.count > 0 {
-            message.error(key: "command.illegalnamedoptions", fromCommand: ircBotCommand, map: [
+        if message.user.hasPermission(permission: .RescueWrite) == false
+            && message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
+            message.error(
+                key: "command.publiconly", fromCommand: ircBotCommand,
+                map: [
+                    "command": ircBotCommand.command
+                ])
+            return
+        }
+
+        if message.user.hasPermission(permission: .RescueWrite) == false
+            && message.destination.isPrivateMessage == false
+            && command.allowedDestinations == .PrivateMessage {
+            message.error(
+                key: "command.privateonly", fromCommand: ircBotCommand,
+                map: [
+                    "command": ircBotCommand.command
+                ])
+            return
+        }
+
+        guard command.minimumParameters <= ircBotCommand.parameters.count else {
+            message.error(
+                key: "command.toofewparams", fromCommand: ircBotCommand,
+                map: [
+                    "command": ircBotCommand.command,
+                    "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
+                    "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
+                ])
+            return
+        }
+
+        mergeTrailingParameters(for: command, in: &ircBotCommand)
+
+        if let maxParameters = command.maximumParameters,
+            ircBotCommand.parameters.count > maxParameters {
+            message.error(
+                key: "command.toomanyparams", fromCommand: ircBotCommand,
+                map: [
+                    "command": ircBotCommand.command,
+                    "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
+                    "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
+                ])
+            return
+        }
+
+        let cooldownPermission = command.cooldownOverride
+        let cooldownExempted =
+            (cooldownPermission != nil
+                && message.user.hasPermission(permission: cooldownPermission!))
+        if configuration.general.drillMode == false && cooldownExempted == false {
+            if let cooldown = command.cooldown, message.destination.isPrivateMessage == false {
+                if let previousCommand = commandHistory.elements.reversed().first(where: {
+                    $0.message.destination.isPrivateMessage == false
+                        && command.commands.contains($0.command)
+                        && configuration.general.cooldownExceptionChannels.contains(
+                            $0.message.destination.name.lowercased()) == false
+                }),
+                    Date().timeIntervalSince(previousCommand.message.raw.time) < cooldown {
+                    message.replyPrivate(
+                        key: "command.cooldown", fromCommand: ircBotCommand,
+                        map: [
+                            "command": ircBotCommand.command,
+                            "cooldown":
+                                (cooldown
+                                - Date().timeIntervalSince(previousCommand.message.raw.time))
+                                .timeSpan(maximumUnits: 1)
+                        ])
+                    return
+                }
+            }
+        }
+
+        commandHistory.push(value: ircBotCommand)
+        if let permission = command.permission {
+            guard message.user.hasPermission(permission: permission) else {
+                message.reply(
+                    key: "board.nopermission", fromCommand: ircBotCommand,
+                    map: [
+                        "nick": message.user.nickname
+                    ])
+                return
+            }
+        }
+        if command.isDispatchingCommand
+            && denylist.contains(where: {
+                message.user.nickname.lowercased().contains($0.lowercased())
+                    || message.user.account?.lowercased() == $0.lowercased()
+            }) {
+            message.client.sendMessage(
+                toChannelName: "#doersofstuff", withKey: "command.blacklist",
+                mapping: [
+                    "command": ircBotCommand.command,
+                    "nick": message.user.nickname
+                ])
+        }
+
+        await command.onCommand?(ircBotCommand)
+    }
+}
+
+private func mergeTrailingParameters(for command: IRCBotCommandDeclaration, in ircBotCommand: inout IRCBotCommand) {
+    guard let maxParameters = command.maximumParameters,
+          command.lastParameterIsContinous == true,
+          ircBotCommand.parameters.count > 1 else {
+        return
+    }
+
+    var parameters: [String] = []
+    var paramIndex = 0
+
+    while paramIndex < maxParameters && paramIndex < ircBotCommand.parameters.count {
+        if paramIndex == maxParameters - 1 {
+            var remainderComponents = Array(ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex])
+            if remainderComponents.count == 1 {
+                parameters.append(remainderComponents[0])
+                break
+            }
+            remainderComponents = remainderComponents.enumerated().map({
+                if ircBotCommand.parameterQuoted[$0.offset + paramIndex] == true {
+                    return "\"\($0.element)\""
+                }
+                return $0.element
+            })
+            let remainder = remainderComponents.joined(separator: " ")
+            parameters.append(remainder)
+            break
+        } else {
+            parameters.append(ircBotCommand.parameters[paramIndex])
+        }
+        paramIndex += 1
+    }
+
+    ircBotCommand.parameters = Array(parameters)
+}
+
+private func findAndMaybeHandleHelp(for command: IRCBotCommand) async -> IRCBotCommandDeclaration? {
+    guard let commandDecl = MechaSqueak.commands.first(where: {
+        $0.commands.contains(command.command)
+    }) else {
+        return nil
+    }
+
+    if command.options.contains("h") {
+        var helpCommand = command
+        helpCommand.command = "!help"
+        helpCommand.parameters = ["!\(command.command)"]
+        await mecha.helpModule.didReceiveHelpCommand(helpCommand)
+        return nil
+    }
+
+    return commandDecl
+}
+
+private func checkIllegalOptions(_ command: IRCBotCommandDeclaration, _ ircBotCommand: IRCBotCommand) -> Bool {
+    let message = ircBotCommand.message
+    let illegalNamedOptions = Set(ircBotCommand.arguments.keys).subtracting(Set(command.arguments.keys))
+    if illegalNamedOptions.count > 0 {
+        message.error(
+            key: "command.illegalnamedoptions", fromCommand: ircBotCommand,
+            map: [
                 "options": Array(illegalNamedOptions).englishList,
                 "command": ircBotCommand.command,
                 "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
                 "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
-            return
-        }
+        return true
+    }
 
-        let illegalOptions = ircBotCommand.options.subtracting(command.options)
-        if illegalOptions.count > 0 {
-            message.error(key: "command.illegaloptions", fromCommand: ircBotCommand, map: [
+    let illegalOptions = ircBotCommand.options.subtracting(command.options)
+    if illegalOptions.count > 0 {
+        let locale = Locale(identifier: String(illegalOptions))
+        if illegalOptions.count == 2 && locale.isValid {
+            message.error(
+                key: "command.illegaloptions.maybelocale", fromCommand: ircBotCommand,
+                map: [
+                    "options": String(illegalOptions),
+                    "command": ircBotCommand.command
+                ])
+            return true
+        }
+        message.error(
+            key: "command.illegaloptions", fromCommand: ircBotCommand,
+            map: [
                 "options": String(illegalOptions),
                 "command": ircBotCommand.command,
                 "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
                 "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
             ])
-            return
-        }
-
-        if message.user.hasPermission(permission: .RescueWrite) == false && message.destination.isPrivateMessage && command.allowedDestinations == .Channel {
-            message.error(key: "command.publiconly", fromCommand: ircBotCommand, map: [
-                "command": ircBotCommand.command
-            ])
-            return
-        }
-
-        if message.user.hasPermission(permission: .RescueWrite) == false && message.destination.isPrivateMessage == false && command.allowedDestinations == .PrivateMessage {
-            message.error(key: "command.privateonly", fromCommand: ircBotCommand, map: [
-                "command": ircBotCommand.command
-            ])
-             return
-        }
-
-        guard command.minimumParameters <= ircBotCommand.parameters.count else {
-            message.error(key: "command.toofewparams", fromCommand: ircBotCommand, map: [
-                "command": ircBotCommand.command,
-                "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
-                "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
-            ])
-            return
-        }
-
-        if
-            let maxParameters = command.maximumParameters,
-            command.lastParameterIsContinous == true,
-            ircBotCommand.parameters.count > 1
-        {
-            var parameters: [String] = []
-            var paramIndex = 0
-
-            while paramIndex < maxParameters && paramIndex < ircBotCommand.parameters.count {
-                if paramIndex == maxParameters - 1 {
-                    let remainderComponents = ircBotCommand.parameters[paramIndex..<ircBotCommand.parameters.endIndex]
-                    let remainder = remainderComponents.joined(separator: " ")
-                    parameters.append(remainder)
-                    break
-                } else {
-                    parameters.append(ircBotCommand.parameters[paramIndex])
-                }
-                paramIndex += 1
-            }
-            ircBotCommand.parameters = Array(parameters)
-        }
-
-        if let maxParameters = command.maximumParameters, ircBotCommand.parameters.count > maxParameters {
-            message.error(key: "command.toomanyparams", fromCommand: ircBotCommand, map: [
-                "command": ircBotCommand.command,
-                "usage": "Usage: \(command.usageDescription(command: ircBotCommand)).",
-                "example": "Example: \(command.exampleDescription(command: ircBotCommand))."
-            ])
-            return
-        }
-
-        if let permission = command.permission {
-            guard message.user.hasPermission(permission: permission) else {
-                message.error(key: "board.nopermission", fromCommand: ircBotCommand)
-                return
-            }
-        }
-        if command.isDispatchingCommand && blacklist.contains(where: {
-            message.user.nickname.lowercased().contains($0.lowercased()) || message.user.account?.lowercased() == $0.lowercased()
-        }) {
-            message.client.sendMessage(toChannelName: "#doersofstuff", withKey: "command.blacklist", mapping: [
-                "command": ircBotCommand.command,
-                "nick": message.user.nickname
-            ])
-        }
-
-        command.onCommand?(ircBotCommand)
+        return true
     }
+
+    return false
 }

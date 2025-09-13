@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -25,6 +25,7 @@
 import Foundation
 import AsyncHTTPClient
 import NIO
+import NIOHTTP1
 
 extension HTTPClient {
     static var defaultJsonDecoder: JSONDecoder {
@@ -33,53 +34,127 @@ extension HTTPClient {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }
+    
+    func execute <T: AnyRange> (
+        request: Request,
+        deadline: NIODeadline? = .now() + .seconds(5),
+        expecting statusCode: T
+    ) async throws -> HTTPClient.Response where T.Bound == Int {
+        try await withCheckedThrowingContinuation({ continuation in
+            self.execute(request: request, deadline: deadline).whenComplete { result in
+                switch result {
+                    case .success(let response):
+                        if statusCode.contains(Int(response.status.code)) {
+                            continuation.resume(returning: response)
+                        } else {
+                            continuation.resume(throwing: response)
+                        }
 
-    func execute<D> (request: Request, forDecodable decodable: D.Type, withDecoder decoder: JSONDecoder = defaultJsonDecoder) -> EventLoopFuture<D> where D: Decodable {
-        let promise = loop.next().makePromise(of: D.self)
-
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-
-                    do {
-                        let result = try decoder.decode(D.self, from: Data(buffer: response.body!))
-                        promise.succeed(result)
-                    } catch {
-                        promise.fail(error)
-                    }
-                case .failure(let restError):
-                    promise.fail(restError)
+                    case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
             }
+        })
+    }
+    
+    func execute<D> (
+        request: Request,
+        forDecodable decodable: D.Type,
+        deadline: NIODeadline? = .now() + .seconds(5),
+        withDecoder decoder: JSONDecoder = defaultJsonDecoder
+    ) async throws -> D where D: Decodable {
+        let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
+        do {
+            guard let body = response.body else {
+                debug(request.url.absoluteString)
+                debug(String(describing: response))
+                if let body = response.body {
+                    debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+                }
+                throw response
+            }
+            return try decoder.decode(D.self, from: Data(buffer: body))
+        } catch {
+            if let body = response.body {
+                debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+            }
+            debug(String(describing: error))
+            throw error
         }
-
-        return promise.futureResult
     }
 }
 
-extension EventLoopFuture where Value == HTTPClient.Response {
-    func whenCompleteExpecting(status: Int, complete: @escaping (Result<HTTPClient.Response, Error>) -> Void) {
-        self.whenComplete { result in
-            switch result {
-                case .success(let response):
-                    if response.status.code == status {
-                        complete(result)
-                    } else {
-                        complete(Result.failure(response))
-                    }
-
-                case .failure:
-                    complete(result)
-            }
+extension HTTPClient.Request {
+    init (apiPath: String, method: HTTPMethod, command: IRCBotCommand? = nil, query: [String: String?] = [:]) throws {
+        var url = URLComponents(string: "\(configuration.api.url)")!
+        url.path = apiPath
+        
+        url.queryItems = query.queryItems
+        try self.init(url: url.url!, method: method)
+        
+        self.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        self.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        self.headers.add(name: "Content-Type", value: "application/vnd.api+json")
+        if let command = command, let user = command.message.user.associatedAPIData?.user {
+            self.headers.add(name: "x-representing", value: user.id.rawValue.uuidString)
         }
     }
 }
 
-extension HTTPClient.Response: Error {}
+extension HTTPClient.Response: @retroactive Error {}
+
+private let sAllowedCharacters: CharacterSet = {
+    var allowed = CharacterSet.urlQueryAllowed
+    allowed.insert(" ")
+    allowed.remove("+")
+    allowed.remove("/")
+    allowed.remove("?")
+    allowed.remove("*")
+    allowed.remove("!")
+    allowed.remove("$")
+    return allowed
+}()
+
+private func urlEscape (_ str: String) -> String {
+    return str.replacingOccurrences(of: "\n", with: "\r\n")
+        .addingPercentEncoding(withAllowedCharacters: sAllowedCharacters)!
+        .replacingOccurrences(of: " ", with: "+")
+}
 
 extension HTTPClient.Body {
     static func encodable<T: Encodable> (_ object: T) throws -> HTTPClient.Body {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         return .data(try encoder.encode(object))
+    }
+    
+    static func formUrlEncoded(_ query: [String: String?]) throws -> HTTPClient.Body {
+        let str = query.map({ (key, value) -> String in
+            if let value = value {
+                return "\(urlEscape(key))=\(urlEscape(value))"
+            }
+            return urlEscape(key)
+        }).joined(separator: "&")
+        return .string(str)
+    }
+}
+
+extension Dictionary where Key == String, Value == String? {
+    var queryItems: [URLQueryItem] {
+        return self.reduce([], { (items, current) in
+            var items = items
+            items.append(URLQueryItem(name: current.key, value: current.value))
+            return items
+        })
+    }
+    
+    var formUrlEncoded: Data? {
+        let str = self.map({ (key, value) -> String in
+            if let value = value {
+                return "\(urlEscape(key))=\(urlEscape(value))"
+            }
+            return urlEscape(key)
+        }).joined(separator: "&")
+        return str.data(using: .utf8)
     }
 }

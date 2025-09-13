@@ -1,0 +1,54 @@
+{
+    "general": {
+        "signal": "ratsignal",
+        "rescueChannel": "#fuelrats",
+        "reportingChannel": "#ratchat",
+        "drillMode": false,
+        "drillChannels": ["#drillrats"],
+        "ratBlacklist": ["Absolver"],
+        "dispatchBlacklist": ["Orange_Sheets"],
+        "cooldownExceptionChannels": ["#dnd"],
+        "operLogin": "mechasqueak",
+        "debug": true
+    },
+    
+    "api": {
+        "url": "https://api.fuelrats.com",
+        "wss": "wss://api.fuelrats.com",
+        "userId": "1baf04fe-a1ae-4600-9f63-105be092ebb5",
+        "token": "hunter2"
+    },
+    
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "mechasqueak",
+        "username": "fuelrats",
+        "password": null
+    },
+    "shortener": {
+        "url": "",
+        "signature": "hunter2"
+    },
+    "queue": {
+        "url": "https://api.qms.fuelrats.dev/api/v1",
+        "token": "hunter2",
+    },
+    "documentationPath": "file:///Users/bob/mechasqueak",
+    "connections": [{
+            "autoConnect": true,
+            "autoReconnect": true,
+            "serverAddress": "irc.fuelrats.com",
+            "serverPort": 6667,
+            "prefersInsecureConnection": false,
+            "clientCertificatePath": null,
+            "serverName": "FuelRats",
+
+            "nickname": "MechaSqueak[BOT]",
+            "username": "mecha",
+            "realName": "MechaSqueak IRC Bot, version 3",
+            "authenticationUsername": "MechaSqueak[BOT]",
+            "authenticationPassword": "hunter2",
+            "channels": ["#fuelrats"]
+        }],
+}

@@ -26,28 +26,44 @@ import Foundation
 import IRCKit
 
 extension IRCPrivateMessage {
-    func reply (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        self.reply(message: lingo.localize(key, locale: command.locale.identifier, interpolations: map))
+    func reply(key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
+        self.reply(message: lingo.localize(key, locale: command.locale.short, interpolations: map))
     }
 
-    func error (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        self.reply(message: "\(command.message.user.nickname): \(lingo.localize(key, locale: command.locale.identifier, interpolations: map))")
+    func error(key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
+        let msg = lingo.localize(key, locale: command.locale.short, interpolations: map)
+        self.reply(
+            message: "\(command.message.user.nickname): \(msg)"
+        )
     }
 
-    func replyPrivate (message: String) {
-        if self.destination.isPrivateMessage || configuration.general.drillMode == true {
+    func replyPrivate(message: String) {
+        if self.destination.isPrivateMessage
+            || (configuration.general.drillMode == true
+                && configuration.general.drillChannels.contains(self.destination.name.lowercased())) {
             self.reply(message: message)
             return
         }
-        self.client.sendNotice(toTarget: self.user.nickname, contents: message)
+        var tags: [String: String?] = [:]
+        if let msgid = self.raw.messageTags["msgid"] {
+            tags["+draft/reply"] = msgid
+        }
+        if self.destination.isPrivateMessage == false {
+            tags["+draft/channel-context"] = self.destination.name
+        }
+        self.client.send("CNOTICE", parameters: [
+            self.user.nickname,
+            self.destination.name,
+            message
+        ], tags: tags)
     }
 
-    func replyPrivate (key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
-        let message = lingo.localize(key, locale: command.locale.identifier, interpolations: map)
+    func replyPrivate(key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
+        let message = lingo.localize(key, locale: command.locale.short, interpolations: map)
         self.replyPrivate(message: message)
     }
 
-    public func reply (list: [String], separator: String, heading: String = "") {
+    public func reply(list: [String], separator: String, heading: String = "") {
         let messages = list.ircList(separator: separator, heading: heading)
 
         for message in messages {
@@ -55,11 +71,39 @@ extension IRCPrivateMessage {
         }
     }
 
-    public func replyPrivate (list: [String], separator: String, heading: String = "") {
+    public func replyPrivate(list: [String], separator: String, heading: String = "") {
         let messages = list.ircList(separator: separator, heading: heading)
 
         for message in messages {
             self.replyPrivate(message: message)
         }
     }
+
+    func retaliate() {
+        let phrase = retaliationPhrases[Int.random(in: 0..<retaliationPhrases.count)]
+        self.client.sendActionMessage(
+            toChannel: self.destination,
+            contents: String(format: phrase, arguments: [self.user.nickname]))
+    }
 }
+
+private let retaliationPhrases = [
+    "yeets %@ out of the airlock",
+    "revokes %@'s snickers rations for 1 month",
+    "launches a tactical nuclear strike in %@'s direction",
+    "drops %@ into a pool of piranhas",
+    "banishes %@ to the shadow realm",
+    "drops %@ into Sagittarius A*",
+    "releases an army of protomolecule hybrid monsters at %@",
+    "designates %@'s email address as the official destination for all navlock related bug reports",
+    "pours glitter onto %@'s keyboard",
+    "forces %@ to play a vanilla ranger in D&D 5th edition",
+    "forces %@ to play the last level of Simpsons Hit & Run over and over for 7 days",
+    "turns the inside of %@'s PC into an aquarium",
+    "has set mode +b %@!*@*",
+    "locks %@ in a room with a TV playing season 8 of Game of Thrones on repeat",
+    "unleashes a horde of angry canadian geese at %@",
+    "locks %@ in a room where they have to solve traffic light captchas for all of eternity",
+    "changes %@'s computer to light mode",
+    "permanently subscribes %@ to daily LinkedIn inspirational posts"
+]

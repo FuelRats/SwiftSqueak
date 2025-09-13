@@ -22,16 +22,14 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
 import AsyncHTTPClient
+import Foundation
+import NIO
 
 class URLShortener {
-    static func shorten (
-        url: URL, keyword: String?,
-        complete: @escaping (ShortURLResponse) -> Void,
-        error: @escaping (Error?) -> Void
-    ) {
-        var requestUrl = URLComponents(url: configuration.shortener.url, resolvingAgainstBaseURL: false)!
+    static func shorten(url: URL, keyword: String? = nil) async throws -> ShortURLResponse {
+        var requestUrl = URLComponents(
+            url: configuration.shortener.url, resolvingAgainstBaseURL: false)!
         requestUrl.queryItems = [
             URLQueryItem(name: "action", value: "shorturl"),
             URLQueryItem(name: "format", value: "json"),
@@ -43,31 +41,18 @@ class URLShortener {
             requestUrl.queryItems?.append(URLQueryItem(name: "keyword", value: keyword))
         }
 
-        var request = try! HTTPClient.Request(url: requestUrl.url!, method: .GET)
+        var request = try HTTPClient.Request(url: requestUrl.url!, method: .GET)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success(let response):
-                    let decoder = JSONDecoder()
-
-                    guard let shortenResult = try? decoder.decode(ShortURLResponse.self, from: Data(buffer: response.body!)) else {
-                        error(nil)
-                        return
-                    }
-                    complete(shortenResult)
-                case .failure(let restError):
-                    error(restError)
-            }
-        }
+        return try await httpClient.execute(request: request, forDecodable: ShortURLResponse.self)
     }
 
-    static func attemptShorten (url: URL, complete: @escaping (URL) -> Void) {
-        URLShortener.shorten(url: url, keyword: nil, complete: { response in
-            complete(response.shorturl)
-        }, error: { _ in
-            complete(url)
-        })
+    static func attemptShorten(url: URL) async -> URL {
+        do {
+            return try await shorten(url: url).shorturl
+        } catch {
+            return url
+        }
     }
 }
 

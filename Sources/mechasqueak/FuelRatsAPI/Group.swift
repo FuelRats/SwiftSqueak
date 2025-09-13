@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -22,10 +22,11 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
+import IRCKit
 import JSONAPI
 import NIO
-import AsyncHTTPClient
 
 enum GroupDescription: ResourceObjectDescription {
     public static var jsonType: String { return "groups" }
@@ -95,18 +96,23 @@ enum AccountPermission: String, Codable {
     case RescueRevisionWrite = "rescue-revisions.write"
 
     case TwitterWrite = "twitter.write"
-    
+
     case DispatchRead = "dispatch.read"
     case DispatchWrite = "dispatch.write"
 
     case AnnouncementWrite = "announcements.write"
 
     case UnknownPermission = ""
+
+    var groups: [Group] {
+        return mecha.groups.filter({ $0.permissions.contains(self) && $0.name != "owner" })
+    }
 }
 
 extension AccountPermission {
-    init (from decoder: Decoder) throws {
-        self = try AccountPermission(rawValue: decoder.singleValueContainer().decode(RawValue.self))
+    init(from decoder: Decoder) throws {
+        self =
+            try AccountPermission(rawValue: decoder.singleValueContainer().decode(RawValue.self))
             ?? AccountPermission.UnknownPermission
     }
 }
@@ -115,44 +121,93 @@ typealias Group = JSONEntity<GroupDescription>
 typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 
 extension Group {
-    static func list () -> EventLoopFuture<GroupSearchDocument> {
-        var url = configuration.api.url
-        url.appendPathComponent("/groups")
-        var request = try! HTTPClient.Request(url: url, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
-
-        return httpClient.execute(request: request, forDecodable: GroupSearchDocument.self)
+    var groupNameMap: [String: String] {
+        return [
+            "verified": "Verified",
+            "developer": "Developer",
+            "rat": "Drilled Rat",
+            "dispatch": "Drilled Dispatch",
+            "trainer": "Trainer",
+            "traineradmin": "Training Manager",
+            "merch": "Quartermaster",
+            "overseer": "Overseer",
+            "techrat": "Tech rat",
+            "moderator": "Moderator",
+            "operations": "Operations team",
+            "netadmin": "Network administrator",
+            "admin": "Network moderator",
+            "owner": "Special snowflake"
+        ]
     }
 
-    func addUser (id: UUID) -> EventLoopFuture<Void> {
-        let promise = loop.next().makePromise(of: Void.self)
+    var groupColor: [String: IRCColor] {
+        return [
+            "verified": .Grey,
+            "developer": .LightBlue,
+            "rat": .LightGreen,
+            "dispatch": .Green,
+            "trainer": .Yellow,
+            "traineradmin": .Purple,
+            "merch": .Grey,
+            "overseer": .Orange,
+            "techrat": .LightBlue,
+            "moderator": .LightRed,
+            "operations": .Purple,
+            "netadmin": .LightBlue,
+            "admin": .Purple,
+            "owner": .Purple
+        ]
+    }
 
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        url.appendPathComponent("/relationships/groups")
+    var groupDescription: String {
+        return groupNameMap[self.name] ?? self.name
+    }
 
-        let relationship = ManyRelationshipBody(data: [ManyRelationshipBody.ManyRelationshipBodyDataItem(
-            type: "groups",
-            id: self.id.rawValue
-        )])
+    var ircRepresentation: String {
+        if let color = groupColor[self.name] {
+            return IRCFormat.color(color, groupDescription)
+        }
+        return groupDescription
+    }
 
-        var request = try! HTTPClient.Request(url: url, method: .POST)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+    static func getList() async throws -> GroupSearchDocument {
+        let request = try HTTPClient.Request(apiPath: "/groups", method: .GET)
+
+        return try await httpClient.execute(
+            request: request, forDecodable: GroupSearchDocument.self)
+    }
+
+    func addUser(id: UUID) async throws {
+        let relationship = ManyRelationshipBody(data: [
+            ManyRelationshipBody.ManyRelationshipBodyDataItem(
+                type: "groups",
+                id: self.id.rawValue
+            )
+        ])
+
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = try! .encodable(relationship)
+        request.body = try .encodable(relationship)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 204, complete: { result in
-            switch result {
-                case .success(_):
-                    promise.succeed(())
+        _ = try await httpClient.execute(
+            request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
+    }
 
-                case .failure(let error):
-                    promise.fail(error)
-            }
-        })
-        return promise.futureResult
+    func removeUser(id: UUID) async throws {
+        let relationship = ManyRelationshipBody(data: [
+            ManyRelationshipBody.ManyRelationshipBodyDataItem(
+                type: "groups",
+                id: self.id.rawValue
+            )
+        ])
+
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.body = try .encodable(relationship)
+
+        _ = try await httpClient.execute(
+            request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }
 }

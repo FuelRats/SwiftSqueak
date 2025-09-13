@@ -25,33 +25,39 @@
 import Foundation
 import IRCKit
 
-
 struct RatSocketConnectedNotification: NotificationDescriptor {
-    init () {}
+    init() {}
 
     typealias Payload = RatSocketEvent<VersionGetDocument>
     let name = Notification.Name("RatSocketDidConnect")
 }
 
 struct RatSocketRescueCreatedNotification: NotificationDescriptor {
-    init () {}
+    init() {}
 
     typealias Payload = RatSocketEvent<RescueEventDocument>
     let name = Notification.Name("RatSocketRescueCreated")
 }
 
 struct RatSocketRescueUpdatedNotification: NotificationDescriptor {
-    init () {}
+    init() {}
 
     typealias Payload = RatSocketEvent<RescueEventDocument>
     let name = Notification.Name("RatSocketRescueUpdated")
 }
 
 struct RatSocketRescueDeletedNotification: NotificationDescriptor {
-    init () {}
+    init() {}
 
     typealias Payload = RatSocketEvent<EmptyBody>
     let name = Notification.Name("RatSocketRescueDeleted")
+}
+
+struct RatSocketUserUpdatedNotification: NotificationDescriptor {
+    init() {}
+
+    typealias Payload = RatSocketEvent<EmptyBody>
+    let name = Notification.Name("RatSocketUserUpdated")
 }
 
 struct EmptyBody: Codable {

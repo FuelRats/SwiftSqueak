@@ -1,0 +1,25 @@
+{% filter bold %}
+{% if includeCaseIds %}
+[{{ rescue.id }}]:
+{% else %}
+#{{ caseId }}:
+{% endif %}
+{% endfilter %}
+{% filter caseColor:rescue %}
+{% if rescue.title %}
+ Operation {{ rescue.title }}
+{% elif rescue.client %}
+ {{ rescue.client }}
+{% else %}
+ unknown client
+{% endif %}
+{% endfilter %}
+ ({{ platform }}
+{% if expansion %}
+ {{ expansion }}
+{% endif %}
+{% if rescue.codeRed %}
+ {{ "CR"|color:4|bold }}
+{% endif %}
+)
+

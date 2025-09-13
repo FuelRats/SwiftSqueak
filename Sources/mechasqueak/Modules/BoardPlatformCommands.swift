@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -31,59 +31,58 @@ class BoardPlatformCommands: IRCBotModule {
         moduleManager.register(module: self)
     }
 
-    static func platformChangeCommand (platform: GamePlatform, command: IRCBotCommand) {
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+    static func platformChangeCommand(platform: GamePlatform, command: IRCBotCommand) async {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         rescue.platform = platform
-        command.message.reply(key: "board.platformset", fromCommand: command, map: [
-            "platform": rescue.platform!.ircRepresentable,
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.client!
-        ])
-        rescue.syncUpstream()
+        try? rescue.save(command)
+
+        command.message.reply(
+            key: "board.platformset", fromCommand: command,
+            map: [
+                "platform": rescue.platform.ircRepresentable,
+                "caseId": caseId,
+                "client": rescue.clientDescription
+            ])
     }
 
     @BotCommand(
         ["xb"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to Xbox.",
-        paramText: "<case id/client>",
-        example: "4",
-        permission: .RescueWriteOwn,
+        tags: ["XB1"],
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveXboxPlatformCommand = { command in
-        platformChangeCommand(platform: .Xbox, command: command)
+        await platformChangeCommand(platform: .Xbox, command: command)
     }
 
     @BotCommand(
         ["pc"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PC.",
-        paramText: "<case id/client>",
-        example: "4",
-        permission: .RescueWriteOwn,
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceivePCPlatformCommand = { command in
-        platformChangeCommand(platform: .PC, command: command)
+        await platformChangeCommand(platform: .PC, command: command)
     }
 
     @BotCommand(
         ["ps", "ps4", "ps5"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Change the platform of this case to PS4.",
-        paramText: "<case id/client>",
-        example: "4",
-        permission: .RescueWriteOwn,
+        tags: ["playstation", "play", "station"],
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceivePS4PlatformCommand = { command in
-        platformChangeCommand(platform: .PS, command: command)
+        await platformChangeCommand(platform: .PS, command: command)
     }
 }

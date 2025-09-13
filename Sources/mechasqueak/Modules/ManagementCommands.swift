@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -22,8 +22,11 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import IRCKit
+import NIO
+import HTMLKit
 
 class ManagementCommands: IRCBotModule {
     var name: String = "ManagementCommands"
@@ -34,9 +37,9 @@ class ManagementCommands: IRCBotModule {
 
     @BotCommand(
         ["flushnames", "clearnames", "flushall", "invalidateall"],
-        parameters: 0...0,
         category: .management,
         description: "Invalidate the bots cache of API user data and fetch it again for all users.",
+        tags: ["nick", "user", "nickserv", "flush"],
         permission: .UserWrite
     )
     var didReceiveFlushAllCommand = { command in
@@ -55,205 +58,375 @@ class ManagementCommands: IRCBotModule {
             MechaSqueak.accounts.lookupIfNotExists(user: user)
         }
 
-        command.message.replyPrivate(key: "flushall.response", fromCommand: command)
+        command.message.reply(key: "flushall.response", fromCommand: command)
+    }
+
+    @BotCommand(
+        ["relaunch"],
+        [.param("update link", "https://fuelrats.com/", .standard, .optional)],
+        category: .management,
+        description: "Restarts MechaSqueak",
+        permission: .UserWrite
+    )
+    var didReceiveRebootCommand = { command in
+        let executablePath = FileManager.default.currentDirectoryPath
+
+        var restartMessage = ":Restarting.."
+        var arguments = Array(CommandLine.arguments.dropFirst())
+        if command.parameters.count > 0 {
+            restartMessage = ":Restarting for an update.."
+            arguments.append(command.parameters[0])
+        }
+
+        for client in mecha.connections {
+            client.sendQuit(message: restartMessage)
+        }
+        loop.next().scheduleTask(in: .seconds(1)) {
+            exit(1)
+        }
     }
 
     @BotCommand(
         ["flush", "clearname", "invalidate"],
-        parameters: 1...1,
+        [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Invalidate a single name in the cache and fetch it again.",
-        permission: .UserWrite
+        tags: ["nick", "user", "nickserv"],
+        permission: .RescueWrite
     )
     var didReceiveFlushCommand = { command in
-        if let mapping = MechaSqueak.accounts.mapping.first(where: {
-            $0.key.lowercased() == command.parameters[0].lowercased()
-        }) {
-            MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
-        }
-
-        guard let user = command.message.client.channels.first(where: {
-            $0.member(named: command.parameters[0]) != nil
-        })?.member(named: command.parameters[0]) else {
-            command.message.replyPrivate(key: "flush.nouser", fromCommand: command, map: [
-                "name": command.parameters[0]
-            ])
+        guard
+            let user = command.message.client.channels.first(where: {
+                $0.member(named: command.parameters[0]) != nil
+            })?.member(named: command.parameters[0])
+        else {
+            command.message.reply(
+                key: "flush.nouser", fromCommand: command,
+                map: [
+                    "name": command.parameters[0]
+                ])
             return
         }
+
+        if let account = user.account {
+            MechaSqueak.accounts.mapping.removeValue(forKey: account)
+        }
         MechaSqueak.accounts.lookupIfNotExists(user: user)
-        command.message.replyPrivate(key: "flush.response", fromCommand: command, map: [
-            "name": command.parameters[0]
-        ])
+        command.message.reply(
+            key: "flush.response", fromCommand: command,
+            map: [
+                "name": command.parameters[0]
+            ])
     }
 
     @BotCommand(
-        ["groups", "permissions"],
-        parameters: 1...1,
+        ["groups", "permissions", "roles"],
+        [.param("nickname", "SpaceDawg")],
         category: .management,
         description: "Lists the permissions of a specific person",
+        tags: ["group", "permission", "role"],
         permission: .UserRead
     )
     var didReceivePermissionsCommand = { command in
-        guard let mapping = MechaSqueak.accounts.mapping.first(where: {
-            $0.key.lowercased() == command.parameters[0].lowercased()
-        }) else {
-            command.message.replyPrivate(key: "groups.nouser", fromCommand: command, map: [
-                "nick": command.parameters[0]
-            ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
+        
+        let userId = user.id.rawValue
 
-        let groupIds = mapping.value.user?.relationships.groups?.ids ?? []
+        let groupIds = user.relationships.groups?.ids ?? []
 
-        let groups = mapping.value.body.includes![Group.self].filter({
+        let groups = accountData.body.includes![Group.self].filter({
             groupIds.contains($0.id)
         }).map({
-            $0.attributes.name.value
+            $0.ircRepresentation
         })
 
-        command.message.reply(key: "groups.response", fromCommand: command, map: [
-            "nick": command.parameters[0],
-            "groups": groups.joined(separator: ", ")
-        ])
+        command.message.reply(
+            key: "groups.response", fromCommand: command,
+            map: [
+                "nick": command.parameters[0],
+                "groups": groups.joined(separator: ", ")
+            ])
+    }
+
+    static func generateGroupList() -> String {
+        let groups = mecha.groups.sorted(by: {
+            $0.attributes.priority.value > $1.attributes.priority.value
+        })
+
+        var groupList: [String] = []
+        for group in groups {
+            groupList.append(group.attributes.name.value)
+        }
+        return "Available permission groups: " + groupList.joined(separator: ", ")
+    }
+    
+    static func generateGroupListView () -> Content {
+        HTMLKit.Div {
+            H5 {
+                "Available permission groups:"
+            }
+            let groups = mecha.groups.sorted(by: {
+                $0.attributes.priority.value > $1.attributes.priority.value
+            })
+            UnorderedList {
+                for group in groups {
+                    ListItem {
+                        Code {
+                            group.attributes.name.value
+                        }
+                        Span { " " }
+                        CommandPermissionGroupView(group: group)
+                    }
+                }
+            }
+        }
     }
 
     @BotCommand(
-        ["addgroup"],
-        parameters: 2...2,
+        ["addgroup", "addrole"],
+        [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
         category: .management,
         description: "Add a permission to a person",
-        paramText: "<nick/user id> <group name>",
-        example: "SpaceDawg dispatch",
-        permission: .UserWrite
+        tags: ["group", "permission", "role"],
+        permission: .UserWrite,
+        helpExtra: {
+            return generateGroupList()
+        },
+        helpView: generateGroupListView
     )
     var didReceiveAddGroupCommand = { command in
-        var getUserId = UUID(uuidString: command.parameters[0])
-        if getUserId == nil {
-            getUserId = command.message.client.user(withName: command.parameters[0])?.associatedAPIData?.user?.id.rawValue
-        }
-
-        guard let userId = getUserId else {
-            command.message.reply(key: "addgroup.noid", fromCommand: command, map: [
-                "param": command.parameters[0]
-            ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
+        
+        let userId = user.id.rawValue
 
-        Group.list().whenSuccess({ groupSearch in
-            guard let group = groupSearch.body.data?.primary.values.first(where: {
-                $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
-            }) else {
-                command.message.reply(key: "addgroup.nogroup", fromCommand: command, map: [
-                    "param": command.parameters[1]
-                ])
+        do {
+            let groupSearch = try await Group.getList()
+
+            guard
+                let group = groupSearch.body.data?.primary.values.first(where: {
+                    $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
+                })
+            else {
+                command.message.reply(
+                    key: "addgroup.nogroup", fromCommand: command,
+                    map: [
+                        "param": command.parameters[1]
+                    ])
                 return
             }
 
-            group.addUser(id: userId).whenComplete({ result in
-                switch result {
-                    case .success(_):
-                        command.message.reply(key: "addgroup.success", fromCommand: command, map: [
-                            "group": group.attributes.name.value,
-                            "groupId": group.id.rawValue.ircRepresentation,
-                            "userId": userId.ircRepresentation
-                        ])
+            try await group.addUser(id: userId)
 
-                    case .failure(let error):
-                        debug(String(describing: error))
-                        command.message.error(key: "addgroup.error", fromCommand: command)
-                }
-            })
-        })
+            command.message.reply(
+                key: "addgroup.success", fromCommand: command,
+                map: [
+                    "group": group.attributes.name.value,
+                    "groupId": group.id.rawValue.ircRepresentation,
+                    "userId": userId.ircRepresentation
+                ])
+        } catch let error as HTTPClient.Response {
+            if error.status == .conflict {
+                command.message.reply(
+                    key: "addgroup.already", fromCommand: command,
+                    map: [
+                        "param": command.parameters[1]
+                    ])
+            } else {
+                command.message.error(key: "addgroup.error", fromCommand: command)
+            }
+        } catch {
+            command.message.error(key: "addgroup.error", fromCommand: command)
+        }
+    }
+
+    @BotCommand(
+        ["delgroup", "delreole"],
+        [.param("nickname/user id", "SpaceDawg"), .param("permission group", "overseer")],
+        category: .management,
+        description: "Remove a permission from a person",
+        tags: ["group", "permission", "role", "delete"],
+        permission: .UserWrite,
+        helpExtra: {
+            return generateGroupList()
+        },
+        helpView: generateGroupListView
+    )
+    var didReceiveDelGroupCommand = { command in
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
+            return
+        }
+        
+        let userId = user.id.rawValue
+
+        do {
+            let groupSearch = try await Group.getList()
+
+            guard
+                let group = groupSearch.body.data?.primary.values.first(where: {
+                    $0.attributes.name.value.lowercased() == command.parameters[1].lowercased()
+                })
+            else {
+                command.message.reply(
+                    key: "delgroup.nogroup", fromCommand: command,
+                    map: [
+                        "param": command.parameters[1]
+                    ])
+                return
+            }
+
+            try await group.removeUser(id: userId)
+
+            command.message.reply(
+                key: "delgroup.success", fromCommand: command,
+                map: [
+                    "group": group.attributes.name.value,
+                    "groupId": group.id.rawValue.ircRepresentation,
+                    "userId": userId.ircRepresentation
+                ])
+        } catch {
+            command.message.error(key: "delgroup.error", fromCommand: command)
+        }
+    }
+    
+    @BotCommand(
+        ["syncgroups"],
+        [.param("nickname/user id", "SpaceDawg")],
+        category: .management,
+        description: "Syncs a person's permissions and updates their vhost",
+        tags: ["group", "permission", "role", "update", "sync", "vhost"],
+        permission: .UserWrite,
+        helpExtra: {
+            return generateGroupList()
+        },
+        helpView: generateGroupListView
+    )
+    var didReceiveSyncGroupCommand = { command in
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
+            return
+        }
+        
+        let userId = user.id.rawValue
+
+        do {
+            _ = try await User.sync(id: userId)
+
+            command.message.reply(
+                key: "syncgroup.success", fromCommand: command,
+                map: [
+                    "userId": userId.ircRepresentation
+                ])
+        } catch {
+            command.message.error(key: "syncgroup.error", fromCommand: command)
+        }
     }
 
     @BotCommand(
         ["suspend"],
-        parameters: 2...2,
+        [.param("nickname/user id", "SpaceDawg"), .param("timespan", "7d")],
         category: .management,
         description: "Suspend a user account, accepts IRC style timespans (0 for indefinite).",
-        paramText: "<nick/user id> <timespan>",
-        example: "SpaceDawg 7d",
+        tags: ["ban"],
         permission: .UserWrite
     )
     var didReceiveSuspendCommand = { command in
-        var getUserId = UUID(uuidString: command.parameters[0])
-        if getUserId == nil {
-            getUserId = command.message.client.user(withName: command.parameters[0])?.associatedAPIData?.user?.id.rawValue
-        }
-
-        guard let userId = getUserId else {
-            command.message.error(key: "suspend.noid", fromCommand: command, map: [
-                "param": command.parameters[0]
-            ])
+        guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {
             return
         }
 
         guard let timespan = TimeInterval.from(string: command.parameters[1]) else {
-            command.message.error(key: "suspend.invalidspan", fromCommand: command, map: [
-                "param": command.parameters[1]
-            ])
+            command.message.error(
+                key: "suspend.invalidspan", fromCommand: command,
+                map: [
+                    "param": command.parameters[1]
+                ])
             return
         }
 
         let date = Date().addingTimeInterval(timespan)
 
-        User.get(id: userId).whenComplete({ result in
-            switch result {
-                case .failure(_):
-                    command.message.error(key: "suspend.nouser", fromCommand: command)
+        do {
+            let userDocument = try await User.get(id: user.id.rawValue)
+            try await userDocument.body.primaryResource?.value.suspend(date: date)
 
-                case .success(let userDocument):
-                    userDocument.body.primaryResource?.value.suspend(date: date).whenComplete({ result in
-                        switch result {
-                            case .failure(let error):
-                                debug(String(describing: error))
-                                command.message.error(key: "suspend.error", fromCommand: command)
-
-                            case .success(_):
-                                command.message.reply(key: "suspend.success", fromCommand: command, map: [
-                                    "userId": userId.ircRepresentation,
-                                    "date": date.ircRepresentable
-                                ])
-                        }
-                    })
-
-            }
-        })
+            command.message.reply(
+                key: "suspend.success", fromCommand: command,
+                map: [
+                    "userId": user.id.rawValue.ircRepresentation,
+                    "date": date.ircRepresentable
+                ])
+        } catch {
+            command.message.error(key: "suspend.error", fromCommand: command)
+        }
     }
 
     @BotCommand(
         ["msg", "say"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [.param("destination", "#ratchat"), .param("message", "squeak!", .continuous)],
         category: .utility,
         description: "Make the bot send an IRC message somewhere.",
-        paramText: "<destination> <message>",
-        example: "#ratchat Squeak!",
+        tags: ["message"],
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
-        command.message.reply(key: "say.sending", fromCommand: command, map: [
-            "target": command.parameters[0],
-            "contents": command.parameters[1]
-        ])
-        command.message.client.sendMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
+        command.message.reply(
+            key: "say.sending", fromCommand: command,
+            map: [
+                "target": command.parameters[0],
+                "contents": command.parameters[1]
+            ])
+        command.message.client.sendMessage(
+            toTarget: command.parameters[0], contents: command.parameters[1])
     }
 
     @BotCommand(
         ["me", "action", "emote"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
+        [
+            .param("destination", "#ratchat"),
+            .param("message", "takes all the snickers", .continuous)
+        ],
         category: .utility,
         description: "Make the bot send an IRC action (/me) somewhere.",
-        paramText: "<destination> <action message>",
-        example: "#ratchat noms popcorn.",
+        tags: ["/me"],
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in
-        command.message.reply(key: "me.sending", fromCommand: command, map: [
-            "target": command.parameters[0],
-            "contents": command.parameters[1]
-        ])
-        command.message.client.sendActionMessage(toChannelName: command.parameters[0], contents: command.parameters[1])
+        command.message.reply(
+            key: "me.sending", fromCommand: command,
+            map: [
+                "target": command.parameters[0],
+                "contents": command.parameters[1]
+            ])
+        command.message.client.sendActionMessage(
+            toChannelName: command.parameters[0], contents: command.parameters[1])
+    }
+
+    @BotCommand(
+        ["sendraw"],
+        [
+            .param("command"),
+            .param("parameters", "MODE #channel +v :SpaceDawg", .multiple, .optional)
+        ],
+        category: nil,
+        description: "Send a raw command to the IRC server",
+        permission: .GroupWrite
+    )
+    var didReceiveSendRawCommand = { command in
+        guard let ircCommand = IRCCommand(rawValue: command.parameters[0].uppercased()) else {
+            return
+        }
+
+        command.message.reply(
+            key: "sendraw", fromCommand: command,
+            map: [
+                "command": command.parameters[0],
+                "contents": command.parameters.dropFirst().joined(separator: " ")
+            ])
+
+        command.message.client.send(
+            command: ircCommand, parameters: Array(command.parameters.dropFirst()))
     }
 }

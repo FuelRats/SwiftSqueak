@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -27,14 +27,17 @@ import IRCKit
 
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
+    static var ongoingShortenUrls: [String: String] = [:]
 
     @BotCommand(
         ["shorten", "short", "shortener"],
-        parameters: 1...2,
+        [
+            .param("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+            .param("custom link", "importantinfo", .standard, .optional)
+        ],
         category: .utility,
-        description: "Create a t.fuelr.at short url to another url, optionally set a custom url rather than a random.",
-        paramText: "<url> [custom link]",
-        example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ importantinfo",
+        description:
+            "Create a t.fuelr.at short url to another url, optionally set a custom url rather than a random.",
         permission: .RescueWriteOwn,
         allowedDestinations: .PrivateMessage
     )
@@ -44,19 +47,46 @@ class ShortenURLCommands: IRCBotModule {
             keyword = command.parameters[1].lowercased()
         }
 
-        guard let url = URL(string: command.parameters[0]) else {
+        var longUrl = command.parameters[0]
+
+        if command.message.destination.isPrivateMessage {
+            ongoingShortenUrls[command.message.user.nickname] = longUrl
+
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            longUrl = ongoingShortenUrls[command.message.user.nickname] ?? longUrl
+            ongoingShortenUrls.removeValue(forKey: command.message.user.nickname)
+        }
+
+        guard
+            let url = URL(
+                string: longUrl.addingPercentEncoding(
+                    withAllowedCharacters: CharacterSet.urlQueryAllowed)!)
+        else {
             command.message.error(key: "shorten.invalidurl", fromCommand: command)
             return
         }
 
-        URLShortener.shorten(url: url, keyword: keyword, complete: { response in
-            command.message.reply(key: "shorten.shortened", fromCommand: command, map: [
-                "url": response.shorturl,
-                "title": response.title
-            ])
-        }, error: { _ in
+        do {
+            let response = try await URLShortener.shorten(url: url, keyword: keyword)
+
+            command.message.reply(
+                key: "shorten.shortened", fromCommand: command,
+                map: [
+                    "url": response.shorturl,
+                    "title": response.title.prefix(160)
+                ])
+        } catch {
             command.message.error(key: "shorten.error", fromCommand: command)
-        })
+        }
+    }
+
+    @EventListener<IRCPrivateMessageNotification>
+    var onPrivateMessage = { privateMessage in
+        if var url = ongoingShortenUrls[privateMessage.user.nickname] {
+            print("appending url")
+            url += privateMessage.message
+            ongoingShortenUrls[privateMessage.user.nickname] = url
+        }
     }
 
     required init(_ moduleManager: IRCBotModuleManager) {

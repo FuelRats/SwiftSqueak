@@ -1,3 +1,4 @@
+import AsyncHTTPClient
 /*
  Copyright 2020 The Fuel Rats Mischief
 
@@ -23,19 +24,27 @@
  */
 import Foundation
 import JSONAPI
-import AsyncHTTPClient
 import NIO
 
 enum UserDescription: ResourceObjectDescription {
     public static var jsonType: String { return "users" }
 
-    public struct Attributes: JSONAPI.Attributes {
-        public let data: Attribute<UserDataObject>
+    public struct Attributes: JSONAPI.SparsableAttributes {
+        public enum CodingKeys: String, JSONAPI.SparsableCodingKey {
+            case data
+            case email
+            case status
+            case suspended
+            case stripeId
+            case createdAt
+            case updatedAt
+        }
+
+        public var data: Attribute<UserDataObject>
         public let email: Attribute<String>?
         public let status: Attribute<UserStatus>
         public var suspended: Attribute<Date>?
         public let stripeId: Attribute<String>?
-        public let image: Attribute<Bool>
         public let createdAt: Attribute<Date>
         public let updatedAt: Attribute<Date>
     }
@@ -48,54 +57,67 @@ enum UserDescription: ResourceObjectDescription {
         public let epics: ToManyRelationship<Epic>?
         public let decals: ToManyRelationship<Decal>?
         public let nicknames: ToManyRelationship<Nickname>?
+        public let avatar: ToOneRelationship<AvatarImage?>?
     }
 }
 typealias User = JSONEntity<UserDescription>
-typealias UserGetDocument = Document<SingleResourceBody<User>, Include7<Rat, Ship, Epic, Nickname, Client, Decal, Group>>
+typealias UserGetDocument = Document<
+    SingleResourceBody<User>, Include8<Rat, Ship, Epic, Nickname, Client, Decal, Group, AvatarImage>
+>
 
 extension User {
-    static func get (id: UUID) -> EventLoopFuture<UserGetDocument> {
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(id.uuidString)
-        var request = try! HTTPClient.Request(url: url, method: .GET)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+    static func get(id: UUID) async throws -> UserGetDocument {
+        let request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)", method: .GET)
 
-        return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+    
+    static func sync(id: UUID) async throws -> UserGetDocument {
+        let request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/sync", method: .PUT)
+
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
 
     @discardableResult
-    func update (attributes: [String: Any]) throws -> EventLoopFuture<UserGetDocument> {
-        let body: [String: Any] = [
-            "data": [
-                "type": "users",
-                "id": self.id.rawValue.uuidString,
-                "attributes": attributes
-            ]
-        ]
-
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(self.id.rawValue.uuidString)
-
-        var request = try! HTTPClient.Request(url: url, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+    static func update(user: User) async throws -> UserGetDocument {
+        let patchRequestDocument = SingleDocument(
+            apiDescription: .none, body: .init(resourceObject: user), includes: .none, meta: .none,
+            links: .none)
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(user.id.rawValue.uuidString)", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 
-        return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let body = try encoder.encode(patchRequestDocument)
+
+        request.body = .data(body)
+
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
 
     @discardableResult
-    func suspend (date: Date) -> EventLoopFuture<UserGetDocument> {
-        return try! self.update(attributes: [
-            "suspended": DateFormatter.iso8601Full.string(from: date)
-        ])
+    func suspend(date: Date) async throws -> UserGetDocument {
+        let updatedUser = self.tappingAttributes({
+            $0.suspended = .init(value: date)
+        }).sparse(with: [UserDescription.Attributes.CodingKeys.suspended]).resourceObject
+            .replacingRelationships({ _ in
+                return UserDescription.Relationships(
+                    rats: nil,
+                    displayRat: nil,
+                    groups: nil,
+                    clients: nil,
+                    epics: nil,
+                    decals: nil,
+                    nicknames: nil,
+                    avatar: nil
+                )
+            })
+        return try await User.update(user: updatedUser)
     }
 
-    func changeEmail (to email: String) -> EventLoopFuture<UserGetDocument> {
+    @discardableResult
+    func changeEmail(to email: String) async throws -> UserGetDocument {
         let body: [String: Any] = [
             "data": [
                 "type": "email-changes",
@@ -105,19 +127,40 @@ extension User {
                 ]
             ]
         ]
-
-        var url = configuration.api.url
-        url.appendPathComponent("/users")
-        url.appendPathComponent(self.id.rawValue.uuidString)
-        url.appendPathComponent("/email")
-
-        var request = try! HTTPClient.Request(url: url, method: .PATCH)
-        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
+        var request = try HTTPClient.Request(
+            apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
         request.headers.add(name: "Content-Type", value: "application/json")
-        request.body = .data(try! JSONSerialization.data(withJSONObject: body, options: []))
+        request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 
-        return httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+        return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
+    }
+
+    @discardableResult
+    func updateUserData(dataObject: UserDataObject) async throws -> UserGetDocument {
+        let updatedUser = self.tappingAttributes {
+            $0.data = .init(value: dataObject)
+        }.sparse(with: [UserDescription.Attributes.CodingKeys.data]).resourceObject
+            .replacingRelationships({ _ in
+                return UserDescription.Relationships(
+                    rats: nil,
+                    displayRat: nil,
+                    groups: nil,
+                    clients: nil,
+                    epics: nil,
+                    decals: nil,
+                    nicknames: nil,
+                    avatar: nil
+                )
+            })
+        return try await User.update(user: updatedUser)
+    }
+    
+    func getCurrentRescues() async -> [(key: Int, value: Rescue)] {
+        let userId = self.id.rawValue
+        return
+            (try? await board.filter({ (_, rescue) in
+                rescue.rats.contains(where: { $0.relationships.user?.id?.rawValue == userId })
+            }).getAllResults()) ?? []
     }
 }
 
@@ -129,5 +172,11 @@ enum UserStatus: String, Codable {
 }
 
 struct UserDataObject: Codable, Equatable {
+    var preferredPrivateMethod: MessagingMethod? = .Privmsg
+    var clientTranslateSubscription: ClientTranslateSubscription?
+}
 
+enum MessagingMethod: String, Codable {
+    case Privmsg
+    case Notice
 }

@@ -4,8 +4,8 @@
        "other": "%{client}: Lütfen bu %{count} fareyi arkadaş olarak ekleyin: %{rats}"
     },
     "board.assign.gocr": {
-       "one": "%{client}: Lütfen ANA MENÜDE KALIN ve bu fareyi arkadaş olarak ekleyin: %{rats}",
-       "other": "%{client}: Lütfen ANA MENÜDE KALIN ve bu %{count} fareyi arkadaş olarak ekleyin: %{rats}"
+       "one": "%{client}: Lütfen ANA MENÜDE KALARAK bu fareyi arkadaş olarak ekleyin: %{rats}",
+       "other": "%{client}: Lütfen ANA MENÜDE KALARAK bu %{count} fareyi arkadaş olarak ekleyin: %{rats}"
     }
 }
 

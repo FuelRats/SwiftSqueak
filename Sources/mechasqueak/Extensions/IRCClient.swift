@@ -26,14 +26,16 @@ import Foundation
 import IRCKit
 
 extension IRCClient {
-    func sendMessage (toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]) {
+    func sendMessage(
+        toChannelName channelName: String, withKey key: String, mapping map: [String: Any]? = [:]
+    ) {
         self.sendMessage(
-            toChannelName: channelName,
+            toTarget: channelName,
             contents: lingo.localize(key, locale: "en-GB", interpolations: map)
         )
     }
 
-    func user (withName name: String) -> IRCUser? {
+    func user(withName name: String) -> IRCUser? {
         return self.channels.compactMap({ channel in
             return channel.member(named: name)
         }).first

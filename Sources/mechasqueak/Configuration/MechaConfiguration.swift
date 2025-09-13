@@ -30,9 +30,24 @@ struct MechaConfiguration: Codable {
     let general: GeneralConfiguration
     let connections: [IRCClientConfiguration]
     let api: FuelRatsAPIConfiguration
-    let queue: QueueConfiguration
+    let queue: QueueConfiguration?
     let database: DatabaseConfiguration
     let shortener: URLShortenerConfiguration
+    let sourcePath: URL
+    var xbox: XboxLiveConfiguration?
+    var psn: PlayStationNetworkConfiguration?
+    let chrono: ChronoConfiguration?
+    let mastodon: MastodonConfiguration?
+    let bluesky: BlueSkyConfiguration?
+    let openAIToken: String?
+    let webServer: WebServerConfiguration?
+    
+    func save () throws {
+        let configEncoder = JSONEncoder()
+        configEncoder.outputFormatting = .prettyPrinted
+        let json = try configEncoder.encode(self)
+        try json.write(to: configPath)
+    }
 }
 
 struct GeneralConfiguration: Codable {
@@ -42,8 +57,9 @@ struct GeneralConfiguration: Codable {
     @Default<False>
     var drillMode: Bool
     let drillChannels: [String]
-    let ratBlacklist: [String]
-    let dispatchBlacklist: [String]
+    let ratDenylist: [String]
+    let dispatchDenylist: [String]
+    let cooldownExceptionChannels: [String]
 
     let operLogin: [String]?
     @Default<False>
@@ -51,11 +67,13 @@ struct GeneralConfiguration: Codable {
 }
 
 struct QueueConfiguration: Codable {
-    let url: URL?
+    let url: URL
+    let token: String
 }
 
 struct FuelRatsAPIConfiguration: Codable {
     let url: URL
+    let websocket: URL?
     let userId: UUID
     let token: String
 }
@@ -72,4 +90,38 @@ struct DatabaseConfiguration: Codable {
 struct URLShortenerConfiguration: Codable {
     let url: URL
     let signature: String
+}
+
+struct XboxLiveConfiguration: Codable {
+    var xuid: String
+    var uhs: String
+    var token: String
+    var refreshToken: String
+    let clientId: String
+    let clientSecret: String
+}
+
+struct PlayStationNetworkConfiguration: Codable {
+    var token: String
+    var refreshToken: String
+    var basicAuth: String
+}
+
+struct ChronoConfiguration: Codable {
+    let nodePath: String
+    let file: String
+}
+
+struct MastodonConfiguration: Codable {
+    let token: String
+}
+
+struct BlueSkyConfiguration: Codable {
+    let handle: String
+    let appPassword: String
+}
+
+struct WebServerConfiguration: Codable {
+    let host: String
+    let port: Int
 }

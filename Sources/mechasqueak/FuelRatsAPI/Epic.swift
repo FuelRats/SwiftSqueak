@@ -36,7 +36,7 @@ enum EpicDescription: ResourceObjectDescription {
 
     public struct Relationships: JSONAPI.Relationships {
         public let nominees: ToManyRelationship<User>?
-        public let rescue: ToOneRelationship<Rescue?>?
+        public let rescue: ToOneRelationship<RemoteRescue?>?
         public let nominatedBy: ToOneRelationship<User?>?
         public let approvedBy: ToOneRelationship<User?>?
     }

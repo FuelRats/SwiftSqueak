@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -35,72 +35,298 @@ class SystemSearch: IRCBotModule {
 
     @BotCommand(
         ["search"],
-        parameters: 1...1,
-        lastParameterIsContinous: true,
+        [.param("system name", "NLTT 48288", .continuous)],
         category: .utility,
         description: "Search for a system in the galaxy database.",
-        paramText: "<system name>",
-        example: "NLTT 48288"
+        tags: ["edsm", "eddb", "systems"],
+        cooldown: .seconds(30)
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
-        SystemsAPI.performSearch(forSystem: system, onComplete: { request in
-            switch request {
-                case .success(let searchResults):
-                    guard var results = searchResults.data else {
-                        command.message.error(key: "systemsearch.error", fromCommand: command)
-                        return
-                    }
 
-                    guard results.count > 0 else {
-                        command.message.reply(key: "systemsearch.noresults", fromCommand: command)
-                        return
-                    }
-
-                    let resultString = results.map({
-                        $0.textRepresentation
-                    }).joined(separator: ", ")
-
-                    command.message.reply(key: "systemsearch.nearestmatches", fromCommand: command, map: [
-                        "system": system,
-                        "results": resultString
-                    ])
-
-                case .failure:
-                    command.message.error(key: "systemsearch.error", fromCommand: command)
-            }
-
-        })
-    }
-
-    @BotCommand(
-        ["landmark"],
-        parameters: 1...1,
-        lastParameterIsContinous: true,
-        category: .utility,
-        description: "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
-        paramText: "<system name>",
-        example: "NLTT 48288"
-    )
-    var didReceiveLandmarkCommand = { command in
-        var system = command.parameters.joined(separator: " ")
-        if system.lowercased().starts(with: "near ") {
-            system.removeFirst(5)
-        }
-
-        SystemsAPI.performSearchAndLandmarkCheck(forSystem: system, onComplete: { (searchResult, landmark, _) in
-            guard let landmark = landmark, let searchResult = searchResult else {
-                command.message.reply(key: "landmark.noresults", fromCommand: command, map: [
+        let extendedSearchWarningTimer = loop.next().scheduleTask(in: .seconds(45)) {
+            command.message.reply(
+                key: "systemsearch.long", fromCommand: command,
+                map: [
                     "system": system
-                ])
+                ]
+            )
+        }
+        do {
+            let searchResults = try await SystemsAPI.performSearch(forSystem: system)
+            extendedSearchWarningTimer.cancel()
+
+            guard var results = searchResults.data else {
+                command.message.error(key: "systemsearch.error", fromCommand: command)
                 return
             }
 
-            command.message.reply(key: "landmark.response", fromCommand: command, map: [
-                "system": searchResult.name,
-                "distance": NumberFormatter.englishFormatter().string(from: NSNumber(value: landmark.distance))!,
-                "landmark": landmark.name
-            ])
-        })
+            guard results.count > 0 else {
+                command.message.reply(key: "systemsearch.noresults", fromCommand: command)
+                return
+            }
+
+            let resultString = results.map({
+                $0.textRepresentation
+            }).joined(separator: ", ")
+
+            command.message.reply(
+                key: "systemsearch.nearestmatches", fromCommand: command,
+                map: [
+                    "system": system,
+                    "results": resultString
+                ])
+
+        } catch {
+            extendedSearchWarningTimer.cancel()
+            command.message.error(key: "systemsearch.error", fromCommand: command)
+        }
+    }
+
+    @BotCommand(
+        ["landmark", "sysinfo", "edsm"],
+        [.param("system name", "NLTT 48288", .continuous)],
+        category: .utility,
+        description:
+            "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
+        tags: ["edsm", "eddb", "systems", "spansh", "neutron"],
+        cooldown: .seconds(15)
+    )
+    var didReceiveLandmarkCommand = { command in
+        var system = command.parameters.joined(separator: " ")
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: system, includingRecentlyClosed: true) {
+            system = rescue.system?.name ?? system
+        }
+        if system.lowercased().starts(with: "near ") {
+            system.removeFirst(5)
+        }
+        if system.lowercased() == "seer" {
+            command.message.retaliate()
+            return
+        }
+
+        var starSystem = StarSystem(name: system)
+
+        do {
+
+            var result = try await SystemsAPI.performSystemCheck(forSystem: starSystem.name)
+            if result.landmark == nil && result.proceduralCheck?.isPgSystem != true {
+                starSystem = autocorrect(system: starSystem)
+                result = try await SystemsAPI.performSystemCheck(forSystem: starSystem.name)
+            }
+
+            guard let landmarkDescription = result.landmarkDescription else {
+                command.message.reply(
+                    key: "landmark.noresults", fromCommand: command,
+                    map: [
+                        "system": system
+                    ])
+                return
+            }
+            command.message.reply(message: await result.info)
+        } catch {
+            print(String(describing: error))
+            command.message.reply(
+                key: "landmark.noresults", fromCommand: command,
+                map: [
+                    "system": system
+                ])
+        }
+    }
+
+    @BotCommand(
+        ["distance", "plot", "distanceto"],
+        [
+            .argument("range", "jump range", example: "68"),
+            .param("departure system / case id / client name", "NLTT 48288"),
+            .param("arrival system / case id / client name", "Sagittarius A*", .continuous)
+        ],
+        category: .utility,
+        description: "Calculate the distance between two star systems",
+        tags: ["edsm", "eddb", "systems", "spansh", "neutron"],
+        cooldown: .seconds(30)
+    )
+    var didReceiveDistanceCommand = { command in
+        guard var (depSystem, arrSystem) = command.param2 as? (String, String) else {
+            return
+        }
+        let range = command.argumentValue(for: "range")
+
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: depSystem, includingRecentlyClosed: true) {
+            depSystem = rescue.system?.name ?? depSystem
+        }
+
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: arrSystem, includingRecentlyClosed: true) {
+            arrSystem = rescue.system?.name ?? arrSystem
+        }
+
+        do {
+            let (departure, arrival) = try await (
+                SystemsAPI.performSystemCheck(forSystem: depSystem),
+                SystemsAPI.performSystemCheck(forSystem: arrSystem)
+            )
+
+            guard let depCoords = departure.coordinates, let arrCoords = arrival.coordinates else {
+                command.message.error(key: "distance.notfound", fromCommand: command)
+                return
+            }
+
+            let distance = arrCoords.distance(from: depCoords)
+
+            let positionsAreApproximated = departure.landmark == nil || arrival.landmark == nil
+            var plotDepName = departure.name
+            var plotArrName = arrival.name
+            if let proceduralCheck = departure.proceduralCheck,
+                let sectordata = proceduralCheck.sectordata {
+                if let nearestKnown = try? await SystemsAPI.getNearestSystem(
+                    forCoordinates: sectordata.coords)?.data {
+                    plotDepName = nearestKnown.name
+                }
+            }
+
+            if let proceduralCheck = arrival.proceduralCheck,
+                let sectordata = proceduralCheck.sectordata {
+                if let nearestKnown = try? await SystemsAPI.getNearestSystem(
+                    forCoordinates: sectordata.coords)?.data {
+                    plotArrName = nearestKnown.name
+                }
+            }
+
+            var spanshUrl: URL?
+            if distance > 1000 || range != nil {
+                spanshUrl = try? await generateSpanshRoute(
+                    from: plotDepName, to: plotArrName, range: Int(range ?? "75") ?? 75)
+            }
+
+            var key = positionsAreApproximated ? "distance.resultapprox" : "distance.result"
+            if spanshUrl != nil {
+                key += ".plotter"
+            }
+
+            let displayDistance = distance * 60 * 60 * 24 * 365.25
+
+            command.message.reply(
+                key: key, fromCommand: command,
+                map: [
+                    "departure": departure.name,
+                    "arrival": arrival.name,
+                    "distance": displayDistance.eliteDistance,
+                    "plotterUrl": spanshUrl?.absoluteString ?? ""
+                ])
+        } catch {
+            print(error)
+            command.message.error(key: "distance.error", fromCommand: command)
+        }
+    }
+
+    @BotCommand(
+        ["station", "stations"],
+        [
+            .param("reference system / case id / client name", "Sagittarius A*", .continuous),
+            .options(["p", "l"]), .argument("legacy")
+        ],
+        category: .utility,
+        description:
+            "Get the nearest station to a system, use a system name, case ID, or client name",
+        tags: ["edsm", "eddb", "systems"],
+        cooldown: .seconds(30)
+    )
+    var didReceiveStationCommand = { command in
+        var systemName = command.param1!
+        let requireLargePad = command.options.contains("l")
+        let requireSpace = !(command.options.contains("p"))
+        var legacyStations = command.arguments["legacy"] != nil
+
+        if let (_, rescue) = await board.findRescue(
+            withCaseIdentifier: systemName, includingRecentlyClosed: true) {
+            systemName = rescue.system?.name ?? ""
+            if rescue.platform == .Xbox || rescue.platform == .PS || rescue.expansion == .legacy {
+                legacyStations = true
+            }
+        }
+
+        var proceduralCheck: SystemsAPI.ProceduralCheckDocument?
+        var nearestSystem: SystemsAPI.NearestSystemDocument.NearestSystem?
+        let systemCheck = try? await SystemsAPI.performSystemCheck(forSystem: systemName)
+        if systemCheck?.landmark == nil, let sectordata = systemCheck?.proceduralCheck?.sectordata {
+            let cords = sectordata.coords
+            if let nearestSystemSearch = try? await SystemsAPI.getNearestSystem(
+                forCoordinates: cords)?.data {
+                systemName = nearestSystemSearch.name
+                proceduralCheck = systemCheck?.proceduralCheck
+                nearestSystem = nearestSystemSearch
+            } else {
+                command.message.error(key: "station.notfound", fromCommand: command)
+                return
+            }
+        }
+
+        do {
+            var stationResult = try await SystemsAPI.getNearestPreferableStation(
+                forSystem: systemName,
+                limit: 10,
+                requireLargePad: requireLargePad,
+                requireSpace: requireSpace,
+                legacyStations: legacyStations
+            )
+
+            if stationResult == nil {
+                stationResult = try await SystemsAPI.getNearestPreferableStation(
+                    forSystem: systemName,
+                    limit: 1000,
+                    requireLargePad: requireLargePad,
+                    requireSpace: requireSpace,
+                    legacyStations: legacyStations
+                )
+            }
+
+            guard let (system, station) = stationResult else {
+                command.message.error(key: "station.notfound", fromCommand: command)
+                return
+            }
+
+            var approximatedDistance: String?
+            if let proc = proceduralCheck, let nearest = nearestSystem,
+                let sectordata = proc.sectordata {
+                let formatter = NumberFormatter.englishFormatter()
+                formatter.usesSignificantDigits = true
+                // Round of output distance based on uncertainty provided by SystemsAPI
+                formatter.maximumSignificantDigits = sectordata.uncertainty.significandWidth
+                // Pythagoras strikes again, he won't ever leave me alone
+                let calculatedDistance = (pow(nearest.distance, 2) + pow(system.distance, 2))
+                    .squareRoot()
+                approximatedDistance = formatter.string(from: calculatedDistance)
+            }
+            
+            var stationDistance = "unknown distance"
+            if let dist = station.distance {
+                stationDistance = dist.distanceToSeconds(
+                    destinationGravity: true
+                ).timeSpan(maximumUnits: 1)
+            }
+
+            command.message.reply(
+                message: (try? stencil.renderLine(
+                    name: "station.stencil",
+                    context: [
+                        "system": system,
+                        "approximatedDistance": approximatedDistance as Any,
+                        "station": station,
+                        "travelTime": stationDistance,
+                        "services": station.allServices,
+                        "notableServices": station.notableServices,
+                        "stationType": station.type?.rawValue as Any,
+                        "showAllServices": command.options.contains("s"),
+                        "additionalServices": station.services.count
+                            - station.notableServices.count,
+                        "hasLargePad": station.hasLargePad
+                    ])) ?? "")
+        } catch {
+            debug(String(describing: error))
+            command.error(error)
+        }
     }
 }

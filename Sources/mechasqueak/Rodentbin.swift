@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -22,37 +22,25 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Foundation
-import CryptoSwift
 import AsyncHTTPClient
+import CryptoSwift
+import Foundation
+import NIO
 
-class Twitter {
-    static func tweet (message: String, complete: @escaping () -> Void, error: @escaping (Error?) -> Void) {
-        let url = URLComponents(string: "\(configuration.api.url)/webhooks/twitter")!
-        var request = try! HTTPClient.Request(url: url.url!, method: .POST)
+class Rodentbin {
+    static func upload(contents: String) async throws -> Rodentbin.Response {
+        var request = try HTTPClient.Request(
+            url: "https://paste.fuelrats.com/documents", method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
-        request.headers.add(name: "Authorization", value: "Bearer \(configuration.api.token)")
         request.headers.add(name: "Content-Type", value: "application/json")
 
-        request.body = .data(try! JSONSerialization.data(withJSONObject: [
-            "message": message
-        ], options: []))
+        request.body = .data(contents.data(using: .utf8)!)
 
-        httpClient.execute(request: request).whenCompleteExpecting(status: 200) { result in
-            switch result {
-                case .success:
-                    complete()
-                case .failure(let restError):
-                    error(restError)
-            }
-        }
+        return try await httpClient.execute(
+            request: request, forDecodable: Response.self, deadline: .now() + .seconds(2))
     }
-}
 
-fileprivate extension String {
-    var twitterUrlEncoded: String? {
-        return self.addingPercentEncoding(withAllowedCharacters: CharacterSet(
-            charactersIn: "ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-        ))
+    struct Response: Codable {
+        let key: String
     }
 }

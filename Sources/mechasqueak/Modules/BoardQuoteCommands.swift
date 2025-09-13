@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The Fuel Rats Mischief
+ Copyright 2021 The Fuel Rats Mischief
 
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ import IRCKit
 
 class BoardQuoteCommands: IRCBotModule {
     static let disallowedInjectNames = ["ratsignal", "drillsignal", "client", "<client>"]
-    static var injectRepeatCache = Set<String>()
     var name: String = "Case Quote Commands"
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)
@@ -35,134 +34,163 @@ class BoardQuoteCommands: IRCBotModule {
 
     @BotCommand(
         ["quote"],
-        parameters: 1...1,
+        [.param("case id/client", "4")],
         category: .board,
         description: "Show all information about a specific case",
-        paramText: "<case id/client name>",
-        example: "4",
         permission: .DispatchRead
     )
     var didReceiveQuoteCommand = { command in
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
-        let format = rescue.title != nil ? "board.quote.operation" : "board.quote.title"
+        let output =
+            (try? stencil.renderLine(
+                name: "quote.stencil",
+                context: [
+                    "caseId": caseId,
+                    "rescue": rescue,
+                    "platform": rescue.platform.ircRepresentable,
+                    "expansion": rescue.platform == .PC ? rescue.expansion.ircRepresentable : "",
+                    "system": rescue.system as Any,
+                    "landmark": rescue.system?.landmark as Any,
+                    "status": rescue.status.rawValue
+                ])) ?? ""
+        command.message.replyPrivate(message: output)
 
-        command.message.replyPrivate(key: format, fromCommand: command, map: [
-            "title": rescue.title ?? "",
-            "caseId": rescue.commandIdentifier,
-            "client": rescue.clientDescription,
-            "nick": rescue.clientNick ?? "?",
-            "system": rescue.systemDescription,
-            "platform": rescue.platform.ircRepresentable,
-            "cr": rescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
-        ])
-
-        command.message.replyPrivate(key: "board.quote.dates", fromCommand: command, map: [
-            "created": rescue.createdAt.ircRepresentable,
-            "updated": rescue.updatedAt.ircRepresentable
-        ])
+        command.message.replyPrivate(
+            key: "board.quote.dates", fromCommand: command,
+            map: [
+                "created": rescue.createdAt.ircRepresentable,
+                "updated": rescue.updatedAt.ircRepresentable
+            ])
 
         if rescue.rats.count == 0 && rescue.unidentifiedRats.count == 0 {
             command.message.replyPrivate(key: "board.quote.noassigned", fromCommand: command)
         } else {
-            command.message.replyPrivate(key: "board.quote.assigned", fromCommand: command, map: [
-                "rats": rescue.assignList!
-            ])
+            command.message.replyPrivate(
+                key: "board.quote.assigned", fromCommand: command,
+                map: [
+                    "rats": rescue.assignList ?? ""
+                ])
         }
 
         for (index, quote) in rescue.quotes.enumerated() {
-            command.message.replyPrivate(key: "board.quote.quote", fromCommand: command, map: [
-                "index": index,
-                "author": quote.lastAuthor,
-                "time": "\(quote.updatedAt.timeAgo) ago",
-                "message": quote.message
-            ])
+            command.message.replyPrivate(
+                key: "board.quote.quote", fromCommand: command,
+                map: [
+                    "index": index,
+                    "author": quote.lastAuthor,
+                    "time": "\(quote.updatedAt.timeAgo(maximumUnits: 1)) ago",
+                    "message": quote.message
+                ])
         }
     }
 
     @BotCommand(
         ["grab"],
-        parameters: 1...1,
+        [
+            .param("case id/client/assigned rat", "1"),
+            .param("nick", "SpaceDawg", .standard, .optional)
+        ],
         category: .board,
-        description: "Grab the last message by the client and add it an existing rescue",
-        paramText: "<client>",
-        example: "SpaceDawg",
-        permission: .RescueWriteOwn,
+        description:
+            "Grab the last message by the client or assigned rat and add it to an existing rescue",
+        tags: ["previous", "msg"],
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveGrabCommand = { command in
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var getRescue: LocalRescue? = command.message.destination.member(named: clientParam)?.assignedRescue
+        var getRescue = await command.message.destination.member(named: clientParam)?
+            .getAssignedRescue()
         var isClient = false
         if getRescue == nil {
             isClient = true
-            getRescue = BoardCommands.assertGetRescueId(command: command)
+            getRescue = await BoardCommands.assertGetRescueId(command: command) ?? nil
         }
-        guard let rescue = getRescue else {
+        guard let (caseId, rescue) = getRescue else {
             return
         }
 
-        let clientNick = isClient ? rescue.clientNick ?? clientParam : clientParam
+        var clientNick = isClient ? rescue.clientNick ?? clientParam : clientParam
+        if command.parameters.count > 1 {
+            clientNick = command.parameters[1]
+        }
 
         guard let clientUser = message.destination.member(named: clientNick) else {
-            command.message.reply(key: "board.grab.noclient", fromCommand: command, map: [
-                "caseId": clientParam
-            ])
+            command.message.reply(
+                key: "board.grab.noclient", fromCommand: command,
+                map: [
+                    "param": clientNick
+                ])
             return
         }
 
         guard let lastMessage = clientUser.lastMessage else {
-            command.message.reply(key: "board.grab.nomessage", fromCommand: command, map: [
-                "client": clientUser.nickname
-            ])
+            command.message.reply(
+                key: "board.grab.nomessage", fromCommand: command,
+                map: [
+                    "client": clientUser.nickname
+                ])
             return
         }
 
-        let quoteMessage = "<\(clientUser.nickname)> \(lastMessage)"
-        if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
-            rescue.quotes.append(RescueQuote(
-                author: message.user.nickname,
-                message: "<\(clientUser.nickname)> \(lastMessage)",
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: message.user.nickname
-            ))
+        var quoteMessage = "<\(clientUser.nickname)> \(lastMessage.message)"
+        if rescue.clientLanguage != nil && clientNick == rescue.clientNick,
+            let translation = try? await Translate.translate(lastMessage.message) {
+            quoteMessage += " (Translation: \(translation))"
         }
 
-        command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-            "clientId": rescue.commandIdentifier,
-            "text": lastMessage
-        ])
+        rescue.quotes.removeAll(where: {
+            $0.message == quoteMessage
+        })
+        if rescue.quotes.contains(where: { $0.message == quoteMessage }) == false {
+            rescue.appendQuote(
+                RescueQuote(
+                    author: message.user.nickname,
+                    message: quoteMessage,
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: message.user.nickname
+                ))
+        }
+        try? rescue.save(command)
 
-        rescue.syncUpstream()
+        command.message.reply(
+            key: "board.grab.updated", fromCommand: command,
+            map: [
+                "clientId": caseId,
+                "text": quoteMessage
+            ])
     }
 
     @BotCommand(
         ["inject"],
-        parameters: 2...2,
-        lastParameterIsContinous: true,
-        options: ["f"],
+        [
+            .options(["f"]), .param("case id/client", "4"),
+            .param("text", "NLTT 48288 PC CR", .continuous)
+        ],
         category: .board,
-        description: "Add some new information to the case, if one does not exist, create one with this information",
-        paramText: "<case id/client> <text>",
-        example: "4 client is 1.1 million ls from main star, rats on the way",
-        permission: .RescueWriteOwn,
+        description:
+            "Add some new information to the case, if one does not exist, create one with this information",
+        permission: .DispatchWrite,
         allowedDestinations: .Channel
     )
     var didReceiveInjectCommand = { command in
-        var forceInject = command.options.contains("f")
+        var forceInject = command.forceOverride
         let message = command.message
         let clientParam = command.parameters[0]
 
-        var rescue = mecha.rescueBoard.findRescue(withCaseIdentifier: clientParam)
+        var (caseId, rescue) = await board.findRescue(withCaseIdentifier: clientParam) ?? (nil, nil)
         if rescue == nil && Int(clientParam) != nil && clientParam.count < 3 {
-            command.message.error(key: "board.casenotfound", fromCommand: command, map: [
-                "caseIdentifier": command.parameters[0]
-            ])
+            command.message.error(
+                key: "board.casenotfound", fromCommand: command,
+                map: [
+                    "caseIdentifier": command.parameters[0]
+                ])
             return
         }
 
@@ -173,120 +201,143 @@ class BoardQuoteCommands: IRCBotModule {
         let injectMessage = command.parameters[1]
         if rescue == nil {
             guard
-                isLikelyAccidentalInject(clientParam: clientParam) == false ||
-                injectRepeatCache.contains(clientParam.lowercased()) ||
-                forceInject
+                isLikelyAccidentalInject(clientParam: clientParam) == false || forceInject
             else {
-                injectRepeatCache.insert(clientParam.lowercased())
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(60), execute: {
-                    injectRepeatCache.remove(clientParam.lowercased())
-                })
-
                 message.error(key: "board.inject.ignored", fromCommand: command)
                 return
             }
 
-            rescue = LocalRescue(text: injectMessage, clientName: clientNick, fromCommand: command)
+            rescue = Rescue(text: injectMessage, clientName: clientNick, fromCommand: command)
             if rescue != nil {
-                rescue?.quotes.append(RescueQuote(
+                rescue?.quotes.append(
+                    RescueQuote(
+                        author: message.user.nickname,
+                        message: injectMessage,
+                        createdAt: Date(),
+                        updatedAt: Date(),
+                        lastAuthor: message.user.nickname
+                    ))
+                try? await board.insert(
+                    rescue: rescue!, fromMessage: message, initiated: .insertion)
+            } else {
+                command.message.error(
+                    key: "board.grab.notcreated", fromCommand: command,
+                    map: [
+                        "client": client
+                    ])
+                return
+            }
+        } else {
+            rescue?.quotes.removeAll(where: {
+                $0.author == message.user.nickname && $0.message == injectMessage
+            })
+            rescue?.quotes.append(
+                RescueQuote(
                     author: message.user.nickname,
                     message: injectMessage,
                     createdAt: Date(),
                     updatedAt: Date(),
                     lastAuthor: message.user.nickname
                 ))
-                mecha.rescueBoard.add(rescue: rescue!, fromMessage: message, initiated: .insertion)
-            } else {
-                command.message.error(key: "board.grab.notcreated", fromCommand: command, map: [
-                    "client": client
+            try? rescue?.save(command)
+
+            command.message.reply(
+                key: "board.grab.updated", fromCommand: command,
+                map: [
+                    "clientId": caseId ?? 0,
+                    "text": injectMessage
                 ])
-                return
-            }
-        } else {
-            rescue?.quotes.append(RescueQuote(
-                author: message.user.nickname,
-                message: injectMessage,
-                createdAt: Date(),
-                updatedAt: Date(),
-                lastAuthor: message.user.nickname
-            ))
-
-            command.message.reply(key: "board.grab.updated", fromCommand: command, map: [
-                "clientId": rescue!.commandIdentifier,
-                "text": injectMessage
-            ])
-
-            rescue?.syncUpstream()
         }
     }
 
     @BotCommand(
         ["sub"],
-        parameters: 2...3,
-        lastParameterIsContinous: true,
+        [
+            .param("case id/client", "4"), .param("line number", "1"),
+            .param("new text", "Client is in EZ", .continuous, .optional)
+        ],
         category: .board,
         description: "Change a text entry in the rescue replacing its contents with new text",
-        paramText: "<case id/client> <line number> [new text]",
-        example: "4 1 Client is PC, not Xbox",
-        permission: .RescueWriteOwn,
-        allowedDestinations: .Channel
+        tags: ["substitute", "edit", "delete", "remove"],
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel,
+        helpExtra: {
+            "If no text is provided, the entry is deleted"
+        }
     )
     var didReceiveSubstituteCommand = { command in
         let message = command.message
 
-        guard let rescue = BoardCommands.assertGetRescueId(command: command) else {
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
 
         guard let quoteIndex = Int(command.parameters[1]) else {
-            command.message.error(key: "board.sub.invalidindex", fromCommand: command, map: [
-                "index": command.parameters[1]
-            ])
+            command.message.error(
+                key: "board.sub.invalidindex", fromCommand: command,
+                map: [
+                    "index": command.parameters[1]
+                ])
             return
         }
 
         guard quoteIndex >= 0 && quoteIndex < rescue.quotes.count else {
-            command.message.error(key: "board.sub.outofbounds", fromCommand: command, map: [
-                "index": quoteIndex,
-                "caseId": rescue.commandIdentifier
-            ])
+            command.message.error(
+                key: "board.sub.outofbounds", fromCommand: command,
+                map: [
+                    "index": quoteIndex,
+                    "caseId": caseId
+                ])
             return
         }
 
         var quote = rescue.quotes[quoteIndex]
         if command.parameters.count > 2 {
+            let previousContents = quote.message
             let contents = command.parameters[2]
 
             quote.message = contents
             quote.lastAuthor = message.user.nickname
             rescue.quotes[quoteIndex] = quote
-            command.message.reply(key: "board.sub.updated", fromCommand: command, map: [
-                "index": quoteIndex,
-                "caseId": rescue.commandIdentifier,
-                "contents": contents
-            ])
+            try? rescue.save(command)
+
+            command.message.reply(
+                key: "board.sub.updated", fromCommand: command,
+                map: [
+                    "index": quoteIndex,
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "previousContents": previousContents.excerpt(maxLength: 50),
+                    "contents": contents
+                ])
         } else {
-            rescue.quotes.remove(at: quoteIndex)
-            command.message.reply(key: "board.sub.deleted", fromCommand: command, map: [
-                "index": quoteIndex,
-                "caseId": rescue.commandIdentifier
-            ])
+            let removedQuote = rescue.quotes.remove(at: quoteIndex)
+            try? rescue.save(command)
+
+            command.message.reply(
+                key: "board.sub.deleted", fromCommand: command,
+                map: [
+                    "index": quoteIndex,
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "author": quote.author,
+                    "contents": quote.message.excerpt(maxLength: 80)
+                ])
         }
-
-
-        rescue.syncUpstream()
     }
 
-    static func isLikelyAccidentalInject (clientParam: String) -> Bool {
+    static func isLikelyAccidentalInject(clientParam: String) -> Bool {
         guard configuration.general.drillMode == false else {
             return false
         }
         guard disallowedInjectNames.contains(clientParam.lowercased()) == false else {
             return true
         }
-        guard let user = mecha.reportingChannel?.client.channels.compactMap({ channel in
-            return channel.member(named: clientParam)
-        }).first else {
+        guard
+            let user = mecha.reportingChannel?.client.channels.compactMap({ channel in
+                return channel.member(named: clientParam)
+            }).first
+        else {
             return true
         }
         return user.account != nil

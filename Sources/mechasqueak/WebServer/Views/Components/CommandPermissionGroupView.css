@@ -1,0 +1,157 @@
+:root {
+    --color-group-verified: #918f8f;
+    --color-group-developer: #92b1c7;
+    --color-group-techrat: #5d93b9;
+    --color-group-netadmin: #276a99;
+    --color-group-rat: #49c549;
+    --color-group-dispatch: #1e711e;
+    --color-group-trainer: #ffb366;
+    --color-group-merch: #b883ba;
+    --color-group-overseer: #df8122;
+    --color-group-moderator: #d15656;
+    --color-group-operations: #bb88ff;
+    --color-group-admin: #aa2020;
+    --color-group-owner: #89308c;
+}
+
+.command-permission-groups {
+    margin-left: auto;
+}
+
+.command-permission-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.2em 0.6em;
+    margin-right: 0.4em;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: white;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-family: system-ui, sans-serif;
+}
+
+.command-permission-group::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    display: inline-block;
+}
+
+/* Color and icon mapping */
+.command-permission-group-verified {
+    background-color: var(--color-group-verified);
+}
+.command-permission-group-verified::before {
+    content: "\f00c"; /* fa-check-circle */
+}
+
+.command-permission-group-developer {
+    background-color: var(--color-group-developer);
+}
+.command-permission-group-developer::before {
+    content: "\f121"; /* fa-code */
+}
+
+.command-permission-group-crawler::before {
+    content: "\f717"; /* fa-code */
+}
+
+.command-permission-group-techrat {
+    background-color: var(--color-group-techrat);
+}
+.command-permission-group-techrat::before {
+    content: "\f085"; /* fa-code */
+}
+
+.command-permission-group-netadmin {
+    background-color: var(--color-group-netadmin);
+}
+.command-permission-group-netadmin::before {
+    content: "\f085";
+}
+
+.command-permission-group-rat {
+    background-color: var(--color-group-rat);
+}
+.command-permission-group-rat::before {
+    content: "\f19d";
+}
+
+.command-permission-group-dispatch {
+    background-color: var(--color-group-dispatch);
+}
+.command-permission-group-dispatch::before {
+    content: "\f8c0";
+}
+
+.command-permission-group-trainer {
+    background-color: var(--color-group-trainer);
+}
+.command-permission-group-trainer::before {
+    content: "\f239";
+}
+
+.command-permission-group-traineradmin::before {
+    content: "\f19d";
+}
+
+.command-permission-group-operations {
+    background-color: var(--color-group-operations);
+}
+.command-permission-group-operations::before {
+    content: "\f328";
+}
+
+.command-permission-group-admin {
+    background-color: var(--color-group-admin);
+}
+.command-permission-group-admin::before {
+    content: "\f0e3";
+}
+
+.command-permission-group-owner {
+    background-color: var(--color-group-owner);
+}
+.command-permission-group-owner::before {
+    content: "\f2dc";
+}
+
+.command-permission-group-merch {
+    background-color: var(--color-group-merch);
+}
+.command-permission-group-merch::before {
+    content: "\f290";
+}
+
+.command-permission-group-overseer {
+    background-color: var(--color-group-overseer);
+}
+.command-permission-group-overseer::before {
+    content: "\f06e";
+}
+
+.command-permission-group-moderator {
+    background-color: var(--color-group-moderator);
+}
+.command-permission-group-moderator::before {
+    content: "\f0e3";
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        .command-permission-group {
+            background-color: #000;
+            color: #fff;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .command-permission-group {
+            background-color: #fff;
+            color: #000;
+        }
+    }
+}

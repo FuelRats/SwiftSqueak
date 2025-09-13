@@ -1,0 +1,45 @@
+{% if approximatedDistance %}
+Station found approximately ~{{ approximatedDistance }} LY away in "{{ system.name }}".
+{% elif system.distance > 0 %}
+Station found {{ system.distance|round|formatNumber }} LY away in "{{ system.name }}".
+{% else %}
+Station found in "{{ system.name }}".
+{% endif %}
+ {{ station.name|bold }}
+ {% filter italic %}
+{% if stationType %}
+({{ stationType }}),
+{% else %}
+(Unknown station type),
+{% endif %}
+{% endfilter %}
+ {{ station.distance|round|eliteDistance }}
+{% if station.distance > 1000 %}
+ (~{{ travelTime }})
+{% endif %}
+ from hyperspace entry point.
+ {{ "Services:"|bold }}
+{% if showAllServices %}
+{% for service in services %}
+{% if forloop.first %}
+ {{ service }}
+{% else %}
+, {{ service }}
+{% endif  %}
+{% endfor %}
+{% else %}
+{% for service in notableServices %}
+{% if forloop.first %}
+ {{ service }}
+{% else %}
+, {{ service }}
+{% endif  %}
+{% endfor %}
+{% if additionalServices > 0 %}
+ (and {{ additionalServices }} other nonessential services)
+{% endif %}
+{% endif %}
+{% if hasLargePad == false %}
+ {{ "Caution:"|bold|color:7 }} No large pad available
+{% endif %}
+.

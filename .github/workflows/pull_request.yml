@@ -1,0 +1,57 @@
+name: Swift Build & Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout SwiftSqueak
+        uses: actions/checkout@v4
+
+      - name: Clone IRCKit to ../IRCKit
+        run: |
+          git clone https://github.com/fuelrats/IRCKit.git ../IRCKit
+
+      - name: Install Swift 6.1
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            binutils \
+            git \
+            libatomic1 \
+            libcurl4-openssl-dev \
+            libedit2 \
+            libgcc-9-dev \
+            libpython3.10 \
+            libsqlite3-0 \
+            libstdc++-11-dev \
+            libxml2-dev \
+            pkg-config \
+            tzdata \
+            unzip \
+            zlib1g-dev
+
+          curl -fSsL https://download.swift.org/swift-6.1-release/ubuntu2204/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu22.04.tar.gz -o swift.tar.gz
+          tar -xzf swift.tar.gz
+          sudo mv swift-6.1-RELEASE-ubuntu22.04 /opt/swift
+          echo "export PATH=/opt/swift/usr/bin:\$PATH" >> $GITHUB_ENV
+
+      - name: Confirm Swift version
+        run: swift --version
+
+      - name: Build project
+        run: swift build --build-tests
+
+      - name: Run SwiftLint via Docker
+        run: |
+          docker run --rm \
+            -v "$(pwd):/swiftlint" \
+            -w /swiftlint \
+            ghcr.io/realm/swiftlint \
+            swiftlint --strict

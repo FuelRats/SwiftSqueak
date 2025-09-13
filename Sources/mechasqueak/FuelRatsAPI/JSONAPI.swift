@@ -35,9 +35,9 @@ struct JSONAPIMeta: Meta {
 
     let apiVersion: String
 
-    let rateLimitTotal: Int
-    let rateLimitRemaining: Int
-    let rateLimitReset: Date
+    let rateLimitTotal: Int?
+    let rateLimitRemaining: Int?
+    let rateLimitReset: Date?
 }
 
 struct JSONAPILinks: Links {
@@ -52,7 +52,7 @@ struct JSONAPIDescriptionMetaData: Meta {
     let apiVersion: String
 }
 
-extension UUID: CreatableRawIdType {
+extension UUID: @retroactive CreatableRawIdType {
     public static func unique() -> UUID {
         return UUID()
     }
@@ -63,19 +63,26 @@ typealias JSONEntity<Description: ResourceObjectDescription> =
 typealias UnidentifiedJSONEntity<Description: ResourceObjectDescription> =
     JSONAPI.ResourceObject<Description, NoMetadata, NoLinks, Unidentified>
 
-typealias ToOneRelationship<Entity: JSONAPIIdentifiable> = JSONAPI.ToOneRelationship<Entity, NoMetadata, NoLinks>
-typealias ToManyRelationship<Entity: Relatable> = JSONAPI.ToManyRelationship<Entity, NoMetadata, NoLinks>
-
-typealias Document<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include> = JSONAPI.Document<
-    PrimaryResourceBody,
-    JSONAPIMeta,
-    JSONAPILinks,
-    IncludeType,
-    APIDescription<JSONAPIDescriptionMetaData>,
-    BasicJSONAPIError<String>
+typealias ToOneRelationship<Entity: JSONAPIIdentifiable> = JSONAPI.ToOneRelationship<
+    Entity, NoIdMetadata, NoMetadata, NoLinks
+>
+typealias ToManyRelationship<Entity: Relatable> = JSONAPI.ToManyRelationship<
+    Entity, NoIdMetadata, NoMetadata, NoLinks
 >
 
-typealias EventDocument<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include> = JSONAPI.Document<
+typealias Document<PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include> =
+    JSONAPI.Document<
+        PrimaryResourceBody,
+        JSONAPIMeta,
+        JSONAPILinks,
+        IncludeType,
+        APIDescription<JSONAPIDescriptionMetaData>,
+        BasicJSONAPIError<String>
+    >
+
+typealias EventDocument<
+    PrimaryResourceBody: JSONAPI.CodableResourceBody, IncludeType: JSONAPI.Include
+> = JSONAPI.Document<
     PrimaryResourceBody,
     JSONAPIDescriptionMetaData,
     JSONAPILinks,
@@ -86,7 +93,7 @@ typealias EventDocument<PrimaryResourceBody: JSONAPI.CodableResourceBody, Includ
 
 struct ManyRelationshipBody: Codable {
     let data: [ManyRelationshipBodyDataItem]
-    
+
     struct ManyRelationshipBodyDataItem: Codable {
         let type: String
         let id: UUID

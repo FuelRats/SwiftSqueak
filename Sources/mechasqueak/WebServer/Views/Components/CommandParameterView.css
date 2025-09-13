@@ -1,0 +1,57 @@
+:root {
+    --param-bg: #f0f0f0;
+    --param-border: #ccc;
+    --param-text: #333;
+    --param-optional-bg: #e8f5ff;
+    --param-optional-border: #8cc5f4;
+    --param-optional-text: #2a6b9c;
+    --param-continuous-bg: #fff5e0;
+    --param-continuous-border: #f4c978;
+    --param-multiple-bg: #f5e0ff;
+    --param-multiple-border: #c78ef4;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --param-bg: #2e2e2e;
+        --param-border: #555;
+        --param-text: #e0e0e0;
+        --param-optional-bg: #203040;
+        --param-optional-border: #4a90c2;
+        --param-optional-text: #aaccee;
+        --param-continuous-bg: #403820;
+        --param-continuous-border: #d1a85a;
+        --param-multiple-bg: #402045;
+        --param-multiple-border: #a064d1;
+    }
+}
+
+.command-parameter {
+    display: inline-block;
+    margin-left: 0.4em;
+    padding: 0.1em 0.3em;
+    background-color: var(--param-bg);
+    border: 1px solid var(--param-border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: var(--param-text);
+}
+
+.command-parameter-optional {
+    opacity: 0.5;
+    font-style: italic;
+    background-color: var(--param-optional-bg);
+    color: var(--param-optional-text);
+    border: 1px dashed var(--param-optional-border);
+}
+
+.command-parameter-continuous {
+    background-color: var(--param-continuous-bg);
+    border-color: var(--param-continuous-border);
+}
+
+.command-parameter-multiple {
+    background-color: var(--param-multiple-bg);
+    border-color: var(--param-multiple-border);
+}

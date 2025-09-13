@@ -37,47 +37,47 @@ extension Character {
 }
 
 extension String {
-    subscript (index: Int) -> Character {
+    subscript(index: Int) -> Character {
         return self[self.index(self.startIndex, offsetBy: index)]
     }
 }
 
 extension String {
-    public func levenshtein (_ other: String) -> Int {
-        let a = self
-        let b = other
-        if (a.count == 0) {
-            return b.count
+    public func levenshtein(_ other: String) -> Int {
+        let str1 = self
+        let str2 = other
+        if str1.count == 0 {
+            return str2.count
         }
-        if (b.count == 0) {
-            return a.count
+        if str2.count == 0 {
+            return str1.count
         }
 
         // Create an empty distance matrix with dimensions len(a)+1 x len(b)+1
-        var dists = Array(repeating: Array(repeating: 0, count: b.count+1), count: a.count+1)
+        var dists = Array(repeating: Array(repeating: 0, count: str2.count + 1), count: str1.count + 1)
 
         // a's default distances are calculated by removing each character
-        for i in 1...(a.count) {
-            dists[i][0] = i
+        for distance1 in 1...(str1.count) {
+            dists[distance1][0] = distance1
         }
         // b's default distances are calulated by adding each character
-        for j in 1...(b.count) {
-            dists[0][j] = j
+        for distance2 in 1...(str2.count) {
+            dists[0][distance2] = distance2
         }
 
         // Find the remaining distances using previous distances
-        for i in 1...(a.count) {
-            for j in 1...(b.count) {
+        for distance1 in 1...(str1.count) {
+            for distance2 in 1...(str2.count) {
                 // Calculate the substitution cost
-                let cost = (a[i-1] == b[j-1]) ? 0 : 1
+                let cost = (str1[distance1 - 1] == str2[distance2 - 1]) ? 0 : 1
 
-                dists[i][j] = Swift.min(
+                dists[distance1][distance2] = Swift.min(
                     // Removing a character from a
-                    dists[i-1][j] + 1,
+                    dists[distance1 - 1][distance2] + 1,
                     // Adding a character to b
-                    dists[i][j-1] + 1,
+                    dists[distance1][distance2 - 1] + 1,
                     // Substituting a character from a to b
-                    dists[i-1][j-1] + cost
+                    dists[distance1 - 1][distance2 - 1] + cost
                 )
             }
         }
@@ -92,7 +92,7 @@ extension String {
         return self.components(separatedBy: CharacterSet.letters.inverted).joined()
     }
 
-    func excerpt (maxLength: Int) -> String {
+    func excerpt(maxLength: Int) -> String {
         if maxLength > 3 && self.count > maxLength {
             return self.prefix(maxLength - 2) + ".."
         }
@@ -102,23 +102,25 @@ extension String {
 }
 
 extension Array where Element == String {
-    func ircList (separator: String, heading: String = "") -> [String] {
-        return self.reduce([String](), { (acc: [String], entry: String) -> [String] in
-            var acc = acc
-            var entry = entry
+    func ircList(separator: String, heading: String = "") -> [String] {
+        return self.reduce(
+            [String](),
+            { (acc: [String], entry: String) -> [String] in
+                var acc = acc
+                var entry = entry
 
-            if acc.last == nil {
-                entry = heading + entry
-            }
+                if acc.last == nil {
+                    entry = heading + entry
+                }
 
-            if acc.last == nil || acc.last!.count + separator.count + self.count > 400 {
-                acc.append(entry)
+                if acc.last == nil || acc.last!.count + separator.count + self.count > 400 {
+                    acc.append(entry)
+                    return acc
+                }
+
+                acc[acc.count - 1] = acc[acc.count - 1] + separator + entry
                 return acc
-            }
-
-            acc[acc.count - 1] = acc[acc.count - 1] + separator + entry
-            return acc
-        })
+            })
     }
 
     var englishList: String {
@@ -132,4 +134,8 @@ extension Array where Element == String {
 
         return self.dropLast(1).joined(separator: ", ") + " and " + self.last! + "."
     }
+}
+
+extension StringProtocol {
+    var firstCapitalized: String { prefix(1).capitalized + dropFirst() }
 }

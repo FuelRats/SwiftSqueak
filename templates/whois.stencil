@@ -1,0 +1,26 @@
+{% if not account %}
+{{ nick }} is not logged in.
+{% else %}
+{{ nick }} is logged in as user {{ account }}
+{% endif %}
+{% if group %}
+ ({{ group }}).
+{% else %}
+ ({{ "Unverified"|color:4 }}).
+{% endif %}
+{% if displayId %}
+ ({{ id }})
+{% endif %}
+ Joined: {{ joined }}. Rats:
+{% for rat in rats %}
+ {{ rat|name }} ({{ rat|platform }})
+{% if rat|isStarterRat %}
+ ({{ "Starter Zone"|color:14 }})
+{% endif %}
+{% if displayId %}
+ ({{ rat|id }})
+{% endif %}
+{% if not forloop.last %}
+,
+{% endif %}
+{% endfor %}

@@ -1,0 +1,20 @@
+{{ signal|color:0,7|bold }}
+  Case
+{% filter bold %}
+ #{{ caseId }}
+{% endfilter %}
+ {{ platform|bold }}
+{% if expansion %}
+ {{ expansion }}
+{% endif %}
+{% if rescue.codeRed %}
+ ({{ "Code Red"|color:4 }})
+{% endif %}
+ – {{ "CMDR"|bold }} {{ rescue.client|default:"unknown client" }}
+{{ rescue|inGameStatus }}
+ – {{ "System:"|bold }} {% include "starsystem.stencil" %}
+ – {{ "Language:"|bold }} {{ language }} ({{ langCode }})
+{% if rescue.clientNick and rescue.clientNick != rescue.client %}
+ – {{ "Nick:"|bold }} {{ rescue.clientNick }}
+{% endif %}
+ {{ platformSignal }}

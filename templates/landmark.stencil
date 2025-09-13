@@ -1,0 +1,7 @@
+{{ landmark.distance|formatNumber }} LY
+{% if landmark.distance > 1000 %}
+ "{{ system|cardinal }}" of
+{% else %}
+ from
+{% endif %}
+ {{ landmark.name }}

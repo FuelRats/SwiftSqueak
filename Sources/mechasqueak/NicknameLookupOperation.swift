@@ -30,7 +30,7 @@ class NicknameLookupManager {
     let queue = OperationQueue()
     var mapping: [String: NicknameSearchDocument] = [:]
 
-    init () {
+    init() {
         self.queue.maxConcurrentOperationCount = 5
     }
 
@@ -40,29 +40,8 @@ class NicknameLookupManager {
         }
     }
 
-    func lookup (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
-        let operation = NicknameLookupOperation(user: user)
-
-        operation.onCompletion = { apiNick in
-            if let result = apiNick {
-                self.mapping[user.nickname] = result
-                completed?(result)
-            }
-        }
-
-        operation.onError = { error in
-            self.lookupServiceAvailable = false
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .seconds(1), execute: {
-                self.lookupIfNotExists(user: user)
-            })
-        }
-
-        self.queue.addOperation(operation)
-        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount)")
-    }
-
-    func lookupIfNotExists (user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
-        guard self.mapping[user.nickname] == nil else {
+    func lookup(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
+        guard user.account != nil else {
             return
         }
 
@@ -71,17 +50,61 @@ class NicknameLookupManager {
             return
         }
 
+        let operation = NicknameLookupOperation(user: user)
+
+        operation.onCompletion = { apiNick in
+            if let result = apiNick, let account = user.account {
+                self.mapping[account] = result
+                if let subscription = result.user?.data.clientTranslateSubscription {
+                    Translate.clientTranslationSubscribers[user.nickname] = subscription
+                }
+                completed?(result)
+            }
+        }
+
+        operation.onError = { _ in
+        }
+
+        self.queue.addOperation(operation)
+        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount))")
+    }
+
+    func lookupIfNotExists(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
+        guard let account = user.account, self.mapping[account] == nil else {
+            return
+        }
+
         lookup(user: user)
     }
 
-    func hasExistingFetchOperation (user: IRCUser) -> Bool {
+    func hasExistingFetchOperation(user: IRCUser) -> Bool {
         return self.queue.operations.contains(where: {
-            $0.name == user.nickname
+            $0.name == user.account
         })
+    }
+
+    @EventListener<RatSocketUserUpdatedNotification>
+    var onRemoteUserUpdate = { userUpdateEvent in
+        guard let userId = UUID(uuidString: userUpdateEvent.resourceIdentifier ?? "") else {
+            return
+        }
+
+        let users = mecha.reportingChannel?.members ?? []
+        for user in users.filter({ $0.associatedAPIData?.user?.id.rawValue == userId }) {
+            MechaSqueak.accounts.lookup(user: user)
+        }
+    }
+
+    @EventListener<IRCChannelUserModeChangeNotification>
+    var onUserModeChange = { userModeChange in
+        guard userModeChange.channel == mecha.rescueChannel else {
+            return
+        }
+        MechaSqueak.accounts.lookup(user: userModeChange.target)
     }
 }
 
-class NicknameLookupOperation: Operation {
+class NicknameLookupOperation: Operation, @unchecked Sendable {
     let user: IRCUser
     var onCompletion: ((NicknameSearchDocument?) -> Void)?
     var onError: ((Error?) -> Void)?
@@ -114,13 +137,13 @@ class NicknameLookupOperation: Operation {
         }
     }
 
-    init (user: IRCUser) {
+    init(user: IRCUser) {
         self.user = user
         super.init()
-        self.name = user.nickname
+        self.name = user.account
     }
 
-    override func start () {
+    override func start() {
         debug("Starting fetch operation for \(user.nickname)")
         guard isCancelled == false else {
             debug("Fetch operation was cancelled")
@@ -136,20 +159,24 @@ class NicknameLookupOperation: Operation {
             return
         }
 
-        try? FuelRatsAPI.getNicknameFor(ircAccount: account, complete: { apiNickname in
-            if apiNickname != nil {
-                debug("Synced account data for \(account)")
-            } else {
-                debug("Did not find account data for \(account)")
+        Task {
+            do {
+                let apiNickname = try await FuelRatsAPI.getNickname(forIRCAccount: account)
+                if apiNickname != nil {
+                    debug("Synced account data for \(account)")
+                } else {
+                    debug("Did not find account data for \(account)")
+                }
+                self.isFinished = true
+                self.isExecuting = false
+                self.onCompletion?(apiNickname)
+            } catch {
+                debug("Failed to lookup account data for \(account)")
+                print(String(describing: error))
+                self.isFinished = true
+                self.isExecuting = false
+                self.onError?(error)
             }
-            self.isFinished = true
-            self.isExecuting = false
-            self.onCompletion?(apiNickname)
-        }, error: { error in
-            debug("Failed to lookup account data for \(account)")
-            self.isFinished = true
-            self.isExecuting = false
-            self.onError?(error)
-        })
+        }
     }
 }

@@ -1,0 +1,100 @@
+::root {
+    --alias-text: #ccc;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --alias-text: #aaa;
+    }
+}
+
+.fact {
+    margin-bottom: 1rem;
+    background: var(--secondary-bg);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+}
+
+.fact-aliases-inline {
+    padding-bottom: 0.5em;
+    font-size: 1rem;
+    color: var(--alias-text);
+    font-style: italic;
+}
+
+.fact h3 {
+    margin: 0;
+    padding-bottom: 0.5em;
+    font-size: 1.1rem;
+}
+
+.fact h4 {
+    margin-bottom: 0.2em;
+}
+
+.fact h5 {
+    margin-bottom: 0.2em;
+}
+
+.fact p {
+    margin: 0.25rem 0 0 0;
+    line-height: 1.4;
+}
+
+.fact-section .section-heading {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.fact-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.1rem;
+}
+
+.fact .byline {
+    padding-top: 0.5em;
+    font-size: 0.75em;
+    color: #777;
+}
+
+.platform-icon {
+    padding-right: 0.5em;
+    margin-top: 0.3em;
+    font-size: 1.2em;
+}
+
+.fact-contents {
+    display: flex;
+    align-items: center;
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        .fact {
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        
+        .fact-aliases-inline {
+            color: #000;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+        .fact {
+            border: 1px solid #fff;
+            background-color: #000;
+        }
+        
+        .fact-aliases-inline {
+            color: #fff;
+        }
+    }
+}

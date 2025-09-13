@@ -26,13 +26,18 @@ import Foundation
 import Regex
 
 struct SignalScanner {
-    private static let platformExpression = "\\b(?:platform(?:\\: )?)?(pc|xbox one|xbox|xb1|xb|playstation(?: 4)?|ps4|ps5|ps)\\b".r!
+    private static let platformExpression =
+        "\\b(?:platform(?:\\: )?)?\\b(pc|xbox one|xbox|xb1|xb|playstation(?: 4)?|ps4|ps5|ps)\\b".r!
     private static let systemExpression = "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b".r!
-    private static let oxygenExpression = "\\b(?:(?:o2|oxygen)(?:\\:)? )?(ok|not ok|code red|cr)\\b".r!
+    private static let oxygenExpression =
+        "(?:^|\\s|$)(?:(?:o2|oxygen)(?:\\:)? )?(ok|not ok|code red|cr)(?:^|\\s|$)".r!
+    private static let expansionExpression =
+        "\\b(horizons 3|horizons 4|odyssey| horizons 3.8|horizons 4.0)\\b".r!
 
     var system: String?
     let platform: String?
     let crStatus: String?
+    var expansion: String?
 
     var isCodeRed: Bool {
         if let crText = self.crStatus {
@@ -43,10 +48,11 @@ struct SignalScanner {
         return false
     }
 
-    init? (message: String, requireSignal: Bool = false) {
+    init?(message: String, requireSignal: Bool = false) {
         var message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let signalIndex = message.range(of: configuration.general.signal, options: .caseInsensitive)?.upperBound
+        let signalIndex = message.range(
+            of: configuration.general.signal, options: .caseInsensitive)?.upperBound
         if requireSignal == true && signalIndex == nil {
             return nil
         }
@@ -56,10 +62,10 @@ struct SignalScanner {
             options: .caseInsensitive
         )
 
-
         if let platformMatch = SignalScanner.platformExpression.findFirst(in: message) {
             self.platform = platformMatch.group(at: 1)
-            message = message.replacingOccurrences(of: platformMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
+            message = message.replacingOccurrences(
+                of: platformMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         } else {
             self.platform = nil
         }
@@ -67,22 +73,39 @@ struct SignalScanner {
 
         if let oxygenMatch = SignalScanner.oxygenExpression.findFirst(in: message) {
             self.crStatus = oxygenMatch.group(at: 1)?.lowercased()
-            message = message.replacingOccurrences(of: oxygenMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
+            message = message.replacingOccurrences(
+                of: oxygenMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
         } else {
             self.crStatus = nil
         }
         message = message.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let range = message.range(of: "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b", options: .regularExpression) {
+        if let expMatch = SignalScanner.expansionExpression.findFirst(in: message) {
+            self.expansion = expMatch.group(at: 1)?.lowercased()
+            message = message.replacingOccurrences(
+                of: expMatch.group(at: 0)!, with: "|", options: .caseInsensitive)
+        }
+        message = message.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let range = message.range(
+            of: "\\b(?:system(?:\\: )?)?([A-Z][A-Za-z0-9- ]+)\\b", options: .regularExpression) {
             self.system = String(message[range])
         } else {
             self.system = nil
         }
-        if self.system == nil, let firstItem = message.firstIndex(of: "|") {
-            let probableSystem = message[message.startIndex...firstItem].dropLast().trimmingCharacters(in: .whitespaces)
-            if probableSystem.components(separatedBy: " ").count < 3 && probableSystem.count > 2 {
-                self.system = String(probableSystem)
-            }
+
+        if self.system == nil {
+            self.system = message.components(separatedBy: "|").reduce(
+                nil,
+                { (system: String?, currentComponent: String) -> String? in
+                    let probableSystem = currentComponent.trimmingCharacters(
+                        in: CharacterSet.whitespaces.union(CharacterSet.punctuationCharacters))
+                    if probableSystem.components(separatedBy: " ").count < 6
+                        && probableSystem.count > 0 {
+                        return probableSystem
+                    }
+                    return system
+                })
         }
     }
 }
