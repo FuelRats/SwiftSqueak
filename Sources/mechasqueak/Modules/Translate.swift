@@ -334,12 +334,14 @@ class Translate: IRCBotModule {
             targetCode = locale.languageCode ?? "en"
         }
 
+        let targetLanguage = locale.englishDescription
+
         let prompt = OpenAIMessage(
             role: .system,
             content:
                 """
                 You are a bot translating text for the Fuel Rats who helps stranded players in Elite Dangerous. 
-                Translate to \(targetCode). JSON only: 
+                Translate to \(targetCode) (\(targetLanguage)) JSON only: 
                 {"source_language":"ISO code","translated_text":"translation","confidence":0.0-1.0}
                 """
         )
