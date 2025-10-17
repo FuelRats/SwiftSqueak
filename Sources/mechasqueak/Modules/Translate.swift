@@ -334,7 +334,7 @@ class Translate: IRCBotModule {
             targetCode = locale.languageCode ?? "en"
         }
 
-        let targetLanguage = locale.englishDescription
+        let targetLanguage = locale.englishDescription ?? ""
 
         let prompt = OpenAIMessage(
             role: .system,
