@@ -201,7 +201,7 @@
     "rescue.pwreminder": "Hi %{nick}, you seem to have some unfiled paperwork: %{rescues}. I recommend you do them, or suffer the consequences.",
     "rescue.pwreminder.meme": "Hi %{nick}, you seem to have some unfiled paperwork: %{rescues}. I recommend you do them, or suffer the consequences.",
     "rescue.pwreminder.rescue": "client \"%{client}\" %{timeAgo} ago (%{link})",
-    "rescue.pwreminder.special": "%{nick} has failed to do their paperwork, %{snickers} of their snickers have been sent to the shadow realm",
+    "rescue.pwreminder.special": "%{nick} has failed to do their paperwork, %{snickers} of their snickers have been sent to the Ratlympics prize pool",
     "rescue.closed.invalid": "Could not list recently closed cases, !closed takes an optional number between 1 and 10.",
     "rescue.closed.error": "Failed to look up recently closed cases due to an error in the rescue server.",
     "rescue.closed.list": "Listing the %{count} most recently closed rescues:",
