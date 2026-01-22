@@ -35,9 +35,10 @@ struct OpenAI {
             name: "Authorization", value: "Bearer \(configuration.openAIToken ?? "")")
         request.headers.add(name: "Content-Type", value: "application/json")
         let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
         let data = try encoder.encode(params)
         request.body = .data(data)
+
+        print("[OpenAI] Request: \(String(data: data, encoding: .utf8) ?? "unable to decode")")
 
         return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
     }
@@ -54,20 +55,79 @@ struct OpenAIMessage: Codable {
     }
 }
 
+struct OpenAIResponseFormat: Codable {
+    let type: String
+    let jsonSchema: JSONSchemaSpec
+
+    enum CodingKeys: String, CodingKey {
+        case type
+        case jsonSchema = "json_schema"
+    }
+
+    struct JSONSchemaSpec: Codable {
+        let name: String
+        let strict: Bool
+        let schema: JSONSchema
+    }
+
+    struct JSONSchema: Codable {
+        let type: String
+        let properties: [String: JSONSchemaProperty]
+        let required: [String]
+        let additionalProperties: Bool
+
+        // Explicit keys to prevent snake_case conversion for JSON Schema keywords
+        enum CodingKeys: String, CodingKey {
+            case type
+            case properties
+            case required
+            case additionalProperties
+        }
+    }
+
+    struct JSONSchemaProperty: Codable {
+        let type: String
+        let description: String?
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case description
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(type, forKey: .type)
+            if let description = description {
+                try container.encode(description, forKey: .description)
+            }
+        }
+    }
+}
+
 struct OpenAIRequest: Codable {
     let model: String
     let temperature: Double
     let maxTokens: Int?
     let messages: [OpenAIMessage]
+    let responseFormat: OpenAIResponseFormat?
+
+    enum CodingKeys: String, CodingKey {
+        case model
+        case temperature
+        case maxTokens = "max_tokens"
+        case messages
+        case responseFormat = "response_format"
+    }
 
     init(
         messages: [OpenAIMessage], model: String = "gpt-4o", temperature: Double = 1.0,
-        maxTokens: Int? = nil
+        maxTokens: Int? = nil, responseFormat: OpenAIResponseFormat? = nil
     ) {
         self.model = model
         self.temperature = temperature
         self.maxTokens = maxTokens
         self.messages = messages
+        self.responseFormat = responseFormat
     }
 }
 
