@@ -597,6 +597,8 @@ class SystemsAPI {
                     && (legacyStations == false || $0.type?.isPlayerStation == false)
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
+                        && $0.services.contains("Refuel")
+                        && $0.services.contains("Repair")
                 }
                 let maxDistance = stations.map { $0.distance ?? defaultMaxDistance }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
