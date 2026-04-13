@@ -40,7 +40,14 @@ struct OpenAI {
 
         print("[OpenAI] Request: \(String(data: data, encoding: .utf8) ?? "unable to decode")")
 
-        return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
+        do {
+            return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
+        } catch {
+            mecha.reportingChannel?.send(
+                message: "⚠️ OpenAI API error: \(error.localizedDescription) - SuperManifolds"
+            )
+            throw error
+        }
     }
 }
 
