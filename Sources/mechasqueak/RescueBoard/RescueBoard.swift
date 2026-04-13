@@ -103,7 +103,7 @@ actor RescueBoard {
         return await self.isSynced
     }
     
-    nonisolated func getRescues () async -> [Int: Rescue] {
+    nonisolated func getRescues() async -> [Int: Rescue] {
         return await self.rescues
     }
     
@@ -331,7 +331,7 @@ actor RescueBoard {
         })
     }
     
-    func restoreRecentlyClosed (id: UUID) async -> Int? {
+    func restoreRecentlyClosed(id: UUID) async -> Int? {
         guard let result = try? await FuelRatsAPI.getRescue(id: id) else {
             return nil
         }
@@ -510,7 +510,7 @@ actor RescueBoard {
         try? rescue.save(nil)
     }
     
-    func generateSignal (caseId: Int, rescue: Rescue, initiated: RescueInitiationType) throws -> String {
+    func generateSignal(caseId: Int, rescue: Rescue, initiated: RescueInitiationType) throws -> String {
         let language = (rescue.clientLanguage ?? Locale(identifier: "en")).englishDescription
         let languageCode = (rescue.clientLanguage ?? Locale(identifier: "en")).identifier
         guard rescue.system != nil else {
@@ -589,7 +589,7 @@ actor RescueBoard {
         return false
     }
     
-    func schedulePrepTimer (rescue: Rescue) {
+    func schedulePrepTimer(rescue: Rescue) {
         let rescueId = rescue.id
         self.prepTimers[rescue.id] = loop.next().scheduleTask(
             in: .seconds(180), { @Sendable in
@@ -1133,7 +1133,7 @@ extension AsyncSequence {
     }
 }
 
-func performXboxProfileCheck (rescue: Rescue) async -> Bool {
+func performXboxProfileCheck(rescue: Rescue) async -> Bool {
     rescue.xboxProfile = await XboxLive.performLookup(forRescue: rescue)
     if let systemName = rescue.xboxProfile?.systemName,
         systemName.lowercased() != rescue.system.name.lowercased() {
@@ -1143,7 +1143,7 @@ func performXboxProfileCheck (rescue: Rescue) async -> Bool {
     return false
 }
 
-func notifyXboxSystemCorrection (caseId: Int, rescue: Rescue) {
+func notifyXboxSystemCorrection(caseId: Int, rescue: Rescue) {
     rescue.channel?.send(key:
         "board.xboxsyschange",
         map: [
@@ -1165,7 +1165,7 @@ func notifyXboxSystemCorrection (caseId: Int, rescue: Rescue) {
     )
 }
 
-func checkSystemBodyInClientMessage (caseId: Int, rescue: Rescue) {
+func checkSystemBodyInClientMessage(caseId: Int, rescue: Rescue) {
     if let system = rescue.system, let systemBody = rescue.system?.clientProvidedBody {
         let bodyDescription = system.systemBodyDescription(forBody: systemBody)
         rescue.channel?.send(key:
@@ -1186,7 +1186,7 @@ func checkSystemBodyInClientMessage (caseId: Int, rescue: Rescue) {
     }
 }
 
-func checkThargoidSystemState (caseId: Int, rescue: Rescue) {
+func checkThargoidSystemState(caseId: Int, rescue: Rescue) {
     if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
         rescue.channel?.send(key:
             "board.systemattack",
@@ -1206,7 +1206,7 @@ func checkThargoidSystemState (caseId: Int, rescue: Rescue) {
     }
 }
 
-func checkUnobtainablePermitSystem (caseId: Int, rescue: Rescue) {
+func checkUnobtainablePermitSystem(caseId: Int, rescue: Rescue) {
     if let system = rescue.system, system.isUnobtainablePermitSystem {
         rescue.channel?.send(key:
             "board.unobtainablepermit",
@@ -1226,7 +1226,7 @@ func checkUnobtainablePermitSystem (caseId: Int, rescue: Rescue) {
     }
 }
 
-func checkXboxPrivacy (caseId: Int, rescue: Rescue) {
+func checkXboxPrivacy(caseId: Int, rescue: Rescue) {
     if case let .found(xboxProfile) = rescue.xboxProfile {
         if xboxProfile.privacy.isAllowed == false {
             
@@ -1252,7 +1252,7 @@ func checkXboxPrivacy (caseId: Int, rescue: Rescue) {
     }
 }
 
-func checkPSPlusMissing (caseId: Int, rescue: Rescue) {
+func checkPSPlusMissing(caseId: Int, rescue: Rescue) {
     if case .found = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
         if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
             rescue.channel?.send(key: "board.psplusmissing", map: [

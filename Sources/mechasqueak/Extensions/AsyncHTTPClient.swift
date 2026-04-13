@@ -35,7 +35,7 @@ extension HTTPClient {
         return decoder
     }
     
-    func execute <T: AnyRange> (
+    func execute<T: AnyRange>(
         request: Request,
         deadline: NIODeadline? = .now() + .seconds(5),
         expecting statusCode: T
@@ -57,7 +57,7 @@ extension HTTPClient {
         })
     }
     
-    func execute<D> (
+    func execute<D>(
         request: Request,
         forDecodable decodable: D.Type,
         deadline: NIODeadline? = .now() + .seconds(5),
@@ -115,14 +115,14 @@ private let sAllowedCharacters: CharacterSet = {
     return allowed
 }()
 
-private func urlEscape (_ str: String) -> String {
+private func urlEscape(_ str: String) -> String {
     return str.replacingOccurrences(of: "\n", with: "\r\n")
         .addingPercentEncoding(withAllowedCharacters: sAllowedCharacters)!
         .replacingOccurrences(of: " ", with: "+")
 }
 
 extension HTTPClient.Body {
-    static func encodable<T: Encodable> (_ object: T) throws -> HTTPClient.Body {
+    static func encodable<T: Encodable>(_ object: T) throws -> HTTPClient.Body {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         return .data(try encoder.encode(object))

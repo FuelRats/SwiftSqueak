@@ -257,7 +257,7 @@ private func checkRatPlatformMismatch(
     }
 }
 
-private func handleJumpCall (
+private func handleJumpCall(
     jumpCallMatch: Match,
     channelMessage: IRCChannelMessageNotification.Payload,
     casesUpdatedForMessage: [Rescue]

@@ -42,7 +42,7 @@ struct MechaConfiguration: Codable {
     let openAIToken: String?
     let webServer: WebServerConfiguration?
     
-    func save () throws {
+    func save() throws {
         let configEncoder = JSONEncoder()
         configEncoder.outputFormatting = .prettyPrinted
         let json = try configEncoder.encode(self)
