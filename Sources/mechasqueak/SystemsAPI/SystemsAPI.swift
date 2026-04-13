@@ -725,6 +725,8 @@ class SystemsAPI {
                     case Settlement = "Odyssey Settlement"
                     case OrbitalConstructionSite = "Orbital Construction Site"
                     case PlanetaryConstructionSite = "Planetary Construction Site"
+                    case CraterPort = "Crater Port"
+                    case DodecStarport = "Dodec Starport"
 
                     nonisolated(unsafe) static var brokenDataMapping: [String: String] = [
                         "Coriolis": "Coriolis Starport",
@@ -736,7 +738,9 @@ class SystemsAPI {
                         "PlanetaryConstructionDepot": "Planetary Construction Depot",
                         "AsteroidBase": "Asteroid base",
                         "OnFootSettlement": "Odyssey Settlement",
-                        "MegaShip": "Mega ship"
+                        "MegaShip": "Mega ship",
+                        "CraterPort": "Crater Port",
+                        "Dodec": "Dodec Starport"
                     ]
 
                     init(from decoder: Decoder) throws {
@@ -772,7 +776,9 @@ class SystemsAPI {
                         .Outpost: 6,
                         .Settlement: 7,
                         .SystemColonizationShip: 7,
-                        .PlanetaryConstructionDepot: 7
+                        .PlanetaryConstructionDepot: 7,
+                        .CraterPort: 2,
+                        .DodecStarport: 0
                     ]
 
                     var rating: UInt {
@@ -792,7 +798,9 @@ class SystemsAPI {
                             StationType.SpaceConstructionDepot,
                             StationType.SystemColonizationShip,
                             StationType.OrbitalConstructionSite,
-                            StationType.PlanetaryConstructionDepot
+                            StationType.PlanetaryConstructionDepot,
+                            StationType.CraterPort,
+                            StationType.DodecStarport
                         ].contains(self)
                     }
 
@@ -813,7 +821,8 @@ class SystemsAPI {
                             StationType.PlanetaryOutpost,
                             StationType.PlanetaryConstructionSite,
                             StationType.Settlement,
-                            StationType.PlanetaryConstructionDepot
+                            StationType.PlanetaryConstructionDepot,
+                            StationType.CraterPort
                         ].contains(self)
                     }
                 }
