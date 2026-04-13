@@ -24,7 +24,6 @@
 
 import Foundation
 import IRCKit
-import DefaultCodable
 
 struct MechaConfiguration: Codable {
     let general: GeneralConfiguration
@@ -54,16 +53,14 @@ struct GeneralConfiguration: Codable {
     let signal: String
     let rescueChannel: String
     let reportingChannel: String
-    @Default<False>
-    var drillMode: Bool
+    var drillMode: Bool = false
     let drillChannels: [String]
     let ratDenylist: [String]
     let dispatchDenylist: [String]
     let cooldownExceptionChannels: [String]
 
     let operLogin: [String]?
-    @Default<False>
-    var debug: Bool
+    var debug: Bool = false
 }
 
 struct QueueConfiguration: Codable {
