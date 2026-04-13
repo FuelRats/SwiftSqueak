@@ -1,0 +1,93 @@
+version: "3.8"
+
+services:
+  mechasqueak:
+    image: fuelrats/mechasqueak:latest
+    build: .
+    ports:
+      - "${WEB_PORT:-8080}:${WEB_PORT:-8080}"
+    volumes:
+      - mechasqueak-data:/data
+    environment:
+      - SOURCE_PATH=/app
+      - IRC_SERVER_NAME=${IRC_SERVER_NAME}
+      - IRC_SERVER_HOST=${IRC_SERVER_HOST}
+      - IRC_SERVER_PORT=${IRC_SERVER_PORT:-6697}
+      - IRC_NICKNAME=${IRC_NICKNAME}
+      - IRC_CHANNELS=${IRC_CHANNELS}
+      - GENERAL_SIGNAL=${GENERAL_SIGNAL}
+      - GENERAL_RESCUE_CHANNEL=${GENERAL_RESCUE_CHANNEL}
+      - GENERAL_REPORTING_CHANNEL=${GENERAL_REPORTING_CHANNEL}
+      - GENERAL_DRILL_MODE=${GENERAL_DRILL_MODE:-false}
+      - GENERAL_DRILL_CHANNELS=${GENERAL_DRILL_CHANNELS:-}
+      - GENERAL_RAT_DENYLIST=${GENERAL_RAT_DENYLIST:-}
+      - GENERAL_DISPATCH_DENYLIST=${GENERAL_DISPATCH_DENYLIST:-}
+      - GENERAL_COOLDOWN_EXCEPTION_CHANNELS=${GENERAL_COOLDOWN_EXCEPTION_CHANNELS:-}
+      - GENERAL_DEBUG=${GENERAL_DEBUG:-false}
+      - API_URL=${API_URL}
+      - API_WEBSOCKET=${API_WEBSOCKET:-}
+      - QUEUE_URL=${QUEUE_URL:-}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+      - SHORTENER_URL=${SHORTENER_URL}
+      - WEB_HOST=${WEB_HOST:-0.0.0.0}
+      - WEB_PORT=${WEB_PORT:-8080}
+      - CHRONO_NODE_PATH=${CHRONO_NODE_PATH:-/usr/bin/node}
+      - CHRONO_FILE=${CHRONO_FILE:-/usr/lib/node_modules/chrono-node/dist/index.js}
+    secrets:
+      - irc_server_password
+      - irc_auth_username
+      - irc_auth_password
+      - api_user_id
+      - api_token
+      - queue_token
+      - db_username
+      - db_password
+      - shortener_signature
+      - xbox_client_id
+      - xbox_client_secret
+      - mastodon_token
+      - bluesky_handle
+      - bluesky_app_password
+      - openai_token
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+
+volumes:
+  mechasqueak-data:
+
+secrets:
+  irc_server_password:
+    external: true
+  irc_auth_username:
+    external: true
+  irc_auth_password:
+    external: true
+  api_user_id:
+    external: true
+  api_token:
+    external: true
+  queue_token:
+    external: true
+  db_username:
+    external: true
+  db_password:
+    external: true
+  shortener_signature:
+    external: true
+  xbox_client_id:
+    external: true
+  xbox_client_secret:
+    external: true
+  mastodon_token:
+    external: true
+  bluesky_handle:
+    external: true
+  bluesky_app_password:
+    external: true
+  openai_token:
+    external: true

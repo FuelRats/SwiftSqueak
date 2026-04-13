@@ -23,17 +23,11 @@
  */
 
 @preconcurrency import AsyncHTTPClient
-import Backtrace
 import Foundation
 @preconcurrency import IRCKit
 @preconcurrency import Lingo
 import NIO
 import SQLKit
-
-let processId = ProcessInfo.processInfo.processIdentifier
-try "\(processId)".write(
-    toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true,
-    encoding: .utf8)
 
 let httpClient = HTTPClient(
     eventLoopGroupProvider: .singleton,
@@ -42,34 +36,17 @@ let httpClient = HTTPClient(
         timeout: .init(connect: .seconds(5), read: .seconds(180))
     ))
 
-nonisolated(unsafe) var configPath = URL(
-    fileURLWithPath: FileManager.default.currentDirectoryPath
-).appendingPathComponent("config.json")
-if CommandLine.arguments.count > 1 {
-    configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-}
-
-func loadConfiguration() throws -> MechaConfiguration {
-    guard let configData = try? Data(contentsOf: configPath) else {
-        fatalError("Could not locate configuration file in \(configPath.absoluteString)")
-    }
-
-    let configDecoder = JSONDecoder()
-    return try configDecoder.decode(MechaConfiguration.self, from: configData)
-}
-
 func debug(_ output: String) {
     if configuration.general.debug == true {
         print(output)
     }
 }
 
-nonisolated(unsafe) var configuration = try loadConfiguration()
+nonisolated(unsafe) var configuration = MechaConfiguration.fromEnvironment()
 nonisolated(unsafe) let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 class MechaSqueak: @unchecked Sendable {
-    let configPath: URL
     nonisolated(unsafe) static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
     nonisolated(unsafe) static let accounts = NicknameLookupManager()
@@ -90,12 +67,6 @@ class MechaSqueak: @unchecked Sendable {
     var sqliteDatabase: SQLDatabase?
 
     init() {
-        var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        if CommandLine.arguments.count > 1 {
-            configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-        }
-        self.configPath = configPath
-
         self.startupTime = Date()
 
         self.connections = configuration.connections.map({

@@ -69,7 +69,9 @@ struct PlaystationNetwork {
         let response = try decoder.decode(RefreshTokenResponse.self, from: result)
         configuration.psn?.token = response.accessToken
         configuration.psn?.refreshToken = response.refreshToken
-        try configuration.save()
+        // Persist refreshed PSN tokens to volume
+        let data = try JSONEncoder().encode(configuration.psn)
+        try data.write(to: URL(fileURLWithPath: "/data/psn_tokens.json"))
     }
 
     static func performRetryingProfileLookup(name: String, retried: Bool = false) async

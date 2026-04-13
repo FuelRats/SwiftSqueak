@@ -90,7 +90,15 @@ struct XboxLive {
         configuration.xbox?.xuid = xstsToken.DisplayClaims.xui.first!.xid
         configuration.xbox?.uhs = xstsToken.DisplayClaims.xui.first!.uhs
         configuration.xbox?.token = xstsToken.Token
-        try configuration.save()
+        // Persist refreshed Xbox tokens to volume
+        let tokens = XboxTokens(
+            xuid: configuration.xbox!.xuid,
+            uhs: configuration.xbox!.uhs,
+            token: configuration.xbox!.token,
+            refreshToken: configuration.xbox!.refreshToken
+        )
+        let data = try JSONEncoder().encode(tokens)
+        try data.write(to: URL(fileURLWithPath: "/data/xbox_tokens.json"))
     }
 
     static func getUserPresence(xuid: String) async throws -> UserPresenceRequest? {
