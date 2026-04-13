@@ -376,6 +376,17 @@ class BoardCommands: IRCBotModule {
             return
         }
 
+        if carrier {
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.user.nickname,
+                    message: "This rescue has been assigned a fleet carrier",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.user.nickname
+                ))
+        }
+
         do {
             try await rescue.close(
                 firstLimpet: firstLimpet, paperworkOnly: pwOnly, command: command)
