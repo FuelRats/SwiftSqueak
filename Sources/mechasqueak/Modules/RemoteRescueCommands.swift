@@ -218,14 +218,17 @@ class RemoteRescueCommands: IRCBotModule {
 
     @BotCommand(
         ["trashlist", "mdlist", "purgelist", "listtrash"],
+        [.param("limit", "10", .standard, .optional)],
         category: .rescues,
         description:
-            "Shows all the rescues that have been added to the trash list but not yet deleted",
+            "Shows the most recent rescues in the trash list (default 10, max 100)",
         permission: .DispatchRead
     )
     var didReceiveListTrashcommand = { command in
+        let limit = min(Int(command.parameters[safe: 0] ?? "10") ?? 10, 100)
+
         do {
-            let results = try await FuelRatsAPI.getRescuesInTrash()
+            let results = try await FuelRatsAPI.getRescuesInTrash(limit: limit)
 
             let rescues = results.body.data!.primary.values
             guard rescues.count > 0 else {

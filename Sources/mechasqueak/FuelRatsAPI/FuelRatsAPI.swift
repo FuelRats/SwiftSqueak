@@ -109,12 +109,14 @@ class FuelRatsAPI {
         return try await FuelRatsAPI.rescueSearch(query: query)
     }
 
-    static func getRescuesInTrash() async throws -> RescueSearchDocument {
-        let query = [
+    static func getRescuesInTrash(limit: Int = 10) async throws -> RescueSearchDocument {
+        let query: [String: String?] = [
             "filter": [
                 "status": ["eq": "closed"],
                 "outcome": "purge"
-            ].jsonString
+            ].jsonString,
+            "sort": "-updatedAt",
+            "limit": String(limit)
         ]
 
         return try await FuelRatsAPI.rescueSearch(query: query)
