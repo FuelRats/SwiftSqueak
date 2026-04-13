@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -57,10 +57,13 @@ let package = Package(
                 .product(name: "HTMLKit", package: "HTMLKit"),
                 .product(name: "Markdown", package: "swift-markdown"),
             ],
+            swiftSettings: [.swiftLanguageMode(.v5)]
             //plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
             name: "mechasqueakTests",
-            dependencies: ["mechasqueak"]),
+            dependencies: ["mechasqueak"],
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
     ]
 )
