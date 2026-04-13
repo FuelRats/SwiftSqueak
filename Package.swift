@@ -2,6 +2,25 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import Foundation
+
+let cssFiles: [String] = {
+    let fm = FileManager.default
+    let sourcesDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .appendingPathComponent("Sources/mechasqueak")
+    guard let enumerator = fm.enumerator(
+        at: sourcesDir,
+        includingPropertiesForKeys: nil
+    ) else { return [] }
+    var result: [String] = []
+    while let url = enumerator.nextObject() as? URL {
+        if url.pathExtension == "css" {
+            result.append(url.path.replacingOccurrences(
+                of: sourcesDir.path + "/", with: ""))
+        }
+    }
+    return result
+}()
 
 let package = Package(
     name: "mechasqueak",
@@ -57,6 +76,7 @@ let package = Package(
                 .product(name: "HTMLKit", package: "HTMLKit"),
                 .product(name: "Markdown", package: "swift-markdown"),
             ],
+            exclude: cssFiles,
             swiftSettings: [.swiftLanguageMode(.v5)]
             //plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
