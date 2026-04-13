@@ -133,7 +133,7 @@ class Translate: IRCBotModule {
             return
         }
         var locale = rescue.clientLanguage ?? command.locale
-        if command.locale.languageCode != "en" {
+        if command.locale.language.languageCode?.identifier != "en" {
             locale = command.locale
         }
         if locale.englishDescription == "unknown locale" {
@@ -374,7 +374,7 @@ class Translate: IRCBotModule {
 
         var targetCode = "en"
         if let locale = locale {
-            targetCode = locale.languageCode ?? "en"
+            targetCode = locale.language.languageCode?.identifier ?? "en"
         }
 
         let targetLanguage = locale?.englishDescription ?? ""
@@ -452,7 +452,7 @@ class Translate: IRCBotModule {
         else {
             return
         }
-        guard rescue.clientLanguage?.languageCode != "en" else {
+        guard rescue.clientLanguage?.language.languageCode?.identifier != "en" else {
             return
         }
 

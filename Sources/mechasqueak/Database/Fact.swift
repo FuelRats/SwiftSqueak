@@ -23,15 +23,17 @@ import NIO
 @preconcurrency import PostgresKit
 @preconcurrency import SQLKit
 
-nonisolated(unsafe) let sqlConfiguration = PostgresConfiguration(
+nonisolated(unsafe) let sqlConfiguration = SQLPostgresConfiguration(
     hostname: configuration.database.host,
+    port: Int(configuration.database.port),
     username: configuration.database.username,
     password: configuration.database.password,
-    database: configuration.database.database
+    database: configuration.database.database,
+    tls: .disable
 )
 
 nonisolated(unsafe) let pools = EventLoopGroupConnectionPool(
-    source: PostgresConnectionSource(configuration: sqlConfiguration),
+    source: PostgresConnectionSource(sqlConfiguration: sqlConfiguration),
     on: loop
 )
 let sql = pools.database(logger: Logger(label: "SQL")).sql()
