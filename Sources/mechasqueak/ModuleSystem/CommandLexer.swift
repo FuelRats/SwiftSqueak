@@ -162,13 +162,14 @@ struct IRCBotCommand {
     }
 
     var isRepeatInvocation: Bool {
-        let previousIncoation = IRCBotModuleManager.commandHistory.elements.reversed().first(
+        let previousInvocation = IRCBotModuleManager.commandHistory.elements.reversed().first(
             where: {
                 $0.id != self.id && $0.command == self.command && $0.parameters == self.parameters
+                    && $0.options == self.options && $0.arguments == self.arguments
                     && $0.message.user.nickname == self.message.user.nickname
             })
-        return previousIncoation != nil
-            && Date().timeIntervalSince(previousIncoation!.message.raw.time) < 30
+        return previousInvocation != nil
+            && Date().timeIntervalSince(previousInvocation!.message.raw.time) < 30
     }
     
     var param1: String? {
