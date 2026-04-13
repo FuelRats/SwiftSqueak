@@ -26,10 +26,10 @@ import AsyncHTTPClient
 import Foundation
 import IRCKit
 import NIO
-import Regex
+@preconcurrency import Regex
 
-class Rescue {
-    private static let announcerExpression =
+class Rescue: @unchecked Sendable {
+    nonisolated(unsafe) private static let announcerExpression =
     // swiftlint:disable:next line_length
         "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( (Horizons 3.8|Horizons 4.0|Odyssey))? - O2: (.*) - Language: .* \\(([a-z]{2,3}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?"
         .r!

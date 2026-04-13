@@ -23,9 +23,9 @@
  */
 
 import Foundation
-import IRCKit
+@preconcurrency import IRCKit
 
-struct MechaConfiguration: Codable {
+struct MechaConfiguration: Codable, Sendable {
     let general: GeneralConfiguration
     let connections: [IRCClientConfiguration]
     let api: FuelRatsAPIConfiguration
@@ -49,7 +49,7 @@ struct MechaConfiguration: Codable {
     }
 }
 
-struct GeneralConfiguration: Codable {
+struct GeneralConfiguration: Codable, Sendable {
     let signal: String
     let rescueChannel: String
     let reportingChannel: String
@@ -63,19 +63,19 @@ struct GeneralConfiguration: Codable {
     var debug: Bool = false
 }
 
-struct QueueConfiguration: Codable {
+struct QueueConfiguration: Codable, Sendable {
     let url: URL
     let token: String
 }
 
-struct FuelRatsAPIConfiguration: Codable {
+struct FuelRatsAPIConfiguration: Codable, Sendable {
     let url: URL
     let websocket: URL?
     let userId: UUID
     let token: String
 }
 
-struct DatabaseConfiguration: Codable {
+struct DatabaseConfiguration: Codable, Sendable {
     let host: String
     let port: Int32
     let database: String
@@ -84,12 +84,12 @@ struct DatabaseConfiguration: Codable {
     let password: String?
 }
 
-struct URLShortenerConfiguration: Codable {
+struct URLShortenerConfiguration: Codable, Sendable {
     let url: URL
     let signature: String
 }
 
-struct XboxLiveConfiguration: Codable {
+struct XboxLiveConfiguration: Codable, Sendable {
     var xuid: String
     var uhs: String
     var token: String
@@ -98,27 +98,27 @@ struct XboxLiveConfiguration: Codable {
     let clientSecret: String
 }
 
-struct PlayStationNetworkConfiguration: Codable {
+struct PlayStationNetworkConfiguration: Codable, Sendable {
     var token: String
     var refreshToken: String
     var basicAuth: String
 }
 
-struct ChronoConfiguration: Codable {
+struct ChronoConfiguration: Codable, Sendable {
     let nodePath: String
     let file: String
 }
 
-struct MastodonConfiguration: Codable {
+struct MastodonConfiguration: Codable, Sendable {
     let token: String
 }
 
-struct BlueSkyConfiguration: Codable {
+struct BlueSkyConfiguration: Codable, Sendable {
     let handle: String
     let appPassword: String
 }
 
-struct WebServerConfiguration: Codable {
+struct WebServerConfiguration: Codable, Sendable {
     let host: String
     let port: Int
 }

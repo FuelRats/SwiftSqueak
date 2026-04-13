@@ -39,7 +39,7 @@ enum RatSocketEventType: String {
 
 struct WebSocket {}
 
-class RatSocket {
+class RatSocket: @unchecked Sendable {
     var connectedAndAuthenticated = false
     var socket: WebSocketKit.WebSocket?
 
@@ -172,7 +172,7 @@ struct GenericSocketData: Decodable {
     }
 }
 
-struct RatSocketEvent<Body: Decodable>: Decodable {
+struct RatSocketEvent<Body: Decodable>: Decodable, @unchecked Sendable {
     let event: String
     let sender: UUID
     let resourceIdentifier: String?

@@ -18,19 +18,19 @@
  */
 
 import Foundation
-import IRCKit
+@preconcurrency import IRCKit
 import NIO
-import PostgresKit
-import SQLKit
+@preconcurrency import PostgresKit
+@preconcurrency import SQLKit
 
-let sqlConfiguration = PostgresConfiguration(
+nonisolated(unsafe) let sqlConfiguration = PostgresConfiguration(
     hostname: configuration.database.host,
     username: configuration.database.username,
     password: configuration.database.password,
     database: configuration.database.database
 )
 
-let pools = EventLoopGroupConnectionPool(
+nonisolated(unsafe) let pools = EventLoopGroupConnectionPool(
     source: PostgresConnectionSource(configuration: sqlConfiguration),
     on: loop
 )
@@ -40,7 +40,7 @@ struct Fact: Codable, Hashable {
     static let platformFacts = [
         "wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team", "open"
     ]
-    private static var cache = [String: Fact]()
+    nonisolated(unsafe) private static var cache = [String: Fact]()
 
     var id: String
     var fact: String

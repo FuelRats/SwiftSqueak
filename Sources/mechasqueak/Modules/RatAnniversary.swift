@@ -27,8 +27,8 @@ import IRCKit
 
 class RatAnniversary: IRCBotModule {
     var name: String = "Rat Anniversary"
-    static var birthdayAnnounced = Set<UUID>()
-    static var fuelRatsAnniversaryAnnounced = false
+    nonisolated(unsafe) static var birthdayAnnounced = Set<UUID>()
+    nonisolated(unsafe) static var fuelRatsAnniversaryAnnounced = false
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)

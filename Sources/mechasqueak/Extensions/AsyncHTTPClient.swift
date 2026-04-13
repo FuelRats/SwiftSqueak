@@ -35,7 +35,7 @@ extension HTTPClient {
         return decoder
     }
     
-    func execute<T: AnyRange>(
+    func execute<T: AnyRange & Sendable>(
         request: Request,
         deadline: NIODeadline? = .now() + .seconds(5),
         expecting statusCode: T

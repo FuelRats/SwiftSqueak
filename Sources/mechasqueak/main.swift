@@ -22,15 +22,13 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import AsyncHTTPClient
+@preconcurrency import AsyncHTTPClient
 import Backtrace
 import Foundation
-import IRCKit
-import Lingo
+@preconcurrency import IRCKit
+@preconcurrency import Lingo
 import NIO
 import SQLKit
-
-Backtrace.install()
 
 let processId = ProcessInfo.processInfo.processIdentifier
 try "\(processId)".write(
@@ -44,7 +42,7 @@ let httpClient = HTTPClient(
         timeout: .init(connect: .seconds(5), read: .seconds(180))
     ))
 
-var configPath = URL(
+nonisolated(unsafe) var configPath = URL(
     fileURLWithPath: FileManager.default.currentDirectoryPath
 ).appendingPathComponent("config.json")
 if CommandLine.arguments.count > 1 {
@@ -66,15 +64,15 @@ func debug(_ output: String) {
     }
 }
 
-var configuration = try loadConfiguration()
-let lingo = try Lingo(
+nonisolated(unsafe) var configuration = try loadConfiguration()
+nonisolated(unsafe) let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
-class MechaSqueak {
+class MechaSqueak: @unchecked Sendable {
     let configPath: URL
-    static var commands: [IRCBotCommandDeclaration] = []
+    nonisolated(unsafe) static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
-    static let accounts = NicknameLookupManager()
+    nonisolated(unsafe) static let accounts = NicknameLookupManager()
     var commands: [IRCBotModule]
     let connections: [IRCClient]
     var rescueChannel: IRCChannel?
@@ -86,7 +84,7 @@ class MechaSqueak {
     var sectors: [StarSector] = []
     var groups: [Group] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
-    static var lastDeltaMessageTime: Date?
+    nonisolated(unsafe) static var lastDeltaMessageTime: Date?
     let ratSocket: RatSocket?
     var webServer: WebServer?
     var sqliteDatabase: SQLDatabase?
@@ -141,7 +139,7 @@ class MechaSqueak {
 
         ratSocket = RatSocket()
 
-        Task {
+        Task { @MainActor in
             if let webServerConfiguration = configuration.webServer {
                 do {
                     self.webServer = try await WebServer(configuration: webServerConfiguration)

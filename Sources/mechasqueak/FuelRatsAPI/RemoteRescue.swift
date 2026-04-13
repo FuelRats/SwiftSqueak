@@ -86,7 +86,7 @@ struct RescueData: Codable, Equatable {
     var clientLastHostname: String?
 }
 
-struct RescueQuote: Codable, Equatable {
+struct RescueQuote: Codable, Equatable, Sendable {
     var author: String
     var message: String
     var createdAt: Date
@@ -94,14 +94,14 @@ struct RescueQuote: Codable, Equatable {
     var lastAuthor: String
 }
 
-enum RescueStatus: String, Codable {
+enum RescueStatus: String, Codable, Sendable {
     case Open = "open"
     case Inactive = "inactive"
     case Queued = "queued"
     case Closed = "closed"
 }
 
-enum RescueOutcome: String, Codable {
+enum RescueOutcome: String, Codable, Sendable {
     case Success = "success"
     case Failure = "failure"
     case Invalid = "invalid"
@@ -109,7 +109,7 @@ enum RescueOutcome: String, Codable {
     case Purge = "purge"
 }
 
-struct JumpCall: Codable {
+struct JumpCall: Codable, Sendable {
     let name: String
     let jumps: UInt
     let remark: String?

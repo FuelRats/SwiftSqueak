@@ -343,7 +343,7 @@ class HelpCommands: IRCBotModule {
     }
 }
 
-enum HelpCategory: String, CaseIterable {
+enum HelpCategory: String, CaseIterable, Sendable {
     case board
     case rescues
     case queue

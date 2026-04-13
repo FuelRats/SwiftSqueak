@@ -77,13 +77,11 @@ let package = Package(
                 .product(name: "Markdown", package: "swift-markdown"),
             ],
             exclude: cssFiles,
-            swiftSettings: [.swiftLanguageMode(.v5)]
             //plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
             name: "mechasqueakTests",
-            dependencies: ["mechasqueak"],
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            dependencies: ["mechasqueak"]
         ),
     ]
 )

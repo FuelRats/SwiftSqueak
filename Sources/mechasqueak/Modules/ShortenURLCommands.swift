@@ -27,7 +27,7 @@ import IRCKit
 
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
-    static var ongoingShortenUrls: [String: String] = [:]
+    nonisolated(unsafe) static var ongoingShortenUrls: [String: String] = [:]
 
     @BotCommand(
         ["shorten", "short", "shortener"],

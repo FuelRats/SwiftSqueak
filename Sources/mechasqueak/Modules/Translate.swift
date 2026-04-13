@@ -28,7 +28,7 @@ import IRCKit
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
-    static var clientTranslationSubscribers: [String: ClientTranslateSubscription] = [:]
+    nonisolated(unsafe) static var clientTranslationSubscribers: [String: ClientTranslateSubscription] = [:]
 
     static var translationResponseFormat: OpenAIResponseFormat {
         OpenAIResponseFormat(

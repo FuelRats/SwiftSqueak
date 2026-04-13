@@ -22,9 +22,9 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import AsyncHTTPClient
+@preconcurrency import AsyncHTTPClient
 import Foundation
-import NIOSSL
+@preconcurrency import NIOSSL
 
 #if canImport(FoundationNetworking)
     import FoundationNetworking

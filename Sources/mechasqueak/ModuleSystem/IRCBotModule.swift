@@ -23,18 +23,18 @@
  */
 
 import Foundation
-import IRCKit
-import HTMLKit
+@preconcurrency import IRCKit
+@preconcurrency import HTMLKit
 
-enum AllowedCommandDestination {
+enum AllowedCommandDestination: Sendable {
     case Channel
     case PrivateMessage
     case All
 }
 
-typealias BotCommandFunction = (IRCBotCommand) async -> Void
+typealias BotCommandFunction = @Sendable (IRCBotCommand) async -> Void
 
-@propertyWrapper struct BotCommand {
+@propertyWrapper struct BotCommand: Sendable {
     var wrappedValue: BotCommandFunction
 
     init(
@@ -49,8 +49,8 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: DispatchTimeInterval? = nil,
         cooldownOverride: AccountPermission? = .RescueWrite,
-        helpExtra: (() -> String)? = nil,
-        helpView: (() -> Content)? = nil,
+        helpExtra: (@Sendable () -> String)? = nil,
+        helpView: (@Sendable () -> Content)? = nil,
     ) {
         self.wrappedValue = value
 
@@ -77,7 +77,7 @@ typealias BotCommandFunction = (IRCBotCommand) async -> Void
     }
 }
 
-struct IRCBotCommandDeclaration {
+struct IRCBotCommandDeclaration: @unchecked Sendable {
     let commands: [String]
     let options: OrderedSet<Character>
     let arguments: [String: String?]
@@ -91,8 +91,8 @@ struct IRCBotCommandDeclaration {
     let tags: [String]
     let helpLocale: String?
     var parameters: [CommandBody]
-    let helpExtra: (() -> String)?
-    let helpView: (() -> Content)?
+    let helpExtra: (@Sendable () -> String)?
+    let helpView: (@Sendable () -> Content)?
 
     var onCommand: BotCommandFunction?
 
@@ -103,8 +103,8 @@ struct IRCBotCommandDeclaration {
         options: OrderedSet<Character> = [],
         arguments: [String: String?] = [:],
         helpArguments: [(String, String?, String?)] = [],
-        helpExtra: (() -> String)? = nil,
-        helpView: (() -> Content)? = nil,
+        helpExtra: (@Sendable () -> String)? = nil,
+        helpView: (@Sendable () -> Content)? = nil,
         category: HelpCategory?,
         description: String,
         tags: [String] = [],
@@ -211,22 +211,24 @@ struct IRCBotCommandDeclaration {
     }
 }
 
-@propertyWrapper struct EventListener<T: NotificationDescriptor> {
-    var wrappedValue: (T.Payload) -> Void
+@propertyWrapper
+struct EventListener<T: NotificationDescriptor & Sendable>: @unchecked Sendable where T.Payload: Sendable {
+    var wrappedValue: @Sendable (T.Payload) -> Void
     let token: NotificationToken
 
-    init(wrappedValue value: @escaping (T.Payload) -> Void) {
+    nonisolated init(wrappedValue value: @escaping @Sendable (T.Payload) -> Void) {
         self.wrappedValue = value
         self.token = NotificationCenter.default.addObserver(
             descriptor: T(), using: self.wrappedValue)
     }
 }
 
-@propertyWrapper struct AsyncEventListener<T: NotificationDescriptor> {
-    var wrappedValue: (T.Payload) async -> Void
+@propertyWrapper
+struct AsyncEventListener<T: NotificationDescriptor & Sendable>: @unchecked Sendable where T.Payload: Sendable {
+    var wrappedValue: @Sendable (T.Payload) async -> Void
     let token: NotificationToken
 
-    init(wrappedValue value: @escaping (T.Payload) async -> Void) {
+    nonisolated init(wrappedValue value: @escaping @Sendable (T.Payload) async -> Void) {
         self.wrappedValue = value
         self.token = NotificationCenter.default.addAsyncObserver(
             descriptor: T(), using: self.wrappedValue)

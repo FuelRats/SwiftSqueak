@@ -23,7 +23,7 @@ import AsyncHTTPClient
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import Foundation
-import JSONAPI
+@preconcurrency import JSONAPI
 import NIO
 
 enum UserDescription: ResourceObjectDescription {

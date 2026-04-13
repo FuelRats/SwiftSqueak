@@ -8,7 +8,7 @@
 
 /// An ordered set is an ordered collection of instances of `Element` in which
 /// uniqueness of the objects is guaranteed.
-public struct OrderedSet<E: Hashable>: Equatable, Collection {
+public struct OrderedSet<E: Hashable & Sendable>: Equatable, Collection, Sendable {
     public typealias Element = E
     public typealias Index = Int
 

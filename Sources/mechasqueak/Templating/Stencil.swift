@@ -23,9 +23,9 @@
  */
 
 import Foundation
-import Stencil
-import IRCKit
-import PathKit
+@preconcurrency import Stencil
+@preconcurrency import IRCKit
+@preconcurrency import PathKit
 
 private func makeColorFilter() -> (Any?, [Any?]) throws -> Any? {
     return { (value, arguments) in
@@ -277,7 +277,7 @@ private func generateEnvironment() -> Environment {
     return environment
 }
 
-let stencil = generateEnvironment()
+nonisolated(unsafe) let stencil = generateEnvironment()
 
 extension Environment {
     func renderLine(name: String, context: [String: Any]) throws -> String {

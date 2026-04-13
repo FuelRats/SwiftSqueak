@@ -23,10 +23,10 @@
  */
 
 import Foundation
-import IRCKit
-import Regex
+@preconcurrency import IRCKit
+@preconcurrency import Regex
 
-private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)"
+nonisolated(unsafe) private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)"
     .r!
 
 extension String {
@@ -367,7 +367,7 @@ struct Lexer {
 }
 
 struct CommandToken {
-    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{1,}(?:_[A-Za-z]{1,2})?))?".r!
+    nonisolated(unsafe) static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{1,}(?:_[A-Za-z]{1,2})?))?".r!
 
     let declaration: String
     let identifier: String

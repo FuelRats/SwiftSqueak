@@ -23,8 +23,8 @@
  */
 
 import Foundation
-import IRCKit
-import JSONAPI
+@preconcurrency import IRCKit
+@preconcurrency import JSONAPI
 
 class NicknameLookupManager {
     let queue = OperationQueue()

@@ -26,8 +26,9 @@ import Foundation
 
 extension Notification {
     func post() {
+        nonisolated(unsafe) let notification = self
         DispatchQueue.main.async {
-            NotificationCenter.default.post(self)
+            NotificationCenter.default.post(notification)
         }
     }
 }

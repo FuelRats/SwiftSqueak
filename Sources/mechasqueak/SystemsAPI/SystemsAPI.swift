@@ -22,10 +22,10 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import AsyncHTTPClient
+@preconcurrency import AsyncHTTPClient
 import Foundation
-import IRCKit
-import JSONAPI
+@preconcurrency import IRCKit
+@preconcurrency import JSONAPI
 import NIO
 import NIOHTTP1
 
@@ -57,7 +57,7 @@ func loadUnobtainablePermitSystems() -> Set<String> {
 let unobtainablePermitSystems = loadUnobtainablePermitSystems()
 
 class SystemsAPI {
-    private static var shortNamesCapitalisation = [
+    nonisolated(unsafe) private static var shortNamesCapitalisation = [
         "IX": "Ix",
         "H": "h",
         "AO": "Ao",
@@ -726,7 +726,7 @@ class SystemsAPI {
                     case OrbitalConstructionSite = "Orbital Construction Site"
                     case PlanetaryConstructionSite = "Planetary Construction Site"
 
-                    static var brokenDataMapping: [String: String] = [
+                    nonisolated(unsafe) static var brokenDataMapping: [String: String] = [
                         "Coriolis": "Coriolis Starport",
                         "Orbis": "Orbis Starport",
                         "Ocellus": "Ocellus Starport",
