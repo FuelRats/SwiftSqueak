@@ -792,8 +792,14 @@ class Rescue: @unchecked Sendable {
         guard configuration.general.drillMode == false else {
             return
         }
-        let identifier = await board.getId(forRescue: self) ?? 0
-        guard self.uploaded || self.uploadOperation != nil else {
+
+        // If not yet uploaded to server, create it (or skip if a create is already in progress)
+        guard self.uploaded else {
+            if self.uploadOperation != nil {
+                // CREATE already in progress — it will upload the latest state when it succeeds
+                return
+            }
+            let identifier = await board.getId(forRescue: self) ?? 0
             return try await withCheckedThrowingContinuation { continuation in
                 let operation = RescueCreateOperation(
                     rescue: self, withCaseId: identifier, representing: command?.message.user)
@@ -825,10 +831,6 @@ class Rescue: @unchecked Sendable {
         return try await withCheckedThrowingContinuation { continuation in
             let operation = RescueUpdateOperation(
                 rescue: self, withCaseId: caseId, representing: command?.message.user)
-
-            if let uploadOperation = self.uploadOperation {
-                operation.addDependency(uploadOperation)
-            }
 
             operation.onCompletion = {
                 continuation.resume(returning: ())

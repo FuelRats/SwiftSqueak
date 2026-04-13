@@ -110,6 +110,13 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
                                 } catch {
                                     continuation.resume(throwing: error)
                                 }
+                            } else if response.status == .notFound {
+                                // Rescue doesn't exist on server — reset uploaded flag
+                                // so next save() will retry as CREATE
+                                self.rescue.uploaded = false
+                                self.rescue.synced = false
+                                continuation.resume(throwing: response)
+                                debug("Rescue \(self.rescue.id) not found on server (404), resetting uploaded flag")
                             } else {
                                 self.rescue.synced = false
 
