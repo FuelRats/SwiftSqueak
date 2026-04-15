@@ -143,4 +143,5 @@ commands.sqlite
 mechasqueak.pid
 Public/css/*
 secrets/
+data/
 .env.dev
