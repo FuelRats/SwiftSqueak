@@ -25,6 +25,7 @@
 import AsyncHTTPClient
 import Foundation
 import IRCKit
+import Logging
 import NIO
 @preconcurrency import Regex
 
@@ -810,7 +811,7 @@ class Rescue: @unchecked Sendable {
 
                 operation.onError = { error in
                     self.uploadOperation = nil
-                    print(String(describing: error))
+                    logger.error("\(error)")
                     continuation.resume(throwing: error)
                 }
 
@@ -837,7 +838,7 @@ class Rescue: @unchecked Sendable {
             }
 
             operation.onError = { error in
-                print(String(describing: error))
+                logger.error("\(error)")
                 continuation.resume(throwing: error)
             }
 

@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 
 class FactCommands: IRCBotModule, @unchecked Sendable {
     var name: String = "Fact Commands"
@@ -210,7 +211,7 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
                 command.message.error(key: "addfact.exists", fromCommand: command)
             }
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.message.error(key: "addfact.error", fromCommand: command)
             return
         }
@@ -261,7 +262,7 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
                     "message": message.excerpt(maxLength: 350)
                 ])
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.message.error(key: "addfact.error", fromCommand: command)
         }
     }

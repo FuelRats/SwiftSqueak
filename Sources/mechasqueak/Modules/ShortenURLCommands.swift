@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
@@ -83,7 +84,7 @@ class ShortenURLCommands: IRCBotModule {
     @EventListener<IRCPrivateMessageNotification>
     var onPrivateMessage = { privateMessage in
         if var url = ongoingShortenUrls[privateMessage.user.nickname] {
-            print("appending url")
+            logger.debug("appending url")
             url += privateMessage.message
             ongoingShortenUrls[privateMessage.user.nickname] = url
         }

@@ -25,6 +25,7 @@
 import AsyncHTTPClient
 import Foundation
 import IRCKit
+import Logging
 
 struct OpenAI {
     static func request(params: OpenAIRequest) async throws -> OpenAIResponse {
@@ -38,7 +39,7 @@ struct OpenAI {
         let data = try encoder.encode(params)
         request.body = .data(data)
 
-        print("[OpenAI] Request: \(String(data: data, encoding: .utf8) ?? "unable to decode")")
+        logger.debug("[OpenAI] Request: \(String(data: data, encoding: .utf8) ?? "unable to decode")")
 
         do {
             return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)

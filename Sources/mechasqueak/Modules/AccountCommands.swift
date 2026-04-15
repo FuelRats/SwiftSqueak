@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 
 class AccountCommands: IRCBotModule {
     var name: String = "AccountCommands"
@@ -438,7 +439,7 @@ class AccountCommands: IRCBotModule {
                 }
             }
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.error(error)
         }
     }

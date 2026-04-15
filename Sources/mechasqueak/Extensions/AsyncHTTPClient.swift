@@ -24,6 +24,7 @@
 
 import Foundation
 import AsyncHTTPClient
+import Logging
 import NIO
 import NIOHTTP1
 
@@ -66,19 +67,19 @@ extension HTTPClient {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
         do {
             guard let body = response.body else {
-                debug(request.url.absoluteString)
-                debug(String(describing: response))
+                logger.error("\(request.url.absoluteString)")
+                logger.error("\(response)")
                 if let body = response.body {
-                    debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+                    logger.error("\(String(data: Data(buffer: body), encoding: .utf8) ?? "")")
                 }
                 throw response
             }
             return try decoder.decode(D.self, from: Data(buffer: body))
         } catch {
             if let body = response.body {
-                debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+                logger.error("\(String(data: Data(buffer: body), encoding: .utf8) ?? "")")
             }
-            debug(String(describing: error))
+            logger.error("\(error)")
             throw error
         }
     }

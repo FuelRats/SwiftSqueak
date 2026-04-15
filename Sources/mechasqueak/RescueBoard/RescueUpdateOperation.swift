@@ -26,6 +26,7 @@ import AsyncHTTPClient
 import Foundation
 import IRCKit
 import JSONAPI
+import Logging
 
 class RescueUpdateOperation: Operation, @unchecked Sendable {
     let caseId: Int
@@ -116,17 +117,17 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
                                 self.rescue.uploaded = false
                                 self.rescue.synced = false
                                 continuation.resume(throwing: response)
-                                debug("Rescue \(self.rescue.id) not found on server (404), resetting uploaded flag")
+                                logger.warning("Rescue \(self.rescue.id) not found on server (404), resetting uploaded flag")
                             } else {
                                 self.rescue.synced = false
 
                                 continuation.resume(throwing: response)
-                                debug(String(response.status.code))
-                                debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
+                                logger.error("\(response.status.code)")
+                                logger.error("\(String(data: Data(buffer: response.body!), encoding: .utf8)!)")
                             }
 
                         case .failure(let error):
-                            debug(String(describing: error))
+                            logger.error("\(error)")
                             self.rescue.synced = false
                             continuation.resume(throwing: error)
                     }
@@ -173,9 +174,9 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
     }
 
     override func start() {
-        debug("Starting update operation for \(rescue.id)")
+        logger.debug("Starting update operation for \(rescue.id)")
         guard isCancelled == false else {
-            debug("Update operation was cancelled")
+            logger.debug("Update operation was cancelled")
             self.isFinished = true
             return
         }

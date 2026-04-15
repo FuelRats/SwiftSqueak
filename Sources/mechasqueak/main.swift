@@ -26,8 +26,11 @@
 import Foundation
 @preconcurrency import IRCKit
 @preconcurrency import Lingo
+import Logging
 import NIO
 import SQLKit
+
+let logger = Logger(label: "com.fuelrats.mechasqueak")
 
 let httpClient = HTTPClient(
     eventLoopGroupProvider: .singleton,
@@ -35,12 +38,6 @@ let httpClient = HTTPClient(
         redirectConfiguration: .none,
         timeout: .init(connect: .seconds(5), read: .seconds(180))
     ))
-
-func debug(_ output: String) {
-    if configuration.general.debug == true {
-        print(output)
-    }
-}
 
 nonisolated(unsafe) var configuration = MechaConfiguration.fromEnvironment()
 nonisolated(unsafe) let lingo = try Lingo(
@@ -70,7 +67,9 @@ class MechaSqueak: @unchecked Sendable {
         self.startupTime = Date()
 
         self.connections = configuration.connections.map({
-            let client = IRCClient(configuration: $0)
+            var ircLogger = Logger(label: "com.fuelrats.mechasqueak.irc")
+            ircLogger.logLevel = configuration.general.debug ? .debug : .info
+            let client = IRCClient(configuration: $0, logger: ircLogger)
             if let operLogin = configuration.general.operLogin {
                 client.connectCommands = [
                     { client in
@@ -116,7 +115,7 @@ class MechaSqueak: @unchecked Sendable {
                     self.webServer = try await WebServer(configuration: webServerConfiguration)
                     try await self.webServer?.start()
                 } catch {
-                    print("Failed to start web server: \(error)")
+                    logger.error("Failed to start web server: \(error)")
                 }
             }
             self.landmarks = try await SystemsAPI.fetchLandmarkList()

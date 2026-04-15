@@ -24,6 +24,7 @@
 
 import Foundation
 @preconcurrency import IRCKit
+import Logging
 import NIO
 import Regex
 
@@ -998,7 +999,7 @@ actor RescueBoard {
         do {
             try await self.sync()
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             if reported == false {
                 mecha.reportingChannel?.send(key: "board.syncfailed")
             }

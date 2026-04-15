@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 import Regex
 import HTMLKit
 
@@ -533,7 +534,7 @@ class BoardCommands: IRCBotModule {
                     "client": rescue.clientDescription
                 ])
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             rescue.status = .Inactive
             command.message.reply(
                 key: "board.trash.error", fromCommand: command,

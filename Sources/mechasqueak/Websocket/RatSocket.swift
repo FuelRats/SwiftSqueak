@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 import NIO
 import NIOHTTP1
 import WebSocketKit
@@ -94,18 +95,18 @@ class RatSocket: @unchecked Sendable {
     }
 
     func websocketDidConnect() {
-        debug("Connected to Websocket connection")
+        logger.info("Connected to Websocket connection")
     }
 
     func websocketDidDisconnect(error: Error?) {
         self.socket = nil
-        debug("Disconnected from Websocket connection")
+        logger.warning("Disconnected from Websocket connection")
         connectedAndAuthenticated = false
         self.connect()
     }
 
     func websocketDidReceiveMessage(socket: WebSocketKit.WebSocket, text: String) {
-        debug(text)
+        logger.debug("\(text)")
         guard let data = text.data(using: .utf8),
             let initialField = RatSocket.getInitialField(from: data)
         else {
@@ -116,7 +117,7 @@ class RatSocket: @unchecked Sendable {
             switch ratSocketEvent {
                 case .connection:
                     connectedAndAuthenticated = true
-                    debug("Received welcome from Websocket connection")
+                    logger.info("Received welcome from Websocket connection")
 
                 //                case .rescueCreated:
                 //                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)

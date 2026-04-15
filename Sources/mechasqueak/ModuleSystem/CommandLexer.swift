@@ -24,6 +24,7 @@
 
 import Foundation
 @preconcurrency import IRCKit
+import Logging
 @preconcurrency import Regex
 
 nonisolated(unsafe) private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)"
@@ -190,7 +191,7 @@ struct IRCBotCommand {
     }
 
     func error(_ error: Error) {
-        debug(String(describing: error))
+        logger.error("\(error)")
         self.message.error(key: "genericerror", fromCommand: self)
     }
 }

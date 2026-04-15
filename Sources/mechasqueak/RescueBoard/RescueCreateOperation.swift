@@ -26,6 +26,7 @@ import AsyncHTTPClient
 import Foundation
 import IRCKit
 import JSONAPI
+import Logging
 
 class RescueCreateOperation: Operation, @unchecked Sendable {
     let caseId: Int
@@ -109,7 +110,7 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                             self.isExecuting = false
                         case .failure(let error):
                             continuation.resume(throwing: error)
-                            debug(String(describing: error))
+                            logger.error("\(error)")
                     }
                 }
             } catch {
@@ -151,9 +152,9 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
     }
 
     override func start() {
-        debug("Starting update operation for \(rescue.id)")
+        logger.debug("Starting create operation for \(rescue.id)")
         guard isCancelled == false else {
-            debug("Update operation was cancelled")
+            logger.debug("Create operation was cancelled")
             self.isFinished = true
             return
         }

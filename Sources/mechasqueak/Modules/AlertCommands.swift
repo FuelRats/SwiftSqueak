@@ -25,6 +25,7 @@
 import Foundation
 import IRCKit
 import HTMLKit
+import Logging
 
 class TweetCommands: IRCBotModule {
     var name: String = "Alert Commands"
@@ -85,7 +86,7 @@ class TweetCommands: IRCBotModule {
             try await BlueSky.post(message: contents)
             command.message.reply(key: "tweet.success", fromCommand: command)
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.message.error(key: "tweet.error", fromCommand: command)
         }
     }
@@ -190,7 +191,7 @@ class TweetCommands: IRCBotModule {
                 ))
             try? rescue.save(command)
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.message.error(
                 key: "tweetcase.failure", fromCommand: command,
                 map: [

@@ -24,6 +24,7 @@
 
 import AsyncHTTPClient
 import Foundation
+import Logging
 import NIO
 import NIOHTTP1
 
@@ -42,13 +43,13 @@ class FuelRatsAPI {
             let document = try NicknameSearchDocument.from(data: Data(buffer: response.body!))
 
             guard (document.body.data?.primary.values.count)! > 0 else {
-                debug("No results found in fetch for \(account)")
+                logger.debug("No results found in fetch for \(account)")
                 return nil
             }
 
             return document
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             throw error
         }
     }
@@ -58,7 +59,7 @@ class FuelRatsAPI {
 
         let response = try await httpClient.execute(
             request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
-        print(String(data: Data(buffer: response.body!), encoding: .utf8)!)
+        logger.debug("\(String(data: Data(buffer: response.body!), encoding: .utf8)!)")
         let document = try RescueSearchDocument.from(data: Data(buffer: response.body!))
 
         return document

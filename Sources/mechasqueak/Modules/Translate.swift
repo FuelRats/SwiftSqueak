@@ -25,6 +25,7 @@
 import Foundation
 import HTMLKit
 import IRCKit
+import Logging
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
@@ -302,7 +303,7 @@ class Translate: IRCBotModule {
             Translate.clientTranslationSubscribers[command.message.user.nickname] = subscriptionType
             command.message.reply(key: "transsub.subbed", fromCommand: command)
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
         }
     }
 
@@ -410,11 +411,11 @@ class Translate: IRCBotModule {
             let decoder = JSONDecoder()
             let translationResponse = try decoder.decode(TranslationResponse.self, from: jsonData)
 
-            print("source language: \(translationResponse.sourceLanguage) confidence: \(translationResponse.confidence) error: \(translationResponse.error)")
+            logger.debug("source language: \(translationResponse.sourceLanguage) confidence: \(translationResponse.confidence) error: \(translationResponse.error)")
 
             // Check if model flagged an error (e.g. prompt injection attempt)
             if !translationResponse.error.isEmpty {
-                print("Translation rejected: \(translationResponse.error)")
+                logger.warning("Translation rejected: \(translationResponse.error)")
                 return nil
             }
 
@@ -435,8 +436,8 @@ class Translate: IRCBotModule {
             return nil
         } catch {
             // If JSON parsing fails, log the error and return nil
-            print("Failed to parse translation JSON response: \(jsonString)")
-            print("Error: \(error)")
+            logger.error("Failed to parse translation JSON response: \(jsonString)")
+            logger.error("Error: \(error)")
             return nil
         }
     }

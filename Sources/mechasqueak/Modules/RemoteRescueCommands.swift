@@ -25,6 +25,7 @@
 import AsyncHTTPClient
 import Foundation
 import IRCKit
+import Logging
 
 class RemoteRescueCommands: IRCBotModule {
     var name: String = "Remote Rescue Commands"
@@ -260,7 +261,7 @@ class RemoteRescueCommands: IRCBotModule {
                     ])
             }
         } catch {
-            debug("TRASH" + String(describing: error))
+            logger.error("TRASH \(error)")
             command.message.error(key: "rescue.trashlist.error", fromCommand: command)
         }
     }

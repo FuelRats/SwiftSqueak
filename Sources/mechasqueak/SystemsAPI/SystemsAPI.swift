@@ -26,6 +26,7 @@
 import Foundation
 @preconcurrency import IRCKit
 @preconcurrency import JSONAPI
+import Logging
 import NIO
 import NIOHTTP1
 
@@ -41,13 +42,13 @@ func loadUnobtainablePermitSystems() -> Set<String> {
     ).appendingPathComponent("unobtainable-permits.json")
     
     guard let permitsData = try? Data(contentsOf: unobtainablePermitsPath) else {
-        debug("Warning: Could not locate unobtainable-permits.json file in \(unobtainablePermitsPath.absoluteString)")
+        logger.warning("Could not locate unobtainable-permits.json file in \(unobtainablePermitsPath.absoluteString)")
         return Set<String>()
     }
     
     guard let json = try? JSONSerialization.jsonObject(with: permitsData) as? [String: Any],
           let systems = json["unobtainable_permit_systems"] as? [String] else {
-        debug("Warning: Could not parse unobtainable-permits.json file")
+        logger.warning("Could not parse unobtainable-permits.json file")
         return Set<String>()
     }
     
@@ -574,7 +575,7 @@ class SystemsAPI {
         func hasPermit(system: PopulatedSystem) -> Bool {
             let permSystems =  self.meta.permSystems ?? []
             for sys in permSystems {
-                debug("\(sys.id64)")
+                logger.debug("\(sys.id64)")
             }
             return permSystems.contains(where: { $0.id64 == system.id64 })
         }
