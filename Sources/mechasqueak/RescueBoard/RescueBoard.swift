@@ -1021,15 +1021,21 @@ actor RescueBoard {
         }
     }
 
-    @EventListener<RatSocketRescueCreatedNotification>
+    @AsyncEventListener<RatSocketRescueCreatedNotification>
     var onRemoteRescueCreated = { rescueCreation in
         guard
             configuration.general.drillMode == false,
-            rescueCreation.sender.uuidString != configuration.api.userId.uuidString,
             let remoteRescue = rescueCreation.body?.body.data?.primary.value
         else {
             return
         }
+
+        // Ignore if we already have this rescue locally (we created it)
+        let rescueId = remoteRescue.id.rawValue
+        if await board.getRescues().values.contains(where: { $0.id == rescueId }) {
+            return
+        }
+
         mecha.reportingChannel?.send(
             key: "board.remotecreation",
             map: [
@@ -1042,39 +1048,47 @@ actor RescueBoard {
     var onRemoteRescueUpdated = { rescueUpdate in
         guard
             configuration.general.drillMode == false,
-            rescueUpdate.sender.uuidString != configuration.api.userId.uuidString,
             let remoteRescue = rescueUpdate.body?.body.data?.primary.value
         else {
             return
         }
 
-        if remoteRescue.attributes.status.value == .Closed {
-            if let (caseId, rescue) = await board.getRescues().first(where: {
-                $0.1.id == remoteRescue.id.rawValue
-            }) {
+        let rescueId = remoteRescue.id.rawValue
+        let remoteUpdatedAt = remoteRescue.attributes.updatedAt.value
+
+        // Check if we have this rescue locally and if the update is newer
+        if let (caseId, localRescue) = await board.getRescues().first(where: {
+            $0.value.id == rescueId
+        }) {
+            // Ignore if our local copy is already at or past this timestamp
+            guard remoteUpdatedAt > localRescue.updatedAt else {
+                return
+            }
+
+            if remoteRescue.attributes.status.value == .Closed {
                 await board.remove(id: caseId)
                 mecha.reportingChannel?.send(
                     key: "board.remoteclose",
                     map: [
                         "caseId": caseId,
-                        "client": rescue.clientDescription
+                        "client": localRescue.clientDescription
                     ])
+                return
             }
-            return
+
+            mecha.reportingChannel?.send(
+                key: "board.remoteupdate",
+                map: [
+                    "caseId": caseId,
+                    "client": remoteRescue.attributes.client.value ?? "?"
+                ])
         }
-        mecha.reportingChannel?.send(
-            key: "board.remoteupdate",
-            map: [
-                "caseId": remoteRescue.attributes.commandIdentifier.value,
-                "client": remoteRescue.attributes.client.value ?? "?"
-            ])
     }
 
     @AsyncEventListener<RatSocketRescueDeletedNotification>
     var onRemoteRescueDeleted = { rescueDeletion in
         guard
             configuration.general.drillMode == false,
-            rescueDeletion.sender.uuidString != configuration.api.userId.uuidString,
             let rescueIdString = rescueDeletion.resourceIdentifier,
             let rescueId = UUID(uuidString: rescueIdString)
         else {

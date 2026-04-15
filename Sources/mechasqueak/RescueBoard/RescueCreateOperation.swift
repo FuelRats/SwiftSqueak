@@ -100,6 +100,11 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                         case .success(let response):
                             if response.status == .created || response.status == .conflict {
                                 self.rescue.synced = true
+                                if let body = response.body,
+                                   let doc = try? RescueGetDocument.from(data: Data(buffer: body)),
+                                   let remoteRescue = doc.body.data?.primary.value {
+                                    self.rescue.updatedAt = remoteRescue.attributes.updatedAt.value
+                                }
                                 continuation.resume(returning: ())
                             } else {
                                 self.rescue.synced = false
