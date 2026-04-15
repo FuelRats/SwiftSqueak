@@ -396,6 +396,22 @@ class MechaSqueak: @unchecked Sendable {
         }
         accounts.lookup(user: user)
     }
+
+    @EventListener<IRCPrivateNoticeNotification>
+    var onPrivateNotice = { notice in
+        // Re-identify with NickServ when prompted (e.g. after netsplit)
+        guard notice.user.nickname.lowercased() == "nickserv",
+              notice.message.contains("This nickname is registered"),
+              let username = notice.client.configuration.authenticationUsername,
+              let password = notice.client.configuration.authenticationPassword
+        else {
+            return
+        }
+        logger.info("NickServ prompted for identification, re-identifying")
+        notice.client.sendMessage(
+            toTarget: "NickServ",
+            contents: "IDENTIFY \(password)")
+    }
 }
 
 signal(SIGTERM, SIG_IGN)
