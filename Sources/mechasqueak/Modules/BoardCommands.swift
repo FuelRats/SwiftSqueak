@@ -253,7 +253,6 @@ class BoardCommands: IRCBotModule {
         let message = command.message
         let override = command.forceOverride
         let pwOnly = command.options.contains("p")
-        let carrier = command.has(argument: "carrier")
 
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             if command.parameters.count > 1,
@@ -268,6 +267,9 @@ class BoardCommands: IRCBotModule {
                     ])
             }
             return
+        }
+        if command.has(argument: "carrier") {
+            rescue.carrier = true
         }
 
         if rescue.isRecentDrill && command.message.destination != rescue.channel {
@@ -303,10 +305,9 @@ class BoardCommands: IRCBotModule {
             } else if !pwOnly {
                 // Rat is not assigned and we're not in paperwork-only mode, so assign them
                 let assignResult = await rescue.assign(
-                    command.parameters[1], 
-                    fromChannel: command.message.destination, 
-                    force: override, 
-                    carrier: carrier
+                    command.parameters[1],
+                    fromChannel: command.message.destination,
+                    force: override
                 )
                 
                 switch assignResult {
@@ -377,7 +378,7 @@ class BoardCommands: IRCBotModule {
             return
         }
 
-        if carrier {
+        if rescue.carrier {
             rescue.appendQuote(
                 RescueQuote(
                     author: command.message.user.nickname,

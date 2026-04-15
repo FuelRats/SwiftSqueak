@@ -36,6 +36,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var clientLanguage: Attribute<String?>
         public var commandIdentifier: Attribute<Int>
         public var codeRed: Attribute<Bool>
+        public var carrier: Attribute<Bool>
         public var data: Attribute<RescueData>
         public var notes: Attribute<String>
         public var platform: Attribute<GamePlatform?>

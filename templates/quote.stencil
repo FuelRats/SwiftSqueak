@@ -5,6 +5,9 @@ Inactive
 {% if expansion %}
  {{ expansion }}
 {% endif %}
+{% if carrier %}
+ 🚢
+{% endif %}
  Case
 {% filter bold %}
  #{{ caseId }}:

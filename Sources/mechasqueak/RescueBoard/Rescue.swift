@@ -41,6 +41,7 @@ class Rescue: @unchecked Sendable {
     var clientNick: String? { didSet { property(\.clientNick, didChangeFrom: oldValue) } }
     var clientLanguage: Locale? { didSet { property(\.clientLanguage, didChangeFrom: oldValue) } }
     var codeRed: Bool { didSet { property(\.codeRed, didChangeFrom: oldValue) } }
+    var carrier: Bool { didSet { property(\.carrier, didChangeFrom: oldValue) } }
     var notes: String { didSet { property(\.notes, didChangeFrom: oldValue) } }
     var platform: GamePlatform? { didSet { property(\.platform, didChangeFrom: oldValue) } }
     var expansion: GameMode { didSet { property(\.expansion, didChangeFrom: oldValue) } }
@@ -100,6 +101,7 @@ class Rescue: @unchecked Sendable {
         } else {
             self.codeRed = false
         }
+        self.carrier = false
 
         let languageCode = match.group(at: 7)!
         self.clientLanguage = Locale(identifier: languageCode)
@@ -156,6 +158,7 @@ class Rescue: @unchecked Sendable {
         self.clientLanguage = Locale(identifier: "en")
 
         self.codeRed = signal.isCodeRed
+        self.carrier = false
 
         self.notes = ""
         self.quotes = [
@@ -224,6 +227,7 @@ class Rescue: @unchecked Sendable {
         }
 
         self.codeRed = input.isCodeRed
+        self.carrier = false
         self.notes = ""
 
         self.quotes = []
@@ -263,6 +267,7 @@ class Rescue: @unchecked Sendable {
         self.expansion = expansion ?? .legacy
 
         self.codeRed = codeRed
+        self.carrier = false
         self.notes = ""
 
         self.quotes = []
@@ -293,6 +298,7 @@ class Rescue: @unchecked Sendable {
         self.channelName = configuration.general.rescueChannel
 
         self.codeRed = attr.codeRed.value
+        self.carrier = attr.carrier.value
         self.notes = attr.notes.value
         self.platform = attr.platform.value
         if let systemName = attr.system.value {
@@ -473,6 +479,7 @@ class Rescue: @unchecked Sendable {
                 clientLanguage: .init(value: self.clientLanguage?.identifier),
                 commandIdentifier: .init(value: identifier),
                 codeRed: .init(value: self.codeRed),
+                carrier: .init(value: self.carrier),
                 data: .init(
                     value: RescueData(
                         systemId: self.system?.searchResult?.id64,
@@ -599,8 +606,7 @@ class Rescue: @unchecked Sendable {
     func assign(
         _ param: String,
         fromChannel channel: IRCChannel,
-        force: Bool = false,
-        carrier: Bool = false
+        force: Bool = false
     ) async -> Result<AssignmentResult, RescueAssignError> {
         let param = param.lowercased()
         guard
@@ -629,7 +635,7 @@ class Rescue: @unchecked Sendable {
         }
 
         var rat: Rat?
-        if carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
+        if self.carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
             rat = nick.currentRat
         } else {
             let assignRat = nick.getRatRepresenting(platform: self.platform)

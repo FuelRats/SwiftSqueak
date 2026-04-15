@@ -48,36 +48,38 @@ class BoardAssignCommands: IRCBotModule {
         let message = command.message
         
         let force = command.forceOverride
-        let carrier = command.has(argument: "carrier")
-        
+
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
+        }
+        if command.has(argument: "carrier") {
+            rescue.carrier = true
         }
         var command = command
         if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
-        
+
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
             command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
-        
+
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
-        
+
         var assigns: [Result<AssignmentResult, RescueAssignError>] = []
         for param in params {
             assigns.append(
                 await rescue.assign(
-                    param, fromChannel: command.message.destination, force: force, carrier: carrier)
+                    param, fromChannel: command.message.destination, force: force)
             )
         }
         try? rescue.save(command)
-        
+
         _ = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
-        
+
     }
     
     @BotCommand(
@@ -98,39 +100,41 @@ class BoardAssignCommands: IRCBotModule {
         let message = command.message
         
         let force = command.forceOverride
-        let carrier = command.has(argument: "carrier")
-        
+
         // Find case by rescue ID or client name
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        
+        if command.has(argument: "carrier") {
+            rescue.carrier = true
+        }
+
         var command = command
         if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
         }
-        
+
         // Disallow assigns on rescues without a platform set
         guard let platform = rescue.platform else {
             command.message.error(key: "board.assign.noplatform", fromCommand: command)
             return
         }
-        
+
         var params = command.parameters.count > 0 ? Array(command.parameters[1...]) : []
-        
+
         var assigns: [Result<AssignmentResult, RescueAssignError>] = []
         for param in params {
             assigns.append(
                 await rescue.assign(
-                    param, fromChannel: command.message.destination, force: force, carrier: carrier)
+                    param, fromChannel: command.message.destination, force: force)
             )
         }
         try? rescue.save(command)
-        
+
         let didSend = sendAssignMessages(assigns: assigns, forRescue: rescue, fromCommand: command)
-        
+
         if didSend {
-            guard carrier == false else {
+            guard rescue.carrier == false else {
                 command.message.reply(
                     message: "I could try asking the client to befriend a fleet carrier "
                            + "but I don't think that's going to help much"
@@ -238,34 +242,32 @@ class BoardAssignCommands: IRCBotModule {
         fromCommand command: IRCBotCommand
     ) -> Bool {
         let includeExistingAssigns = command.options.contains("a")
-        let carrier = command.has(argument: "carrier")
-        
+
         let failedAssigns = assigns.compactMap({ assign -> RescueAssignError? in
             if case let .failure(result) = assign {
                 return result
             }
             return nil
         })
-        
+
         if failedAssigns.count > 0 {
-            handleFailedAssigns(failedAssigns, rescue: rescue, command: command, carrier: carrier)
+            handleFailedAssigns(failedAssigns, rescue: rescue, command: command)
         }
-        
+
         let successfulAssigns = assigns.compactMap({ assign -> AssignmentResult? in
             if case let .success(result) = assign {
                 return result
             }
             return nil
         })
-        
+
         if successfulAssigns.count > 0 || includeExistingAssigns || assigns.count == 0 {
             return handleSuccessfulAssigns(
                 successfulAssigns,
                 assigns: assigns,
                 includeExistingAssigns: includeExistingAssigns,
                 rescue: rescue,
-                command: command,
-                carrier: carrier
+                command: command
             )
         }
         return false
@@ -277,8 +279,7 @@ class BoardAssignCommands: IRCBotModule {
         assigns: [Result<AssignmentResult, RescueAssignError>],
         includeExistingAssigns: Bool,
         rescue: Rescue,
-        command: IRCBotCommand,
-        carrier: Bool
+        command: IRCBotCommand
     ) -> Bool {
         var names = successfulAssigns.compactMap({ assign -> String? in
             switch assign {
@@ -302,7 +303,7 @@ class BoardAssignCommands: IRCBotModule {
         }
 
         var format = rescue.codeRed ? "board.assign.gocr" : "board.assign.go"
-        if carrier {
+        if rescue.carrier {
             format = "board.assign.carrier"
             rescue.quotes.append(
                 RescueQuote(
@@ -329,18 +330,16 @@ class BoardAssignCommands: IRCBotModule {
 private func handleFailedAssigns(
     _ failedAssigns: [RescueAssignError],
     rescue: Rescue,
-    command: IRCBotCommand,
-    carrier: Bool
+    command: IRCBotCommand
 ) {
-    let errorMessage = buildFailedAssignErrorMessage(failedAssigns, rescue: rescue, carrier: carrier)
+    let errorMessage = buildFailedAssignErrorMessage(failedAssigns, rescue: rescue)
     command.message.reply(message: errorMessage)
     sendDenylistedErrorMessage(failedAssigns, command: command)
 }
 
 private func buildFailedAssignErrorMessage(
     _ failedAssigns: [RescueAssignError],
-    rescue: Rescue,
-    carrier: Bool
+    rescue: Rescue
 ) -> String {
     var errorMessage = "\(failedAssigns.count) rats failed to assign: "
 
@@ -373,7 +372,7 @@ private func buildFailedAssignErrorMessage(
         return nil
     }
     if unidentified.count > 0 {
-        if carrier {
+        if rescue.carrier {
             let universe = rescue.expansion == .legacy ? "legacy" : "live / odyssey"
             errorMessage += lingo.localize("board.assign.invalidcmdrcarrier", locale: "en", interpolations: [
                 "rats": unidentified.joined(separator: ", "),
