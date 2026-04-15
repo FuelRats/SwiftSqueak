@@ -43,6 +43,17 @@ nonisolated(unsafe) var configuration = MechaConfiguration.fromEnvironment()
 nonisolated(unsafe) let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
+private let clientJoinLeaveMessages: Set<String> = [
+    "Client rejoined the rescue channel",
+    "Client left the rescue channel"
+]
+
+private func isClientBouncing(rescue: Rescue, threshold: Int = 4) -> Bool {
+    let recentQuotes = rescue.quotes.suffix(threshold)
+    guard recentQuotes.count >= threshold else { return false }
+    return recentQuotes.allSatisfy { clientJoinLeaveMessages.contains($0.message) }
+}
+
 class MechaSqueak: @unchecked Sendable {
     nonisolated(unsafe) static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
@@ -191,7 +202,12 @@ class MechaSqueak: @unchecked Sendable {
                 rescue.setQuotes(quotes)
                 try? rescue.save(nil)
 
-                var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
+                guard !isClientBouncing(rescue: rescue) else {
+                    logger.info("Suppressing client join message for bouncing client on case \(caseId)")
+                    return
+                }
+
+                let key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
                 userJoin.channel.send(
                     key: key,
                     map: [
@@ -226,6 +242,11 @@ class MechaSqueak: @unchecked Sendable {
             )
             rescue.setQuotes(quotes)
             try? rescue.save(nil)
+
+            guard !isClientBouncing(rescue: rescue) else {
+                logger.info("Suppressing client part message for bouncing client on case \(caseId)")
+                return
+            }
 
             userPart.channel.send(
                 key: "board.clientquit",
@@ -303,6 +324,11 @@ class MechaSqueak: @unchecked Sendable {
             )
 
             try? rescue.save(nil)
+
+            guard !isClientBouncing(rescue: rescue) else {
+                logger.info("Suppressing client quit message for bouncing client on case \(caseId)")
+                return
+            }
 
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
