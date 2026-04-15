@@ -33,6 +33,25 @@ struct PlatformExpansion: Codable, Hashable {
     let expansion: GameMode
 }
 
+private let snickersDestinations = [
+    "sent to the Ratlympics prize pool",
+    "jettisoned into the nearest star",
+    "confiscated by the Fuel Rats ops team special stash",
+    "redistributed too the masses",
+    "launched toward Sagittarius A*",
+    "melted down and reformed into a mecha shaped statue",
+    "added to the emergency snack reserves on Fuelum",
+    "given to the Thargoids as a peace offering",
+    "hidden somewhere in the Formidine Rift",
+    "converted into fuel limpets",
+    "scattered across 12 systems as part of a treasure hunt",
+    "strapped to an SRV and driven off a cliff for science",
+    "donated to the Hull Seals as a gift",
+    "shredded and used as packing material for Guardian relics",
+    "airdropped over a random planetary settlement",
+    "converted into a commemorative NFT",
+]
+
 actor RescueBoard {
     private var rescues: [Int: Rescue] = [:]
     private let queue = OperationQueue()
@@ -797,12 +816,12 @@ actor RescueBoard {
                                 return
                                     (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
                             }) * 10)
-                    mecha.reportingChannel?.send(
-                        key: "rescue.pwreminder.special",
-                        map: [
-                            "nick": latestNick.nickname,
-                            "snickers": Swift.max(Int(snickersCalculation), 1)
-                        ])
+                    let snickersCount = Swift.max(Int(snickersCalculation), 1)
+                    let destination = snickersDestinations.randomElement()!
+                    let message = String(
+                        format: "%@ has failed to do their paperwork, %d of their snickers have been %@",
+                        latestNick.nickname, snickersCount, destination)
+                    mecha.reportingChannel?.send(message: message)
                     return
                 }
             }
