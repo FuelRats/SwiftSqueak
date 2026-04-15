@@ -399,7 +399,7 @@ actor RescueBoard {
         if force == false {
             do {
                 try await anticipateClientJoin(
-                    name: clientNick ?? clientName ?? "", forRescue: rescue, initiated: initiated)
+                    name: rescue.clientNick ?? rescue.client ?? "", forRescue: rescue, initiated: initiated)
             } catch {
                 message.reply(message: lingo.localize("board.signal.ignore", locale: "en-GB"))
                 return

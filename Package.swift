@@ -75,8 +75,7 @@ let package = Package(
                 .product(name: "HTMLKit", package: "HTMLKit"),
                 .product(name: "Markdown", package: "swift-markdown"),
             ],
-            exclude: cssFiles,
-            //plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+            exclude: cssFiles
         ),
         .testTarget(
             name: "mechasqueakTests",

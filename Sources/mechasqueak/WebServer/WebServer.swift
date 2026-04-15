@@ -7,7 +7,7 @@
 
 import Vapor
 
-final class WebServer {
+final class WebServer: @unchecked Sendable {
     private let app: Application
 
     init(configuration: WebServerConfiguration) async throws {

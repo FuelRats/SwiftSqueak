@@ -1,24 +1,29 @@
 # Stage 1 - Build
-FROM swift:6.0 AS build
+FROM swift:6.1 AS build
 
 WORKDIR /build
 
-# Copy dependency manifests first for caching
+# Copy manifests and source structure for dependency resolution
+# (Package.swift enumerates CSS files from Sources/ at manifest parse time)
 COPY Package.swift Package.resolved ./
+COPY Sources/ Sources/
+COPY Tests/ Tests/
 RUN swift package resolve
 
-# Copy source code and build
-COPY Sources/ Sources/
-RUN swift build -c release
+# Build release binary (cache mount target for dev builds)
+ARG BUILDKIT_CACHE=""
+RUN --mount=type=cache,id=spm-build,target=/build/.build,sharing=locked \
+    swift build -c release && \
+    cp -a .build/release/mechasqueak /usr/local/bin/mechasqueak
 
 # Compile CSS: concatenate all .css files from Views directory into Public/css/styles.css
 RUN mkdir -p Public/css && \
     find Sources/mechasqueak/WebServer/Views/ -name '*.css' | sort | xargs cat > Public/css/styles.css
 
 # Stage 2 - Runtime
-FROM swift:6.0-slim
+FROM swift:6.1-slim
 
-# Install Node.js 20 and chrono-node
+# Install Node.js and chrono-node
 RUN apt-get update && \
     apt-get install -y nodejs npm && \
     npm install -g chrono-node && \
@@ -27,7 +32,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy release binary from build stage
-COPY --from=build /build/.build/release/mechasqueak ./mechasqueak
+COPY --from=build /usr/local/bin/mechasqueak ./mechasqueak
 
 # Copy runtime assets
 COPY localisation/ localisation/
@@ -39,7 +44,6 @@ COPY --from=build /build/Public/ Public/
 # Create data directory for token persistence
 RUN mkdir -p /data
 
-# Expose web port (configurable via WEB_PORT)
 EXPOSE 8080
 
 CMD ["./mechasqueak"]

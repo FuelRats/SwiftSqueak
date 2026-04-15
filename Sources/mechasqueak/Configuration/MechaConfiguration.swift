@@ -99,6 +99,19 @@ struct MechaConfiguration: Sendable {
         ircConfig.authenticationUsername = readSecret("irc_auth_username")
         ircConfig.authenticationPassword = readSecret("irc_auth_password")
         ircConfig.channels = requireEnv("IRC_CHANNELS").split(separator: ",").map(String.init)
+        ircConfig.autoConnect = env("IRC_AUTO_CONNECT") != "false"
+        ircConfig.autoReconnect = env("IRC_AUTO_RECONNECT") != "false"
+        ircConfig.floodControlMaximumMessages = Int(env("IRC_FLOOD_CONTROL_MAX_MESSAGES") ?? "20") ?? 20
+        ircConfig.floodControlDelayTimerInterval = Int(env("IRC_FLOOD_CONTROL_DELAY") ?? "3") ?? 3
+        ircConfig.prefersInsecureConnection = env("IRC_PREFERS_INSECURE") == "true"
+        ircConfig.allowsServerSelfSignedCertificate = env("IRC_ALLOW_SELF_SIGNED_CERT") == "true"
+        let channels = ircConfig.channels.map { $0.lowercased() }
+        if !channels.contains(general.rescueChannel.lowercased()) {
+            fatalError("GENERAL_RESCUE_CHANNEL '\(general.rescueChannel)' is not in IRC_CHANNELS")
+        }
+        if !channels.contains(general.reportingChannel.lowercased()) {
+            fatalError("GENERAL_REPORTING_CHANNEL '\(general.reportingChannel)' is not in IRC_CHANNELS")
+        }
         let connections = [ircConfig]
 
         let api = FuelRatsAPIConfiguration(

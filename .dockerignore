@@ -3,4 +3,5 @@
 *.pid
 config.json
 .swiftpm/
-Tests/
+secrets/
+data/

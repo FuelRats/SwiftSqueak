@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  mechasqueak:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    env_file:
+      - .env.dev
+    secrets:
+      - irc_server_password
+      - irc_auth_username
+      - irc_auth_password
+      - api_user_id
+      - api_token
+      - queue_token
+      - db_username
+      - db_password
+      - shortener_signature
+      - xbox_client_id
+      - xbox_client_secret
+      - mastodon_token
+      - bluesky_handle
+      - bluesky_app_password
+      - openai_token
+
+secrets:
+  irc_server_password:
+    file: ./secrets/irc_server_password
+  irc_auth_username:
+    file: ./secrets/irc_auth_username
+  irc_auth_password:
+    file: ./secrets/irc_auth_password
+  api_user_id:
+    file: ./secrets/api_user_id
+  api_token:
+    file: ./secrets/api_token
+  queue_token:
+    file: ./secrets/queue_token
+  db_username:
+    file: ./secrets/db_username
+  db_password:
+    file: ./secrets/db_password
+  shortener_signature:
+    file: ./secrets/shortener_signature
+  xbox_client_id:
+    file: ./secrets/xbox_client_id
+  xbox_client_secret:
+    file: ./secrets/xbox_client_secret
+  mastodon_token:
+    file: ./secrets/mastodon_token
+  bluesky_handle:
+    file: ./secrets/bluesky_handle
+  bluesky_app_password:
+    file: ./secrets/bluesky_app_password
+  openai_token:
+    file: ./secrets/openai_token

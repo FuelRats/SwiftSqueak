@@ -142,3 +142,5 @@ config.json
 commands.sqlite
 mechasqueak.pid
 Public/css/*
+secrets/
+.env.dev
