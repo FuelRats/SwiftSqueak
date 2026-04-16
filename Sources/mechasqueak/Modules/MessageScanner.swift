@@ -394,6 +394,12 @@ private func checkExpansionMismatch(
         return nil
     }
 
+    // Skip warning if the jump call message contains a keyword matching the rescue's expansion
+    let words = channelMessage.message.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+    if words.contains(where: { GameMode.parsedFromText(text: String($0)) == rescue.expansion }) {
+        return nil
+    }
+
     channelMessage.client.sendMessage(
         toChannelName: channelMessage.destination.name,
         withKey: "jumpcall.clientexpansion",
