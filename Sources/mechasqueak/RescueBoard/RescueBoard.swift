@@ -64,6 +64,20 @@ actor RescueBoard {
     private var pendingClientJoins: [String: (EventLoopPromise<Void>, Rescue)] = [:]
 
     private var lastPaperworkReminder: [UUID: Date] = [:]
+    private var pendingOutgoingUpdates: [UUID: Date] = [:]
+
+    func markOutgoingUpdate(rescueId: UUID) {
+        pendingOutgoingUpdates[rescueId] = Date()
+    }
+
+    func hasRecentOutgoingUpdate(rescueId: UUID, within interval: TimeInterval = 10) -> Bool {
+        guard let updateTime = pendingOutgoingUpdates[rescueId] else { return false }
+        if Date().timeIntervalSince(updateTime) < interval {
+            return true
+        }
+        pendingOutgoingUpdates.removeValue(forKey: rescueId)
+        return false
+    }
 
     nonisolated func startUpRoutines() {
         if configuration.general.drillMode == false {
@@ -1073,6 +1087,12 @@ actor RescueBoard {
         }
 
         let rescueId = remoteRescue.id.rawValue
+
+        // Ignore if we just sent an update for this rescue (our own echo)
+        if await board.hasRecentOutgoingUpdate(rescueId: rescueId) {
+            return
+        }
+
         let remoteUpdatedAt = remoteRescue.attributes.updatedAt.value
 
         // Check if we have this rescue locally and if the update is newer

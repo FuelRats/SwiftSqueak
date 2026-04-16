@@ -25,5 +25,5 @@ Inactive
  in
   {% include "starsystem.stencil" %}
 {% if language %}
- ({{ language }})
+ {{ language }}
 {% endif %}

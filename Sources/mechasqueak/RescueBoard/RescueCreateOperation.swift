@@ -73,6 +73,7 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
     }
 
     private func attemptUpload() async throws {
+        await board.markOutgoingUpdate(rescueId: rescue.id)
         return try await withCheckedThrowingContinuation { continuation in
             let postDocument = SingleDocument(
                 apiDescription: .none,
@@ -144,11 +145,12 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
             }
         } catch {
             if errorReported == false {
+                let errorDetail = (error as? HTTPClient.Response).map {
+                    "HTTP \($0.status.code) \($0.body.map { String(data: Data(buffer: $0), encoding: .utf8) ?? "" } ?? "")"
+                } ?? "\(error)"
                 mecha.reportingChannel?.send(
-                    key: "board.sync.error",
-                    map: [
-                        "caseId": caseId
-                    ])
+                    message: "⚠️ Create error on case #\(caseId): \(errorDetail.prefix(500)) - SuperManifolds"
+                )
                 errorReported = true
             }
             try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)

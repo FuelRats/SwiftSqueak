@@ -220,6 +220,7 @@ class BoardCommands: IRCBotModule {
                         "platform": rescue.platform.ircRepresentable,
                         "expansion": rescue.platform == .PC
                             ? rescue.expansion.shortIRCRepresentable : "",
+                        "flag": rescue.clientLanguage?.flagEmoji ?? "",
                         "includeCaseIds": arguments.contains(.includeCaseIds)
                     ])) ?? ""
             return output

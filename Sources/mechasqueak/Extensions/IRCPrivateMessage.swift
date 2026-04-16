@@ -114,5 +114,11 @@ private let retaliationPhrases = [
     "replaces %@'s chaff launcher with a confetti cannon that does nothing",
     "forces %@ to play in VR while their ship is stuck in a permanent aileron roll",
     "loosens a few bolts on the landing gear of %@'s rat ship",
-    "unleashes a mass of spiders into %@'s cockpit"
+    "unleashes a mass of spiders into %@'s cockpit",
+    "strands %@ on a Wraith hive ship with nothing but a lemon",
+    "puts %@ on permanent night shift on Babylon 5's Brown Sector",
+    "dumps %@ on Tatooine with no sunscreen",
+    "uploads %@ into the Matrix but it's running on Windows ME",
+    "resets all of %@'s keybinds",
+    "places %@ in front of an activating Stargate"
 ]

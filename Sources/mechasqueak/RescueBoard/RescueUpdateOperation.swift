@@ -73,6 +73,7 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
     }
 
     func attemptUpload() async throws -> RemoteRescue {
+        await board.markOutgoingUpdate(rescueId: rescue.id)
         return try await withCheckedThrowingContinuation { continuation in
             let patchDocument = SingleDocument(
                 apiDescription: .none,
@@ -143,10 +144,9 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
             self.isFinished = true
             throw CancellationError()
         }
-        let previousSyncState = self.rescue.synced
         do {
             let rescue = try await attemptUpload()
-            if errorReported && previousSyncState == false {
+            if errorReported {
                 mecha.reportingChannel?.send(
                     key: "board.sync.errorsolved",
                     map: [
@@ -160,12 +160,13 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
             }
             return rescue
         } catch {
-            if errorReported == false && previousSyncState == true {
+            if errorReported == false {
+                let errorDetail = (error as? HTTPClient.Response).map {
+                    "HTTP \($0.status.code) \($0.body.map { String(data: Data(buffer: $0), encoding: .utf8) ?? "" } ?? "")"
+                } ?? "\(error)"
                 mecha.reportingChannel?.send(
-                    key: "board.sync.error",
-                    map: [
-                        "caseId": caseId
-                    ])
+                    message: "⚠️ Sync error on case #\(caseId): \(errorDetail.prefix(500)) - SuperManifolds"
+                )
                 errorReported = true
             }
             try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)

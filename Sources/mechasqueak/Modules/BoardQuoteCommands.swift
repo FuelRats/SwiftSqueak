@@ -56,7 +56,9 @@ class BoardQuoteCommands: IRCBotModule {
                     "landmark": rescue.system?.landmark as Any,
                     "status": rescue.status.rawValue,
                     "carrier": rescue.carrier,
-                    "language": rescue.clientLanguage?.englishDescription ?? ""
+                    "language": rescue.clientLanguage.map {
+                        "\(IRCFormat.bold($0.identifier)) (\($0.englishDescription))"
+                    } ?? ""
                 ])) ?? ""
         command.message.replyPrivate(message: output)
 

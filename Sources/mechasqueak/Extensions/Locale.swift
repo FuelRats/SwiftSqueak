@@ -38,4 +38,26 @@ extension Locale {
     var short: String {
         return String(self.identifier.prefix(2))
     }
+
+    var flagEmoji: String? {
+        // Extract region code from locale identifier like "en-US", "fr_FR"
+        let parts = self.identifier.split(whereSeparator: { $0 == "-" || $0 == "_" })
+        guard parts.count >= 2,
+              let regionPart = parts.last,
+              regionPart.count == 2,
+              regionPart.allSatisfy({ $0.isLetter })
+        else {
+            return nil
+        }
+        let regionCode = regionPart.uppercased()
+        let base: UInt32 = 0x1F1E6 - 65 // Regional Indicator Symbol Letter A - 'A'
+        var emoji = ""
+        for scalar in regionCode.unicodeScalars {
+            guard let flagScalar = Unicode.Scalar(base + scalar.value) else {
+                return nil
+            }
+            emoji.unicodeScalars.append(flagScalar)
+        }
+        return emoji
+    }
 }
