@@ -27,3 +27,6 @@ Inactive
 {% if language %}
  {{ language }}
 {% endif %}
+{% if not rescue.synced %}
+ ❌
+{% endif %}

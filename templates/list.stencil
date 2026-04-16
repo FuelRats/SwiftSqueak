@@ -25,4 +25,7 @@
  {{ flag }}
 {% endif %}
 )
+{% if not rescue.synced %}
+ ❌
+{% endif %}
 
