@@ -22,6 +22,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AsyncHTTPClient
 import Foundation
 import IRCKit
 import HTMLKit
@@ -84,11 +85,17 @@ class TweetCommands: IRCBotModule {
         do {
             try await Mastodon.post(message: contents)
             try await BlueSky.post(message: contents)
-            command.message.reply(key: "tweet.success", fromCommand: command)
         } catch {
-            logger.error("\(error)")
-            command.message.error(key: "tweet.error", fromCommand: command)
+            logger.error("Social media alert failed: \(error)")
         }
+
+        do {
+            try await FuelRatsAPI.postAlert(title: "Fuel Rats Alert", body: contents, command: command)
+        } catch {
+            logger.error("API alert failed: \(error)")
+        }
+
+        command.message.reply(key: "tweet.success", fromCommand: command)
     }
 
     @BotCommand(
@@ -175,28 +182,29 @@ class TweetCommands: IRCBotModule {
         do {
             try await Mastodon.post(message: tweet)
             try await BlueSky.post(message: tweet, link: url.absoluteString)
-
-            command.message.reply(
-                key: "tweetcase.success", fromCommand: command,
-                map: [
-                    "tweet": tweet
-                ])
-            rescue.appendQuote(
-                RescueQuote(
-                    author: command.message.user.nickname,
-                    message: "Tweet to @FuelRatAlerts has been posted",
-                    createdAt: Date(),
-                    updatedAt: Date(),
-                    lastAuthor: command.message.user.nickname
-                ))
-            try? rescue.save(command)
         } catch {
-            logger.error("\(error)")
-            command.message.error(
-                key: "tweetcase.failure", fromCommand: command,
-                map: [
-                    "caseId": caseId
-                ])
+            logger.error("Social media alert failed: \(error)")
         }
+
+        do {
+            try await FuelRatsAPI.postRescueAlert(rescueId: rescue.id, command: command)
+        } catch {
+            logger.error("API alert failed: \(error)")
+        }
+
+        command.message.reply(
+            key: "tweetcase.success", fromCommand: command,
+            map: [
+                "tweet": tweet
+            ])
+        rescue.appendQuote(
+            RescueQuote(
+                author: command.message.user.nickname,
+                message: "Alert has been posted",
+                createdAt: Date(),
+                updatedAt: Date(),
+                lastAuthor: command.message.user.nickname
+            ))
+        try? rescue.save(command)
     }
 }

@@ -123,6 +123,23 @@ class FuelRatsAPI {
         return try await FuelRatsAPI.rescueSearch(query: query)
     }
 
+    static func postAlert(title: String, body: String, command: IRCBotCommand?) async throws {
+        var request = try HTTPClient.Request(
+            apiPath: "/alerts", method: .POST, command: command)
+        let payload: [String: String] = ["title": title, "body": body]
+        request.body = try .encodable(payload)
+        _ = try await httpClient.execute(
+            request: request, deadline: .now() + .seconds(10), expecting: 200)
+    }
+
+    static func postRescueAlert(rescueId: UUID, command: IRCBotCommand?) async throws {
+        let request = try HTTPClient.Request(
+            apiPath: "/rescues/\(rescueId.uuidString.lowercased())/alert",
+            method: .POST, command: command)
+        _ = try await httpClient.execute(
+            request: request, deadline: .now() + .seconds(10), expecting: 200)
+    }
+
     static func getUnfiledRescues() async throws -> RescueSearchDocument {
         let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
         let twoHoursAgo = Calendar.current.date(byAdding: .hour, value: -2, to: Date())!
