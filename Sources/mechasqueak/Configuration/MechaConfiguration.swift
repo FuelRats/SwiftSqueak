@@ -25,19 +25,6 @@
 import Foundation
 @preconcurrency import IRCKit
 
-func readSecret(_ name: String) -> String? {
-    let path = "/run/secrets/\(name)"
-    return try? String(contentsOfFile: path, encoding: .utf8)
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-}
-
-func requireSecret(_ name: String) -> String {
-    guard let value = readSecret(name) else {
-        fatalError("Required Docker secret '\(name)' not found at /run/secrets/\(name)")
-    }
-    return value
-}
-
 func requireEnv(_ name: String) -> String {
     guard let value = ProcessInfo.processInfo.environment[name] else {
         fatalError("Required environment variable '\(name)' not set")
@@ -95,9 +82,9 @@ struct MechaConfiguration: Sendable {
             username: env("IRC_USERNAME") ?? requireEnv("IRC_NICKNAME"),
             realName: env("IRC_REALNAME") ?? requireEnv("IRC_NICKNAME")
         )
-        ircConfig.serverPassword = readSecret("irc_server_password")
-        ircConfig.authenticationUsername = readSecret("irc_auth_username")
-        ircConfig.authenticationPassword = readSecret("irc_auth_password")
+        ircConfig.serverPassword = env("IRC_SERVER_PASSWORD")
+        ircConfig.authenticationUsername = env("IRC_AUTH_USERNAME")
+        ircConfig.authenticationPassword = env("IRC_AUTH_PASSWORD")
         ircConfig.channels = requireEnv("IRC_CHANNELS").split(separator: ",").map(String.init)
         ircConfig.autoConnect = env("IRC_AUTO_CONNECT") != "false"
         ircConfig.autoReconnect = env("IRC_AUTO_RECONNECT") != "false"
@@ -117,33 +104,33 @@ struct MechaConfiguration: Sendable {
         let api = FuelRatsAPIConfiguration(
             url: URL(string: requireEnv("API_URL"))!,
             websocket: env("API_WEBSOCKET").flatMap(URL.init(string:)),
-            userId: UUID(uuidString: requireSecret("api_user_id"))!,
-            token: requireSecret("api_token")
+            userId: UUID(uuidString: requireEnv("API_USER_ID"))!,
+            token: requireEnv("API_TOKEN")
         )
 
         let queue: QueueConfiguration? = env("QUEUE_URL").map {
-            QueueConfiguration(url: URL(string: $0)!, token: requireSecret("queue_token"))
+            QueueConfiguration(url: URL(string: $0)!, token: requireEnv("QUEUE_TOKEN"))
         }
 
         let database = DatabaseConfiguration(
             host: requireEnv("DB_HOST"),
             port: Int32(env("DB_PORT") ?? "5432") ?? 5432,
             database: requireEnv("DB_NAME"),
-            username: requireSecret("db_username"),
-            password: readSecret("db_password")
+            username: requireEnv("DB_USERNAME"),
+            password: env("DB_PASSWORD")
         )
 
         let shortener = URLShortenerConfiguration(
             url: URL(string: requireEnv("SHORTENER_URL"))!,
-            signature: requireSecret("shortener_signature")
+            signature: requireEnv("SHORTENER_SIGNATURE")
         )
 
         let sourcePath = URL(fileURLWithPath: env("SOURCE_PATH") ?? FileManager.default.currentDirectoryPath)
 
-        // Xbox: client ID/secret from secrets, tokens from volume file
+        // Xbox: client ID/secret from env, tokens from volume file
         var xbox: XboxLiveConfiguration?
-        if let clientId = readSecret("xbox_client_id"),
-           let clientSecret = readSecret("xbox_client_secret") {
+        if let clientId = env("XBOX_CLIENT_ID"),
+           let clientSecret = env("XBOX_CLIENT_SECRET") {
             let tokenFile = "/data/xbox_tokens.json"
             if let tokenData = try? Data(contentsOf: URL(fileURLWithPath: tokenFile)),
                let tokens = try? JSONDecoder().decode(XboxTokens.self, from: tokenData) {
@@ -152,9 +139,6 @@ struct MechaConfiguration: Sendable {
                     token: tokens.token, refreshToken: tokens.refreshToken,
                     clientId: clientId, clientSecret: clientSecret
                 )
-            } else {
-                // No token file yet — Xbox features disabled until seeded
-                xbox = nil
             }
         }
 
@@ -172,15 +156,15 @@ struct MechaConfiguration: Sendable {
             return ChronoConfiguration(nodePath: nodePath, file: file)
         }()
 
-        let mastodon = readSecret("mastodon_token").map { MastodonConfiguration(token: $0) }
+        let mastodon = env("MASTODON_TOKEN").map { MastodonConfiguration(token: $0) }
 
         let bluesky: BlueSkyConfiguration? = {
-            guard let handle = readSecret("bluesky_handle"),
-                  let appPassword = readSecret("bluesky_app_password") else { return nil }
+            guard let handle = env("BLUESKY_HANDLE"),
+                  let appPassword = env("BLUESKY_APP_PASSWORD") else { return nil }
             return BlueSkyConfiguration(handle: handle, appPassword: appPassword)
         }()
 
-        let openAIToken = readSecret("openai_token")
+        let openAIToken = env("OPENAI_TOKEN")
 
         let webServer: WebServerConfiguration? = {
             guard let host = env("WEB_HOST"), let portStr = env("WEB_PORT"),
