@@ -10,11 +10,8 @@ COPY Sources/ Sources/
 COPY Tests/ Tests/
 RUN swift package resolve
 
-# Build release binary (cache mount target for dev builds)
-ARG BUILDKIT_CACHE=""
-RUN --mount=type=cache,id=spm-build,target=/build/.build,sharing=locked \
-    swift build -c release && \
-    cp -a .build/release/mechasqueak /usr/local/bin/mechasqueak
+# Build release binary
+RUN swift build -c release
 
 # Compile CSS: concatenate all .css files from Views directory into Public/css/styles.css
 RUN mkdir -p Public/css && \
@@ -32,7 +29,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy release binary from build stage
-COPY --from=build /usr/local/bin/mechasqueak ./mechasqueak
+COPY --from=build /build/.build/release/mechasqueak ./mechasqueak
 
 # Copy runtime assets
 COPY localisation/ localisation/
