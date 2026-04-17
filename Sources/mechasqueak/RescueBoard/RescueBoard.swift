@@ -49,7 +49,7 @@ private let snickersDestinations = [
     "donated to the Hull Seals as a gift",
     "shredded and used as packing material for Guardian relics",
     "airdropped over a random planetary settlement",
-    "converted into a commemorative NFT",
+    "converted into a commemorative NFT"
 ]
 
 actor RescueBoard {
