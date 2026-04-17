@@ -24,6 +24,7 @@
 
 import Foundation
 import AsyncHTTPClient
+import Logging
 import NIO
 import NIOHTTP1
 
@@ -35,7 +36,7 @@ extension HTTPClient {
         return decoder
     }
     
-    func execute <T: AnyRange> (
+    func execute<T: AnyRange & Sendable>(
         request: Request,
         deadline: NIODeadline? = .now() + .seconds(5),
         expecting statusCode: T
@@ -57,7 +58,7 @@ extension HTTPClient {
         })
     }
     
-    func execute<D> (
+    func execute<D>(
         request: Request,
         forDecodable decodable: D.Type,
         deadline: NIODeadline? = .now() + .seconds(5),
@@ -66,19 +67,19 @@ extension HTTPClient {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
         do {
             guard let body = response.body else {
-                debug(request.url.absoluteString)
-                debug(String(describing: response))
+                logger.error("\(request.url.absoluteString)")
+                logger.error("\(response)")
                 if let body = response.body {
-                    debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+                    logger.error("\(String(data: Data(buffer: body), encoding: .utf8) ?? "")")
                 }
                 throw response
             }
             return try decoder.decode(D.self, from: Data(buffer: body))
         } catch {
             if let body = response.body {
-                debug(String(data: Data(buffer: body), encoding: .utf8) ?? "")
+                logger.error("\(String(data: Data(buffer: body), encoding: .utf8) ?? "")")
             }
-            debug(String(describing: error))
+            logger.error("\(error)")
             throw error
         }
     }
@@ -115,14 +116,14 @@ private let sAllowedCharacters: CharacterSet = {
     return allowed
 }()
 
-private func urlEscape (_ str: String) -> String {
+private func urlEscape(_ str: String) -> String {
     return str.replacingOccurrences(of: "\n", with: "\r\n")
         .addingPercentEncoding(withAllowedCharacters: sAllowedCharacters)!
         .replacingOccurrences(of: " ", with: "+")
 }
 
 extension HTTPClient.Body {
-    static func encodable<T: Encodable> (_ object: T) throws -> HTTPClient.Body {
+    static func encodable<T: Encodable>(_ object: T) throws -> HTTPClient.Body {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .formatted(DateFormatter.iso8601Full)
         return .data(try encoder.encode(object))

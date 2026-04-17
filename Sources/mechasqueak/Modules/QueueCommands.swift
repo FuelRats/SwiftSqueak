@@ -27,7 +27,7 @@ import IRCKit
 import NIO
 
 class QueueCommands: IRCBotModule {
-    static var maxClientsCount: Int = 15
+    nonisolated(unsafe) static var maxClientsCount: Int = 15
     var name: String = "QueueCommands"
 
     required init(_ moduleManager: IRCBotModuleManager) {

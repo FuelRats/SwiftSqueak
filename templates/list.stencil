@@ -21,5 +21,11 @@
 {% if rescue.codeRed %}
  {{ "CR"|color:4|bold }}
 {% endif %}
+{% if flag %}
+ {{ flag }}
+{% endif %}
 )
+{% if not rescue.synced %}
+ ❌
+{% endif %}
 

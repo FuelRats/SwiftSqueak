@@ -45,7 +45,7 @@ enum GroupDescription: ResourceObjectDescription {
     public typealias Relationships = NoRelationships
 }
 
-enum AccountPermission: String, Codable {
+enum AccountPermission: String, Codable, Sendable {
     case RescueRead = "rescues.read"
     case RescueReadOwn = "rescues.read.me"
     case RescueWrite = "rescues.write"

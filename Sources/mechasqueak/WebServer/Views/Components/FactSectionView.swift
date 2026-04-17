@@ -22,7 +22,7 @@ struct FactSectionView: View {
             }
             .class("fact-list")
         }
-        .isOpen(true)
+        .open(true)
         .id(category.key)
         .class("section fact-section")
     }

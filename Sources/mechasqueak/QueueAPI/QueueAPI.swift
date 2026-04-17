@@ -22,14 +22,14 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import AsyncHTTPClient
+@preconcurrency import AsyncHTTPClient
 import Foundation
-import IRCKit
+@preconcurrency import IRCKit
 import NIO
 import NIOHTTP1
 
 class QueueAPI {
-    static var pendingQueueJoins: [String: EventLoopPromise<Void>] = [:]
+    nonisolated(unsafe) static var pendingQueueJoins: [String: EventLoopPromise<Void>] = [:]
 
     static var decoder: JSONDecoder {
         let decoder = JSONDecoder()

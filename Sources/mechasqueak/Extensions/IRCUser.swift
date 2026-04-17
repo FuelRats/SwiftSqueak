@@ -23,7 +23,7 @@
  */
 
 import Foundation
-import IRCKit
+@preconcurrency import IRCKit
 
 extension IRCUser {
     var associatedAPIData: NicknameSearchDocument? {

@@ -8,8 +8,8 @@
 import Foundation
 import NIO
 
-extension EventLoopFuture {
-    func and<SecondValue, ThirdValue>(
+extension EventLoopFuture where Value: Sendable {
+    func and<SecondValue: Sendable, ThirdValue: Sendable>(
         _ future2: EventLoopFuture<SecondValue>, _ future3: EventLoopFuture<ThirdValue>
     ) -> EventLoopFuture<(Value, SecondValue, ThirdValue)> {
         let combinedFuture = self.eventLoop.next().makePromise(

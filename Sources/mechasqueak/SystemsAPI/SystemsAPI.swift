@@ -22,10 +22,11 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import AsyncHTTPClient
+@preconcurrency import AsyncHTTPClient
 import Foundation
-import IRCKit
-import JSONAPI
+@preconcurrency import IRCKit
+@preconcurrency import JSONAPI
+import Logging
 import NIO
 import NIOHTTP1
 
@@ -41,13 +42,13 @@ func loadUnobtainablePermitSystems() -> Set<String> {
     ).appendingPathComponent("unobtainable-permits.json")
     
     guard let permitsData = try? Data(contentsOf: unobtainablePermitsPath) else {
-        debug("Warning: Could not locate unobtainable-permits.json file in \(unobtainablePermitsPath.absoluteString)")
+        logger.warning("Could not locate unobtainable-permits.json file in \(unobtainablePermitsPath.absoluteString)")
         return Set<String>()
     }
     
     guard let json = try? JSONSerialization.jsonObject(with: permitsData) as? [String: Any],
           let systems = json["unobtainable_permit_systems"] as? [String] else {
-        debug("Warning: Could not parse unobtainable-permits.json file")
+        logger.warning("Could not parse unobtainable-permits.json file")
         return Set<String>()
     }
     
@@ -57,7 +58,7 @@ func loadUnobtainablePermitSystems() -> Set<String> {
 let unobtainablePermitSystems = loadUnobtainablePermitSystems()
 
 class SystemsAPI {
-    private static var shortNamesCapitalisation = [
+    nonisolated(unsafe) private static var shortNamesCapitalisation = [
         "IX": "Ix",
         "H": "h",
         "AO": "Ao",
@@ -574,7 +575,7 @@ class SystemsAPI {
         func hasPermit(system: PopulatedSystem) -> Bool {
             let permSystems =  self.meta.permSystems ?? []
             for sys in permSystems {
-                debug("\(sys.id64)")
+                logger.debug("\(sys.id64)")
             }
             return permSystems.contains(where: { $0.id64 == system.id64 })
         }
@@ -597,6 +598,8 @@ class SystemsAPI {
                     && (legacyStations == false || $0.type?.isPlayerStation == false)
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
+                        && $0.services.contains("Refuel")
+                        && $0.services.contains("Repair")
                 }
                 let maxDistance = stations.map { $0.distance ?? defaultMaxDistance }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
@@ -725,8 +728,10 @@ class SystemsAPI {
                     case Settlement = "Odyssey Settlement"
                     case OrbitalConstructionSite = "Orbital Construction Site"
                     case PlanetaryConstructionSite = "Planetary Construction Site"
+                    case CraterPort = "Crater Port"
+                    case DodecStarport = "Dodec Starport"
 
-                    static var brokenDataMapping: [String: String] = [
+                    nonisolated(unsafe) static var brokenDataMapping: [String: String] = [
                         "Coriolis": "Coriolis Starport",
                         "Orbis": "Orbis Starport",
                         "Ocellus": "Ocellus Starport",
@@ -736,7 +741,9 @@ class SystemsAPI {
                         "PlanetaryConstructionDepot": "Planetary Construction Depot",
                         "AsteroidBase": "Asteroid base",
                         "OnFootSettlement": "Odyssey Settlement",
-                        "MegaShip": "Mega ship"
+                        "MegaShip": "Mega ship",
+                        "CraterPort": "Crater Port",
+                        "Dodec": "Dodec Starport"
                     ]
 
                     init(from decoder: Decoder) throws {
@@ -772,7 +779,9 @@ class SystemsAPI {
                         .Outpost: 6,
                         .Settlement: 7,
                         .SystemColonizationShip: 7,
-                        .PlanetaryConstructionDepot: 7
+                        .PlanetaryConstructionDepot: 7,
+                        .CraterPort: 2,
+                        .DodecStarport: 0
                     ]
 
                     var rating: UInt {
@@ -792,7 +801,9 @@ class SystemsAPI {
                             StationType.SpaceConstructionDepot,
                             StationType.SystemColonizationShip,
                             StationType.OrbitalConstructionSite,
-                            StationType.PlanetaryConstructionDepot
+                            StationType.PlanetaryConstructionDepot,
+                            StationType.CraterPort,
+                            StationType.DodecStarport
                         ].contains(self)
                     }
 
@@ -813,7 +824,8 @@ class SystemsAPI {
                             StationType.PlanetaryOutpost,
                             StationType.PlanetaryConstructionSite,
                             StationType.Settlement,
-                            StationType.PlanetaryConstructionDepot
+                            StationType.PlanetaryConstructionDepot,
+                            StationType.CraterPort
                         ].contains(self)
                     }
                 }

@@ -24,8 +24,8 @@
 
 import AsyncHTTPClient
 import Foundation
-import IRCKit
-import JSONAPI
+@preconcurrency import IRCKit
+@preconcurrency import JSONAPI
 import NIO
 
 enum RatDescription: ResourceObjectDescription {
@@ -134,7 +134,7 @@ struct RatDataObject: Codable, Equatable {
     var permits: [String]?
 }
 
-enum GamePlatform: String, Codable, CaseIterable {
+enum GamePlatform: String, Codable, CaseIterable, Sendable {
     case PC = "pc"
     case Xbox = "xb"
     case PS = "ps"
@@ -206,7 +206,7 @@ enum GamePlatform: String, Codable, CaseIterable {
     }
 }
 
-enum GameMode: String, Codable, CaseIterable {
+enum GameMode: String, Codable, CaseIterable, Sendable {
     case legacy = "horizons3"
     case horizons = "horizons4"
     case odyssey
@@ -238,7 +238,7 @@ enum GameMode: String, Codable, CaseIterable {
         }
     }
 
-    static var englishDescriptions: [GameMode: String] = [
+    nonisolated(unsafe) static var englishDescriptions: [GameMode: String] = [
         .legacy: "Legacy",
         .horizons: "Horizons",
         .odyssey: "Odyssey"
@@ -247,7 +247,7 @@ enum GameMode: String, Codable, CaseIterable {
         return GameMode.englishDescriptions[self]!
     }
 
-    static var announcerDescriptions: [GameMode: String] = [
+    nonisolated(unsafe) static var announcerDescriptions: [GameMode: String] = [
         .legacy: "Horizons 3.8",
         .horizons: "Horizons 4.0",
         .odyssey: "Odyssey"
@@ -256,7 +256,7 @@ enum GameMode: String, Codable, CaseIterable {
         return GameMode.announcerDescriptions[self]!
     }
 
-    static var shortEnglishDescriptions: [GameMode: String] = [
+    nonisolated(unsafe) static var shortEnglishDescriptions: [GameMode: String] = [
         .legacy: "LEG",
         .horizons: "HOR",
         .odyssey: "ODY"
@@ -265,7 +265,7 @@ enum GameMode: String, Codable, CaseIterable {
         return GameMode.shortEnglishDescriptions[self]!
     }
 
-    static var colors: [GameMode: IRCColor] = [
+    nonisolated(unsafe) static var colors: [GameMode: IRCColor] = [
         .legacy: .Pink,
         .horizons: .LightCyan,
         .odyssey: .Orange

@@ -24,7 +24,7 @@
 
 import Foundation
 import IRCKit
-import Regex
+@preconcurrency import Regex
 
 private let standDownPhrases = ["stand down", "stnd", "stdn"]
 private let carrierPhrases = ["fc", "carrier", "horizons", "odyssey"]
@@ -32,12 +32,12 @@ private let carrierPhrases = ["fc", "carrier", "horizons", "odyssey"]
 class MessageScanner: IRCBotModule {
     var name: String = "Message Scanner"
     // swiftlint:disable force_try
-    static let jumpCallExpression = try! Regex(
+    nonisolated(unsafe) static let jumpCallExpression = try! Regex(
         pattern: "([0-9]{1,3})[jJ] #([0-9]{1,3})", groupNames: ["jumps", "case"])
-    static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
+    nonisolated(unsafe) static let caseMentionExpression = try! Regex(pattern: "(?:^|\\s+)#([0-9]{1,3})(?:$|\\s+)")
     static let systemExpression =
         "(([A-Za-z0-9\\s]+) (SECTOR|sector) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+))"
-    static let jumpCallExpressionCaseAfter = try! Regex(
+    nonisolated(unsafe) static let jumpCallExpressionCaseAfter = try! Regex(
         pattern: "#([0-9]{1,3}) ([0-9]{1,3})[jJ]",
         groupNames: ["case", "jumps"]
     )
@@ -257,7 +257,7 @@ private func checkRatPlatformMismatch(
     }
 }
 
-private func handleJumpCall (
+private func handleJumpCall(
     jumpCallMatch: Match,
     channelMessage: IRCChannelMessageNotification.Payload,
     casesUpdatedForMessage: [Rescue]
@@ -391,6 +391,12 @@ private func checkExpansionMismatch(
           rescue.expansion != rat.attributes.expansion.value,
           containsCarrierPhrase == false
     else {
+        return nil
+    }
+
+    // Skip warning if the jump call message contains a keyword matching the rescue's expansion
+    let words = channelMessage.message.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+    if words.contains(where: { GameMode.parsedFromText(text: String($0)) == rescue.expansion }) {
         return nil
     }
 

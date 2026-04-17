@@ -25,11 +25,12 @@
 import AsyncHTTPClient
 import Foundation
 import IRCKit
+import Logging
 import NIO
-import Regex
+@preconcurrency import Regex
 
-class Rescue {
-    private static let announcerExpression =
+class Rescue: @unchecked Sendable {
+    nonisolated(unsafe) private static let announcerExpression =
     // swiftlint:disable:next line_length
         "Incoming Client: (.*) - System: (.*) - Platform: ([A-Za-z0-9]+)( (Horizons 3.8|Horizons 4.0|Odyssey))? - O2: (.*) - Language: .* \\(([a-z]{2,3}(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]+)?)\\)(?: - IRC Nickname: (.*))?"
         .r!
@@ -40,6 +41,7 @@ class Rescue {
     var clientNick: String? { didSet { property(\.clientNick, didChangeFrom: oldValue) } }
     var clientLanguage: Locale? { didSet { property(\.clientLanguage, didChangeFrom: oldValue) } }
     var codeRed: Bool { didSet { property(\.codeRed, didChangeFrom: oldValue) } }
+    var carrier: Bool { didSet { property(\.carrier, didChangeFrom: oldValue) } }
     var notes: String { didSet { property(\.notes, didChangeFrom: oldValue) } }
     var platform: GamePlatform? { didSet { property(\.platform, didChangeFrom: oldValue) } }
     var expansion: GameMode { didSet { property(\.expansion, didChangeFrom: oldValue) } }
@@ -99,6 +101,7 @@ class Rescue {
         } else {
             self.codeRed = false
         }
+        self.carrier = false
 
         let languageCode = match.group(at: 7)!
         self.clientLanguage = Locale(identifier: languageCode)
@@ -155,6 +158,7 @@ class Rescue {
         self.clientLanguage = Locale(identifier: "en")
 
         self.codeRed = signal.isCodeRed
+        self.carrier = false
 
         self.notes = ""
         self.quotes = [
@@ -223,6 +227,7 @@ class Rescue {
         }
 
         self.codeRed = input.isCodeRed
+        self.carrier = false
         self.notes = ""
 
         self.quotes = []
@@ -262,6 +267,7 @@ class Rescue {
         self.expansion = expansion ?? .legacy
 
         self.codeRed = codeRed
+        self.carrier = false
         self.notes = ""
 
         self.quotes = []
@@ -292,6 +298,7 @@ class Rescue {
         self.channelName = configuration.general.rescueChannel
 
         self.codeRed = attr.codeRed.value
+        self.carrier = attr.carrier.value
         self.notes = attr.notes.value
         self.platform = attr.platform.value
         if let systemName = attr.system.value {
@@ -472,6 +479,7 @@ class Rescue {
                 clientLanguage: .init(value: self.clientLanguage?.identifier),
                 commandIdentifier: .init(value: identifier),
                 codeRed: .init(value: self.codeRed),
+                carrier: .init(value: self.carrier),
                 data: .init(
                     value: RescueData(
                         systemId: self.system?.searchResult?.id64,
@@ -598,8 +606,7 @@ class Rescue {
     func assign(
         _ param: String,
         fromChannel channel: IRCChannel,
-        force: Bool = false,
-        carrier: Bool = false
+        force: Bool = false
     ) async -> Result<AssignmentResult, RescueAssignError> {
         let param = param.lowercased()
         guard
@@ -628,7 +635,7 @@ class Rescue {
         }
 
         var rat: Rat?
-        if carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
+        if self.carrier && nick.currentRat?.expansion.hasSharedUniverse(with: self.expansion) == true {
             rat = nick.currentRat
         } else {
             let assignRat = nick.getRatRepresenting(platform: self.platform)
@@ -792,8 +799,14 @@ class Rescue {
         guard configuration.general.drillMode == false else {
             return
         }
-        let identifier = await board.getId(forRescue: self) ?? 0
-        guard self.uploaded || self.uploadOperation != nil else {
+
+        // If not yet uploaded to server, create it (or skip if a create is already in progress)
+        guard self.uploaded else {
+            if self.uploadOperation != nil {
+                // CREATE already in progress — it will upload the latest state when it succeeds
+                return
+            }
+            let identifier = await board.getId(forRescue: self) ?? 0
             return try await withCheckedThrowingContinuation { continuation in
                 let operation = RescueCreateOperation(
                     rescue: self, withCaseId: identifier, representing: command?.message.user)
@@ -804,7 +817,7 @@ class Rescue {
 
                 operation.onError = { error in
                     self.uploadOperation = nil
-                    print(String(describing: error))
+                    logger.error("\(error)")
                     continuation.resume(throwing: error)
                 }
 
@@ -826,16 +839,12 @@ class Rescue {
             let operation = RescueUpdateOperation(
                 rescue: self, withCaseId: caseId, representing: command?.message.user)
 
-            if let uploadOperation = self.uploadOperation {
-                operation.addDependency(uploadOperation)
-            }
-
             operation.onCompletion = {
                 continuation.resume(returning: ())
             }
 
             operation.onError = { error in
-                print(String(describing: error))
+                logger.error("\(error)")
                 continuation.resume(throwing: error)
             }
 

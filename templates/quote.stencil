@@ -5,6 +5,9 @@ Inactive
 {% if expansion %}
  {{ expansion }}
 {% endif %}
+{% if carrier %}
+ 🚢
+{% endif %}
  Case
 {% filter bold %}
  #{{ caseId }}:
@@ -21,3 +24,9 @@ Inactive
 {% endif %}
  in
   {% include "starsystem.stencil" %}
+{% if language %}
+ {{ language }}
+{% endif %}
+{% if not rescue.synced %}
+ ❌
+{% endif %}

@@ -24,7 +24,7 @@
 
 import Foundation
 
-public struct Queue<E>: ExpressibleByArrayLiteral {
+public struct Queue<E: Sendable>: ExpressibleByArrayLiteral, Sendable {
     public private(set) var elements: [E] = []
     public private(set) var maxSize: Int?
 

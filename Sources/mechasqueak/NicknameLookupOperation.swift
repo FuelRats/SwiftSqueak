@@ -23,8 +23,9 @@
  */
 
 import Foundation
-import IRCKit
-import JSONAPI
+@preconcurrency import IRCKit
+@preconcurrency import JSONAPI
+import Logging
 
 class NicknameLookupManager {
     let queue = OperationQueue()
@@ -46,7 +47,7 @@ class NicknameLookupManager {
         }
 
         guard hasExistingFetchOperation(user: user) == false else {
-            debug("Ignoring fetch for \(user.nickname) due to existing fetch operation")
+            logger.debug("Ignoring fetch for \(user.nickname) due to existing fetch operation")
             return
         }
 
@@ -66,7 +67,7 @@ class NicknameLookupManager {
         }
 
         self.queue.addOperation(operation)
-        debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount))")
+        logger.debug("Added fetch for \(user.nickname) to queue (\(self.queue.operationCount))")
     }
 
     func lookupIfNotExists(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
@@ -144,9 +145,9 @@ class NicknameLookupOperation: Operation, @unchecked Sendable {
     }
 
     override func start() {
-        debug("Starting fetch operation for \(user.nickname)")
+        logger.debug("Starting fetch operation for \(user.nickname)")
         guard isCancelled == false else {
-            debug("Fetch operation was cancelled")
+            logger.debug("Fetch operation was cancelled")
             self.isFinished = true
             return
         }
@@ -154,7 +155,7 @@ class NicknameLookupOperation: Operation, @unchecked Sendable {
         self.isExecuting = true
 
         guard let account = user.account else {
-            debug("Ignoring fetch for \(user.nickname) as they are not logged in")
+            logger.debug("Ignoring fetch for \(user.nickname) as they are not logged in")
             self.isFinished = true
             return
         }
@@ -163,16 +164,16 @@ class NicknameLookupOperation: Operation, @unchecked Sendable {
             do {
                 let apiNickname = try await FuelRatsAPI.getNickname(forIRCAccount: account)
                 if apiNickname != nil {
-                    debug("Synced account data for \(account)")
+                    logger.debug("Synced account data for \(account)")
                 } else {
-                    debug("Did not find account data for \(account)")
+                    logger.debug("Did not find account data for \(account)")
                 }
                 self.isFinished = true
                 self.isExecuting = false
                 self.onCompletion?(apiNickname)
             } catch {
-                debug("Failed to lookup account data for \(account)")
-                print(String(describing: error))
+                logger.error("Failed to lookup account data for \(account)")
+                logger.error("\(error)")
                 self.isFinished = true
                 self.isExecuting = false
                 self.onError?(error)

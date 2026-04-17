@@ -24,8 +24,8 @@
 
 import Foundation
 
-extension Array {
-    func asyncMap<T>(_ transform: @escaping (Element) async throws -> T) async rethrows -> [T] {
+extension Array where Element: Sendable {
+    func asyncMap<T: Sendable>(_ transform: @escaping @Sendable (Element) async throws -> T) async rethrows -> [T] {
         var mappedElements: [T] = []
         try await withThrowingTaskGroup(of: T.self) { group in
             for element in self {
@@ -41,7 +41,7 @@ extension Array {
         return mappedElements
     }
 
-    func asyncCompactMap<T>(_ transform: @escaping (Element) async throws -> T?) async rethrows
+    func asyncCompactMap<T: Sendable>(_ transform: @escaping @Sendable (Element) async throws -> T?) async rethrows
         -> [T] {
         var mappedElements: [T] = []
         try await withThrowingTaskGroup(of: T?.self) { group in
@@ -60,7 +60,7 @@ extension Array {
         return mappedElements
     }
 
-    func asyncFirst(where predicate: @escaping (Element) async throws -> Bool) async rethrows
+    func asyncFirst(where predicate: @escaping @Sendable (Element) async throws -> Bool) async rethrows
         -> Element? {
         for element in self {
             let result = try await predicate(element)

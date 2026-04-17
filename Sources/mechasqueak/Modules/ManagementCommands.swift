@@ -162,7 +162,7 @@ class ManagementCommands: IRCBotModule {
         return "Available permission groups: " + groupList.joined(separator: ", ")
     }
     
-    static func generateGroupListView () -> Content {
+    static func generateGroupListView() -> Content {
         HTMLKit.Div {
             H5 {
                 "Available permission groups:"

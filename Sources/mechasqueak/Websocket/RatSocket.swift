@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 import NIO
 import NIOHTTP1
 import WebSocketKit
@@ -39,7 +40,7 @@ enum RatSocketEventType: String {
 
 struct WebSocket {}
 
-class RatSocket {
+class RatSocket: @unchecked Sendable {
     var connectedAndAuthenticated = false
     var socket: WebSocketKit.WebSocket?
 
@@ -94,18 +95,18 @@ class RatSocket {
     }
 
     func websocketDidConnect() {
-        debug("Connected to Websocket connection")
+        logger.info("Connected to Websocket connection")
     }
 
     func websocketDidDisconnect(error: Error?) {
         self.socket = nil
-        debug("Disconnected from Websocket connection")
+        logger.warning("Disconnected from Websocket connection")
         connectedAndAuthenticated = false
         self.connect()
     }
 
     func websocketDidReceiveMessage(socket: WebSocketKit.WebSocket, text: String) {
-        debug(text)
+        logger.debug("\(text)")
         guard let data = text.data(using: .utf8),
             let initialField = RatSocket.getInitialField(from: data)
         else {
@@ -116,17 +117,19 @@ class RatSocket {
             switch ratSocketEvent {
                 case .connection:
                     connectedAndAuthenticated = true
-                    debug("Received welcome from Websocket connection")
+                    logger.info("Received welcome from Websocket connection")
 
-                //                case .rescueCreated:
-                //                    RatSocket.getEventAndPost(notification: RatSocketRescueCreatedNotification.self, from: data)
-                //
-                //                case .rescueUpdated:
-                //                    RatSocket.getEventAndPost(notification: RatSocketRescueUpdatedNotification.self, from: data)
-                //
-                //                case .rescueDeleted:
-                //                    RatSocket.getEventAndPost(notification: RatSocketRescueDeletedNotification.self, from: data)
-                //
+                case .rescueCreated:
+                    RatSocket.getEventAndPost(
+                        notification: RatSocketRescueCreatedNotification.self, from: data)
+
+                case .rescueUpdated:
+                    RatSocket.getEventAndPost(
+                        notification: RatSocketRescueUpdatedNotification.self, from: data)
+
+                case .rescueDeleted:
+                    RatSocket.getEventAndPost(
+                        notification: RatSocketRescueDeletedNotification.self, from: data)
                 case .userUpdated:
                     RatSocket.getEventAndPost(
                         notification: RatSocketUserUpdatedNotification.self, from: data)
@@ -172,7 +175,7 @@ struct GenericSocketData: Decodable {
     }
 }
 
-struct RatSocketEvent<Body: Decodable>: Decodable {
+struct RatSocketEvent<Body: Decodable>: Decodable, @unchecked Sendable {
     let event: String
     let sender: UUID
     let resourceIdentifier: String?

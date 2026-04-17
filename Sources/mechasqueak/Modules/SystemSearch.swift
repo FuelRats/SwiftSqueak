@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 import NIO
 
 class SystemSearch: IRCBotModule {
@@ -126,7 +127,7 @@ class SystemSearch: IRCBotModule {
             }
             command.message.reply(message: await result.info)
         } catch {
-            print(String(describing: error))
+            logger.error("\(error)")
             command.message.reply(
                 key: "landmark.noresults", fromCommand: command,
                 map: [
@@ -217,7 +218,7 @@ class SystemSearch: IRCBotModule {
                     "plotterUrl": spanshUrl?.absoluteString ?? ""
                 ])
         } catch {
-            print(error)
+            logger.error("\(error)")
             command.message.error(key: "distance.error", fromCommand: command)
         }
     }
@@ -325,7 +326,7 @@ class SystemSearch: IRCBotModule {
                         "hasLargePad": station.hasLargePad
                     ])) ?? "")
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.error(error)
         }
     }
