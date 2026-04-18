@@ -24,7 +24,7 @@
 
 import Foundation
 
-enum CommandBody {
+enum CommandBody: Sendable {
     case options([Character])
     case argument(String, String? = nil, example: String? = nil)
     case param(String, String = "", ParameterType = .standard, ParameterNullability = .required)

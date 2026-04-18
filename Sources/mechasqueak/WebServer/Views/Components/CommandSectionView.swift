@@ -30,7 +30,7 @@ struct CommandSectionView: View {
             }
             .class("command-list")
         }
-        .isOpen(true)
+        .open(true)
         .id(categoryTitle.lowercased())
         .class("section command-section")
     }

@@ -23,7 +23,7 @@
  */
 
 import Foundation
-import Regex
+@preconcurrency import Regex
 
 func autocorrect(system: StarSystem) -> StarSystem {
     var system = system
@@ -57,10 +57,10 @@ func autocorrect(system: StarSystem) -> StarSystem {
 }
 
 struct ProceduralSystem: CustomStringConvertible {
-    static let proceduralSystemExpression =
+    nonisolated(unsafe) static let proceduralSystemExpression =
         "([\\w\\s'.()/-]+) ([A-Za-z])([A-Za-z])-([A-Za-z]) ([A-Za-z])(?:(\\d+)-)?(\\d+)".r!
-    static let proceduralEndPattern = "^[a-zA-Z]{2,4}[0-9]{1,5}$".r!
-    static let systemBodyPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
+    nonisolated(unsafe) static let proceduralEndPattern = "^[a-zA-Z]{2,4}[0-9]{1,5}$".r!
+    nonisolated(unsafe) static let systemBodyPattern = "(\\s(?:[A-Ga-g]{1,2}(?: [0-9]{1,2})?))+$".r!
     static let validMassCategories = "ABCDEFGH"
     private static let numberSubstitutions: [Character: Character] = [
         "1": "I",

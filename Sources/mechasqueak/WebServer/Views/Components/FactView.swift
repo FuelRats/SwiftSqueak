@@ -116,7 +116,7 @@ struct FactMessageView: View {
                 if let platform = platform {
                     Div {}
                         .class("platform-icon fa-brands \(platform.fontAwesomeClass)")
-                        .aria(label: "\(platform)")
+                        .accessibilityLabel("\(platform)")
                 }
                 Paragraph {
                     AutomaticLinkTextView(text: fact.message)

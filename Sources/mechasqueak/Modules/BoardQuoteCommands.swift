@@ -54,7 +54,11 @@ class BoardQuoteCommands: IRCBotModule {
                     "expansion": rescue.platform == .PC ? rescue.expansion.ircRepresentable : "",
                     "system": rescue.system as Any,
                     "landmark": rescue.system?.landmark as Any,
-                    "status": rescue.status.rawValue
+                    "status": rescue.status.rawValue,
+                    "carrier": rescue.carrier,
+                    "language": rescue.clientLanguage.map {
+                        "\(IRCFormat.bold($0.identifier)) (\($0.englishDescription))"
+                    } ?? ""
                 ])) ?? ""
         command.message.replyPrivate(message: output)
 

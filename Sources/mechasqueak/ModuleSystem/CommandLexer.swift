@@ -23,10 +23,11 @@
  */
 
 import Foundation
-import IRCKit
-import Regex
+@preconcurrency import IRCKit
+import Logging
+@preconcurrency import Regex
 
-private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)"
+nonisolated(unsafe) private let ircFormattingExpression = "(\\x03([0-9]{1,2})?(,[0-9]{1,2})?|\\x02|\\x1F|\\x1E|\\x11)"
     .r!
 
 extension String {
@@ -162,13 +163,14 @@ struct IRCBotCommand {
     }
 
     var isRepeatInvocation: Bool {
-        let previousIncoation = IRCBotModuleManager.commandHistory.elements.reversed().first(
+        let previousInvocation = IRCBotModuleManager.commandHistory.elements.reversed().first(
             where: {
                 $0.id != self.id && $0.command == self.command && $0.parameters == self.parameters
+                    && $0.options == self.options && $0.arguments == self.arguments
                     && $0.message.user.nickname == self.message.user.nickname
             })
-        return previousIncoation != nil
-            && Date().timeIntervalSince(previousIncoation!.message.raw.time) < 30
+        return previousInvocation != nil
+            && Date().timeIntervalSince(previousInvocation!.message.raw.time) < 30
     }
     
     var param1: String? {
@@ -189,7 +191,7 @@ struct IRCBotCommand {
     }
 
     func error(_ error: Error) {
-        debug(String(describing: error))
+        logger.error("\(error)")
         self.message.error(key: "genericerror", fromCommand: self)
     }
 }
@@ -367,7 +369,7 @@ struct Lexer {
 }
 
 struct CommandToken {
-    static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{1,}(?:_[A-Za-z]{1,2})?))?".r!
+    nonisolated(unsafe) static let regex = "^(!)([A-Za-z0-9_]*)(?:-([A-Za-z]{1,}(?:_[A-Za-z]{1,2})?))?".r!
 
     let declaration: String
     let identifier: String

@@ -24,16 +24,17 @@
 
 import Foundation
 import IRCKit
+import Logging
 
-class FactCommands: IRCBotModule {
+class FactCommands: IRCBotModule, @unchecked Sendable {
     var name: String = "Fact Commands"
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
-    public static var prepFacts = [
+    nonisolated(unsafe) public static var prepFacts = [
         "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit"
     ]
-    public static var factCategoryNames: [String: String] = [
+    nonisolated(unsafe) public static var factCategoryNames: [String: String] = [
         "irc": "IRC info",
         "dispatch": "Dispatching",
         "rescue": "Rescue information",
@@ -210,7 +211,7 @@ class FactCommands: IRCBotModule {
                 command.message.error(key: "addfact.exists", fromCommand: command)
             }
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.message.error(key: "addfact.error", fromCommand: command)
             return
         }
@@ -261,7 +262,7 @@ class FactCommands: IRCBotModule {
                     "message": message.excerpt(maxLength: 350)
                 ])
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             command.message.error(key: "addfact.error", fromCommand: command)
         }
     }
@@ -750,11 +751,11 @@ class FactCommands: IRCBotModule {
 
         self.channelMessageObserver = NotificationCenter.default.addAsyncObserver(
             descriptor: IRCChannelMessageNotification(),
-            using: onMessage(_:)
+            using: { [weak self] message in await self?.onMessage(message) }
         )
         self.privateMessageObserver = NotificationCenter.default.addAsyncObserver(
             descriptor: IRCPrivateMessageNotification(),
-            using: onMessage(_:)
+            using: { [weak self] message in await self?.onMessage(message) }
         )
     }
 }

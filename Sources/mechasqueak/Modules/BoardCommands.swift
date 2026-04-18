@@ -24,6 +24,7 @@
 
 import Foundation
 import IRCKit
+import Logging
 import Regex
 import HTMLKit
 
@@ -219,6 +220,7 @@ class BoardCommands: IRCBotModule {
                         "platform": rescue.platform.ircRepresentable,
                         "expansion": rescue.platform == .PC
                             ? rescue.expansion.shortIRCRepresentable : "",
+                        "flag": rescue.clientLanguage?.flagEmoji ?? "",
                         "includeCaseIds": arguments.contains(.includeCaseIds)
                     ])) ?? ""
             return output
@@ -252,7 +254,6 @@ class BoardCommands: IRCBotModule {
         let message = command.message
         let override = command.forceOverride
         let pwOnly = command.options.contains("p")
-        let carrier = command.has(argument: "carrier")
 
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             if command.parameters.count > 1,
@@ -267,6 +268,9 @@ class BoardCommands: IRCBotModule {
                     ])
             }
             return
+        }
+        if command.has(argument: "carrier") {
+            rescue.carrier = true
         }
 
         if rescue.isRecentDrill && command.message.destination != rescue.channel {
@@ -302,10 +306,9 @@ class BoardCommands: IRCBotModule {
             } else if !pwOnly {
                 // Rat is not assigned and we're not in paperwork-only mode, so assign them
                 let assignResult = await rescue.assign(
-                    command.parameters[1], 
-                    fromChannel: command.message.destination, 
-                    force: override, 
-                    carrier: carrier
+                    command.parameters[1],
+                    fromChannel: command.message.destination,
+                    force: override
                 )
                 
                 switch assignResult {
@@ -374,6 +377,17 @@ class BoardCommands: IRCBotModule {
                     "caseId": caseId
                 ])
             return
+        }
+
+        if rescue.carrier {
+            rescue.appendQuote(
+                RescueQuote(
+                    author: command.message.user.nickname,
+                    message: "This rescue has been assigned a fleet carrier",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.user.nickname
+                ))
         }
 
         do {
@@ -522,7 +536,7 @@ class BoardCommands: IRCBotModule {
                     "client": rescue.clientDescription
                 ])
         } catch {
-            debug(String(describing: error))
+            logger.error("\(error)")
             rescue.status = .Inactive
             command.message.reply(
                 key: "board.trash.error", fromCommand: command,

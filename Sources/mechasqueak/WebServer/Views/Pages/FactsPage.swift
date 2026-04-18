@@ -9,11 +9,16 @@ struct FactsPage: View {
     let platformFacts: [String: [GroupedFact]]
 
     var body: Content {
-        Div {
+        var tocItems: [TOCItem] = factCategories
+        if !platformFacts.isEmpty {
+            tocItems.append(PlatformFactTOCItem(facts: platformFacts))
+        }
+
+        return Div {
             Title {
                 FactsPage.title
             }
-            TableOfContentsView(items: factCategories)
+            TableOfContentsView(items: tocItems)
             Anchor("↑ TOC").reference("#toc").class("toc-jump")
             Div {
                 Div {
@@ -62,8 +67,25 @@ extension GroupedFact: TOCSubItem {
     var title: String {
         return "!\(self.canonicalName)"
     }
-    
+
     var reference: String {
         return self.canonicalName
     }
+}
+
+struct PlatformFactTOCItem: TOCItem {
+    let facts: [String: [GroupedFact]]
+
+    var title: String { "Platform facts" }
+    var reference: String { "platform" }
+
+    var children: [any TOCSubItem] {
+        facts.keys.sorted().map { PlatformFactTOCSubItem(name: $0) }
+    }
+}
+
+struct PlatformFactTOCSubItem: TOCSubItem {
+    let name: String
+    var title: String { "!\(name)" }
+    var reference: String { name }
 }

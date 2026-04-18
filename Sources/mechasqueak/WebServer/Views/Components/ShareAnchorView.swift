@@ -8,7 +8,7 @@ struct ShareAnchorView: View {
         Button {}
         .class("share-anchor")
         .custom(key: "data-anchor", value: value)
-        .aria(label: title)
+        .accessibilityLabel(title)
         .title(title)
     }
 }

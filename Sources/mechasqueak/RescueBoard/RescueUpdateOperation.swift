@@ -26,6 +26,7 @@ import AsyncHTTPClient
 import Foundation
 import IRCKit
 import JSONAPI
+import Logging
 
 class RescueUpdateOperation: Operation, @unchecked Sendable {
     let caseId: Int
@@ -72,6 +73,7 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
     }
 
     func attemptUpload() async throws -> RemoteRescue {
+        await board.markOutgoingUpdate(rescueId: rescue.id)
         return try await withCheckedThrowingContinuation { continuation in
             let patchDocument = SingleDocument(
                 apiDescription: .none,
@@ -110,16 +112,23 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
                                 } catch {
                                     continuation.resume(throwing: error)
                                 }
+                            } else if response.status == .notFound {
+                                // Rescue doesn't exist on server — reset uploaded flag
+                                // so next save() will retry as CREATE
+                                self.rescue.uploaded = false
+                                self.rescue.synced = false
+                                continuation.resume(throwing: response)
+                                logger.warning("Rescue \(self.rescue.id) not found on server (404), resetting uploaded flag")
                             } else {
                                 self.rescue.synced = false
 
                                 continuation.resume(throwing: response)
-                                debug(String(response.status.code))
-                                debug(String(data: Data(buffer: response.body!), encoding: .utf8)!)
+                                logger.error("\(response.status.code)")
+                                logger.error("\(String(data: Data(buffer: response.body!), encoding: .utf8)!)")
                             }
 
                         case .failure(let error):
-                            debug(String(describing: error))
+                            logger.error("\(error)")
                             self.rescue.synced = false
                             continuation.resume(throwing: error)
                     }
@@ -135,10 +144,9 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
             self.isFinished = true
             throw CancellationError()
         }
-        let previousSyncState = self.rescue.synced
         do {
             let rescue = try await attemptUpload()
-            if errorReported && previousSyncState == false {
+            if errorReported {
                 mecha.reportingChannel?.send(
                     key: "board.sync.errorsolved",
                     map: [
@@ -152,12 +160,13 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
             }
             return rescue
         } catch {
-            if errorReported == false && previousSyncState == true {
+            if errorReported == false {
+                let errorDetail = (error as? HTTPClient.Response).map {
+                    "HTTP \($0.status.code) \($0.body.map { String(data: Data(buffer: $0), encoding: .utf8) ?? "" } ?? "")"
+                } ?? "\(error)"
                 mecha.reportingChannel?.send(
-                    key: "board.sync.error",
-                    map: [
-                        "caseId": caseId
-                    ])
+                    message: "⚠️ Sync error on case #\(caseId): \(errorDetail.prefix(500)) - SuperManifolds"
+                )
                 errorReported = true
             }
             try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
@@ -166,9 +175,9 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
     }
 
     override func start() {
-        debug("Starting update operation for \(rescue.id)")
+        logger.debug("Starting update operation for \(rescue.id)")
         guard isCancelled == false else {
-            debug("Update operation was cancelled")
+            logger.debug("Update operation was cancelled")
             self.isFinished = true
             return
         }

@@ -23,9 +23,9 @@
  */
 
 import Foundation
-import Stencil
-import IRCKit
-import PathKit
+@preconcurrency import Stencil
+@preconcurrency import IRCKit
+@preconcurrency import PathKit
 
 private func makeColorFilter() -> (Any?, [Any?]) throws -> Any? {
     return { (value, arguments) in
@@ -248,7 +248,7 @@ private func makeIdFilter() -> (Any?) throws -> Any? {
     }
 }
 
-private func generateEnvironment () -> Environment {
+private func generateEnvironment() -> Environment {
     let ext = Extension()
     let environment = Environment(
         loader: FileSystemLoader(paths: [Path("\(configuration.sourcePath.path)/templates")]),
@@ -277,10 +277,10 @@ private func generateEnvironment () -> Environment {
     return environment
 }
 
-let stencil = generateEnvironment()
+nonisolated(unsafe) let stencil = generateEnvironment()
 
 extension Environment {
-    func renderLine (name: String, context: [String: Any]) throws -> String {
+    func renderLine(name: String, context: [String: Any]) throws -> String {
         return try self.renderTemplate(name: name, context: context)
             .replacingOccurrences(of: "\n", with: "")
             .replacingOccurrences(of: "[\\s]+", with: " ", options: .regularExpression, range: nil)

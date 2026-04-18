@@ -23,7 +23,7 @@
  */
 
 import Foundation
-import IRCKit
+@preconcurrency import IRCKit
 
 protocol IRCBotModule {
     var name: String { get }
@@ -33,8 +33,8 @@ protocol IRCBotModule {
 
 class IRCBotModuleManager {
     private var registeredModules: [IRCBotModule] = []
-    public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 250)
-    static var denylist = configuration.general.dispatchDenylist
+    nonisolated(unsafe) public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 250)
+    nonisolated(unsafe) static var denylist = configuration.general.dispatchDenylist
 
     func register(module: IRCBotModule) {
         self.registeredModules.append(module)

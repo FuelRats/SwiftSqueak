@@ -2,9 +2,9 @@ name: Swift Build & Lint
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   build-and-lint:
@@ -13,10 +13,6 @@ jobs:
     steps:
       - name: Checkout SwiftSqueak
         uses: actions/checkout@v4
-
-      - name: Clone IRCKit to ../IRCKit
-        run: |
-          git clone https://github.com/fuelrats/IRCKit.git ../IRCKit
 
       - name: Install Swift 6.1
         run: |

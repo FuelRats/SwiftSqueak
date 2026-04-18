@@ -1,0 +1,57 @@
+services:
+  mechasqueak:
+    image: ghcr.io/fuelrats/swiftsqueak:develop
+    ports:
+      - "${WEB_PORT:-8080}:${WEB_PORT:-8080}"
+    volumes:
+      - mechasqueak-data:/data
+    environment:
+      - SOURCE_PATH=/app
+      - IRC_SERVER_NAME=${IRC_SERVER_NAME}
+      - IRC_SERVER_HOST=${IRC_SERVER_HOST}
+      - IRC_SERVER_PORT=${IRC_SERVER_PORT:-6697}
+      - IRC_NICKNAME=${IRC_NICKNAME}
+      - IRC_CHANNELS=${IRC_CHANNELS}
+      - IRC_SERVER_PASSWORD=${IRC_SERVER_PASSWORD:-}
+      - IRC_AUTH_USERNAME=${IRC_AUTH_USERNAME:-}
+      - IRC_AUTH_PASSWORD=${IRC_AUTH_PASSWORD:-}
+      - GENERAL_SIGNAL=${GENERAL_SIGNAL}
+      - GENERAL_RESCUE_CHANNEL=${GENERAL_RESCUE_CHANNEL}
+      - GENERAL_REPORTING_CHANNEL=${GENERAL_REPORTING_CHANNEL}
+      - GENERAL_DRILL_MODE=${GENERAL_DRILL_MODE:-false}
+      - GENERAL_DRILL_CHANNELS=${GENERAL_DRILL_CHANNELS:-}
+      - GENERAL_RAT_DENYLIST=${GENERAL_RAT_DENYLIST:-}
+      - GENERAL_DISPATCH_DENYLIST=${GENERAL_DISPATCH_DENYLIST:-}
+      - GENERAL_COOLDOWN_EXCEPTION_CHANNELS=${GENERAL_COOLDOWN_EXCEPTION_CHANNELS:-}
+      - GENERAL_DEBUG=${GENERAL_DEBUG:-false}
+      - API_URL=${API_URL}
+      - API_WEBSOCKET=${API_WEBSOCKET:-}
+      - API_USER_ID=${API_USER_ID}
+      - API_TOKEN=${API_TOKEN}
+      - QUEUE_URL=${QUEUE_URL:-}
+      - QUEUE_TOKEN=${QUEUE_TOKEN:-}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - SHORTENER_URL=${SHORTENER_URL}
+      - SHORTENER_SIGNATURE=${SHORTENER_SIGNATURE}
+      - XBOX_CLIENT_ID=${XBOX_CLIENT_ID:-}
+      - XBOX_CLIENT_SECRET=${XBOX_CLIENT_SECRET:-}
+      - MASTODON_TOKEN=${MASTODON_TOKEN:-}
+      - BLUESKY_HANDLE=${BLUESKY_HANDLE:-}
+      - BLUESKY_APP_PASSWORD=${BLUESKY_APP_PASSWORD:-}
+      - OPENAI_TOKEN=${OPENAI_TOKEN:-}
+      - WEB_HOST=${WEB_HOST:-0.0.0.0}
+      - WEB_PORT=${WEB_PORT:-8080}
+      - CHRONO_NODE_PATH=${CHRONO_NODE_PATH:-/usr/bin/node}
+      - CHRONO_FILE=${CHRONO_FILE:-/usr/lib/node_modules/chrono-node/dist/index.js}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+
+volumes:
+  mechasqueak-data:

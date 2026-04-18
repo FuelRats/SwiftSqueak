@@ -22,20 +22,15 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import AsyncHTTPClient
-import Backtrace
+@preconcurrency import AsyncHTTPClient
 import Foundation
-import IRCKit
-import Lingo
+@preconcurrency import IRCKit
+@preconcurrency import Lingo
+import Logging
 import NIO
 import SQLKit
 
-Backtrace.install()
-
-let processId = ProcessInfo.processInfo.processIdentifier
-try "\(processId)".write(
-    toFile: "\(FileManager.default.currentDirectoryPath)/mechasqueak.pid", atomically: true,
-    encoding: .utf8)
+let logger = Logger(label: "com.fuelrats.mechasqueak")
 
 let httpClient = HTTPClient(
     eventLoopGroupProvider: .singleton,
@@ -44,37 +39,25 @@ let httpClient = HTTPClient(
         timeout: .init(connect: .seconds(5), read: .seconds(180))
     ))
 
-var configPath = URL(
-    fileURLWithPath: FileManager.default.currentDirectoryPath
-).appendingPathComponent("config.json")
-if CommandLine.arguments.count > 1 {
-    configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-}
-
-func loadConfiguration() throws -> MechaConfiguration {
-    guard let configData = try? Data(contentsOf: configPath) else {
-        fatalError("Could not locate configuration file in \(configPath.absoluteString)")
-    }
-
-    let configDecoder = JSONDecoder()
-    return try configDecoder.decode(MechaConfiguration.self, from: configData)
-}
-
-func debug(_ output: String) {
-    if configuration.general.debug == true {
-        print(output)
-    }
-}
-
-var configuration = try loadConfiguration()
-let lingo = try Lingo(
+nonisolated(unsafe) var configuration = MechaConfiguration.fromEnvironment()
+nonisolated(unsafe) let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
-class MechaSqueak {
-    let configPath: URL
-    static var commands: [IRCBotCommandDeclaration] = []
+private let clientJoinLeaveMessages: Set<String> = [
+    "Client rejoined the rescue channel",
+    "Client left the rescue channel"
+]
+
+private func isClientBouncing(rescue: Rescue, threshold: Int = 4) -> Bool {
+    let recentQuotes = rescue.quotes.suffix(threshold)
+    guard recentQuotes.count >= threshold else { return false }
+    return recentQuotes.allSatisfy { clientJoinLeaveMessages.contains($0.message) }
+}
+
+class MechaSqueak: @unchecked Sendable {
+    nonisolated(unsafe) static var commands: [IRCBotCommandDeclaration] = []
     let moduleManager: IRCBotModuleManager
-    static let accounts = NicknameLookupManager()
+    nonisolated(unsafe) static let accounts = NicknameLookupManager()
     var commands: [IRCBotModule]
     let connections: [IRCClient]
     var rescueChannel: IRCChannel?
@@ -86,22 +69,18 @@ class MechaSqueak {
     var sectors: [StarSector] = []
     var groups: [Group] = []
     static let userAgent = "MechaSqueak/3.0 Contact support@fuelrats.com if needed"
-    static var lastDeltaMessageTime: Date?
+    nonisolated(unsafe) static var lastDeltaMessageTime: Date?
     let ratSocket: RatSocket?
     var webServer: WebServer?
     var sqliteDatabase: SQLDatabase?
 
     init() {
-        var configPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        if CommandLine.arguments.count > 1 {
-            configPath = URL(fileURLWithPath: CommandLine.arguments[1])
-        }
-        self.configPath = configPath
-
         self.startupTime = Date()
 
         self.connections = configuration.connections.map({
-            let client = IRCClient(configuration: $0)
+            var ircLogger = Logger(label: "com.fuelrats.mechasqueak.irc")
+            ircLogger.logLevel = configuration.general.debug ? .debug : .info
+            let client = IRCClient(configuration: $0, logger: ircLogger)
             if let operLogin = configuration.general.operLogin {
                 client.connectCommands = [
                     { client in
@@ -141,13 +120,13 @@ class MechaSqueak {
 
         ratSocket = RatSocket()
 
-        Task {
+        Task { @MainActor in
             if let webServerConfiguration = configuration.webServer {
                 do {
                     self.webServer = try await WebServer(configuration: webServerConfiguration)
                     try await self.webServer?.start()
                 } catch {
-                    print("Failed to start web server: \(error)")
+                    logger.error("Failed to start web server: \(error)")
                 }
             }
             self.landmarks = try await SystemsAPI.fetchLandmarkList()
@@ -223,7 +202,12 @@ class MechaSqueak {
                 rescue.setQuotes(quotes)
                 try? rescue.save(nil)
 
-                var key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
+                guard !isClientBouncing(rescue: rescue) else {
+                    logger.info("Suppressing client join message for bouncing client on case \(caseId)")
+                    return
+                }
+
+                let key = rescue.rats.count == 0 ? "board.clientjoin.needsrats" : "board.clientjoin"
                 userJoin.channel.send(
                     key: key,
                     map: [
@@ -258,6 +242,11 @@ class MechaSqueak {
             )
             rescue.setQuotes(quotes)
             try? rescue.save(nil)
+
+            guard !isClientBouncing(rescue: rescue) else {
+                logger.info("Suppressing client part message for bouncing client on case \(caseId)")
+                return
+            }
 
             userPart.channel.send(
                 key: "board.clientquit",
@@ -335,6 +324,11 @@ class MechaSqueak {
             )
 
             try? rescue.save(nil)
+
+            guard !isClientBouncing(rescue: rescue) else {
+                logger.info("Suppressing client quit message for bouncing client on case \(caseId)")
+                return
+            }
 
             let quitChannels = userQuit.previousChannels
             for channel in quitChannels {
@@ -427,6 +421,22 @@ class MechaSqueak {
             return
         }
         accounts.lookup(user: user)
+    }
+
+    @EventListener<IRCPrivateNoticeNotification>
+    var onPrivateNotice = { notice in
+        // Re-identify with NickServ when prompted (e.g. after netsplit)
+        guard notice.user.nickname.lowercased() == "nickserv",
+              notice.message.contains("This nickname is registered"),
+              let username = notice.client.configuration.authenticationUsername,
+              let password = notice.client.configuration.authenticationPassword
+        else {
+            return
+        }
+        logger.info("NickServ prompted for identification, re-identifying")
+        notice.client.sendMessage(
+            toTarget: "NickServ",
+            contents: "IDENTIFY \(password)")
     }
 }
 

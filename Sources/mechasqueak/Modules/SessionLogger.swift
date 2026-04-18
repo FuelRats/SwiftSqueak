@@ -28,7 +28,7 @@ import IRCKit
 class SessionLogger: IRCBotModule {
     var name: String = "Session Logger"
 
-    static var sessions: [String: LoggingSession] = [:]
+    nonisolated(unsafe) static var sessions: [String: LoggingSession] = [:]
 
     required init(_ moduleManager: IRCBotModuleManager) {
         moduleManager.register(module: self)

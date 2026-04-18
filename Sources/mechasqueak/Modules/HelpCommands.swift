@@ -202,10 +202,12 @@ class HelpCommands: IRCBotModule {
         description: "Send help information about a MechaSqueak command to another user",
         tags: ["support", "commands"],
         permission: .AnnouncementWrite,
-        allowedDestinations: .Channel
+        allowedDestinations: .All
     )
     var didReceiveSendHelpCommand = { command in
-        guard let user = command.message.destination.member(named: command.parameters[0]) else {
+        let lookupChannel = command.message.destination.isPrivateMessage
+            ? mecha.rescueChannel : command.message.destination
+        guard let user = lookupChannel?.member(named: command.parameters[0]) else {
             command.message.error(
                 key: "sendhelp.nouser", fromCommand: command,
                 map: [
@@ -343,7 +345,7 @@ class HelpCommands: IRCBotModule {
     }
 }
 
-enum HelpCategory: String, CaseIterable {
+enum HelpCategory: String, CaseIterable, Sendable {
     case board
     case rescues
     case queue

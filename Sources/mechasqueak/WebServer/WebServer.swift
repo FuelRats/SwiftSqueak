@@ -5,9 +5,10 @@
 //  Created by Alex Sørlie on 10/05/2025.
 //
 
+import Logging
 import Vapor
 
-final class WebServer {
+final class WebServer: @unchecked Sendable {
     private let app: Application
 
     init(configuration: WebServerConfiguration) async throws {
@@ -20,7 +21,7 @@ final class WebServer {
         let env = Environment(name: envName, arguments: ["vapor"])
         self.app = try await Application.make(env)
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-        print("Serving static files from: \(app.directory.publicDirectory)")
+        logger.info("Serving static files from: \(app.directory.publicDirectory)")
 
         self.app.http.server.configuration.hostname = configuration.host
         self.app.http.server.configuration.port = configuration.port
