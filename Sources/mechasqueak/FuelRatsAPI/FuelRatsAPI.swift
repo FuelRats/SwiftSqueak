@@ -35,7 +35,10 @@ class FuelRatsAPI {
 
     static func getNickname(forIRCAccount account: String) async throws -> NicknameSearchDocument? {
         let request = try HTTPClient.Request(
-            apiPath: "/nicknames", method: .GET, query: ["nick": account])
+            apiPath: "/nicknames", method: .GET, query: [
+                "nick": account,
+                "include": "user,rats,groups,clients"
+            ])
 
         let response = try await httpClient.execute(
             request: request, deadline: .now() + .seconds(5), expecting: 200)
@@ -55,6 +58,10 @@ class FuelRatsAPI {
     }
 
     static func rescueSearch(query: [String: String?]) async throws -> RescueSearchDocument {
+        var query = query
+        if query["include"] == nil {
+            query["include"] = "rats,firstLimpet,lastEditUser"
+        }
         let request = try HTTPClient.Request(apiPath: "/rescues", method: .GET, query: query)
 
         let response = try await httpClient.execute(
@@ -66,7 +73,9 @@ class FuelRatsAPI {
     }
 
     static func getRescue(id: UUID) async throws -> RescueGetDocument? {
-        let request = try HTTPClient.Request(apiPath: "/rescues/\(id)", method: .GET)
+        let request = try HTTPClient.Request(
+            apiPath: "/rescues/\(id)", method: .GET,
+            query: ["include": "rats,firstLimpet,lastEditUser"])
 
         let response = try await httpClient.execute(
             request: request, deadline: FuelRatsAPI.deadline, expecting: 200)
