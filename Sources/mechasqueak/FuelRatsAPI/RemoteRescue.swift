@@ -127,13 +127,13 @@ struct AssignMeta: Codable {
 }
 
 typealias RescueSearchDocument = Document<
-    ManyResourceBody<RemoteRescue>, Include5<Rat, User, Ship, Epic, AvatarImage>
+    ManyResourceBody<RemoteRescue>, Include2<Rat, User>
 >
 typealias RescueGetDocument = Document<
-    SingleResourceBody<RemoteRescue>, Include5<Rat, User, Ship, Epic, AvatarImage>
+    SingleResourceBody<RemoteRescue>, Include2<Rat, User>
 >
 typealias RescueEventDocument = EventDocument<
-    SingleResourceBody<RemoteRescue>, Include5<Rat, User, Ship, Epic, AvatarImage>
+    SingleResourceBody<RemoteRescue>, Include2<Rat, User>
 >
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,

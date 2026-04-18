@@ -62,18 +62,22 @@ enum UserDescription: ResourceObjectDescription {
 }
 typealias User = JSONEntity<UserDescription>
 typealias UserGetDocument = Document<
-    SingleResourceBody<User>, Include8<Rat, Ship, Epic, Nickname, Client, Decal, Group, AvatarImage>
+    SingleResourceBody<User>, Include3<Rat, Nickname, Group>
 >
 
 extension User {
     static func get(id: UUID) async throws -> UserGetDocument {
-        let request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)", method: .GET)
+        let request = try HTTPClient.Request(
+            apiPath: "/users/\(id.uuidString)", method: .GET,
+            query: ["include": "rats,nicknames,groups"])
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
-    
+
     static func sync(id: UUID) async throws -> UserGetDocument {
-        let request = try HTTPClient.Request(apiPath: "/users/\(id.uuidString)/sync", method: .PUT)
+        let request = try HTTPClient.Request(
+            apiPath: "/users/\(id.uuidString)/sync", method: .PUT,
+            query: ["include": "rats,nicknames,groups"])
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
