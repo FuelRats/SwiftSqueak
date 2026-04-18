@@ -1,0 +1,38 @@
+# Dev Dockerfile with BuildKit cache for fast rebuilds
+FROM swift:6.1 AS build
+
+WORKDIR /build
+
+COPY Package.swift Package.resolved ./
+COPY Sources/ Sources/
+COPY Tests/ Tests/
+RUN swift package resolve
+
+RUN --mount=type=cache,id=spm-build,target=/build/.build,sharing=locked \
+    swift build -c release && \
+    cp .build/release/mechasqueak /usr/local/bin/mechasqueak
+
+RUN mkdir -p Public/css && \
+    find Sources/mechasqueak/WebServer/Views/ -name '*.css' | sort | xargs cat > Public/css/styles.css
+
+FROM swift:6.1-slim
+
+RUN apt-get update && \
+    apt-get install -y nodejs npm && \
+    npm install -g chrono-node && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=build /usr/local/bin/mechasqueak ./mechasqueak
+COPY localisation/ localisation/
+COPY templates/ templates/
+COPY regions.json .
+COPY namedbodies.json .
+COPY --from=build /build/Public/ Public/
+
+RUN mkdir -p /data
+
+EXPOSE 8080
+
+CMD ["./mechasqueak"]
