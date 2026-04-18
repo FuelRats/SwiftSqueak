@@ -148,9 +148,7 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                 let errorDetail = (error as? HTTPClient.Response).map {
                     "HTTP \($0.status.code) \($0.body.map { String(data: Data(buffer: $0), encoding: .utf8) ?? "" } ?? "")"
                 } ?? "\(error)"
-                mecha.reportingChannel?.send(
-                    message: "⚠️ Create error on case #\(caseId): \(errorDetail.prefix(500)) - SuperManifolds"
-                )
+                logger.error("Create error on case #\(caseId): \(errorDetail)")
                 errorReported = true
             }
             try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
