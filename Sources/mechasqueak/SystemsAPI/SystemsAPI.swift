@@ -598,8 +598,7 @@ class SystemsAPI {
                     && (legacyStations == false || $0.type?.isPlayerStation == false)
                         && (requireSpace == false || $0.type?.isPlanetary == false)
                         && $0.isFunctional
-                        && $0.services.contains("Refuel")
-                        && $0.services.contains("Repair")
+                        && $0.services.contains(where: { $0.caseInsensitiveCompare("Refuel") == .orderedSame })
                 }
                 let maxDistance = stations.map { $0.distance ?? defaultMaxDistance }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
@@ -670,7 +669,12 @@ class SystemsAPI {
                         stationState = .Construction
                     }
                     if stationType == nil {
-                        stationType = .Settlement
+                        // Infer station type from available data when API returns no type
+                        if self.hasMarket && self.hasOutfitting {
+                            stationType = .Outpost
+                        } else {
+                            stationType = .Settlement
+                        }
                     }
 
                     self.type = stationType
