@@ -36,6 +36,7 @@ COPY localisation/ localisation/
 COPY templates/ templates/
 COPY regions.json .
 COPY namedbodies.json .
+COPY unobtainable-permits.json .
 COPY --from=build /build/Public/ Public/
 
 # Create data directory for token persistence

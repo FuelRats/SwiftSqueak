@@ -88,7 +88,8 @@ extension User {
             apiDescription: .none, body: .init(resourceObject: user), includes: .none, meta: .none,
             links: .none)
         var request = try HTTPClient.Request(
-            apiPath: "/users/\(user.id.rawValue.uuidString)", method: .PATCH)
+            apiPath: "/users/\(user.id.rawValue.uuidString)", method: .PATCH,
+            query: ["include": "rats,nicknames,groups"])
         request.headers.add(name: "Content-Type", value: "application/json")
 
         let encoder = JSONEncoder()
@@ -132,7 +133,8 @@ extension User {
             ]
         ]
         var request = try HTTPClient.Request(
-            apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH)
+            apiPath: "/users/\(self.id.rawValue.uuidString)/email", method: .PATCH,
+            query: ["include": "rats,nicknames,groups"])
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = .data(try JSONSerialization.data(withJSONObject: body, options: []))
 

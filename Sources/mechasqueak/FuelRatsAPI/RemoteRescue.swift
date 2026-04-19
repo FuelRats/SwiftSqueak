@@ -133,7 +133,7 @@ typealias RescueGetDocument = Document<
     SingleResourceBody<RemoteRescue>, Include2<Rat, User>
 >
 typealias RescueEventDocument = EventDocument<
-    SingleResourceBody<RemoteRescue>, Include2<Rat, User>
+    SingleResourceBody<RemoteRescue>, Include5<Rat, User, Ship, Epic, AvatarImage>
 >
 typealias SingleDocument<Resource: ResourceObjectType> = JSONAPI.Document<
     SingleResourceBody<Resource>,
