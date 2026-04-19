@@ -109,8 +109,7 @@ class AccountCommands: IRCBotModule {
         description:
             "Check the Fuel Rats account information the bot is associating with someone's nick.",
         tags: ["user", "info"],
-        permission: .RatReadOwn,
-        allowedDestinations: .PrivateMessage
+        permission: .RatReadOwn
     )
     var didReceiveWhoIsCommand = { command in
         let message = command.message
@@ -148,7 +147,7 @@ class AccountCommands: IRCBotModule {
                     "rats": rats
                 ])) ?? ""
 
-        command.message.reply(message: output)
+        command.message.replyPrivate(message: output)
     }
 
     @BotCommand(
