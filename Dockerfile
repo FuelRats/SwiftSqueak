@@ -39,6 +39,10 @@ COPY namedbodies.json .
 COPY unobtainable-permits.json .
 COPY --from=build /build/Public/ Public/
 
+# Bake version info into image
+ARG BUILD_VERSION=unknown
+RUN echo "${BUILD_VERSION}" > /app/version.txt
+
 # Create data directory for token persistence
 RUN mkdir -p /data
 

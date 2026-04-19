@@ -246,10 +246,17 @@ class GeneralCommands: IRCBotModule {
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
 
-        let gitDir = configuration.sourcePath
-        let version =
-            shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let version: String
+        if let fileVersion = try? String(
+            contentsOfFile: "\(configuration.sourcePath.path)/version.txt",
+            encoding: .utf8
+        ).trimmingCharacters(in: .whitespacesAndNewlines), !fileVersion.isEmpty, fileVersion != "unknown" {
+            version = fileVersion
+        } else {
+            let gitDir = configuration.sourcePath
+            version = shell("/usr/bin/git", ["describe", "--tags", "--abbrev=0"], currentDirectory: gitDir)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? "unknown"
+        }
         command.message.reply(
             key: replyKey, fromCommand: command,
             map: [
