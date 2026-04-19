@@ -561,6 +561,7 @@ class Rescue: @unchecked Sendable {
         if configuration.general.drillMode {
             return
         }
+        await board.markOutgoingUpdate(rescueId: self.id)
         let identifier = await board.getId(forRescue: self) ?? 0
         let patchDocument = SingleDocument(
             apiDescription: .none,
@@ -677,6 +678,7 @@ class Rescue: @unchecked Sendable {
             return
         }
 
+        await board.markOutgoingUpdate(rescueId: self.id)
         let identifier = await board.getId(forRescue: self) ?? 0
 
         let patchDocument = SingleDocument(

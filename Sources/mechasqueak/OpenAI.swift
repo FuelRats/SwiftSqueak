@@ -28,7 +28,7 @@ import IRCKit
 import Logging
 
 struct OpenAI {
-    static func request(params: OpenAIRequest) async throws -> OpenAIResponse {
+    static func request(params: OpenAIRequest, maxRetries: Int = 3) async throws -> OpenAIResponse {
         var request = try HTTPClient.Request(
             url: URL(string: "https://api.openai.com/v1/chat/completions")!, method: .POST)
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
@@ -41,12 +41,19 @@ struct OpenAI {
 
         logger.debug("[OpenAI] Request: \(String(data: data, encoding: .utf8) ?? "unable to decode")")
 
-        do {
-            return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
-        } catch {
-            logger.error("OpenAI API error: \(error)")
-            throw error
+        var lastError: Error?
+        for attempt in 1...maxRetries {
+            do {
+                return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
+            } catch {
+                lastError = error
+                logger.error("OpenAI API error (attempt \(attempt)/\(maxRetries)): \(error)")
+                if attempt < maxRetries {
+                    try? await Task.sleep(nanoseconds: UInt64(attempt) * 2_000_000_000)
+                }
+            }
         }
+        throw lastError!
     }
 }
 
