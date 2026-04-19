@@ -83,7 +83,8 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                 links: .none
             )
 
-            let url = URLComponents(string: "\(configuration.api.url)/rescues")!
+            var url = URLComponents(string: "\(configuration.api.url)/rescues")!
+            url.queryItems = [URLQueryItem(name: "include", value: "rats,firstLimpet,lastEditUser")]
             do {
                 var request = try HTTPClient.Request(url: url.url!, method: .POST)
                 request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
