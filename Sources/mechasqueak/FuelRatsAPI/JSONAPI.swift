@@ -91,6 +91,17 @@ typealias EventDocument<
     BasicJSONAPIError<String>
 >
 
+/// Catch-all type that absorbs any unknown JSON:API include without failing.
+/// Place as the last type in Poly/Include to silently skip unrecognized types.
+struct UnknownInclude: Codable, Equatable, Sendable {
+    let type: String
+    let id: String
+
+    private enum CodingKeys: String, CodingKey {
+        case type, id
+    }
+}
+
 struct ManyRelationshipBody: Codable {
     let data: [ManyRelationshipBodyDataItem]
 

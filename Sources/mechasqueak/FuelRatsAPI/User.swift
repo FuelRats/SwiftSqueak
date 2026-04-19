@@ -62,7 +62,7 @@ enum UserDescription: ResourceObjectDescription {
 }
 typealias User = JSONEntity<UserDescription>
 typealias UserGetDocument = Document<
-    SingleResourceBody<User>, Include3<Rat, Nickname, Group>
+    SingleResourceBody<User>, Include4<Rat, Nickname, Group, UnknownInclude>
 >
 
 extension User {
