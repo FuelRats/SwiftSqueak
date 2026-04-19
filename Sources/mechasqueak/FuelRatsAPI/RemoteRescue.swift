@@ -127,10 +127,10 @@ struct AssignMeta: Codable {
 }
 
 typealias RescueSearchDocument = Document<
-    ManyResourceBody<RemoteRescue>, Include2<Rat, User>
+    ManyResourceBody<RemoteRescue>, Include3<Rat, User, AvatarImage>
 >
 typealias RescueGetDocument = Document<
-    SingleResourceBody<RemoteRescue>, Include2<Rat, User>
+    SingleResourceBody<RemoteRescue>, Include3<Rat, User, AvatarImage>
 >
 typealias RescueEventDocument = EventDocument<
     SingleResourceBody<RemoteRescue>, Include5<Rat, User, Ship, Epic, AvatarImage>
