@@ -44,9 +44,7 @@ struct OpenAI {
         do {
             return try await httpClient.execute(request: request, forDecodable: OpenAIResponse.self)
         } catch {
-            mecha.reportingChannel?.send(
-                message: "⚠️ OpenAI API error: \(error.localizedDescription) - SuperManifolds"
-            )
+            logger.error("OpenAI API error: \(error)")
             throw error
         }
     }
