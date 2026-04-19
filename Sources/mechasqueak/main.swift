@@ -171,13 +171,12 @@ class MechaSqueak: @unchecked Sendable {
                 await board.performSyncUntilSuccess()
             }
 
-            let gitDir = configuration.sourcePath
-            let release = shell(
-                "/usr/bin/git", ["tag", "--points-at", "HEAD"], currentDirectory: gitDir)?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            if let releaseName = release, releaseName.count > 0 {
+            let versionFile = "\(configuration.sourcePath.path)/version.txt"
+            if let version = try? String(contentsOfFile: versionFile, encoding: .utf8)
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               !version.isEmpty, version != "unknown" {
                 mecha.reportingChannel?.send(key: "update", map: [
-                    "release": releaseName
+                    "release": version
                 ])
             }
         } else {
