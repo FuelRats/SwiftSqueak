@@ -370,6 +370,7 @@ class Translate: IRCBotModule {
     static func translate(_ text: String, locale: Foundation.Locale? = nil) async throws -> String? {
         // Validate locale is a real language
         if let locale = locale, !locale.isValid {
+            logger.info("Translation discarded: invalid locale '\(locale.identifier)' for text: \(text.prefix(100))")
             return nil
         }
 
@@ -403,6 +404,7 @@ class Translate: IRCBotModule {
         let result = try await OpenAI.request(params: request)
 
         guard let jsonString = result.choices.first?.message.content else {
+            logger.info("Translation discarded: no content in OpenAI response for text: \(text.prefix(100))")
             return nil
         }
 
@@ -415,16 +417,18 @@ class Translate: IRCBotModule {
 
             // Check if model flagged an error (e.g. prompt injection attempt)
             if !translationResponse.error.isEmpty {
-                logger.warning("Translation rejected: \(translationResponse.error)")
+                logger.info("Translation discarded: model error '\(translationResponse.error)' for text: \(text.prefix(100))")
                 return nil
             }
 
             // If source language matches target language and confidence is high, don't translate
             if translationResponse.sourceLanguage == targetCode
                 && translationResponse.confidence > 0.8 {
+                logger.info("Translation discarded: source language '\(translationResponse.sourceLanguage)' matches target '\(targetCode)' (confidence: \(translationResponse.confidence)) for text: \(text.prefix(100))")
                 return nil
             }
             if translationResponse.translatedText == text {
+                logger.info("Translation discarded: output identical to input for text: \(text.prefix(100))")
                 return nil
             }
 
@@ -433,6 +437,7 @@ class Translate: IRCBotModule {
                 return translationResponse.translatedText
             }
 
+            logger.info("Translation discarded: low confidence \(translationResponse.confidence) for text: \(text.prefix(100))")
             return nil
         } catch {
             // If JSON parsing fails, log the error and return nil
