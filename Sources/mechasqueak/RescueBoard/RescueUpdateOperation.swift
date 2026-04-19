@@ -83,8 +83,9 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
                 links: .none
             )
 
-            let url = URLComponents(
+            var url = URLComponents(
                 string: "\(configuration.api.url)/rescues/\(rescue.id.uuidString.lowercased())")!
+            url.queryItems = [URLQueryItem(name: "include", value: "rats,firstLimpet,lastEditUser")]
 
             do {
                 var request = try HTTPClient.Request(url: url.url!, method: .PATCH)
