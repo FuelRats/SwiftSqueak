@@ -420,28 +420,8 @@ actor RescueBoard {
         let clientNick = rescue.clientNick?.lowercased()
 
         if let (_, existingRescue) = await self.first(where: {
-            let currentClientName = $0.value.client?.lowercased()
-            let currentClientNick = $0.value.clientNick?.lowercased()
-
-            // Exact match
-            if currentClientName == clientName
-                || (currentClientNick != nil && currentClientNick == clientNick) {
-                return true
-            }
-
-            // Fuzzy match — edit distance <= 2 for names 4+ characters
-            if let name = clientName, let existing = currentClientName,
-               name.count >= 4 && existing.count >= 4,
-               name.levenshtein(existing) <= 2 {
-                return true
-            }
-            if let nick = clientNick, let existing = currentClientNick,
-               nick.count >= 4 && existing.count >= 4,
-               nick.levenshtein(existing) <= 2 {
-                return true
-            }
-
-            return false
+            rescueMatchesClient(
+                $0.value, clientName: clientName, clientNick: clientNick)
         }) {
             try? await announceExistingRescue(
                 existingRescue, conflictingWith: rescue, initiated: initiated, inMessage: message)
@@ -1162,6 +1142,33 @@ actor RescueBoard {
                 ])
         }
     }
+}
+
+private func rescueMatchesClient(
+    _ rescue: Rescue, clientName: String?, clientNick: String?
+) -> Bool {
+    let currentClientName = rescue.client?.lowercased()
+    let currentClientNick = rescue.clientNick?.lowercased()
+
+    // Exact match
+    if currentClientName == clientName
+        || (currentClientNick != nil && currentClientNick == clientNick) {
+        return true
+    }
+
+    // Fuzzy match — edit distance <= 2 for names 4+ characters
+    if let name = clientName, let existing = currentClientName,
+       name.count >= 4 && existing.count >= 4,
+       name.levenshtein(existing) <= 2 {
+        return true
+    }
+    if let nick = clientNick, let existing = currentClientNick,
+       nick.count >= 4 && existing.count >= 4,
+       nick.levenshtein(existing) <= 2 {
+        return true
+    }
+
+    return false
 }
 
 enum RescueInitiationType {

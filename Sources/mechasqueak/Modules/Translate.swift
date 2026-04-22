@@ -102,7 +102,11 @@ class Translate: IRCBotModule {
 
     @BotCommand(
         ["tcase", "tc"],
-        [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous), .argument("notice", "channel", example: "#fuelrats")],
+        [
+            .param("case id/client", "4"),
+            .param("message", "Help is on the way!", .continuous),
+            .argument("notice", "channel", example: "#fuelrats")
+        ],
         category: .utility,
         description:
             "Translates a message to the client's language and replies in the rescue channel as you",
