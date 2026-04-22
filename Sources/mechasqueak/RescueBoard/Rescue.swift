@@ -313,7 +313,7 @@ class Rescue: @unchecked Sendable {
         self.outcome = attr.outcome.value
         self.unidentifiedRats = attr.unidentifiedRats.value
 
-        self.dispatchers = attr.data.value.dispatchers ?? []
+        self.dispatchers = apiRescue.relationships.dispatchers?.ids.map { $0.rawValue } ?? []
 
         self.createdAt = attr.createdAt.value
         self.updatedAt = attr.updatedAt.value
@@ -485,7 +485,6 @@ class Rescue: @unchecked Sendable {
                         systemId: self.system?.searchResult?.id64,
                         permit: self.system?.permit,
                         landmark: self.system?.landmark,
-                        dispatchers: self.dispatchers,
                         clientLastHostname: self.clientLastHostName
                     )),
                 notes: .init(value: self.notes),
@@ -500,7 +499,11 @@ class Rescue: @unchecked Sendable {
                 createdAt: .init(value: self.createdAt),
                 updatedAt: .init(value: self.updatedAt)
             ),
-            relationships: RemoteRescue.Relationships.init(rats: rats, firstLimpet: firstLimpet),
+            relationships: RemoteRescue.Relationships.init(
+                rats: rats,
+                firstLimpet: firstLimpet,
+                dispatchers: .init(ids: self.dispatchers.map { User.ID(rawValue: $0) })
+            ),
             meta: RemoteRescue.Meta.none,
             links: RemoteRescue.Links.none
         )

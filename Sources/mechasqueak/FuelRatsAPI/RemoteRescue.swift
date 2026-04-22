@@ -56,6 +56,7 @@ enum RescueDescription: ResourceObjectDescription {
         public var rats: ToManyRelationship<Rat>
         public var firstLimpet: ToOneRelationship<Rat?>?
         public var lastEditUser: ToOneRelationship<User>?
+        public var dispatchers: ToManyRelationship<User>?
     }
 }
 typealias RemoteRescue = JSONEntity<RescueDescription>
@@ -72,7 +73,6 @@ struct RescueData: Codable, Equatable {
     var systemId: Int64?
     var permit: StarSystem.Permit?
     var landmark: SystemsAPI.LandmarkDocument.LandmarkResult?
-    var dispatchers: [UUID]? = []
 
     struct MarkForDeletionEntry: Codable {
         var marked: Bool
