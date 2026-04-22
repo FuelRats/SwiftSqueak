@@ -444,6 +444,8 @@
     "help.command.distance.range": "Define the desired ship jump range for the Spansh plot link",
     "help.command.unfiled.all": "Show all unfiled paperwork from the last 30 days (instead of just your own)",
     "help.command.changeemail.user": "Change another user's email address (requires admin permissions)",
+    "help.command.tcase.notice": "Send the translated message as a CNOTICE to you in the specified channel instead of sending it as the client",
+    "help.command.translateme.notice": "Send the translated message as a CNOTICE to you instead of sending it as a channel message",
     "announcement": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",
     "announcement.pc": "Incoming Client: %{client} - System: %{system} - Platform: %{platform} %{expansion} - O2: %{crStatus} - Language: %{language} (%{langCode}) - IRC Nickname: %{nick}",
     "announce.invalidchannel": "Invalid channel given to announce command",

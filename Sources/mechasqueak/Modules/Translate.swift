@@ -61,11 +61,12 @@ class Translate: IRCBotModule {
 
     @BotCommand(
         ["translate", "t"],
-        [.param("message", "Help is on the way!", .continuous), .argument("notice", "channel", example: "#fuelrats")],
+        [.param("message", "Help is on the way!", .continuous)],
         category: .utility,
         description: "Translate a message to another language",
         tags: ["google", "deepl"],
         helpLocale: "fr",
+        allowedDestinations: .Channel,
         cooldown: .seconds(30),
         helpExtra: {
             return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
@@ -92,17 +93,7 @@ class Translate: IRCBotModule {
         do {
             if let translation = try await Translate.translate(
                 command.parameters[0], locale: command.locale) {
-                if let noticeChannel = command.argumentValue(for: "notice") {
-                    command.message.client.send(
-                        "CNOTICE",
-                        parameters: [
-                            command.message.user.nickname,
-                            noticeChannel,
-                            translation
-                        ])
-                } else {
-                    command.message.reply(message: translation)
-                }
+                command.message.reply(message: translation)
             }
         } catch {
             command.error(error)
@@ -203,7 +194,8 @@ class Translate: IRCBotModule {
         [
             .param("channel", "#fuelrats"),
             .param("language code", "fr"),
-            .param("message", "Help is on the way!", .continuous)
+            .param("message", "Help is on the way!", .continuous),
+            .argument("notice")
         ],
         category: .utility,
         description:
@@ -262,13 +254,23 @@ class Translate: IRCBotModule {
         do {
             if let translation = try await Translate.translate(
                 message, locale: locale) {
-                command.message.client.send(
-                    "MSGAS",
-                    parameters: [
-                        command.message.raw.sender?.nickname ?? "",
-                        channel.name,
-                        translation
-                    ])
+                if command.has(argument: "notice") {
+                    command.message.client.send(
+                        "CNOTICE",
+                        parameters: [
+                            command.message.user.nickname,
+                            channel.name,
+                            translation
+                        ])
+                } else {
+                    command.message.client.send(
+                        "MSGAS",
+                        parameters: [
+                            command.message.raw.sender?.nickname ?? "",
+                            channel.name,
+                            translation
+                        ])
+                }
                 let contents = "<\(command.message.user.nickname)> \(message)"
                 notifyTranslateSubscribers(
                     client: command.message.client, channel: channelName, contents: contents)
