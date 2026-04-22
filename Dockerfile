@@ -37,7 +37,8 @@ COPY templates/ templates/
 COPY regions.json .
 COPY namedbodies.json .
 COPY unobtainable-permits.json .
-COPY --from=build /build/Public/ Public/
+COPY Public/ Public/
+COPY --from=build /build/Public/css/ Public/css/
 
 # Bake version info into image
 ARG BUILD_VERSION=unknown
