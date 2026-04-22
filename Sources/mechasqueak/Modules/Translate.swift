@@ -61,12 +61,11 @@ class Translate: IRCBotModule {
 
     @BotCommand(
         ["translate", "t"],
-        [.param("message", "Help is on the way!", .continuous)],
+        [.param("message", "Help is on the way!", .continuous), .argument("notice", "channel", example: "#fuelrats")],
         category: .utility,
         description: "Translate a message to another language",
         tags: ["google", "deepl"],
         helpLocale: "fr",
-        allowedDestinations: .Channel,
         cooldown: .seconds(30),
         helpExtra: {
             return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
@@ -93,7 +92,17 @@ class Translate: IRCBotModule {
         do {
             if let translation = try await Translate.translate(
                 command.parameters[0], locale: command.locale) {
-                command.message.reply(message: translation)
+                if let noticeChannel = command.argumentValue(for: "notice") {
+                    command.message.client.send(
+                        "CNOTICE",
+                        parameters: [
+                            command.message.user.nickname,
+                            noticeChannel,
+                            translation
+                        ])
+                } else {
+                    command.message.reply(message: translation)
+                }
             }
         } catch {
             command.error(error)
@@ -102,12 +111,11 @@ class Translate: IRCBotModule {
 
     @BotCommand(
         ["tcase", "tc"],
-        [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous)],
+        [.param("case id/client", "4"), .param("message", "Help is on the way!", .continuous), .argument("notice", "channel", example: "#fuelrats")],
         category: .utility,
         description:
             "Translates a message to the client's language and replies in the rescue channel as you",
         tags: ["google", "deepl", "client", "rescue"],
-        allowedDestinations: .PrivateMessage,
         helpExtra: {
             return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
         },
@@ -151,13 +159,23 @@ class Translate: IRCBotModule {
             if let translation = try await Translate.translate(
                 command.parameters[1], locale: locale) {
                 let destination = rescue.channel ?? mecha.rescueChannel
-                command.message.client.send(
-                    "MSGAS",
-                    parameters: [
-                        command.message.raw.sender?.nickname ?? "",
-                        destination?.name ?? "",
-                        "\(target): \(translation)"
-                    ])
+                if let noticeChannel = command.argumentValue(for: "notice") {
+                    command.message.client.send(
+                        "CNOTICE",
+                        parameters: [
+                            command.message.user.nickname,
+                            noticeChannel,
+                            "\(target): \(translation)"
+                        ])
+                } else {
+                    command.message.client.send(
+                        "MSGAS",
+                        parameters: [
+                            command.message.raw.sender?.nickname ?? "",
+                            destination?.name ?? "",
+                            "\(target): \(translation)"
+                        ])
+                }
                 let contents = "<\(command.message.user.nickname)> \(command.parameters[1])"
                 for (subscriber, subType) in Translate.clientTranslationSubscribers {
                     switch subType {
