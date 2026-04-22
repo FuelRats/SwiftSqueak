@@ -341,6 +341,23 @@ class Translate: IRCBotModule {
         command.message.reply(key: "transsub.unsubbed", fromCommand: command)
     }
 
+    @BotCommand(
+        ["torg"],
+        [.param("channel", "#fuelrats"), .param("message", "Please disable your wing.", .continuous)],
+        category: .utility,
+        description: "Send a message to all translation subscribers via the channel",
+        tags: ["translate", "original", "dispatch"],
+        permission: .DispatchRead,
+        allowedDestinations: .PrivateMessage
+    )
+    var didReceiveTranslateOriginalCommand = { command in
+        let channel = command.parameters[0]
+        let message = command.parameters[1]
+        let contents = "<\(command.message.user.nickname)> \(message)"
+        notifyTranslateSubscribers(
+            client: command.message.client, channel: channel, contents: contents)
+    }
+
     struct TranslationResponse: Codable {
         let sourceLanguage: String
         let translatedText: String
