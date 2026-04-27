@@ -8,13 +8,16 @@ struct FactsPage: View {
     let factCategories: [FactCategory]
     let platformFacts: [String: [GroupedFact]]
 
-    var body: Content {
-        var tocItems: [TOCItem] = factCategories
+    var tocItems: [TOCItem] {
+        var items: [TOCItem] = factCategories
         if !platformFacts.isEmpty {
-            tocItems.append(PlatformFactTOCItem(facts: platformFacts))
+            items.append(PlatformFactTOCItem(facts: platformFacts))
         }
+        return items
+    }
 
-        return Div {
+    var body: Content {
+        Div {
             Title {
                 FactsPage.title
             }
