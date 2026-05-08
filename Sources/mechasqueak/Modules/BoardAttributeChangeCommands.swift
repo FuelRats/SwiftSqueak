@@ -547,4 +547,39 @@ class BoardAttributeCommands: IRCBotModule {
                 "expansion": expansion.ircRepresentable
             ])
     }
+
+    @BotCommand(
+        ["channel"],
+        [.param("case id/client", "4"), .param("channel", "#fuelrats")],
+        category: .board,
+        description: "Change the IRC channel associated with a rescue case",
+        permission: .DispatchWrite,
+        allowedDestinations: .Channel
+    )
+    var didReceiveChannelChangeCommand = { command in
+        guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
+            return
+        }
+
+        let channelName = command.parameters[1]
+        guard command.message.client.channels.contains(where: {
+            $0.name.lowercased() == channelName.lowercased()
+        }) else {
+            command.message.error(
+                key: "board.channelchange.notfound", fromCommand: command,
+                map: [
+                    "channel": channelName
+                ])
+            return
+        }
+
+        rescue.channelName = channelName
+        command.message.reply(
+            key: "board.channelchange", fromCommand: command,
+            map: [
+                "caseId": caseId,
+                "client": rescue.clientDescription,
+                "channel": channelName
+            ])
+    }
 }

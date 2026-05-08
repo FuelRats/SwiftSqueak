@@ -122,6 +122,8 @@
     "board.syschange.autocorrect.spansh": "The system for case #%{caseId} (%{client}) has been changed to %{systemInfo} %{plotUrl} \u000308(Automatically corrected)\u0003",
     "board.languagechange": "The language for case #%{caseId} (%{client}) has now been changed to %{language}",
     "board.languagechange.error": "The case language could not be changed as %{language} is not a valid language",
+    "board.channelchange": "The channel for case #%{caseId} (%{client}) has been changed to %{channel}",
+    "board.channelchange.notfound": "Cannot change channel: I am not in %{channel}",
     "board.clientchange": "The client name for case #%{caseId} (%{oldClient}) has been changed to: %{client}.",
     "board.clientchange.exists": "CAUTION \"%{client}\" is already the client of another case (#%{caseId}).",
     "board.nickchange": "The client nickname for case #%{caseId} (%{client}) has been changed to %{nick}.",
