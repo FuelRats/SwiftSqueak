@@ -37,7 +37,7 @@ private let snickersDestinations = ShuffledPicker([
     "sent to the Ratlympics prize pool",
     "jettisoned into the nearest star",
     "confiscated by the Fuel Rats ops team special stash",
-    "redistributed too the masses",
+    "redistributed to the masses",
     "launched toward Sagittarius A*",
     "melted down and reformed into a mecha shaped statue",
     "added to the emergency snack reserves on Fuelum",

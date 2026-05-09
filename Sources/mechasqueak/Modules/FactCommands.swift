@@ -724,7 +724,8 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         } else if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
             if (firstTarget == command.message.client.currentNick.lowercased() || firstTarget == "supermanifolds")
-                && command.message.destination != mecha.rescueChannel {
+                && command.message.destination != mecha.rescueChannel
+                && command.message.user.nickname.lowercased() != "supermanifolds" {
                 command.message.retaliate()
                 return
             }

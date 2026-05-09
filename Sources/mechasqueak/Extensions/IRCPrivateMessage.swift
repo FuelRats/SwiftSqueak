@@ -108,7 +108,6 @@ private let retaliationPicker = ShuffledPicker([
     "makes %@'s docking computer play La Cucaracha instead of Blue Danube",
     "drops a Thargoid interceptor into %@'s instance",
     "permanently sets %@'s SRV to maximum sensitivity on a 0.01G moon",
-    "forces %@ to navigate the galaxy map using only a flight stick",
     "replaces %@'s retro thrusters with a 'thoughts and prayers' module",
     "sentences %@ to staff the Fuel Rats help desk during a free weekend sale",
     "replaces %@'s chaff launcher with a confetti cannon that does nothing",
@@ -120,5 +119,7 @@ private let retaliationPicker = ShuffledPicker([
     "dumps %@ on Tatooine with no sunscreen",
     "uploads %@ into the Matrix but it's running on Windows ME",
     "resets all of %@'s keybinds",
-    "places %@ in front of an activating Stargate"
+    "places %@ in front of an activating Stargate",
+    "signs %@ up for a mandatory 12-part webinar on proper fuel management",
+    "permanently wires %@'s boost button to their screenshot key"
 ])
