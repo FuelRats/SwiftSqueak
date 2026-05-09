@@ -747,7 +747,8 @@ class SystemsAPI {
                         "OnFootSettlement": "Odyssey Settlement",
                         "MegaShip": "Mega ship",
                         "CraterPort": "Crater Port",
-                        "Dodec": "Dodec Starport"
+                        "Dodec": "Dodec Starport",
+                        "Bernal": "Ocellus Starport"
                     ]
 
                     init(from decoder: Decoder) throws {
