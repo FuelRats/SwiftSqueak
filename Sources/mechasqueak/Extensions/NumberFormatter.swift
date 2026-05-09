@@ -76,7 +76,7 @@ extension Double {
                 "\(scientificFormatter.string(from: lightYears) ?? "\(lightYears)")ly"
         } else if self > 3.6 * Double.pow(10, 6) {
             formattedDistance = (formatter.string(from: lightYears) ?? "\(lightYears)") + "ly"
-        } else if self < 1 {
+        } else if self < 1 && self > 0 {
             formattedDistance = "\(scientificFormatter.string(from: self) ?? "\(self)")ls"
         }
         return formattedDistance
@@ -117,6 +117,10 @@ extension Double {
             }
             result += "\(formatter.string(from: value)!) \(description)"
             index += 1
+        }
+        if result.isEmpty {
+            let smallest = components.last ?? .second
+            return "0 \(smallest)s"
         }
         return result
     }
