@@ -353,20 +353,31 @@ class BoardCommands: IRCBotModule {
                         }
                 }
             } else {
-                // In paperwork-only mode, just try to find the rat without assigning
-                guard
-                    let nick = message.destination.member(named: command.parameters[1]),
-                    let rat = nick.getRatRepresenting(platform: rescue.platform)
-                else {
-                    command.message.error(
-                        key: "board.close.notfound", fromCommand: command,
-                        map: [
-                            "caseId": caseId,
-                            "firstLimpet": command.parameters[1]
-                        ])
-                    return
+                // In paperwork-only mode, find the rat without assigning
+                // First try channel member, then fall back to API lookup
+                let nick = message.destination.member(named: command.parameters[1])
+                if let nick = nick, let rat = nick.getRatRepresenting(platform: rescue.platform) {
+                    firstLimpet = rat
+                } else {
+                    // Look up via API by nickname
+                    let account = nick?.account ?? command.parameters[1]
+                    if let apiData = try? await FuelRatsAPI.getNickname(forIRCAccount: account),
+                       let user = apiData.user {
+                        let rats = apiData.ratsBelongingTo(user: user)
+                        firstLimpet = rats.first(where: {
+                            $0.attributes.platform.value == rescue.platform
+                        }) ?? rats.first
+                    }
+                    if firstLimpet == nil {
+                        command.message.error(
+                            key: "board.close.notfound", fromCommand: command,
+                            map: [
+                                "caseId": caseId,
+                                "firstLimpet": command.parameters[1]
+                            ])
+                        return
+                    }
                 }
-                firstLimpet = rat
             }
         }
         
