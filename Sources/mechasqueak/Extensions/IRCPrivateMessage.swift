@@ -80,14 +80,14 @@ extension IRCPrivateMessage {
     }
 
     func retaliate() {
-        let phrase = retaliationPhrases[Int.random(in: 0..<retaliationPhrases.count)]
+        let phrase = retaliationPicker.next()
         self.client.sendActionMessage(
             toChannel: self.destination,
             contents: String(format: phrase, arguments: [self.user.nickname]))
     }
 }
 
-private let retaliationPhrases = [
+private let retaliationPicker = ShuffledPicker([
     "yeets %@ out of the airlock",
     "revokes %@'s snickers rations for 1 month",
     "launches a tactical nuclear strike in %@'s direction",
@@ -121,4 +121,4 @@ private let retaliationPhrases = [
     "uploads %@ into the Matrix but it's running on Windows ME",
     "resets all of %@'s keybinds",
     "places %@ in front of an activating Stargate"
-]
+])

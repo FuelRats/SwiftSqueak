@@ -33,7 +33,7 @@ struct PlatformExpansion: Codable, Hashable {
     let expansion: GameMode
 }
 
-private let snickersDestinations = [
+private let snickersDestinations = ShuffledPicker([
     "sent to the Ratlympics prize pool",
     "jettisoned into the nearest star",
     "confiscated by the Fuel Rats ops team special stash",
@@ -50,7 +50,7 @@ private let snickersDestinations = [
     "shredded and used as packing material for Guardian relics",
     "airdropped over a random planetary settlement",
     "converted into a commemorative NFT"
-]
+])
 
 actor RescueBoard {
     private var rescues: [Int: Rescue] = [:]
@@ -829,7 +829,7 @@ actor RescueBoard {
                                     (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
                             }) * 10)
                     let snickersCount = Swift.max(Int(snickersCalculation), 1)
-                    let destination = snickersDestinations.randomElement()!
+                    let destination = snickersDestinations.next()
                     let message = String(
                         format: "%@ has failed to do their paperwork, %d of their snickers have been %@",
                         latestNick.nickname, snickersCount, destination)
