@@ -196,7 +196,8 @@ class SystemsAPI {
             }
 
             let stationTravelTime = (bestStation.distance ?? 100000).distanceToSeconds(destinationGravity: true)
-            let rankingPenalty = Double(bestStation.ranking) * rankingTimePenalty + (bestStation.isLimited ? limitedTimePenalty : 0)
+            let rankingPenalty = Double(bestStation.ranking) * rankingTimePenalty
+                + (bestStation.isLimited ? limitedTimePenalty : 0)
             let jumpPenalty = system.distance > 0 ? 60.0 + system.distance * jumpTimePerLY : 0.0
             let totalScore = stationTravelTime + rankingPenalty + jumpPenalty
             if bestCandidate == nil || totalScore < bestCandidate!.2 {
