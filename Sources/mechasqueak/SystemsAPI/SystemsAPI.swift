@@ -34,7 +34,9 @@ let maxUsefulDistance = 300000.0
 let minPreferredDistance = 15000.0
 let limitedPenalty = 50.0
 let defaultMaxDistance = 1000000.0
-let systemDistanceWeight = 2.0
+let jumpTimePerLY = 30.0
+let rankingTimePenalty = 60.0
+let limitedTimePenalty = 120.0
 
 func loadUnobtainablePermitSystems() -> Set<String> {
     let unobtainablePermitsPath = URL(
@@ -193,7 +195,10 @@ class SystemsAPI {
                 continue
             }
 
-            let totalScore = bestStation.score() + pow(system.distance, systemDistanceWeight)
+            let stationTravelTime = (bestStation.distance ?? 100000).distanceToSeconds(destinationGravity: true)
+            let rankingPenalty = Double(bestStation.ranking) * rankingTimePenalty + (bestStation.isLimited ? limitedTimePenalty : 0)
+            let jumpPenalty = system.distance > 0 ? 60.0 + system.distance * jumpTimePerLY : 0.0
+            let totalScore = stationTravelTime + rankingPenalty + jumpPenalty
             if bestCandidate == nil || totalScore < bestCandidate!.2 {
                 bestCandidate = (system, bestStation, totalScore)
             }
