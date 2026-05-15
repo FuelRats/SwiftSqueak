@@ -92,7 +92,7 @@ class BoardQuoteCommands: IRCBotModule {
     }
 
     @BotCommand(
-        ["grab"],
+        ["grab", "yoink"],
         [
             .param("case id/client/assigned rat", "1"),
             .param("nick", "SpaceDawg", .standard, .optional)
