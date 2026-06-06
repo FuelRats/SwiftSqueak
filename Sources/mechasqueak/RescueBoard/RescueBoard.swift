@@ -535,7 +535,7 @@ actor RescueBoard {
             notifyXboxSystemCorrection(caseId: identifier, rescue: rescue)
         }
         
-        checkThargoidSystemState(caseId: identifier, rescue: rescue)
+        // checkThargoidSystemState(caseId: identifier, rescue: rescue)
         checkUnobtainablePermitSystem(caseId: identifier, rescue: rescue)
         checkXboxPrivacy(caseId: identifier, rescue: rescue)
         checkPSPlusMissing(caseId: identifier, rescue: rescue)
@@ -969,7 +969,7 @@ actor RescueBoard {
                             "systemInfo": existingRescue.system.description
                         ]))
 
-                checkThargoidSystemState(caseId: caseId, rescue: rescue)
+                // checkThargoidSystemState(caseId: caseId, rescue: rescue)
                 checkUnobtainablePermitSystem(caseId: caseId, rescue: rescue)
 
             }

@@ -139,22 +139,22 @@ class BoardAttributeCommands: IRCBotModule {
             )
         }
 
-        if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
-            command.message.reply(
-                message: lingo.localize(
-                    "board.systemattack", locale: "en",
-                    interpolations: [
-                        "system": system.name
-                    ]))
-            rescue.appendQuote(
-                RescueQuote(
-                    author: command.message.client.currentNick,
-                    message: "CAUTION: \(system.name) is currently under attack by Thargoids",
-                    createdAt: Date(),
-                    updatedAt: Date(),
-                    lastAuthor: command.message.client.currentNick)
-            )
-        }
+        // if let system = rescue.system, system.isUnderAttack && rescue.expansion != .legacy {
+        //     command.message.reply(
+        //         message: lingo.localize(
+        //             "board.systemattack", locale: "en",
+        //             interpolations: [
+        //                 "system": system.name
+        //             ]))
+        //     rescue.appendQuote(
+        //         RescueQuote(
+        //             author: command.message.client.currentNick,
+        //             message: "CAUTION: \(system.name) is currently under attack by Thargoids",
+        //             createdAt: Date(),
+        //             updatedAt: Date(),
+        //             lastAuthor: command.message.client.currentNick)
+        //     )
+        // }
         
         if let system = rescue.system, system.isUnobtainablePermitSystem {
             command.message.reply(

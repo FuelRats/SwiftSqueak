@@ -236,13 +236,8 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
     }
 
     var isUnderAttack: Bool {
-        if self.data?.body.data?.primary.value.attributes.systemAllegiance.value == .Thargoid {
-            return true
-        }
-        let stations = self.data?.body.includes?[SystemsAPI.Station.self] ?? []
-        return stations.contains(where: {
-            $0.stationState == .UnderAttack
-        })
+        // Thargoid alerts disabled
+        return false
     }
 
     var hasSecondaryFuelStar: Bool {
