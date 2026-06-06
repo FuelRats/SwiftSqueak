@@ -1333,7 +1333,7 @@ func checkXboxPrivacy(caseId: Int, rescue: Rescue) {
 
 func checkPSPlusMissing(caseId: Int, rescue: Rescue) {
     if case .found = rescue.psnProfile?.0, rescue.psnProfile?.1 == nil {
-        if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
+        if case let .found(profile) = rescue.psnProfile?.0, !profile.isPlus {
             rescue.channel?.send(key: "board.psplusmissing", map: [
                 "caseId": caseId,
                 "client": rescue.clientDescription

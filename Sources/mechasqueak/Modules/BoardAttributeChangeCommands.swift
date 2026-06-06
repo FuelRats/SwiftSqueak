@@ -248,7 +248,7 @@ class BoardAttributeCommands: IRCBotModule {
         if rescue.platform == .PS {
             rescue.psnProfile = await PSN.performLookup(name: client)
 
-            if case let .found(profile) = rescue.psnProfile?.0, profile.plus == 0 {
+            if case let .found(profile) = rescue.psnProfile?.0, !profile.isPlus {
                 command.message.reply(
                     message: lingo.localize(
                         "board.psplusmissing", locale: "en",
