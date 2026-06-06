@@ -53,9 +53,7 @@ class BoardAssignCommands: IRCBotModule {
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        if command.has(argument: "carrier") {
-            rescue.carrier = true
-        }
+        rescue.carrier = command.has(argument: "carrier")
         var command = command
         if command.locale.identifier == "auto" || command.locale.identifier == "a" {
             command.locale = rescue.clientLanguage ?? Locale(identifier: "en-GB")
@@ -105,9 +103,7 @@ class BoardAssignCommands: IRCBotModule {
         guard let (_, rescue) = await BoardCommands.assertGetRescueId(command: command) else {
             return
         }
-        if command.has(argument: "carrier") {
-            rescue.carrier = true
-        }
+        rescue.carrier = command.has(argument: "carrier")
 
         var command = command
         if command.locale.identifier == "auto" || command.locale.identifier == "a" {
