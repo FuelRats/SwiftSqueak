@@ -80,45 +80,46 @@ struct PlaystationNetwork {
             return .failure
         }
 
-        guard
-            var url = URLComponents(
-                string:
-                    "https://us-prof.np.community.playstation.net/userProfile/v1/users/\(name)/profile2"
-            )
-        else {
-            return .failure
-        }
-        url.queryItems = []
-        let fields = [
-            "npId",
-            "onlineId",
-            "accountId",
-            "avatarUrls",
-            "plus",
-            "aboutMe",
-            "languagesUsed",
-            "trophySummary(@default,level,progress,earnedTrophies)",
-            "isOfficiallyVerified",
-            "personalDetail(@default,profilePictureUrls)",
-            "personalDetailSharing",
-            "personalDetailSharingRequestMessageFlag",
-            "primaryOnlineStatus",
-            "presences(@default,@titleInfo,platform,lastOnlineDate,hasBroadcastData)",
-            "requestMessageFlag",
-            "blocking",
-            "friendRelation",
-            "following",
-            "consoleAvailability"
-        ]
-        url.queryItems?.append(URLQueryItem(name: "fields", value: fields.joined(separator: ",")))
         do {
-            var request = try HTTPClient.Request(url: url.url!, method: .GET)
+            // Step 1: Search for the account by online ID
+            let searchUrl = URL(
+                string: "https://m.np.playstation.com/api/search/v1/universalSearch")!
+            var searchRequest = try HTTPClient.Request(url: searchUrl, method: .POST)
+            searchRequest.headers.add(name: "Authorization", value: "Bearer \(psnConfig.token)")
+            searchRequest.headers.add(name: "Content-Type", value: "application/json")
+            let searchBody = UniversalSearchRequest(
+                searchTerm: name,
+                domainRequests: [.init(domain: "SocialAllAccounts")]
+            )
+            searchRequest.body = .data(try JSONEncoder().encode(searchBody))
 
-            request.headers.add(name: "Authorization", value: "Bearer \(psnConfig.token)")
+            let searchResponse = try await httpClient.execute(
+                request: searchRequest, forDecodable: UniversalSearchResponse.self)
 
-            let response = try await httpClient.execute(
-                request: request, forDecodable: ProfileResponse.self)
-            return .found(response.profile)
+            guard let match = searchResponse.domainResponses.first?.results.first,
+                match.socialMetadata.onlineId.caseInsensitiveCompare(name) == .orderedSame
+            else {
+                return .notFound
+            }
+            let accountId = match.socialMetadata.accountId
+
+            // Step 2: Get full profile by account ID
+            let profileUrl = URL(
+                string:
+                    "https://m.np.playstation.com/api/userProfile/v1/internal/users/\(accountId)/profiles"
+            )!
+            var profileRequest = try HTTPClient.Request(url: profileUrl, method: .GET)
+            profileRequest.headers.add(name: "Authorization", value: "Bearer \(psnConfig.token)")
+
+            let profileResponse = try await httpClient.execute(
+                request: profileRequest, forDecodable: ProfileFromAccountId.self)
+
+            let profile = Profile(
+                onlineId: profileResponse.onlineId,
+                accountId: accountId,
+                isPlus: profileResponse.isPlus
+            )
+            return .found(profile)
         } catch let error as HTTPClient.Response {
             if error.status == .notFound {
                 return .notFound
@@ -158,24 +159,45 @@ struct PlaystationNetwork {
         return try await httpClient.execute(request: request, forDecodable: PresenceResponse.self)
     }
 
-    struct ProfileResponse: Codable {
-        let profile: Profile
+    struct UniversalSearchRequest: Codable {
+        let searchTerm: String
+        let domainRequests: [DomainRequest]
+
+        struct DomainRequest: Codable {
+            let domain: String
+        }
+    }
+
+    struct UniversalSearchResponse: Codable {
+        let domainResponses: [DomainResponse]
+
+        struct DomainResponse: Codable {
+            let results: [SearchResult]
+        }
+
+        struct SearchResult: Codable {
+            let socialMetadata: SocialMetadata
+        }
+
+        struct SocialMetadata: Codable {
+            let accountId: String
+            let onlineId: String
+            let isPsPlus: Bool?
+        }
+    }
+
+    struct ProfileFromAccountId: Codable {
+        let onlineId: String
+        let isPlus: Bool
     }
 
     struct Profile: Codable {
         let onlineId: String
         let accountId: String
-        let npId: String
-        let plus: Int
-        let aboutMe: String
-        let languagesUsed: [String]
-        let isOfficiallyVerified: Bool
-        let personalDetailSharing: String
-        let personalDetailSharingRequestMessageFlag: Bool
-        let requestMessageFlag: Bool
+        let isPlus: Bool
 
         var psPlusStatus: String {
-            if self.plus > 0 {
+            if self.isPlus {
                 return IRCFormat.bold(IRCFormat.color(.Yellow, "PS+"))
             }
             return IRCFormat.color(.Grey, "(No PS+)")
