@@ -3,7 +3,7 @@ name: Build & Publish Docker Image
 on:
   push:
     branches: [ main, develop ]
-    tags: [ 'v*' ]
+    tags: [ '*' ]
 
 env:
   REGISTRY: ghcr.io
@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
