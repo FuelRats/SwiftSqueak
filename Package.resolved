@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/FuelRats/IRCKit.git",
       "state" : {
-        "revision" : "39a04691ff06c0329e84cb48c42a923e5d152d1b",
-        "version" : "0.19.0"
+        "revision" : "09a5d8e8119c97feca6ee15d21a1747d988b2f74",
+        "version" : "0.19.1"
       }
     },
     {
