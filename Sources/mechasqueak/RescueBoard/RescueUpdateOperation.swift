@@ -161,6 +161,26 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
             }
             return rescue
         } catch {
+            // A 422 on update usually means a relationship id — an assigned rat — no longer
+            // exists on the server. Validate the rescue's rats, drop any that were deleted
+            // upstream, and retry immediately so the board self-heals instead of looping
+            // forever on the same rejected payload.
+            if let response = error as? HTTPClient.Response, response.status.code == 422 {
+                let removed = await rescue.pruneDeletedRats()
+                if removed.isEmpty == false {
+                    let ratNames = removed.map({ $0.attributes.name.value }).joined(separator: ", ")
+                    logger.warning(
+                        "Removed \(removed.count) deleted rat(s) from case #\(caseId): \(ratNames)")
+                    mecha.reportingChannel?.send(
+                        key: "board.sync.removedDeletedRat",
+                        map: [
+                            "caseId": caseId,
+                            "rats": ratNames
+                        ])
+                    return try await performUploadUntilSuccess()
+                }
+            }
+
             if errorReported == false {
                 logger.error("Sync error on case #\(caseId): \(error)")
                 mecha.reportingChannel?.send(

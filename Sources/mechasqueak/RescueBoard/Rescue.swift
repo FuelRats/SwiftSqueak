@@ -510,6 +510,34 @@ class Rescue: @unchecked Sendable {
         return rescue
     }
 
+    /// Validates that every assigned rat still exists on the API and removes any that have
+    /// been deleted upstream (clearing first limpet if it was one of them). A rat is only
+    /// removed when the API definitively reports it missing (404) — a network or decode
+    /// error leaves the assignment untouched so a transient outage can't wipe rats.
+    /// Returns the rats that were pruned so callers can report them.
+    @discardableResult
+    func pruneDeletedRats() async -> [Rat] {
+        var removed: [Rat] = []
+        for rat in self.rats {
+            // `Rat.get` returns nil for a confirmed-missing rat and throws on failure, so
+            // `try?` yields `.some(nil)` only when the lookup succeeded and the rat is gone.
+            if case .some(.none) = try? await Rat.get(id: rat.id.rawValue) {
+                removed.append(rat)
+            }
+        }
+
+        guard removed.isEmpty == false else {
+            return []
+        }
+
+        let removedIds = Set(removed.map({ $0.id.rawValue }))
+        self.rats.removeAll(where: { removedIds.contains($0.id.rawValue) })
+        if let firstLimpet = self.firstLimpet, removedIds.contains(firstLimpet.id.rawValue) {
+            self.firstLimpet = nil
+        }
+        return removed
+    }
+
     func setQuotes(_ quotes: [RescueQuote]) {
         self.quotes = quotes
     }
