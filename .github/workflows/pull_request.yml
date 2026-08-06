@@ -14,6 +14,19 @@ jobs:
       - name: Checkout SwiftSqueak
         uses: actions/checkout@v4
 
+      - name: Validate localisation JSON
+        run: |
+          status=0
+          for f in localisation/*.json; do
+            if error=$(python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" 2>&1); then
+              echo "$f: valid"
+            else
+              echo "::error file=$f::Invalid JSON: ${error##*Error: }"
+              status=1
+            fi
+          done
+          exit $status
+
       - name: Install Swift 6.1
         run: |
           sudo apt-get update
