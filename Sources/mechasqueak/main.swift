@@ -174,10 +174,10 @@ class MechaSqueak: @unchecked Sendable {
                 await board.performSyncUntilSuccess()
             }
 
-            let versionFile = "\(configuration.sourcePath.path)/version.txt"
-            if let version = try? String(contentsOfFile: versionFile, encoding: .utf8)
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-               !version.isEmpty, version != "unknown" {
+            // Announce a completed update only when the build version actually changed,
+            // so a plain restart or reconnect doesn't re-post the announcement.
+            if let version = UpdateAnnouncer.versionToAnnounce(
+                sourcePath: configuration.sourcePath.path) {
                 mecha.reportingChannel?.send(key: "update", map: [
                     "release": version
                 ])
