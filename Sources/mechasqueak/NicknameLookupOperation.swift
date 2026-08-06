@@ -94,6 +94,35 @@ class NicknameLookupManager {
         for user in users.filter({ $0.associatedAPIData?.user?.id.rawValue == userId }) {
             MechaSqueak.accounts.lookup(user: user)
         }
+
+        // A user update also fires when one of the user's rats is deleted. Proactively drop
+        // any now-missing rats from that user's active rescues so the board self-heals
+        // without waiting for a save to fail with a 422.
+        Task {
+            let affected =
+                (try? await board.filter({ (_, rescue) in
+                    rescue.rats.contains(where: {
+                        $0.relationships.user?.id?.rawValue == userId
+                    })
+                }).getAllResults()) ?? []
+
+            for (caseId, rescue) in affected {
+                let removed = await rescue.pruneDeletedRats()
+                guard removed.isEmpty == false else {
+                    continue
+                }
+                let ratNames = removed.map({ $0.attributes.name.value }).joined(separator: ", ")
+                logger.warning(
+                    "Removed \(removed.count) deleted rat(s) from case #\(caseId): \(ratNames)")
+                try? await rescue.saveAndWait(nil)
+                mecha.reportingChannel?.send(
+                    key: "board.sync.removedDeletedRat",
+                    map: [
+                        "caseId": caseId,
+                        "rats": ratNames
+                    ])
+            }
+        }
     }
 
     @EventListener<IRCChannelUserModeChangeNotification>
