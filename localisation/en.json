@@ -73,7 +73,7 @@
     "board.sync.error": "\u0002Alert:\u0002 I am having trouble updating case #%{caseId} on the server, the dispatch board is no longer up to date. I will keep trying and let you know when the issue has been resolved.",
     "board.sync.errorsolved": "The problems with syncing case #%{caseId} have been resolved.",
     "board.sync.removedDeletedRat": "Notice: Removed rat(s) %{rats} from case #%{caseId} because they no longer exist on the server; the case has been updated.",
-    "board.sync.givingup": "Alert: I was unable to update case #%{caseId} after several attempts and have stopped retrying. The dispatch board may be out of date for this case — please check it manually.",
+    "board.sync.givingup": "\u0002Alert:\u0002 I was unable to update case #%{caseId} after several attempts and have stopped retrying. The dispatch board may be out of date for this case — please check it manually.",
     "board.synced.downstreamNew": {
         "one": "%{count} new rescue was downloaded from the server",
         "other": "%{count} new rescues were downloaded from the server"
@@ -285,11 +285,11 @@
     "anyfact.info": "!%{fact} (%{language} translation). Created %{created}. Updated %{updated}. Last updated by %{author}.",
     "facts.list": {
         "one": "\u0002%{category}\u0002 (%{count} %{language} fact): %{facts}",
-        "other": "\u0002%{category}\u0002 (%{count} %{language} facts): %{facts}",
+        "other": "\u0002%{category}\u0002 (%{count} %{language} facts): %{facts}"
     },
     "facts.list.platform": {
         "one": "There is also %{count} platform specific fact: %{facts}",
-        "other": "There are also %{count} platform specific facts: %{facts}",
+        "other": "There are also %{count} platform specific facts: %{facts}"
     },
     "fact.fallback": "!%{fact} is not available in %{language} (%{identifier}), falling back to English",
     "facts.noclienterror": "Facts that automatically detect platform does not work without a client as target as there is no way to determine the platform",
@@ -461,24 +461,24 @@
     "savelogs.notfound": "I did not find a session in this channel to save",
     "timeago.second": {
         "one": "%{time} second",
-        "other": "%{time} seconds",
+        "other": "%{time} seconds"
     },
     "timeago.minute": {
         "one": "%{time} minute",
-        "other": "%{time} minutes",
+        "other": "%{time} minutes"
     },
     "timeago.hour": {
         "one": "%{time} hour",
-        "other": "%{time} hours",
+        "other": "%{time} hours"
     },
     "timeago.day": {
         "one": "%{time} day",
-        "other": "%{time} days",
+        "other": "%{time} days"
     },
     "timeago.week": {
         "one": "%{time} week",
-        "other": "%{time} weeks",
+        "other": "%{time} weeks"
     },
     "genericerror": "Command failed to due an unknown error",
-    "update": "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/%{release}",
+    "update": "Update complete. Go here to read the latest changes: https://github.com/FuelRats/SwiftSqueak/releases/tag/%{release}"
 }
