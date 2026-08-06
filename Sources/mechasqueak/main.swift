@@ -30,6 +30,9 @@ import Logging
 import NIO
 import SQLKit
 
+// Install the logging backend before any Logger is created so all logs flow through it.
+GelfLogging.bootstrap()
+
 let logger = Logger(label: "com.fuelrats.mechasqueak")
 
 let httpClient = HTTPClient(
