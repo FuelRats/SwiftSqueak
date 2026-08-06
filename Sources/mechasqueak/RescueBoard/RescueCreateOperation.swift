@@ -29,10 +29,14 @@ import JSONAPI
 import Logging
 
 class RescueCreateOperation: Operation, @unchecked Sendable {
+    private static let baseBackoffSeconds: UInt64 = 2
+    private static let maxBackoffSeconds: UInt64 = 300
+    private static let maxPermanentAttempts = 5
+
     let caseId: Int
     let rescue: Rescue
     let representing: IRCUser?
-    var errorReported = false
+    var attempt = 0
 
     var onCompletion: (() -> Void)?
     var onError: ((Error) -> Void)?
@@ -133,7 +137,7 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
         }
         do {
             try await attemptUpload()
-            if errorReported {
+            if await board.clearSyncErrorReported(rescueId: rescue.id) {
                 mecha.reportingChannel?.send(
                     key: "board.sync.errorsolved",
                     map: [
@@ -145,16 +149,41 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                 await board.setIsSynced(true)
             }
         } catch {
-            if errorReported == false {
+            // Alert once per degraded period (tracked on the board so a fresh operation
+            // per change doesn't re-spam the channel).
+            if await board.markSyncErrorReported(rescueId: rescue.id) {
                 logger.error("Create error on case #\(caseId): \(error)")
                 mecha.reportingChannel?.send(
                     key: "board.sync.error",
                     map: [
                         "caseId": caseId
                     ])
-                errorReported = true
             }
-            try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+
+            attempt += 1
+
+            // A 4xx (other than request-timeout/rate-limit) is a client error that blind
+            // retries won't fix — give up after a few attempts instead of hammering the
+            // server and channel forever.
+            if let response = error as? HTTPClient.Response {
+                let code = Int(response.status.code)
+                let isPermanent = (400...499).contains(code) && code != 408 && code != 429
+                if isPermanent && attempt >= Self.maxPermanentAttempts {
+                    logger.error(
+                        "Giving up on case #\(caseId) after \(attempt) attempts on a permanent error (\(code))")
+                    mecha.reportingChannel?.send(
+                        key: "board.sync.givingup",
+                        map: [
+                            "caseId": caseId
+                        ])
+                    throw error
+                }
+            }
+
+            // Exponential backoff, capped, instead of a fixed 30s retry.
+            let backoffSeconds = min(
+                Self.baseBackoffSeconds << min(attempt - 1, 8), Self.maxBackoffSeconds)
+            try? await Task.sleep(nanoseconds: backoffSeconds * 1_000_000_000)
             try await performUploadUntilSuccess()
         }
     }

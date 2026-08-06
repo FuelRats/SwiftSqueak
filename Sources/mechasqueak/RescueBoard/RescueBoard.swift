@@ -65,6 +65,7 @@ actor RescueBoard {
 
     private var lastPaperworkReminder: [UUID: Date] = [:]
     private var pendingOutgoingUpdates: [UUID: Date] = [:]
+    private var syncErrorReported: Set<UUID> = []
 
     func markOutgoingUpdate(rescueId: UUID) {
         pendingOutgoingUpdates[rescueId] = Date()
@@ -77,6 +78,20 @@ actor RescueBoard {
         }
         pendingOutgoingUpdates.removeValue(forKey: rescueId)
         return false
+    }
+
+    /// Records that a rescue's sync is failing. Returns true only on the transition into
+    /// the failed state, so the "trouble updating" alert fires once per degraded period
+    /// rather than once per change (each change spawns a fresh update operation).
+    func markSyncErrorReported(rescueId: UUID) -> Bool {
+        return syncErrorReported.insert(rescueId).inserted
+    }
+
+    /// Clears a rescue's sync-error state. Returns true if it was previously failing, so
+    /// the "resolved" message is sent once on recovery.
+    @discardableResult
+    func clearSyncErrorReported(rescueId: UUID) -> Bool {
+        return syncErrorReported.remove(rescueId) != nil
     }
 
     nonisolated func startUpRoutines() {
