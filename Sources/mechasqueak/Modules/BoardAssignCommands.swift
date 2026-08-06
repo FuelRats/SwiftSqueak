@@ -172,45 +172,51 @@ class BoardAssignCommands: IRCBotModule {
         var removed: [String] = []
         
         for unassign in unassigns {
+            let token = unassign.lowercased()
+
+            // 1. Unidentified (name-string) assignment.
             if let assignIndex = rescue.unidentifiedRats.firstIndex(where: {
-                $0.lowercased() == unassign.lowercased()
+                $0.lowercased() == token
             }) {
                 rescue.unidentifiedRats.remove(at: assignIndex)
                 removed.append(unassign)
                 continue
-            } else if let nick = message.destination.member(named: unassign),
-                      let apiData = nick.associatedAPIData,
-                      let user = apiData.user {
-                var rats = apiData.ratsBelongingTo(user: user).filter({ rat in
-                    return rescue.rats.contains(where: {
-                        $0.id.rawValue == rat.id.rawValue
-                    })
-                })
-                
-                if rats.count == 0 {
-                    continue
-                }
-                
-                let nickname = unassign.lowercased()
-                rats.sort(by: {
-                    nickname.levenshtein($0.attributes.name.value.lowercased())
-                    < nickname.levenshtein($1.attributes.name.value.lowercased())
-                })
-                let rat = rats[0]
-                
-                if let ratIndex = rescue.rats.firstIndex(of: rat) {
-                    rescue.rats.remove(at: ratIndex)
-                    removed.append(rat.attributes.name.value)
-                    continue
-                }
-            } else if let ratIndex = rescue.rats.firstIndex(where: {
-                $0.attributes.name.value.lowercased() == unassign.lowercased()
+            }
+
+            // 2. Assigned rat matched directly by rat name. Matches the in-memory
+            // assignment, so this works even if the rat was deleted upstream (its name
+            // would otherwise be un-resolvable through the API).
+            if let ratIndex = rescue.rats.firstIndex(where: {
+                $0.attributes.name.value.lowercased() == token
             }) {
                 removed.append(rescue.rats[ratIndex].attributes.name.value)
                 rescue.rats.remove(at: ratIndex)
                 continue
             }
-            
+
+            // 3. Matched by the IRC nick of a rat's owner in the channel (handles the case
+            // where the nick differs from the rat name). Resolve against the rats already
+            // on the case — not live account data — so a since-deleted rat can still be
+            // removed. Pick the owner's best-matching assigned rat.
+            if let nick = message.destination.member(named: unassign),
+                let user = nick.associatedAPIData?.user {
+                let ownedOnCase = rescue.rats.filter({
+                    $0.relationships.user?.id?.rawValue == user.id.rawValue
+                }).sorted(by: {
+                    token.levenshtein($0.attributes.name.value.lowercased())
+                    < token.levenshtein($1.attributes.name.value.lowercased())
+                })
+                if let rat = ownedOnCase.first,
+                    let ratIndex = rescue.rats.firstIndex(where: {
+                        $0.id.rawValue == rat.id.rawValue
+                    }) {
+                    removed.append(rat.attributes.name.value)
+                    rescue.rats.remove(at: ratIndex)
+                    continue
+                }
+            }
+
+            // Nothing matched — always tell the dispatcher, never fail silently.
             command.message.reply(
                 key: "board.unassign.notassigned", fromCommand: command,
                 map: [
