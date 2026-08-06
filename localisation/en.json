@@ -72,6 +72,7 @@
     "board.synced": "Successfully synced board with %{api}. %{updates}",
     "board.sync.error": "\u0002Alert:\u0002 I am having trouble updating case #%{caseId} on the server, the dispatch board is no longer up to date. I will keep trying and let you know when the issue has been resolved.",
     "board.sync.errorsolved": "The problems with syncing case #%{caseId} have been resolved.",
+    "board.sync.removedDeletedRat": "Notice: Removed rat(s) %{rats} from case #%{caseId} because they no longer exist on the server; the case has been updated.",
     "board.synced.downstreamNew": {
         "one": "%{count} new rescue was downloaded from the server",
         "other": "%{count} new rescues were downloaded from the server"

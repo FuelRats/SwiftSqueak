@@ -47,8 +47,23 @@ enum RatDescription: ResourceObjectDescription {
     }
 }
 typealias Rat = JSONEntity<RatDescription>
+typealias RatGetDocument = Document<SingleResourceBody<Rat>, NoIncludes>
 
 extension Rat {
+    /// Fetches a rat by id. Returns `nil` when the API definitively reports the rat does
+    /// not exist (404); other failures (network, decode) throw so callers can distinguish
+    /// "confirmed gone" from "couldn't check".
+    static func get(id: UUID) async throws -> Rat? {
+        let request = try HTTPClient.Request(apiPath: "/rats/\(id.uuidString)", method: .GET)
+        do {
+            let document = try await httpClient.execute(
+                request: request, forDecodable: RatGetDocument.self)
+            return document.body.data?.primary.value
+        } catch let response as HTTPClient.Response where response.status.code == 404 {
+            return nil
+        }
+    }
+
     func presence(inIRCChannel channel: IRCChannel) -> [IRCUser] {
         guard let userId = self.relationships.user?.id?.rawValue else {
             return []
