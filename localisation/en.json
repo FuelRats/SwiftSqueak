@@ -314,6 +314,7 @@
     "groupchannel.error": "Unable to make that change due to an unknown error",
     "groupchannel.badflags": "\"%{flags}\" is not a valid set of channel access flags",
     "groupchannel.badchannel": "That is not a valid channel name",
+    "groupchannel.notregistered": "%{channel} is not registered with ChanServ, so access can't be granted to it",
     "groupchannel.badscope": "That is not a valid permission scope",
     "groupchannel.badvalue": "\"%{value}\" is not a valid value for that field",
     "groupchannel.badname": "\"%{name}\" is not a valid group name (letters and numbers only)",

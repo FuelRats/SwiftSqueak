@@ -121,6 +121,11 @@ typealias Group = JSONEntity<GroupDescription>
 typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
 typealias GroupDocument = Document<SingleResourceBody<Group>, NoIncludes>
 
+/// Plain-JSON payload of `GET /anope/channels` (not a JSON:API document).
+struct RegisteredChannelsResponse: Codable {
+    let channels: [String]
+}
+
 /// Valid Anope channel-access FLAGS letters. Mirror of the authoritative set in the
 /// API at `src/helpers/groupFlagLetters.mjs` — keep in sync. Lowercase `g` is invalid.
 let validGroupFlagLetters = Set<Character>("ABFGHIKNOQUVabcfhikmoqstuv")
@@ -220,6 +225,16 @@ extension Group {
 
         return try await httpClient.execute(
             request: request, forDecodable: GroupSearchDocument.self)
+    }
+
+    /// Every channel registered with ChanServ. Used to guard channel-access grants
+    /// so a group can only be given access to a channel that actually exists.
+    static func getRegisteredChannels() async throws -> [String] {
+        let request = try HTTPClient.Request(apiPath: "/anope/channels", method: .GET)
+
+        let response = try await httpClient.execute(
+            request: request, forDecodable: RegisteredChannelsResponse.self)
+        return response.channels
     }
 
     func addUser(id: UUID, command: IRCBotCommand? = nil) async throws {
