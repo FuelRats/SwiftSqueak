@@ -111,6 +111,7 @@ class MechaSqueak: @unchecked Sendable {
             ShortenURLCommands(moduleManager),
             TweetCommands(moduleManager),
             ManagementCommands(moduleManager),
+            GroupManagementCommands(moduleManager),
             RatAnniversary(moduleManager),
             AccountCommands(moduleManager),
             SessionLogger(moduleManager),

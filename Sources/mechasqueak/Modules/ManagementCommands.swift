@@ -219,7 +219,7 @@ class ManagementCommands: IRCBotModule {
                 return
             }
 
-            try await group.addUser(id: userId)
+            try await group.addUser(id: userId, command: command)
 
             command.message.reply(
                 key: "addgroup.success", fromCommand: command,
@@ -278,7 +278,7 @@ class ManagementCommands: IRCBotModule {
                 return
             }
 
-            try await group.removeUser(id: userId)
+            try await group.removeUser(id: userId, command: command)
 
             command.message.reply(
                 key: "delgroup.success", fromCommand: command,
@@ -312,7 +312,7 @@ class ManagementCommands: IRCBotModule {
         let userId = user.id.rawValue
 
         do {
-            _ = try await User.sync(id: userId)
+            _ = try await User.sync(id: userId, command: command)
 
             command.message.reply(
                 key: "syncgroup.success", fromCommand: command,
