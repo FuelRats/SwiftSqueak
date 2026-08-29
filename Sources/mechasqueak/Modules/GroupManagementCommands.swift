@@ -184,6 +184,22 @@ class GroupManagementCommands: IRCBotModule {
         }
 
         let channel = command.parameters[1]
+
+        // Only grant access to channels registered with ChanServ. Fail open if the
+        // registered-channel list can't be fetched — the API still validates the write.
+        if let registered = try? await Group.getRegisteredChannels() {
+            let target = Group.bareChannel(channel).lowercased()
+            let isRegistered = registered.contains { candidate in
+                Group.bareChannel(candidate).lowercased() == target
+            }
+            guard isRegistered else {
+                command.message.error(
+                    key: "groupchannel.notregistered", fromCommand: command,
+                    map: ["channel": "#\(Group.bareChannel(channel))"])
+                return
+            }
+        }
+
         do {
             let updated = try await group.setChannel(channel, flags: flags, command: command)
             await GroupManagementCommands.refreshGroups()
