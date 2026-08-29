@@ -74,9 +74,9 @@ extension User {
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
     }
 
-    static func sync(id: UUID) async throws -> UserGetDocument {
+    static func sync(id: UUID, command: IRCBotCommand? = nil) async throws -> UserGetDocument {
         let request = try HTTPClient.Request(
-            apiPath: "/users/\(id.uuidString)/sync", method: .PUT,
+            apiPath: "/users/\(id.uuidString)/sync", method: .PUT, command: command,
             query: ["include": "rats,nicknames,groups"])
 
         return try await httpClient.execute(request: request, forDecodable: UserGetDocument.self)
