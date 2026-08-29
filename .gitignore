@@ -145,3 +145,4 @@ Public/css/*
 secrets/
 data/
 .env.dev
+thoughts/
