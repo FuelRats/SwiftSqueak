@@ -70,7 +70,12 @@ struct BlueSky {
         request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.headers.add(name: "Authorization", value: "Bearer \(auth.accessJwt)")
-        request.body = try .encodable(post)
+        // atproto's data model has no floating-point type, so the record's
+        // `createdAt` must be an ISO 8601 datetime string. The default encoder
+        // serialises Date as a number, which Bluesky rejects (HTTP 400).
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        request.body = try .data(encoder.encode(post))
 
         return try await httpClient.execute(request: request, forDecodable: BlueSkyPostResponse.self)
     }
