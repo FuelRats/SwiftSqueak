@@ -119,6 +119,56 @@ extension AccountPermission {
 
 typealias Group = JSONEntity<GroupDescription>
 typealias GroupSearchDocument = Document<ManyResourceBody<Group>, NoIncludes>
+typealias GroupDocument = Document<SingleResourceBody<Group>, NoIncludes>
+
+/// Plain-JSON payload of `GET /anope/channels` (not a JSON:API document).
+struct RegisteredChannelsResponse: Codable {
+    let channels: [String]
+}
+
+/// Valid Anope channel-access FLAGS letters. Mirror of the authoritative set in the
+/// API at `src/helpers/groupFlagLetters.mjs` — keep in sync. Lowercase `g` is invalid.
+let validGroupFlagLetters = Set<Character>("ABFGHIKNOQUVabcfhikmoqstuv")
+
+/// JSON:API request body carrying a `groups` resource's attributes for a write.
+private struct GroupWriteBody<A: Encodable>: Encodable {
+    struct DataObject: Encodable {
+        let type = "groups"
+        let attributes: A
+    }
+    let data: DataObject
+
+    init(_ attributes: A) {
+        self.data = DataObject(attributes: attributes)
+    }
+}
+
+/// Partial `groups` attributes for a `PUT /groups/:id` — only the set fields are
+/// encoded (JSON:API PATCH semantics). `vhost` is a double optional: the outer
+/// optional marks whether the field is being changed, the inner value encodes as
+/// JSON `null` to clear the vhost.
+private struct GroupPatchAttributes: Encodable {
+    var vhost: String??
+    var priority: Int?
+    var withoutPrefix: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case vhost, priority, withoutPrefix
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        if let vhost = vhost {
+            try container.encode(vhost, forKey: .vhost)
+        }
+        if let priority = priority {
+            try container.encode(priority, forKey: .priority)
+        }
+        if let withoutPrefix = withoutPrefix {
+            try container.encode(withoutPrefix, forKey: .withoutPrefix)
+        }
+    }
+}
 
 extension Group {
     var groupNameMap: [String: String] {
@@ -177,7 +227,17 @@ extension Group {
             request: request, forDecodable: GroupSearchDocument.self)
     }
 
-    func addUser(id: UUID) async throws {
+    /// Every channel registered with ChanServ. Used to guard channel-access grants
+    /// so a group can only be given access to a channel that actually exists.
+    static func getRegisteredChannels() async throws -> [String] {
+        let request = try HTTPClient.Request(apiPath: "/anope/channels", method: .GET)
+
+        let response = try await httpClient.execute(
+            request: request, forDecodable: RegisteredChannelsResponse.self)
+        return response.channels
+    }
+
+    func addUser(id: UUID, command: IRCBotCommand? = nil) async throws {
         let relationship = ManyRelationshipBody(data: [
             ManyRelationshipBody.ManyRelationshipBodyDataItem(
                 type: "groups",
@@ -186,7 +246,8 @@ extension Group {
         ])
 
         var request = try HTTPClient.Request(
-            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST)
+            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .POST,
+            command: command)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try .encodable(relationship)
 
@@ -194,7 +255,7 @@ extension Group {
             request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }
 
-    func removeUser(id: UUID) async throws {
+    func removeUser(id: UUID, command: IRCBotCommand? = nil) async throws {
         let relationship = ManyRelationshipBody(data: [
             ManyRelationshipBody.ManyRelationshipBodyDataItem(
                 type: "groups",
@@ -203,9 +264,104 @@ extension Group {
         ])
 
         var request = try HTTPClient.Request(
-            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE)
+            apiPath: "/users/\(id.uuidString)/relationships/groups", method: .DELETE,
+            command: command)
         request.headers.add(name: "Content-Type", value: "application/json")
         request.body = try .encodable(relationship)
+
+        _ = try await httpClient.execute(
+            request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
+    }
+
+    /// The bare channel key the group-channel endpoints expect (no leading `#`/`&`).
+    static func bareChannel(_ channel: String) -> String {
+        if let first = channel.first, first == "#" || first == "&" {
+            return String(channel.dropFirst())
+        }
+        return channel
+    }
+
+    /// Add or update a channel's access FLAGS on this group. Acts on behalf of the
+    /// caller (`command`) so the API authorises the write against their `groups.write`.
+    func setChannel(_ channel: String, flags: String, command: IRCBotCommand) async throws -> Group {
+        var request = try HTTPClient.Request(
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/channels/\(Group.bareChannel(channel))",
+            method: .PUT, command: command)
+        request.body = try .encodable(GroupWriteBody(["flags": flags]))
+
+        let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
+        return document.body.data!.primary.value
+    }
+
+    /// Remove a channel from this group (idempotent). Acts on behalf of `command`'s caller.
+    func removeChannel(_ channel: String, command: IRCBotCommand) async throws -> Group {
+        let request = try HTTPClient.Request(
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/channels/\(Group.bareChannel(channel))",
+            method: .DELETE, command: command)
+
+        let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
+        return document.body.data!.primary.value
+    }
+
+    /// Grant an OAuth permission scope to this group (idempotent). Acts on behalf of `command`'s caller.
+    func setPermission(_ scope: String, command: IRCBotCommand) async throws -> Group {
+        let request = try HTTPClient.Request(
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/permissions/\(scope)",
+            method: .PUT, command: command)
+
+        let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
+        return document.body.data!.primary.value
+    }
+
+    /// Revoke an OAuth permission scope from this group (idempotent). Acts on behalf of `command`'s caller.
+    func removePermission(_ scope: String, command: IRCBotCommand) async throws -> Group {
+        let request = try HTTPClient.Request(
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/permissions/\(scope)",
+            method: .DELETE, command: command)
+
+        let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
+        return document.body.data!.primary.value
+    }
+
+    /// Partial-update this group's scalar attributes (`vhost`/`priority`/`withoutPrefix`)
+    /// via `PUT /groups/:id`. Only the fields set on `attributes` are sent.
+    private func patch(_ attributes: GroupPatchAttributes, command: IRCBotCommand) async throws -> Group {
+        var request = try HTTPClient.Request(
+            apiPath: "/groups/\(self.id.rawValue.uuidString)", method: .PUT, command: command)
+        request.body = try .encodable(GroupWriteBody(attributes))
+
+        let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
+        return document.body.data!.primary.value
+    }
+
+    /// Set (or clear, with `nil`) this group's vhost.
+    func setVhost(_ vhost: String?, command: IRCBotCommand) async throws -> Group {
+        return try await patch(GroupPatchAttributes(vhost: .some(vhost)), command: command)
+    }
+
+    /// Set this group's priority.
+    func setPriority(_ priority: Int, command: IRCBotCommand) async throws -> Group {
+        return try await patch(GroupPatchAttributes(priority: priority), command: command)
+    }
+
+    /// Set whether this group's vhost is applied without a rat-name prefix.
+    func setWithoutPrefix(_ withoutPrefix: Bool, command: IRCBotCommand) async throws -> Group {
+        return try await patch(GroupPatchAttributes(withoutPrefix: withoutPrefix), command: command)
+    }
+
+    /// Create a new permission group. Acts on behalf of `command`'s caller.
+    static func create(name: String, command: IRCBotCommand) async throws -> Group {
+        var request = try HTTPClient.Request(apiPath: "/groups", method: .POST, command: command)
+        request.body = try .encodable(GroupWriteBody(["name": name]))
+
+        let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
+        return document.body.data!.primary.value
+    }
+
+    /// Delete this permission group. Acts on behalf of `command`'s caller.
+    func delete(command: IRCBotCommand) async throws {
+        let request = try HTTPClient.Request(
+            apiPath: "/groups/\(self.id.rawValue.uuidString)", method: .DELETE, command: command)
 
         _ = try await httpClient.execute(
             request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
