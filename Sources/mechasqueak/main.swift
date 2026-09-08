@@ -122,6 +122,12 @@ class MechaSqueak: @unchecked Sendable {
             commands.append(QueueCommands(moduleManager))
         }
 
+        // Always-listening AI assistant. Inert unless the Anthropic + Outline tokens are configured.
+        if let aiConfig = configuration.ai {
+            aiService = AIService.make(from: aiConfig)
+            commands.append(AIListener(moduleManager))
+        }
+
         ratSocket = RatSocket()
 
         Task { @MainActor in
