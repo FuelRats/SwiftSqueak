@@ -181,6 +181,18 @@ extension JSONValue {
         .object([("type", .string("string")), ("description", .string(description))])
     }
 
+    /// A JSON Schema `array` whose elements match `items` (defaults to strings).
+    static func arraySchema(
+        _ description: String,
+        items: JSONValue = .object([("type", .string("string"))])
+    ) -> JSONValue {
+        .object([
+            ("type", .string("array")),
+            ("description", .string(description)),
+            ("items", items)
+        ])
+    }
+
     static func integerSchema(_ description: String) -> JSONValue {
         .object([("type", .string("integer")), ("description", .string(description))])
     }

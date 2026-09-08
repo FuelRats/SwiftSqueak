@@ -63,7 +63,7 @@ struct AskPipeline: Sendable {
     init(
         provider: LLMProvider,
         outline: OutlineAPI,
-        tools: [AITool] = DataTools.all() + ExternalTools.all(),
+        tools: [AITool] = DataTools.all() + ExternalTools.all() + [CommandDispatchTool.tool],
         model: String = Anthropic.answerModel,
         maxTokens: Int = 1024,
         maxToolRounds: Int = 5,

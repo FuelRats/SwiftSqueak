@@ -101,7 +101,10 @@ final class AIService: Sendable {
         }
 
         do {
-            let reply = try await pipeline.answer(question: question)
+            // Pass the invoking message so the run_command tool can dispatch a read-only command
+            // as this user, with native permission/cooldown/destination enforcement.
+            let reply = try await pipeline.answer(
+                question: question, context: ToolContext(message: message))
             send(reply, to: message)
         } catch {
             aiLogger.error("[ai] pipeline error: \(error)")
