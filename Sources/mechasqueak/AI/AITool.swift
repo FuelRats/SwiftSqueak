@@ -23,15 +23,18 @@
  */
 
 import Foundation
+@preconcurrency import IRCKit
 
-/// Context passed to every tool invocation. Carries the invoking user's locale (for localized
-/// data like facts). Later phases extend this with the invoking command/channel for command
-/// dispatch and scrollback.
+/// Context passed to every tool invocation. Carries the invoking user's locale (for localized data
+/// like facts) and the originating IRC message, which the `run_command` tool needs to dispatch a
+/// read-only command as the invoking user. `message` is nil outside a live IRC invocation.
 struct ToolContext: Sendable {
     let locale: Locale
+    let message: IRCPrivateMessage?
 
-    init(locale: Locale = Locale(identifier: "en")) {
+    init(locale: Locale = Locale(identifier: "en"), message: IRCPrivateMessage? = nil) {
         self.locale = locale
+        self.message = message
     }
 }
 
