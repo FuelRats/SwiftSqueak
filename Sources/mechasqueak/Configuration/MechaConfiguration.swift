@@ -57,6 +57,7 @@ struct MechaConfiguration: Sendable {
     let mastodon: MastodonConfiguration?
     let bluesky: BlueSkyConfiguration?
     let openAIToken: String?
+    let ai: AIConfiguration?
     let webServer: WebServerConfiguration?
 
     static func fromEnvironment() -> MechaConfiguration {
@@ -166,6 +167,23 @@ struct MechaConfiguration: Sendable {
 
         let openAIToken = env("OPENAI_TOKEN")
 
+        // AI Q&A feature. Inert unless the Anthropic + Outline tokens and the FRKB
+        // collection id are all present; the private ED-Knowledge collection is optional.
+        let ai: AIConfiguration? = {
+            guard let anthropicToken = env("AI_ANTHROPIC_TOKEN"),
+                  let outlineToken = env("AI_OUTLINE_TOKEN"),
+                  let frkbCollectionId = env("AI_FRKB_COLLECTION_ID") else { return nil }
+            let base = env("AI_OUTLINE_BASE_URL") ?? "https://docs.fuelrats.com/api"
+            guard let outlineBaseURL = URL(string: base) else { return nil }
+            return AIConfiguration(
+                anthropicToken: anthropicToken,
+                outlineToken: outlineToken,
+                outlineBaseURL: outlineBaseURL,
+                frkbCollectionId: frkbCollectionId,
+                edKbCollectionId: env("AI_ED_KB_COLLECTION_ID")
+            )
+        }()
+
         let webServer: WebServerConfiguration? = {
             guard let host = env("WEB_HOST"), let portStr = env("WEB_PORT"),
                   let port = Int(portStr) else { return nil }
@@ -176,7 +194,7 @@ struct MechaConfiguration: Sendable {
             general: general, connections: connections, api: api, queue: queue,
             database: database, shortener: shortener, sourcePath: sourcePath,
             xbox: xbox, psn: psn, chrono: chrono, mastodon: mastodon,
-            bluesky: bluesky, openAIToken: openAIToken, webServer: webServer
+            bluesky: bluesky, openAIToken: openAIToken, ai: ai, webServer: webServer
         )
     }
 }
@@ -253,4 +271,12 @@ struct BlueSkyConfiguration: Codable, Sendable {
 struct WebServerConfiguration: Codable, Sendable {
     let host: String
     let port: Int
+}
+
+struct AIConfiguration: Codable, Sendable {
+    let anthropicToken: String
+    let outlineToken: String
+    let outlineBaseURL: URL
+    let frkbCollectionId: String
+    let edKbCollectionId: String?
 }
