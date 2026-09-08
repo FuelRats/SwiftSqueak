@@ -15,28 +15,45 @@ final class OutlineAPITests: XCTestCase {
             transport: { _, _ in Data() })
     }
 
-    func testSearchRequestFiltersByAllowedCollections() throws {
+    func testSearchRequestScopesToASingleCollection() throws {
+        // Only the singular collectionId param restricts server-side; each request targets one.
         let api = makeAPI(edKb: edKb)
-        let request = api.buildSearchRequest(query: "how to file a case", limit: 8)
+        let request = api.buildSearchRequest(query: "how to file a case", limit: 8, collectionId: frkb)
 
         XCTAssertEqual(request.query, "how to file a case")
         XCTAssertEqual(request.limit, 8)
-        XCTAssertEqual(request.filters.count, 1)
-        let filter = try XCTUnwrap(request.filters.first)
-        XCTAssertEqual(filter.field, "collectionId")
-        XCTAssertEqual(filter.operator, "in")
-        XCTAssertEqual(filter.value, [frkb, edKb])
+        XCTAssertEqual(request.collectionId, frkb)
 
-        // The encoded body must carry the deprecated-free `filters` array verbatim.
         let json = String(data: try OutlineAPI.encoder.encode(request), encoding: .utf8) ?? ""
-        XCTAssertTrue(json.contains("\"collectionId\""))
-        XCTAssertTrue(json.contains("\"operator\":\"in\""))
+        XCTAssertTrue(json.contains("\"collectionId\":\"collection-frkb\""))
     }
 
-    func testSearchOmitsEdKbWhenUnset() throws {
-        let api = makeAPI(edKb: nil)
-        let filter = try XCTUnwrap(api.buildSearchRequest(query: "q", limit: 5).filters.first)
-        XCTAssertEqual(filter.value, [frkb], "ED-Knowledge id must be absent until the collection is seeded")
+    func testAllowedCollectionsOmitsEdKbWhenUnset() {
+        XCTAssertEqual(makeAPI(edKb: nil).allowedCollectionIds, [frkb])
+        XCTAssertEqual(makeAPI(edKb: edKb).allowedCollectionIds, [frkb, edKb])
+    }
+
+    func testSearchQueriesEachCollectionAndMergesByRanking() async throws {
+        // One transport response per collection; merged output should be ranked across both.
+        let frkbBody = """
+        {"data":[{"context":"sop hi","ranking":0.7,
+          "document":{"id":"f1","title":"SOP","url":"/doc/sop","collectionId":"collection-frkb"}}]}
+        """
+        let edBody = """
+        {"data":[{"context":"ed hi","ranking":0.95,
+          "document":{"id":"e1","title":"ED","url":"/doc/ed","collectionId":"collection-edkb"}}]}
+        """
+        let edId = edKb
+        let api = OutlineAPI(
+            baseURL: base, frkbCollectionId: frkb, edKbCollectionId: edKb,
+            transport: { _, body in
+                let request = try? JSONDecoder().decode(OutlineAPI.SearchRequest.self, from: body)
+                return Data((request?.collectionId == edId ? edBody : frkbBody).utf8)
+            })
+
+        let docs = try await api.search("q", limit: 10)
+        XCTAssertEqual(docs.map(\.id), ["e1", "f1"], "higher-ranked ED hit sorts before the SOP hit")
+        XCTAssertEqual(docs.first?.source, .edKnowledge)
     }
 
     func testParseTagsSourcesAndDropsNonAllowlisted() {

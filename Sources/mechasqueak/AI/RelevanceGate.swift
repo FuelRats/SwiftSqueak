@@ -84,10 +84,12 @@ struct RelevanceGate: Sendable {
             return false
         }
         let system = """
-        You are a filter for an Elite Dangerous / Fuel Rats assistant bot. Decide whether the user's \
-        line is a genuine question or request for information or help directed at the bot — even if \
-        it is basic, silly, or poorly phrased. Greetings, thanks, reactions, jokes with no request, \
-        and general chatter are NOT. Answer with exactly one character: y or n.
+        You are a relevance filter for the Fuel Rats' Elite Dangerous assistant bot. The user already \
+        addressed the bot by name. Answer 'y' if their message is a genuine question or request — \
+        about Fuel Rats procedure, Elite Dangerous, a star system/station/route, the bot's data, or a \
+        direct question aimed at the bot itself (what it is or can do) — even if basic, silly, or \
+        sloppily phrased. Answer 'n' for greetings, thanks, reactions, statements, and idle chatter \
+        with no question or request. Answer with exactly one character: y or n.
         """
         let request = LLMRequest(
             model: model, maxTokens: 1, system: system, messages: [.text(.user, question)])
