@@ -190,6 +190,15 @@ struct LLMUsage: Sendable, Equatable {
         self.cacheReadInputTokens = cacheReadInputTokens
         self.cacheCreationInputTokens = cacheCreationInputTokens
     }
+
+    /// Accumulates usage across the rounds of a tool loop.
+    static func + (lhs: LLMUsage, rhs: LLMUsage) -> LLMUsage {
+        LLMUsage(
+            inputTokens: lhs.inputTokens + rhs.inputTokens,
+            outputTokens: lhs.outputTokens + rhs.outputTokens,
+            cacheReadInputTokens: lhs.cacheReadInputTokens + rhs.cacheReadInputTokens,
+            cacheCreationInputTokens: lhs.cacheCreationInputTokens + rhs.cacheCreationInputTokens)
+    }
 }
 
 // MARK: - Errors

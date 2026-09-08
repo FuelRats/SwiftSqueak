@@ -38,19 +38,22 @@ final class AIService: Sendable {
     let state: AIState
     let conversations: ConversationManager
     let scrollback: ScrollbackBuffer
+    let metrics: AIMetrics
 
     init(
         pipeline: AskPipeline,
         gate: RelevanceGate,
         state: AIState,
         conversations: ConversationManager,
-        scrollback: ScrollbackBuffer
+        scrollback: ScrollbackBuffer,
+        metrics: AIMetrics
     ) {
         self.pipeline = pipeline
         self.gate = gate
         self.state = state
         self.conversations = conversations
         self.scrollback = scrollback
+        self.metrics = metrics
     }
 
     /// Builds the service from configuration: one Anthropic client (Opus for answers, Haiku for the
@@ -67,7 +70,8 @@ final class AIService: Sendable {
             gate: RelevanceGate(provider: anthropic),
             state: AIState(),
             conversations: ConversationManager(),
-            scrollback: ScrollbackBuffer())
+            scrollback: ScrollbackBuffer(),
+            metrics: AIMetrics())
     }
 
     // MARK: - Entry points
@@ -95,8 +99,9 @@ final class AIService: Sendable {
         // Cheap prefilter before touching any paid path.
         guard RelevanceGate.prefilterPasses(question) else { return }
 
-        // Atomic cooldown + in-flight + budget reservation.
-        switch await state.reserve(key: cooldownKey(message)) {
+        // Atomic cooldown + in-flight + per-user + global budget reservation.
+        let user = message.user.account ?? message.user.nickname.lowercased()
+        switch await state.reserve(key: cooldownKey(message), user: user) {
             case .reserved:
             break
             case .cooldown, .overCapacity:
@@ -107,7 +112,9 @@ final class AIService: Sendable {
         }
 
         // Paid Haiku relevance gate.
-        guard await gate.isRelevant(question) else {
+        let relevant = await gate.isRelevant(question)
+        await metrics.recordGate(passed: relevant)
+        guard relevant else {
             await state.release()
             return
         }
@@ -122,6 +129,12 @@ final class AIService: Sendable {
             let reply = try await pipeline.answer(
                 question: question, history: history, context: ToolContext(message: message))
             send(reply, to: message)
+            await metrics.recordAnswer(reply)
+            let logLine =
+                "[ai] answered refused=\(reply.refused) rounds=\(reply.toolRounds) "
+                + "in=\(reply.usage.inputTokens) out=\(reply.usage.outputTokens) "
+                + "cacheRead=\(reply.usage.cacheReadInputTokens) citations=\(reply.citations.count)"
+            aiLogger.info("\(logLine)")
             if reply.refused == false, reply.text.isEmpty == false {
                 await conversations.record(account: account, question: question, answer: reply.text)
             }

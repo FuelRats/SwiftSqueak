@@ -43,6 +43,21 @@ struct AIReply: Sendable {
     let citations: [ReplyCitation]
     let refused: Bool
     let toolRounds: Int
+    let usage: LLMUsage
+
+    init(
+        text: String,
+        citations: [ReplyCitation],
+        refused: Bool,
+        toolRounds: Int,
+        usage: LLMUsage = LLMUsage()
+    ) {
+        self.text = text
+        self.citations = citations
+        self.refused = refused
+        self.toolRounds = toolRounds
+        self.usage = usage
+    }
 }
 
 /// The core answer pipeline: retrieve grounding documents from Outline, ask Claude with those
@@ -110,6 +125,7 @@ struct AskPipeline: Sendable {
         let llmTools = tools.llmTools
 
         var rounds = 0
+        var totalUsage = LLMUsage()
         while rounds < maxToolRounds {
             let request = LLMRequest(
                 model: model, maxTokens: maxTokens, system: system, messages: messages, tools: llmTools)
@@ -118,11 +134,12 @@ struct AskPipeline: Sendable {
             do {
                 response = try await provider.complete(request)
             } catch LLMError.refused {
-                return AIReply(text: "", citations: [], refused: true, toolRounds: rounds)
+                return AIReply(text: "", citations: [], refused: true, toolRounds: rounds, usage: totalUsage)
             }
+            totalUsage = totalUsage + response.usage
 
             guard response.stopReason == .toolUse, response.toolCalls.isEmpty == false else {
-                return buildReply(response, docs: docs, rounds: rounds)
+                return buildReply(response, docs: docs, rounds: rounds, usage: totalUsage)
             }
 
             // Replay the assistant's tool-use turn, then feed back each tool result.
@@ -141,9 +158,10 @@ struct AskPipeline: Sendable {
             model: model, maxTokens: maxTokens, system: system, messages: messages, tools: [])
         do {
             let response = try await provider.complete(finalRequest)
-            return buildReply(response, docs: docs, rounds: rounds)
+            totalUsage = totalUsage + response.usage
+            return buildReply(response, docs: docs, rounds: rounds, usage: totalUsage)
         } catch LLMError.refused {
-            return AIReply(text: "", citations: [], refused: true, toolRounds: rounds)
+            return AIReply(text: "", citations: [], refused: true, toolRounds: rounds, usage: totalUsage)
         }
     }
 
@@ -197,9 +215,11 @@ struct AskPipeline: Sendable {
 
     // MARK: - Reply building
 
-    private func buildReply(_ response: LLMResponse, docs: [GroundingDoc], rounds: Int) -> AIReply {
+    private func buildReply(
+        _ response: LLMResponse, docs: [GroundingDoc], rounds: Int, usage: LLMUsage
+    ) -> AIReply {
         if response.stopReason == .refusal {
-            return AIReply(text: "", citations: [], refused: true, toolRounds: rounds)
+            return AIReply(text: "", citations: [], refused: true, toolRounds: rounds, usage: usage)
         }
         var seen = Set<String>()
         var citations: [ReplyCitation] = []
@@ -214,7 +234,8 @@ struct AskPipeline: Sendable {
             text: response.text.trimmingCharacters(in: .whitespacesAndNewlines),
             citations: citations,
             refused: false,
-            toolRounds: rounds)
+            toolRounds: rounds,
+            usage: usage)
     }
 
     // MARK: - Prompt

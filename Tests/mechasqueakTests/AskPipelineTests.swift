@@ -172,6 +172,25 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertTrue(carriesError)
     }
 
+    func testPipelineAccumulatesTokenUsageAcrossRounds() async throws {
+        let toolResponse = LLMResponse(
+            content: [.toolUse(id: "t1", name: "system_info", input: .object([("system", .string("Sol"))]))],
+            stopReason: .toolUse,
+            usage: LLMUsage(inputTokens: 100, outputTokens: 10, cacheReadInputTokens: 0))
+        let finalResponse = LLMResponse(
+            content: [.text("done", citations: [])],
+            stopReason: .endTurn,
+            usage: LLMUsage(inputTokens: 120, outputTokens: 15, cacheReadInputTokens: 90))
+        let script = Script([.success(toolResponse), .success(finalResponse)])
+        let tools = [stubTool("system_info", returns: "{}")]
+
+        let reply = try await pipeline(script, tools: tools).answer(question: "is Sol scoopable?")
+
+        XCTAssertEqual(reply.usage.inputTokens, 220)
+        XCTAssertEqual(reply.usage.outputTokens, 25)
+        XCTAssertEqual(reply.usage.cacheReadInputTokens, 90)
+    }
+
     func testSystemPromptCarriesGroundingAndPersona() {
         let prompt = AskPipeline.systemPrompt(locale: Locale(identifier: "en"))
         XCTAssertTrue(prompt.contains("GROUNDING"))
