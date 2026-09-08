@@ -323,7 +323,8 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Get a list of your rescues that have not had their paperwork completed.",
         permission: .DispatchRead,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        allowTool: true
     )
     var didReceiveUnfiledListCommand = { command in
         do {
