@@ -45,24 +45,36 @@ actor AIState {
     private let cooldown: TimeInterval
     private let maxInFlight: Int
     private let dailyRequestCap: Int
+    private let perUserCap: Int
+    private let perUserWindow: TimeInterval
 
     private var cooldownUntil: [String: Date] = [:]
     private var inFlight = 0
     private var requestsInWindow = 0
     private var windowStart: Date?
+    private var perUser: [String: (start: Date, count: Int)] = [:]
 
     static let windowLength: TimeInterval = 24 * 60 * 60
 
-    init(cooldown: TimeInterval = 30, maxInFlight: Int = 3, dailyRequestCap: Int = 500) {
+    init(
+        cooldown: TimeInterval = 30,
+        maxInFlight: Int = 3,
+        dailyRequestCap: Int = 500,
+        perUserCap: Int = 60,
+        perUserWindow: TimeInterval = 3600
+    ) {
         self.cooldown = cooldown
         self.maxInFlight = maxInFlight
         self.dailyRequestCap = dailyRequestCap
+        self.perUserCap = perUserCap
+        self.perUserWindow = perUserWindow
     }
 
-    /// Atomically reserves a slot for `key` if it is off cooldown, under the in-flight cap, and
-    /// within the daily budget. On `.reserved` the caller owns one in-flight slot and must
-    /// `release()` it exactly once.
-    func reserve(key: String, now: Date = Date()) -> ReserveResult {
+    /// Atomically reserves a slot for `key`/`user` if it is off cooldown, under the in-flight cap,
+    /// within the per-user budget, and within the global daily budget. On `.reserved` the caller
+    /// owns one in-flight slot and must `release()` it exactly once. `user` is the identity budget
+    /// bucket (across channels); `key` is the per-channel cooldown bucket.
+    func reserve(key: String, user: String = "global", now: Date = Date()) -> ReserveResult {
         rolloverIfNeeded(now: now)
 
         if requestsInWindow >= dailyRequestCap {
@@ -71,6 +83,15 @@ actor AIState {
         if let until = cooldownUntil[key], until > now {
             return .cooldown
         }
+
+        var userBudget = perUser[user] ?? (start: now, count: 0)
+        if now.timeIntervalSince(userBudget.start) > perUserWindow {
+            userBudget = (start: now, count: 0)
+        }
+        if userBudget.count >= perUserCap {
+            return .overBudget
+        }
+
         if inFlight >= maxInFlight {
             return .overCapacity
         }
@@ -78,6 +99,8 @@ actor AIState {
         cooldownUntil[key] = now.addingTimeInterval(cooldown)
         inFlight += 1
         requestsInWindow += 1
+        userBudget.count += 1
+        perUser[user] = userBudget
         return .reserved
     }
 

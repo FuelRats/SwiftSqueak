@@ -49,6 +49,27 @@ final class AIStateTests: XCTestCase {
         XCTAssertEqual(afterCooldown, .reserved)
     }
 
+    func testPerUserBudgetIsEnforcedIndependentlyOfOtherUsers() async {
+        let state = AIState(
+            cooldown: 0, maxInFlight: 10, dailyRequestCap: 1000, perUserCap: 2, perUserWindow: 3600)
+        // Distinct keys avoid the cooldown; the per-user cap should still bite after 2.
+        let one = await state.reserve(key: "k1", user: "alice", now: base)
+        await state.release()
+        let two = await state.reserve(key: "k2", user: "alice", now: base)
+        await state.release()
+        let three = await state.reserve(key: "k3", user: "alice", now: base)
+        XCTAssertEqual([one, two], [.reserved, .reserved])
+        XCTAssertEqual(three, .overBudget, "a user past their per-user cap is rejected")
+
+        // A different user is unaffected.
+        let otherUser = await state.reserve(key: "k4", user: "bob", now: base)
+        XCTAssertEqual(otherUser, .reserved)
+
+        // The per-user window resets.
+        let afterWindow = await state.reserve(key: "k5", user: "alice", now: base.addingTimeInterval(3601))
+        XCTAssertEqual(afterWindow, .reserved)
+    }
+
     func testDailyBudgetIsEnforcedAndRollsOver() async {
         let state = AIState(cooldown: 0, maxInFlight: 10, dailyRequestCap: 2)
         _ = await state.reserve(key: "k1", now: base)
