@@ -120,7 +120,8 @@ class GeneralCommands: IRCBotModule {
         description: "See statistics about the systems API.",
         tags: ["stats", "system", "count"],
         permission: nil,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var didReceiveSystemStatisticsCommand = { command in
         do {
@@ -241,7 +242,8 @@ class GeneralCommands: IRCBotModule {
         description: "See version information about the bot.",
         tags: ["info"],
         permission: nil,
-        cooldown: .seconds(120)
+        cooldown: .seconds(120),
+        allowTool: true
     )
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
