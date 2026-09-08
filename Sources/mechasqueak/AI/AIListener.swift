@@ -44,6 +44,8 @@ class AIListener: IRCBotModule {
             channelMessage.destination.channelModes.keys.contains(.isSecret) == false else {
             return
         }
+        // Record every message for scrollback context, then act only on name-triggers.
+        await service.scrollback.record(channelMessage)
         await service.handleChannelMessage(channelMessage)
     }
 

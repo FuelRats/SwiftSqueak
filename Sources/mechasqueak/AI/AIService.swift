@@ -36,11 +36,21 @@ final class AIService: Sendable {
     let pipeline: AskPipeline
     let gate: RelevanceGate
     let state: AIState
+    let conversations: ConversationManager
+    let scrollback: ScrollbackBuffer
 
-    init(pipeline: AskPipeline, gate: RelevanceGate, state: AIState) {
+    init(
+        pipeline: AskPipeline,
+        gate: RelevanceGate,
+        state: AIState,
+        conversations: ConversationManager,
+        scrollback: ScrollbackBuffer
+    ) {
         self.pipeline = pipeline
         self.gate = gate
         self.state = state
+        self.conversations = conversations
+        self.scrollback = scrollback
     }
 
     /// Builds the service from configuration: one Anthropic client (Opus for answers, Haiku for the
@@ -55,7 +65,9 @@ final class AIService: Sendable {
         return AIService(
             pipeline: AskPipeline(provider: anthropic, outline: outline),
             gate: RelevanceGate(provider: anthropic),
-            state: AIState())
+            state: AIState(),
+            conversations: ConversationManager(),
+            scrollback: ScrollbackBuffer())
     }
 
     // MARK: - Entry points
@@ -100,12 +112,19 @@ final class AIService: Sendable {
             return
         }
 
+        // Multi-turn memory for identified users only (nicks are spoofable).
+        let account = message.user.account
+        let history = await conversations.history(account: account)
+
         do {
             // Pass the invoking message so the run_command tool can dispatch a read-only command
             // as this user, with native permission/cooldown/destination enforcement.
             let reply = try await pipeline.answer(
-                question: question, context: ToolContext(message: message))
+                question: question, history: history, context: ToolContext(message: message))
             send(reply, to: message)
+            if reply.refused == false, reply.text.isEmpty == false {
+                await conversations.record(account: account, question: question, answer: reply.text)
+            }
         } catch {
             aiLogger.error("[ai] pipeline error: \(error)")
             if isPM { message.reply(message: AIService.errorMessage) }
