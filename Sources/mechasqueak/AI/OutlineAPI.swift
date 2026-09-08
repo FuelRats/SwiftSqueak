@@ -101,10 +101,17 @@ struct OutlineAPI: Sendable {
 
     // MARK: - Search
 
+    /// Searches every allowed collection and merges the hits by ranking. Outline's `documents.search`
+    /// only honours the singular `collectionId` param for scoping (the `filters` array is ignored on
+    /// this instance), so multi-collection retrieval means one query per collection.
     func search(_ query: String, limit: Int = OutlineAPI.defaultLimit) async throws -> [OutlineDoc] {
-        let body = try OutlineAPI.encoder.encode(buildSearchRequest(query: query, limit: limit))
-        let data = try await transport("documents.search", body)
-        return parseSearchResults(data)
+        var ranked: [(ranking: Double, doc: OutlineDoc)] = []
+        for collectionId in allowedCollectionIds {
+            let request = buildSearchRequest(query: query, limit: limit, collectionId: collectionId)
+            let data = try await transport("documents.search", try OutlineAPI.encoder.encode(request))
+            ranked.append(contentsOf: rankedResults(data))
+        }
+        return ranked.sorted { $0.ranking > $1.ranking }.prefix(limit).map { $0.doc }
     }
 
     /// Fetches the full body of a document (for grounding a citation).
@@ -117,22 +124,27 @@ struct OutlineAPI: Sendable {
 
     // MARK: - Payload construction / parsing (unit-testable, network-free)
 
-    func buildSearchRequest(query: String, limit: Int) -> SearchRequest {
-        SearchRequest(
-            query: query,
-            limit: limit,
-            filters: [
-                SearchRequest.Filter(field: "collectionId", operator: "in", value: allowedCollectionIds)
-            ])
+    func buildSearchRequest(query: String, limit: Int, collectionId: String) -> SearchRequest {
+        SearchRequest(query: query, limit: limit, collectionId: collectionId)
     }
 
-    func parseSearchResults(_ data: Data) -> [OutlineDoc] {
+    /// Parsed hits paired with their ranking (for cross-collection merge).
+    func rankedResults(_ data: Data) -> [(ranking: Double, doc: OutlineDoc)] {
         guard let decoded = try? OutlineAPI.decoder.decode(SearchResponse.self, from: data) else {
             return []
         }
         return decoded.data.compactMap { result in
-            document(from: result.document, snippet: result.context ?? result.document.text ?? "")
+            guard let doc = document(
+                from: result.document, snippet: result.context ?? result.document.text ?? "") else {
+                return nil
+            }
+            return (result.ranking ?? 0, doc)
         }
+    }
+
+    /// Allowlist-filtered docs from one search response (defense-in-depth; also used in tests).
+    func parseSearchResults(_ data: Data) -> [OutlineDoc] {
+        rankedResults(data).map { $0.doc }
     }
 
     /// Maps a wire document to an `OutlineDoc`, tagging its source and dropping anything
@@ -173,16 +185,10 @@ struct OutlineAPI: Sendable {
 
     // MARK: - Wire types
 
-    struct SearchRequest: Encodable {
+    struct SearchRequest: Codable {
         let query: String
         let limit: Int
-        let filters: [Filter]
-
-        struct Filter: Encodable {
-            let field: String
-            let `operator`: String
-            let value: [String]
-        }
+        let collectionId: String
     }
 
     struct InfoRequest: Encodable {

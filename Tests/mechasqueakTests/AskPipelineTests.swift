@@ -31,23 +31,27 @@ final class AskPipelineTests: XCTestCase {
     }
 
     private func outline() -> OutlineAPI {
-        let search = """
-        {"data":[
-          {"context":"snippet a","ranking":0.9,
-           "document":{"id":"d-sop","title":"Dispatch SOP","url":"/doc/dispatch",
-                       "collectionId":"c-frkb","text":"sop body"}},
-          {"context":"snippet b","ranking":0.8,
-           "document":{"id":"d-ed","title":"Supercruise","url":"/doc/sc",
-                       "collectionId":"c-edkb","text":"ed body"}}
-        ]}
+        // Each per-collection query returns only that collection's doc. The SOP hit ranks highest,
+        // so the merged order is [SOP (index 0), ED-Knowledge (index 1)].
+        let sopBody = """
+        {"data":[{"context":"snippet a","ranking":0.9,
+          "document":{"id":"d-sop","title":"Dispatch SOP","url":"/doc/dispatch",
+                      "collectionId":"c-frkb","text":"sop body"}}]}
+        """
+        let edBody = """
+        {"data":[{"context":"snippet b","ranking":0.8,
+          "document":{"id":"d-ed","title":"Supercruise","url":"/doc/sc",
+                      "collectionId":"c-edkb","text":"ed body"}}]}
         """
         let info = #"{"data":{"id":"d","title":"t","url":"/doc/d","collectionId":"c-frkb","text":"full body"}}"#
         return OutlineAPI(
             baseURL: URL(string: "https://docs.fuelrats.com/api")!,
             frkbCollectionId: "c-frkb",
             edKbCollectionId: "c-edkb",
-            transport: { path, _ in
-                Data((path == "documents.search" ? search : info).utf8)
+            transport: { path, body in
+                guard path == "documents.search" else { return Data(info.utf8) }
+                let request = try? JSONDecoder().decode(OutlineAPI.SearchRequest.self, from: body)
+                return Data((request?.collectionId == "c-edkb" ? edBody : sopBody).utf8)
             })
     }
 
