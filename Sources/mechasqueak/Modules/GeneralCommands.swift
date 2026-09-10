@@ -70,7 +70,8 @@ class GeneralCommands: IRCBotModule {
         description: "Get a list of cases that currently require rats to call jumps",
         tags: ["needs", "needed", "unassigned"],
         permission: .DispatchRead,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var needsRatsCommand = { command in
         let needsRats = await board.getRescues().filter({ (_, rescue) in
@@ -460,7 +461,8 @@ class GeneralCommands: IRCBotModule {
         description: "See information about an xbox gamertag",
         tags: ["xbox", "live", "gamer", "tag"],
         permission: nil,
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveXboxLiveCommand = { command in
         var gamertag = command.parameters[0]
@@ -512,7 +514,8 @@ class GeneralCommands: IRCBotModule {
         description: "See information about a playstation user",
         tags: ["playstation", "play", "station", "plus", "PS+"],
         permission: nil,
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceivePSNCommand = { command in
         var username = command.parameters[0]

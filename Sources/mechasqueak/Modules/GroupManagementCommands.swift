@@ -127,6 +127,7 @@ class GroupManagementCommands: IRCBotModule {
         description: "Show a permission group's channels, granted scopes, vhost and priority.",
         tags: ["group", "channel", "permission"],
         permission: .GroupRead,
+        allowTool: true,
         helpExtra: {
             return ManagementCommands.generateGroupList()
         }
