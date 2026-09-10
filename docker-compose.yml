@@ -45,8 +45,6 @@ services:
       - OPENAI_TOKEN=${OPENAI_TOKEN:-}
       - WEB_HOST=${WEB_HOST:-0.0.0.0}
       - WEB_PORT=${WEB_PORT:-8080}
-      - CHRONO_NODE_PATH=${CHRONO_NODE_PATH:-/usr/bin/node}
-      - CHRONO_FILE=${CHRONO_FILE:-/usr/lib/node_modules/chrono-node/dist/index.js}
     deploy:
       replicas: 1
       restart_policy:
