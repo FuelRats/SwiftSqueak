@@ -49,6 +49,17 @@ final class AIStateTests: XCTestCase {
         XCTAssertEqual(afterCooldown, .reserved)
     }
 
+    func testPerCallCooldownOverridesDefault() async {
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        _ = await state.reserve(key: "chan", cooldown: 300, now: base)
+        await state.release()
+        // The default 30s has elapsed, but the per-call 5-minute cooldown still blocks the channel key.
+        let blocked = await state.reserve(key: "chan", cooldown: 300, now: base.addingTimeInterval(60))
+        XCTAssertEqual(blocked, .cooldown)
+        let afterFive = await state.reserve(key: "chan", cooldown: 300, now: base.addingTimeInterval(301))
+        XCTAssertEqual(afterFive, .reserved)
+    }
+
     func testPerUserBudgetIsEnforcedIndependentlyOfOtherUsers() async {
         let state = AIState(
             cooldown: 0, maxInFlight: 10, dailyTokenCap: 1000, perUserCap: 2, perUserWindow: 3600)

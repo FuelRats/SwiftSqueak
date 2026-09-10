@@ -76,7 +76,9 @@ actor AIState {
     /// the caller owns one in-flight slot and must `release()` it exactly once — passing the `user`
     /// and `refundingUser: true` if the reservation produced no billable answer. `user` is the
     /// identity budget bucket (across channels); `key` is the per-channel cooldown bucket.
-    func reserve(key: String, user: String = "global", now: Date = Date()) -> ReserveResult {
+    func reserve(
+        key: String, user: String = "global", cooldown: TimeInterval? = nil, now: Date = Date()
+    ) -> ReserveResult {
         rolloverIfNeeded(now: now)
         sweepExpired(now: now)
 
@@ -99,7 +101,7 @@ actor AIState {
             return .overCapacity
         }
 
-        cooldownUntil[key] = now.addingTimeInterval(cooldown)
+        cooldownUntil[key] = now.addingTimeInterval(cooldown ?? self.cooldown)
         inFlight += 1
         userBudget.count += 1
         perUser[user] = userBudget

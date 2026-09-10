@@ -110,7 +110,14 @@ final class AIService: Sendable {
 
         // Atomic cooldown + in-flight + per-user + global budget reservation.
         let user = message.user.account ?? message.user.nickname.lowercased()
-        switch await state.reserve(key: cooldownKey(message), user: user) {
+        // Public channels get one overall answer per 5 minutes (channel-wide, not per-user), gated the
+        // same way command cooldowns are (rescues.write bypasses, i.e. drilled rats and above). PMs and
+        // bypassing users keep the light per-user cooldown instead.
+        let bypasses = message.user.hasPermission(permission: .RescueWrite)
+        let (key, cooldown): (String, TimeInterval?) = (isPM || bypasses)
+            ? (cooldownKey(message), nil)
+            : (channelCooldownKey(message), AIService.publicChannelCooldown)
+        switch await state.reserve(key: key, user: user, cooldown: cooldown) {
             case .reserved:
             break
             case .cooldown, .overCapacity:
@@ -254,6 +261,15 @@ final class AIService: Sendable {
         let identity = message.user.account ?? message.user.nickname.lowercased()
         return "\(ObjectIdentifier(message.client))|\(message.destination.name.lowercased())|\(identity)"
     }
+
+    /// Channel-wide cooldown key (no user identity): one overall answer per channel, used to rate-limit
+    /// public-channel questions from unprivileged users.
+    private func channelCooldownKey(_ message: IRCPrivateMessage) -> String {
+        return "\(ObjectIdentifier(message.client))|\(message.destination.name.lowercased())"
+    }
+
+    /// Overall cooldown between AI answers in a public channel for unprivileged users.
+    static let publicChannelCooldown: TimeInterval = 5 * 60
 
     /// Returns the question with the leading bot name stripped, or nil if the message is not
     /// addressed to the bot. The character after the name must be a separator so "MechaSqueakBot"

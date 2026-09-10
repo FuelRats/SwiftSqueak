@@ -345,11 +345,13 @@ struct AskPipeline: Sendable {
         - Answer in the user's language (locale: \(locale.short)).
 
         LINKING
-        - Do not append a "Sources" list. Most answers need no link at all.
-        - You may include ONE link inline, in your own sentence, only when it genuinely helps the \
-        user go deeper, and only to a document explicitly marked "public, linkable". NEVER share a \
-        link to a document marked internal/NOT public; those pages are not publicly accessible. \
-        Never invent or guess a URL.
+        - When your answer draws on a Fuel Rats SOP document, you MUST include that document's public \
+        link inline in your sentence: use the URL given after "public, linkable:" in its provenance \
+        tag. Every SOP/procedure answer carries its source link, always.
+        - Otherwise, include at most ONE link, and only to a document explicitly marked "public, \
+        linkable", when it genuinely helps. Do not append a separate "Sources" list.
+        - NEVER share a link to a document marked internal/NOT public; those pages are not publicly \
+        accessible. Never invent or guess a URL.
 
         \(MechaPersona.voice)
         """
