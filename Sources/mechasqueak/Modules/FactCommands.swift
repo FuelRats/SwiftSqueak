@@ -54,7 +54,8 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         ["facts", "listfacts", "factlist", "fact"],
         [.argument("locales")],
         category: .facts,
-        description: "View the list of facts"
+        description: "View the list of facts",
+        allowTool: true
     )
     var didReceiveFactListCommand = { command in
         if command.has(argument: "locales") {
@@ -129,7 +130,8 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         ["searchfacts", "factsearch", "factssearch"],
         [.param("search term", "log in to open", .continuous)],
         category: .facts,
-        description: "Search for facts"
+        description: "Search for facts",
+        allowTool: true
     )
     var didReceiveFactSearchCommand = { command in
         let search = command.parameters[0]

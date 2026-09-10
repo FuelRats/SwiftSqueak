@@ -125,7 +125,8 @@ class ManagementCommands: IRCBotModule {
         category: .management,
         description: "Lists the permissions of a specific person",
         tags: ["group", "permission", "role"],
-        permission: .UserRead
+        permission: .UserRead,
+        allowTool: true
     )
     var didReceivePermissionsCommand = { command in
         guard let (accountData, user) = await getAccountData(nick: command.parameters[0], fromCommand: command) else {

@@ -39,7 +39,8 @@ class AccountCommands: IRCBotModule {
         description:
             "Check the Fuel Rats account information the bot is currently associating with your nick",
         tags: ["user", "info", "whois"],
-        cooldown: .seconds(60)
+        cooldown: .seconds(60),
+        allowTool: true
     )
     var didReceiveWhoAmICommand = { command in
         let message = command.message
@@ -109,7 +110,8 @@ class AccountCommands: IRCBotModule {
         description:
             "Check the Fuel Rats account information the bot is associating with someone's nick.",
         tags: ["user", "info"],
-        permission: .RatReadOwn
+        permission: .RatReadOwn,
+        allowTool: true
     )
     var didReceiveWhoIsCommand = { command in
         let message = command.message
@@ -157,7 +159,8 @@ class AccountCommands: IRCBotModule {
         description:
             "Check what CMDR name mecha would currently assign to a case based on your nickname",
         permission: .RatReadOwn,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var didReceiveAssignCheckCommand = { command in
         let message = command.message
@@ -246,7 +249,8 @@ class AccountCommands: IRCBotModule {
         category: .account,
         description: "List all the permits currently belonging to your account",
         permission: .UserReadOwn,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        allowTool: true
     )
     var didReceiveListPermitCommand = { command in
         guard let currentRat = command.message.user.currentRat else {
