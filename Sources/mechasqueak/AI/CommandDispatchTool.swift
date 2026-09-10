@@ -42,9 +42,11 @@ extension IRCBotCommand {
 }
 
 /// Tier-2 tool: lets the model invoke a read-only IRC command on the user's behalf. The command
-/// replies through its normal path, as the invoking user, so permissions/cooldowns/destinations are
-/// all enforced natively by `handleIncomingCommand`. Only commands the author opted in with
-/// `allowTool` (and which are not rescue-writing dispatch commands) are permitted.
+/// replies through its normal path, as the invoking user, so cooldowns/destinations are enforced
+/// natively by `handleIncomingCommand`. Permission is gated up front here too (parity with the
+/// command's own `permission`) so the model can't do anything the user couldn't, and a lack of
+/// permission is refused cleanly to the model instead of surfacing in-channel. Only commands the
+/// author opted in with `allowTool` (and which are not rescue-writing dispatch commands) are permitted.
 enum CommandDispatchTool {
     static let tool = AITool(
         name: "run_command",
@@ -83,6 +85,13 @@ enum CommandDispatchTool {
         guard CommandDispatchTool.isDispatchable(declaration) else {
             return ToolOutput.error("command '\(name)' is not available to the assistant")
         }
+        // Gate the AI path by the command's own permission, so run_command never lets the model do
+        // something the user couldn't do by typing it — and refuse cleanly to the model here rather
+        // than letting the command emit an in-channel "no permission" reply in the user's name.
+        guard CommandDispatchTool.isPermitted(
+            declaration, hasPermission: { message.user.hasPermission(permission: $0) }) else {
+            return ToolOutput.error("you do not have permission to use '\(name)'")
+        }
 
         let botCommand = IRCBotCommand(
             toolInvocation: name, parameters: args, message: message, locale: context.locale)
@@ -102,6 +111,16 @@ enum CommandDispatchTool {
             return false
         }
         return isDispatchable(declaration)
+    }
+
+    /// Whether the invoking user may AI-dispatch this command: permission parity with the interactive
+    /// command. A command with no `permission` is open to anyone (matching its interactive behavior);
+    /// otherwise the user must hold that permission. `hasPermission` is injected for testability.
+    static func isPermitted(
+        _ declaration: IRCBotCommandDeclaration, hasPermission: (AccountPermission) -> Bool
+    ) -> Bool {
+        guard let permission = declaration.permission else { return true }
+        return hasPermission(permission)
     }
 
     static func looksUnsafe(_ argument: String) -> Bool {

@@ -114,12 +114,20 @@ struct OutlineAPI: Sendable {
         return ranked.sorted { $0.ranking > $1.ranking }.prefix(limit).map { $0.doc }
     }
 
-    /// Fetches the full body of a document (for grounding a citation).
-    func info(id: String) async throws -> OutlineDoc? {
-        let body = try OutlineAPI.encoder.encode(InfoRequest(id: id))
+    /// Fetches the full body for an already-allowlisted search hit. The hit passed the collection
+    /// allowlist at search time, so its body is trusted; we only re-reject if `documents.info`
+    /// reports a `collectionId` that is present AND disallowed. Crucially we do NOT drop the body
+    /// when Outline omits `collectionId` from the info response — doing so silently degraded
+    /// grounding to the search snippet. Returns nil only on an explicit allowlist violation.
+    func fullText(for hit: OutlineDoc) async throws -> String? {
+        let body = try OutlineAPI.encoder.encode(InfoRequest(id: hit.id))
         let data = try await transport("documents.info", body)
         let decoded = try OutlineAPI.decoder.decode(InfoResponse.self, from: data)
-        return document(from: decoded.data, snippet: decoded.data.text ?? "")
+        if let collectionId = decoded.data.collectionId,
+            allowedCollectionIds.contains(collectionId) == false {
+            return nil
+        }
+        return decoded.data.text
     }
 
     // MARK: - Payload construction / parsing (unit-testable, network-free)

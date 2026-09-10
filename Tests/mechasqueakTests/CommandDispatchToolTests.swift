@@ -44,6 +44,26 @@ final class CommandDispatchToolTests: XCTestCase {
         XCTAssertFalse(CommandDispatchTool.isDispatchable("bcancel", in: commands))
     }
 
+    // MARK: - Permission parity
+
+    func testNoPermissionCommandIsOpenToAnyone() {
+        let command = declaration(["landmark"], category: .utility, allowTool: true)
+        XCTAssertTrue(
+            CommandDispatchTool.isPermitted(command, hasPermission: { _ in false }),
+            "a command with no permission is dispatchable regardless of the user's permissions")
+    }
+
+    func testPermissionedCommandRequiresTheUserToHoldIt() {
+        let command = declaration(
+            ["unfiled"], category: .rescues, permission: .RescueWriteOwn, allowTool: true)
+        XCTAssertTrue(
+            CommandDispatchTool.isPermitted(command, hasPermission: { $0 == .RescueWriteOwn }),
+            "a user holding the command's permission may dispatch it")
+        XCTAssertFalse(
+            CommandDispatchTool.isPermitted(command, hasPermission: { _ in false }),
+            "a user lacking the command's permission is refused")
+    }
+
     // MARK: - Argument sanitization
 
     func testLooksUnsafeRejectsFlagsAndSigils() {

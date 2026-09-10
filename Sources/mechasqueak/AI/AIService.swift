@@ -115,7 +115,8 @@ final class AIService: Sendable {
         let relevant = await gate.isRelevant(question)
         await metrics.recordGate(passed: relevant)
         guard relevant else {
-            await state.release()
+            // No billable answer produced — refund the user's attempt so chatter doesn't lock them out.
+            await state.release(refundingUser: user)
             return
         }
 
@@ -125,11 +126,15 @@ final class AIService: Sendable {
 
         do {
             // Pass the invoking message so the run_command tool can dispatch a read-only command
-            // as this user, with native permission/cooldown/destination enforcement.
-            let reply = try await pipeline.answer(
-                question: question, history: history, context: ToolContext(message: message))
+            // as this user, with native permission/cooldown/destination enforcement. A deadline
+            // bounds how long a stuck upstream call can pin one of the scarce in-flight slots.
+            let reply = try await AIService.withTimeout(seconds: AIService.answerDeadline) {
+                try await self.pipeline.answer(
+                    question: question, history: history, context: ToolContext(message: message))
+            }
             send(reply, to: message)
             await metrics.recordAnswer(reply)
+            await state.recordUsage(tokens: reply.usage.inputTokens + reply.usage.outputTokens)
             let logLine =
                 "[ai] answered refused=\(reply.refused) rounds=\(reply.toolRounds) "
                 + "in=\(reply.usage.inputTokens) out=\(reply.usage.outputTokens) "
@@ -138,28 +143,95 @@ final class AIService: Sendable {
             if reply.refused == false, reply.text.isEmpty == false {
                 await conversations.record(account: account, question: question, answer: reply.text)
             }
+            await state.release()
         } catch {
             aiLogger.error("[ai] pipeline error: \(error)")
             if isPM { message.reply(message: AIService.errorMessage) }
+            // No answer reached the user — refund the attempt.
+            await state.release(refundingUser: user)
         }
-        await state.release()
     }
+
+    /// Upper bound on a single answer pipeline (all tool rounds + upstream retries). Generous enough
+    /// for legitimate multi-round answers, but prevents a hung or rate-limited upstream call from
+    /// holding an in-flight slot indefinitely.
+    static let answerDeadline: Double = 240
+
+    struct AITimeoutError: Error {}
+
+    /// Runs `operation`, throwing `AITimeoutError` if it doesn't finish within `seconds`. The losing
+    /// child is cancelled; `Anthropic.complete` checks for cancellation between retries so it unwinds
+    /// promptly (bounded by the in-flight HTTP request's own deadline).
+    static func withTimeout<T: Sendable>(
+        seconds: Double, operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await operation() }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw AITimeoutError()
+            }
+            defer { group.cancelAll() }
+            guard let result = try await group.next() else { throw AITimeoutError() }
+            return result
+        }
+    }
+
+    /// Hard cap on a whole answer. A reply may run to roughly two IRC lines; IRCKit's
+    /// `sendMessage(toTarget:)` splits anything over the protocol byte limit on word boundaries, so
+    /// we only enforce the overall character budget here (trimmed to a sentence boundary).
+    static let maxTotalLength = 800
 
     private func send(_ reply: AIReply, to message: IRCPrivateMessage) {
         guard reply.refused == false, reply.text.isEmpty == false else {
             message.reply(message: reply.refused ? AIService.refusalMessage : AIService.emptyMessage)
             return
         }
-        let lines = reply.text
+        let full = AIService.clamp(AIService.formatForIRC(reply.text), to: AIService.maxTotalLength)
+        message.reply(message: full.isEmpty ? AIService.emptyMessage : full)
+    }
+
+    /// Collapses an LLM answer into a single IRC-safe line: converts `**bold**` to the IRC bold
+    /// control code, strips residual markdown and em/en dashes, and flattens all newlines and runs
+    /// of whitespace to single spaces. The model is told to produce IRC-ready prose; this is the
+    /// backstop that guarantees one clean line regardless.
+    static func formatForIRC(_ text: String) -> String {
+        var result = text
+            .replacingOccurrences(of: "\u{2014}", with: "-")  // em dash
+            .replacingOccurrences(of: "\u{2013}", with: "-")  // en dash
+            .replacingOccurrences(of: "`", with: "")
+        if let bold = try? NSRegularExpression(pattern: "\\*\\*(.+?)\\*\\*") {
+            let range = NSRange(result.startIndex..., in: result)
+            result = bold.stringByReplacingMatches(
+                in: result, range: range, withTemplate: "\u{02}$1\u{02}")
+        }
+        let flattened = result
             .split(whereSeparator: \.isNewline)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { $0.isEmpty == false }
-        message.reply(list: lines.isEmpty ? [reply.text] : lines, separator: " ")
-
-        if reply.citations.isEmpty == false {
-            let sources = reply.citations.map { "\($0.title): \($0.url)" }.joined(separator: " · ")
-            message.reply(list: ["Sources: \(sources)"], separator: " ")
+            .joined(separator: " ")
+        var collapsed = flattened
+        while collapsed.contains("  ") {
+            collapsed = collapsed.replacingOccurrences(of: "  ", with: " ")
         }
+        return collapsed.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// Truncates over-long text without ever stopping mid-sentence: prefer ending at the last
+    /// sentence terminator within the limit (clean, no ellipsis); otherwise fall back to the last
+    /// word boundary with an ellipsis. The model is told to fit one line, so this rarely fires.
+    static func clamp(_ text: String, to limit: Int) -> String {
+        guard text.count > limit else { return text }
+        let head = String(text.prefix(limit))
+        if let terminator = head.lastIndex(where: { ".!?".contains($0) }),
+            head.distance(from: head.startIndex, to: terminator) > limit / 2 {
+            return String(head[...terminator]).trimmingCharacters(in: .whitespaces)
+        }
+        if let lastSpace = head.lastIndex(of: " "),
+            head.distance(from: head.startIndex, to: lastSpace) > limit / 2 {
+            return head[..<lastSpace].trimmingCharacters(in: .whitespaces) + "\u{2026}"
+        }
+        return head.trimmingCharacters(in: .whitespaces) + "\u{2026}"
     }
 
     // MARK: - Helpers
@@ -191,7 +263,8 @@ final class AIService: Sendable {
 
     // User-facing strings, kept dry and in-character. English-only for now; Lingo-keyed
     // localization is a planned follow-up (m1).
-    static let refusalMessage = "I don't have that. Ask a live dispatcher before you invent policy."
+    static let refusalMessage =
+        "I don't have that. Take it to Ops, a trainer, or an overseer before you invent policy."
     static let emptyMessage = "Nothing useful to say to that."
     static let busyMessage = "Busy. Try again shortly."
     static let errorMessage = "Something broke on my end. Try again shortly."

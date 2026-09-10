@@ -40,17 +40,18 @@ enum ReserveResult: Sendable, Equatable {
 /// Shared, actor-isolated state for the always-listening AI surface. Because IRCKit delivers each
 /// message notification on its own detached task, cooldown and capacity checks must be atomic —
 /// `reserve` does check-and-reserve in a single actor hop so a burst from one user admits exactly
-/// one pipeline. Also enforces a global in-flight cap and a rolling daily request budget.
+/// one pipeline. Also enforces a global in-flight cap, a per-user attempt budget, and a global daily
+/// *token* budget (cost control — committed from actual usage via `recordUsage`, not at reserve).
 actor AIState {
     private let cooldown: TimeInterval
     private let maxInFlight: Int
-    private let dailyRequestCap: Int
+    private let dailyTokenCap: Int
     private let perUserCap: Int
     private let perUserWindow: TimeInterval
 
     private var cooldownUntil: [String: Date] = [:]
     private var inFlight = 0
-    private var requestsInWindow = 0
+    private var tokensInWindow = 0
     private var windowStart: Date?
     private var perUser: [String: (start: Date, count: Int)] = [:]
 
@@ -59,25 +60,27 @@ actor AIState {
     init(
         cooldown: TimeInterval = 30,
         maxInFlight: Int = 3,
-        dailyRequestCap: Int = 500,
+        dailyTokenCap: Int = 2_000_000,
         perUserCap: Int = 60,
         perUserWindow: TimeInterval = 3600
     ) {
         self.cooldown = cooldown
         self.maxInFlight = maxInFlight
-        self.dailyRequestCap = dailyRequestCap
+        self.dailyTokenCap = dailyTokenCap
         self.perUserCap = perUserCap
         self.perUserWindow = perUserWindow
     }
 
     /// Atomically reserves a slot for `key`/`user` if it is off cooldown, under the in-flight cap,
-    /// within the per-user budget, and within the global daily budget. On `.reserved` the caller
-    /// owns one in-flight slot and must `release()` it exactly once. `user` is the identity budget
-    /// bucket (across channels); `key` is the per-channel cooldown bucket.
+    /// within the per-user attempt budget, and within the global daily token budget. On `.reserved`
+    /// the caller owns one in-flight slot and must `release()` it exactly once — passing the `user`
+    /// and `refundingUser: true` if the reservation produced no billable answer. `user` is the
+    /// identity budget bucket (across channels); `key` is the per-channel cooldown bucket.
     func reserve(key: String, user: String = "global", now: Date = Date()) -> ReserveResult {
         rolloverIfNeeded(now: now)
+        sweepExpired(now: now)
 
-        if requestsInWindow >= dailyRequestCap {
+        if tokensInWindow >= dailyTokenCap {
             return .overBudget
         }
         if let until = cooldownUntil[key], until > now {
@@ -98,28 +101,55 @@ actor AIState {
 
         cooldownUntil[key] = now.addingTimeInterval(cooldown)
         inFlight += 1
-        requestsInWindow += 1
         userBudget.count += 1
         perUser[user] = userBudget
         return .reserved
     }
 
-    /// Releases one in-flight slot. Idempotent-safe against underflow.
-    func release() {
+    /// Releases one in-flight slot. Idempotent-safe against underflow. When the reservation produced
+    /// no billable answer (relevance gate rejected it, or the pipeline threw), pass the `user` as
+    /// `refundingUser` to roll back that user's attempt count so idle chatter can't lock a real
+    /// questioner out of their per-user budget.
+    func release(refundingUser user: String? = nil) {
         inFlight = max(0, inFlight - 1)
+        if let user, var budget = perUser[user] {
+            budget.count = max(0, budget.count - 1)
+            perUser[user] = budget
+        }
+    }
+
+    /// Commits actual token spend (input + output) against the global daily cost budget, after a
+    /// completed answer. The reserve check is a soft ceiling: up to `maxInFlight` answers can be in
+    /// flight before any of them records usage, so the cap can overshoot by that bounded amount.
+    func recordUsage(tokens: Int, now: Date = Date()) {
+        rolloverIfNeeded(now: now)
+        tokensInWindow += max(0, tokens)
     }
 
     /// Test/diagnostic accessor for the current in-flight count.
     var inFlightCount: Int { inFlight }
+
+    /// Test/diagnostic accessor for the number of tracked per-user buckets (for leak testing).
+    var trackedUserCount: Int { perUser.count }
+
+    /// Drops expired cooldown entries and stale per-user buckets so neither dictionary grows
+    /// unbounded over the bot's uptime (entries are otherwise created per distinct nick forever).
+    private func sweepExpired(now: Date) {
+        cooldownUntil = cooldownUntil.filter { $0.value > now }
+        perUser = perUser.filter { now.timeIntervalSince($0.value.start) <= perUserWindow }
+    }
 
     private func rolloverIfNeeded(now: Date) {
         guard let start = windowStart else {
             windowStart = now
             return
         }
-        if now.timeIntervalSince(start) > AIState.windowLength {
-            windowStart = now
-            requestsInWindow = 0
-        }
+        let elapsed = now.timeIntervalSince(start)
+        guard elapsed > AIState.windowLength else { return }
+        // Advance by whole windows so the budget boundary doesn't drift forward by the inter-request
+        // gap on each rollover (a quiet period must not stretch the window past its length).
+        let periods = (elapsed / AIState.windowLength).rounded(.down)
+        windowStart = start.addingTimeInterval(periods * AIState.windowLength)
+        tokensInWindow = 0
     }
 }

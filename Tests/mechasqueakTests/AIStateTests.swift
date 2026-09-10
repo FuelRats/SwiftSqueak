@@ -6,7 +6,7 @@ final class AIStateTests: XCTestCase {
     private let base = Date(timeIntervalSince1970: 1_700_000_000)
 
     func testConcurrentReserveForOneKeyAdmitsExactlyOne() async {
-        let state = AIState(cooldown: 30, maxInFlight: 100, dailyRequestCap: 1000)
+        let state = AIState(cooldown: 30, maxInFlight: 100, dailyTokenCap: 1000)
         let now = base
         let reserved = await withTaskGroup(of: ReserveResult.self) { group -> Int in
             for _ in 0..<50 {
@@ -20,7 +20,7 @@ final class AIStateTests: XCTestCase {
     }
 
     func testInFlightCapIsEnforced() async {
-        let state = AIState(cooldown: 30, maxInFlight: 2, dailyRequestCap: 1000)
+        let state = AIState(cooldown: 30, maxInFlight: 2, dailyTokenCap: 1000)
         let first = await state.reserve(key: "k1", now: base)
         let second = await state.reserve(key: "k2", now: base)
         let third = await state.reserve(key: "k3", now: base)
@@ -30,7 +30,7 @@ final class AIStateTests: XCTestCase {
     }
 
     func testReleaseFreesASlot() async {
-        let state = AIState(cooldown: 30, maxInFlight: 1, dailyRequestCap: 1000)
+        let state = AIState(cooldown: 30, maxInFlight: 1, dailyTokenCap: 1000)
         _ = await state.reserve(key: "k1", now: base)
         let blocked = await state.reserve(key: "k2", now: base)
         XCTAssertEqual(blocked, .overCapacity)
@@ -40,7 +40,7 @@ final class AIStateTests: XCTestCase {
     }
 
     func testCooldownBlocksSameKey() async {
-        let state = AIState(cooldown: 30, maxInFlight: 10, dailyRequestCap: 1000)
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
         _ = await state.reserve(key: "k1", now: base)
         await state.release()
         let again = await state.reserve(key: "k1", now: base.addingTimeInterval(10))
@@ -51,7 +51,7 @@ final class AIStateTests: XCTestCase {
 
     func testPerUserBudgetIsEnforcedIndependentlyOfOtherUsers() async {
         let state = AIState(
-            cooldown: 0, maxInFlight: 10, dailyRequestCap: 1000, perUserCap: 2, perUserWindow: 3600)
+            cooldown: 0, maxInFlight: 10, dailyTokenCap: 1000, perUserCap: 2, perUserWindow: 3600)
         // Distinct keys avoid the cooldown; the per-user cap should still bite after 2.
         let one = await state.reserve(key: "k1", user: "alice", now: base)
         await state.release()
@@ -70,18 +70,86 @@ final class AIStateTests: XCTestCase {
         XCTAssertEqual(afterWindow, .reserved)
     }
 
-    func testDailyBudgetIsEnforcedAndRollsOver() async {
-        let state = AIState(cooldown: 0, maxInFlight: 10, dailyRequestCap: 2)
-        _ = await state.reserve(key: "k1", now: base)
+    func testDailyTokenBudgetIsEnforcedAndRollsOver() async {
+        // Budget is token-based and committed from actual usage, not charged at reserve.
+        let state = AIState(cooldown: 0, maxInFlight: 10, dailyTokenCap: 100)
+        let first = await state.reserve(key: "k1", now: base)
+        await state.recordUsage(tokens: 60, now: base)
         await state.release()
-        _ = await state.reserve(key: "k2", now: base)
+        let second = await state.reserve(key: "k2", now: base)
+        await state.recordUsage(tokens: 60, now: base)  // cumulative 120 >= 100
         await state.release()
-        let overBudget = await state.reserve(key: "k3", now: base)
-        XCTAssertEqual(overBudget, .overBudget)
+        XCTAssertEqual([first, second], [.reserved, .reserved])
 
-        // A new 24h window resets the counter.
+        let overBudget = await state.reserve(key: "k3", now: base)
+        XCTAssertEqual(overBudget, .overBudget, "global token budget exhausted")
+
+        // A new 24h window resets the token counter.
         let nextDay = base.addingTimeInterval(AIState.windowLength + 1)
         let afterRollover = await state.reserve(key: "k4", now: nextDay)
+        XCTAssertEqual(afterRollover, .reserved)
+    }
+
+    func testNonAnswerDoesNotDrainTokenBudget() async {
+        // Reservations that never record usage (gate-rejected chatter) must not consume the budget.
+        let state = AIState(cooldown: 0, maxInFlight: 10, dailyTokenCap: 100)
+        for index in 0..<50 {
+            _ = await state.reserve(key: "k\(index)", user: "u\(index)", now: base)
+            await state.release(refundingUser: "u\(index)")  // no recordUsage: not a billable answer
+        }
+        let stillAvailable = await state.reserve(key: "kfinal", now: base)
+        XCTAssertEqual(stillAvailable, .reserved, "non-answers must not exhaust the token budget")
+    }
+
+    func testRefundingUserRollsBackTheAttempt() async {
+        let state = AIState(
+            cooldown: 0, maxInFlight: 10, dailyTokenCap: 1000, perUserCap: 2, perUserWindow: 3600)
+        // Two gate-rejected attempts, each refunded — must not count toward the per-user cap.
+        _ = await state.reserve(key: "k1", user: "alice", now: base)
+        await state.release(refundingUser: "alice")
+        _ = await state.reserve(key: "k2", user: "alice", now: base)
+        await state.release(refundingUser: "alice")
+        // A third attempt still succeeds because the refunded two didn't accumulate.
+        let third = await state.reserve(key: "k3", user: "alice", now: base)
+        XCTAssertEqual(third, .reserved, "refunded attempts must not lock the user out")
+    }
+
+    func testReleaseWithoutRefundKeepsTheAttempt() async {
+        let state = AIState(
+            cooldown: 0, maxInFlight: 10, dailyTokenCap: 1000, perUserCap: 2, perUserWindow: 3600)
+        _ = await state.reserve(key: "k1", user: "alice", now: base)
+        await state.release()  // billable answer: attempt stands
+        _ = await state.reserve(key: "k2", user: "alice", now: base)
+        await state.release()
+        let third = await state.reserve(key: "k3", user: "alice", now: base)
+        XCTAssertEqual(third, .overBudget, "un-refunded attempts count toward the per-user cap")
+    }
+
+    func testStalePerUserBucketsAreSwept() async {
+        let state = AIState(cooldown: 0, maxInFlight: 100, dailyTokenCap: 1000, perUserWindow: 3600)
+        for index in 0..<100 {
+            _ = await state.reserve(key: "k\(index)", user: "u\(index)", now: base)
+            await state.release()
+        }
+        let trackedAtBase = await state.trackedUserCount
+        XCTAssertEqual(trackedAtBase, 100)
+        // A later reserve past the per-user window must sweep the stale buckets.
+        _ = await state.reserve(key: "knew", user: "newuser", now: base.addingTimeInterval(3601))
+        let trackedAfter = await state.trackedUserCount
+        XCTAssertEqual(trackedAfter, 1, "stale per-user buckets must be swept, not retained forever")
+    }
+
+    func testBudgetWindowDoesNotDriftForward() async {
+        // After a long quiet gap the window must realign to a whole-window boundary, not snap to now.
+        let state = AIState(cooldown: 0, maxInFlight: 10, dailyTokenCap: 100)
+        let first = await state.reserve(key: "k1", now: base)
+        await state.recordUsage(tokens: 150, now: base)  // over cap
+        XCTAssertEqual(first, .reserved)
+        let blocked = await state.reserve(key: "k2", now: base.addingTimeInterval(60))
+        XCTAssertEqual(blocked, .overBudget)
+        // 2.5 windows later: the counter resets exactly once the boundary is crossed.
+        let later = base.addingTimeInterval(AIState.windowLength * 2 + 5)
+        let afterRollover = await state.reserve(key: "k3", now: later)
         XCTAssertEqual(afterRollover, .reserved)
     }
 }

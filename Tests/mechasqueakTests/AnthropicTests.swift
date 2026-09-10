@@ -182,6 +182,24 @@ final class AnthropicTests: XCTestCase {
         XCTAssertEqual(sleeps, [1.5], "429 backoff must honor the Retry-After header")
     }
 
+    func test429RetryAfterIsClampedToCeiling() async throws {
+        // A hostile/misconfigured Retry-After must not pin an in-flight slot for minutes.
+        let recorder = Recorder(responses: [
+            Anthropic.HTTPParts(status: 429, retryAfter: 3600, body: Data()),
+            Anthropic.HTTPParts(status: 200, retryAfter: nil, body: successBody())
+        ])
+        let client = Anthropic(
+            maxRetries: 3,
+            transport: { _ in await recorder.next() },
+            sleeper: { await recorder.recordSleep($0) })
+
+        _ = try await client.complete(
+            LLMRequest(model: "m", maxTokens: 8, messages: [.text(.user, "hi")]))
+
+        let sleeps = await recorder.sleeps
+        XCTAssertEqual(sleeps, [Anthropic.maxRetryDelay], "a huge Retry-After must be clamped to the ceiling")
+    }
+
     func test400IsNotRetried() async throws {
         let recorder = Recorder(responses: [
             Anthropic.HTTPParts(status: 400, retryAfter: nil, body: Data(#"{"error":"bad"}"#.utf8))

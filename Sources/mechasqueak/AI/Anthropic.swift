@@ -54,6 +54,10 @@ struct Anthropic: LLMProvider {
     static let messagesURL = "https://api.anthropic.com/v1/messages"
     static let apiVersion = "2023-06-01"
 
+    /// Hard ceiling on any inter-attempt sleep, including a server-supplied `Retry-After`. Prevents a
+    /// hostile or misconfigured header from pinning one of the scarce in-flight slots for minutes.
+    static let maxRetryDelay: Double = 30
+
     // Default model identifiers (callers pass the model via the request).
     static let answerModel = "claude-opus-4-8"
     static let gateModel = "claude-haiku-4-5"
@@ -97,6 +101,8 @@ struct Anthropic: LLMProvider {
 
         var lastError: Error = LLMError.retriesExhausted(underlying: "no attempts made")
         for attempt in 1...max(1, maxRetries) {
+            // Unwind promptly if a surrounding deadline cancelled us (see AIService.withTimeout).
+            try Task.checkCancellation()
             let parts: HTTPParts
             do {
                 parts = try await transport(body)
@@ -120,7 +126,7 @@ struct Anthropic: LLMProvider {
                 let retryAfterText = parts.retryAfter.map { "\($0)" } ?? "n/a"
                 aiLogger.warning("[Anthropic] 429 rate limited (attempt \(attempt)/\(maxRetries)), retry-after=\(retryAfterText)")
                 if attempt < maxRetries {
-                    await sleeper(parts.retryAfter ?? Double(attempt) * 2.0)
+                    await sleeper(min(parts.retryAfter ?? Double(attempt) * 2.0, Anthropic.maxRetryDelay))
                     continue
                 }
                 throw lastError
