@@ -84,7 +84,7 @@ struct AskPipeline: Sendable {
     init(
         provider: LLMProvider,
         outline: OutlineAPI,
-        tools: [AITool] = DataTools.all() + ExternalTools.all() + BoardTools.all()
+        tools: [AITool] = DataTools.all() + ExternalTools.all() + BoardTools.all() + TimeTools.all()
             + [CommandDispatchTool.tool, ScrollbackTool.tool, KnowledgeBaseSearchTool.tool],
         model: String = Anthropic.answerModel,
         maxTokens: Int = 1024,

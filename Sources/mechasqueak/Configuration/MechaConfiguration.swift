@@ -53,7 +53,6 @@ struct MechaConfiguration: Sendable {
     let sourcePath: URL
     var xbox: XboxLiveConfiguration?
     var psn: PlayStationNetworkConfiguration?
-    let chrono: ChronoConfiguration?
     let mastodon: MastodonConfiguration?
     let bluesky: BlueSkyConfiguration?
     /// Anthropic API token, read independently of the full AI Q&A config so the translation
@@ -153,12 +152,6 @@ struct MechaConfiguration: Sendable {
             psn = tokens
         }
 
-        let chrono: ChronoConfiguration? = {
-            guard let nodePath = env("CHRONO_NODE_PATH"),
-                  let file = env("CHRONO_FILE") else { return nil }
-            return ChronoConfiguration(nodePath: nodePath, file: file)
-        }()
-
         let mastodon = env("MASTODON_TOKEN").map { MastodonConfiguration(token: $0) }
 
         let bluesky: BlueSkyConfiguration? = {
@@ -195,7 +188,7 @@ struct MechaConfiguration: Sendable {
         return MechaConfiguration(
             general: general, connections: connections, api: api, queue: queue,
             database: database, shortener: shortener, sourcePath: sourcePath,
-            xbox: xbox, psn: psn, chrono: chrono, mastodon: mastodon,
+            xbox: xbox, psn: psn, mastodon: mastodon,
             bluesky: bluesky, anthropicToken: anthropicToken,
             ai: ai, webServer: webServer
         )
@@ -255,11 +248,6 @@ struct PlayStationNetworkConfiguration: Codable, Sendable {
     var token: String
     var refreshToken: String
     var basicAuth: String
-}
-
-struct ChronoConfiguration: Codable, Sendable {
-    let nodePath: String
-    let file: String
 }
 
 struct MastodonConfiguration: Codable, Sendable {

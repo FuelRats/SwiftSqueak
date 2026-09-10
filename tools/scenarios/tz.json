@@ -1,0 +1,24 @@
+{
+  "_comment": "Live coverage of the rewritten !tz command (Claude interprets plain English, timezone_convert does DST-correct math). !tz is a direct command (not name-triggered) with a 10s cooldown, so each step waits 12s. Today is September so northern-hemisphere summer DST applies (London BST/UTC+1, New York EDT/UTC-4, Paris CEST/UTC+2).",
+  "steps": [
+    {"note": "1 source-only place, defaults target to UTC",
+     "send": "!tz 3pm in London",
+     "expect": ["(?i)london", "\\d\\d:\\d\\d", "(?i)utc"], "timeout": 20, "delay_before": 2},
+
+    {"note": "2 abbreviations, explicit target",
+     "send": "!tz 9am EST to CET",
+     "expect": ["\\d\\d:\\d\\d"], "timeout": 20, "delay_before": 12},
+
+    {"note": "3 source place + explicit target place",
+     "send": "!tz 3pm London in New York",
+     "expect": ["(?i)new york", "\\d\\d:\\d\\d"], "timeout": 20, "delay_before": 12},
+
+    {"note": "4 24h time, UTC source to Tokyo (+9)",
+     "send": "!tz 12:00 UTC in Tokyo",
+     "expect": ["(?i)tokyo", "21:00"], "timeout": 20, "delay_before": 12},
+
+    {"note": "5 gibberish -> graceful failure message (model declines the tool)",
+     "send": "!tz banana",
+     "expect": ["(?i)could not|try|usage"], "expect_absent": ["00:00"], "timeout": 20, "delay_before": 12}
+  ]
+}
