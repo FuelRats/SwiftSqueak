@@ -49,21 +49,23 @@ actor ResponseCache {
     }
 }
 
-/// External Elite Dangerous data tools (EDSM). Keyless; sends a descriptive User-Agent and
-/// caches responses briefly. Fills gaps the Fuel Rats systems API doesn't cover — notably
-/// authoritative primary-star scoopability and permit status.
-///
-/// Spansh route/search tools are intentionally not implemented yet: the Spansh route and
-/// search endpoint details were flagged unverified during planning and need a live spike
-/// before shipping (tracked as an open item), rather than guessing the wire contract here.
+/// External Elite Dangerous data tools (EDSM + Spansh). Keyless; sends a descriptive User-Agent
+/// and caches responses briefly. Fills gaps the Fuel Rats systems API doesn't cover — notably
+/// authoritative primary-star scoopability and permit status, full-system body listings, and
+/// neutron-highway route plotting.
 enum ExternalTools {
     static let cache = ResponseCache()
     static let edsmBase = "https://www.edsm.net"
+    static let spanshBase = "https://spansh.co.uk"
     static let nearestRadius = 50
     static let nearestSystemLimit = 5
+    static let routeWaypointLimit = 10
+    static let routeDefaultEfficiency = 60
+    static let routePollAttempts = 6
+    static let routePollInterval: UInt64 = 2_000_000_000
 
     static func all() -> [AITool] {
-        [edsmSystem, edsmNearest]
+        [edsmSystem, edsmNearest, scoopableStar, routePlot]
     }
 
     // MARK: - HTTP
@@ -191,6 +193,174 @@ enum ExternalTools {
         }
     }
 
+    // MARK: - scoopable_star
+
+    static let scoopableStar = AITool(
+        name: "scoopable_star",
+        description: """
+        List the stars in a system from EDSM and whether each is fuel-scoopable (KGB FOAM), with \
+        the nearest scoopable star's arrival distance. Use for "is there a fuel star in <system>" \
+        or "where can a stranded commander refuel in <system>" questions.
+        """,
+        inputSchema: .objectSchema(
+            properties: [("system", .stringSchema("The star system name"))],
+            required: ["system"])
+    ) { input, _ in
+        guard let name = input["system"]?.stringValue, name.isEmpty == false else {
+            return ToolOutput.error("missing 'system'")
+        }
+        let url = edsmURL(path: "/api-system-v1/bodies", query: ["systemName": name])
+        do {
+            let data = try await fetch(url)
+            guard let summary = parseBodies(data) else {
+                return ToolOutput.error("no body data for '\(name)' in EDSM")
+            }
+            return ToolOutput.json(summary)
+        } catch {
+            aiLogger.error("[tool:scoopable_star] \(error)")
+            return ToolOutput.error("EDSM body lookup failed")
+        }
+    }
+
+    /// Parses an EDSM `/bodies` response down to its stars and their scoopability. EDSM returns
+    /// `{"bodies": []}` (or `[]`) for an unknown/unmapped system, which maps to "no data" (nil).
+    static func parseBodies(_ data: Data) -> ScoopableSummary? {
+        guard let document = try? edsmDecoder.decode(EDSMBodiesDocument.self, from: data),
+              let name = document.name else {
+            return nil
+        }
+        let stars = document.bodies.filter { $0.type == "Star" }.map {
+            StarSummary(
+                name: $0.name,
+                subType: $0.subType,
+                scoopable: $0.isScoopable ?? false,
+                mainStar: $0.isMainStar ?? false,
+                distanceLs: $0.distanceToArrival)
+        }
+        if stars.isEmpty {
+            return nil
+        }
+        let nearestScoopable = stars
+            .filter { $0.scoopable }
+            .min { ($0.distanceLs ?? .greatestFiniteMagnitude) < ($1.distanceLs ?? .greatestFiniteMagnitude) }
+        return ScoopableSummary(
+            system: name,
+            hasScoopableStar: stars.contains { $0.scoopable },
+            nearestScoopableLs: nearestScoopable?.distanceLs,
+            stars: stars)
+    }
+
+    // MARK: - route_plot
+
+    static let routePlot = AITool(
+        name: "route_plot",
+        description: """
+        Plot a neutron-highway jump route between two star systems via Spansh, given a ship's \
+        jump range. Returns the total number of jumps, straight-line distance, and the neutron \
+        boost waypoints. Use for "how many jumps from A to B" or long-distance travel questions. \
+        `efficiency` (0-100, default \(routeDefaultEfficiency)) trades a longer path for more \
+        neutron boosts.
+        """,
+        inputSchema: .objectSchema(
+            properties: [
+                ("from", .stringSchema("The origin star system")),
+                ("to", .stringSchema("The destination star system")),
+                ("jump_range", .numberSchema("The ship's laden jump range in light years")),
+                ("efficiency", .integerSchema(
+                    "Optional 0-100; higher favours more neutron boosts over a shorter path"))
+            ],
+            required: ["from", "to", "jump_range"])
+    ) { input, _ in
+        guard let from = input["from"]?.stringValue, from.isEmpty == false else {
+            return ToolOutput.error("missing 'from'")
+        }
+        guard let to = input["to"]?.stringValue, to.isEmpty == false else {
+            return ToolOutput.error("missing 'to'")
+        }
+        guard let range = input["jump_range"]?.doubleValue, range > 0 else {
+            return ToolOutput.error("missing or invalid 'jump_range'")
+        }
+        let efficiency = input["efficiency"]?.intValue ?? routeDefaultEfficiency
+        do {
+            guard let summary = try await spanshRoute(
+                from: from, to: to, range: range, efficiency: efficiency) else {
+                return ToolOutput.error("could not plot a route from '\(from)' to '\(to)'")
+            }
+            return ToolOutput.json(summary)
+        } catch {
+            aiLogger.error("[tool:route_plot] \(error)")
+            return ToolOutput.error("route plotting failed")
+        }
+    }
+
+    /// Submits a Spansh neutron-route job, then polls for the result. Spansh is asynchronous:
+    /// `POST /api/route` returns a job id, and `GET /api/results/<id>` returns `{"status":"queued"}`
+    /// until the route is ready, at which point it carries a `result` object.
+    static func spanshRoute(
+        from: String, to: String, range: Double, efficiency: Int
+    ) async throws -> RouteSummary? {
+        let body = formEncode([
+            "efficiency": String(max(0, min(100, efficiency))),
+            "range": String(range),
+            "from": from,
+            "to": to
+        ])
+        var request = try HTTPClient.Request(url: spanshBase + "/api/route", method: .POST)
+        request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
+        request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
+        request.headers.add(name: "Accept", value: "application/json")
+        request.body = .string(body)
+
+        let submit = try await httpClient.execute(
+            request: request, deadline: .now() + .seconds(15)).get()
+        guard (200...202).contains(submit.status.code),
+              let submitData = submit.body.map({ Data(buffer: $0) }),
+              let job = try? edsmDecoder.decode(SpanshJob.self, from: submitData), let id = job.job else {
+            return nil
+        }
+
+        let resultURL = spanshBase + "/api/results/" + id
+        for attempt in 0..<routePollAttempts {
+            if attempt > 0 {
+                try await Task.sleep(nanoseconds: routePollInterval)
+            }
+            let poll = try await httpClient.execute(
+                request: HTTPClient.Request(url: resultURL, method: .GET), deadline: .now() + .seconds(15)
+            ).get()
+            guard let data = poll.body.map({ Data(buffer: $0) }) else { continue }
+            if let summary = parseRoute(data) {
+                return summary
+            }
+        }
+        return nil
+    }
+
+    /// Parses a Spansh `/results` payload. Returns nil while the job is still queued (no `result`).
+    static func parseRoute(_ data: Data) -> RouteSummary? {
+        guard let document = try? edsmDecoder.decode(SpanshResult.self, from: data),
+              let result = document.result else {
+            return nil
+        }
+        let boosts = result.systemJumps.filter { $0.neutronStar == true }.map { $0.system }
+        return RouteSummary(
+            from: result.sourceSystem,
+            to: result.destinationSystem,
+            totalJumps: result.totalJumps,
+            distanceLy: result.distance,
+            neutronBoosts: boosts.count,
+            waypoints: Array(boosts.prefix(routeWaypointLimit)))
+    }
+
+    /// Percent-encodes key/value pairs for an `application/x-www-form-urlencoded` body.
+    static func formEncode(_ pairs: [String: String]) -> String {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return pairs.map { key, value in
+            let encoded = value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
+            return "\(key)=\(encoded)"
+        }.joined(separator: "&")
+    }
+
     static func parseSphereSystems(_ data: Data, limit: Int) -> [EDSMNeighbour] {
         guard let systems = try? edsmDecoder.decode([EDSMSphereSystem].self, from: data) else {
             return []
@@ -243,6 +413,56 @@ enum ExternalTools {
         }
     }
 
+    struct EDSMBodiesDocument: Decodable {
+        let name: String?
+        let bodies: [Body]
+
+        struct Body: Decodable {
+            let name: String
+            let type: String?
+            let subType: String?
+            let isMainStar: Bool?
+            let isScoopable: Bool?
+            let distanceToArrival: Double?
+        }
+    }
+
+    // MARK: - Spansh wire types
+
+    struct SpanshJob: Decodable {
+        let job: String?
+    }
+
+    struct SpanshResult: Decodable {
+        let result: Route?
+
+        struct Route: Decodable {
+            let sourceSystem: String
+            let destinationSystem: String
+            let distance: Double
+            let totalJumps: Int
+            let systemJumps: [Jump]
+
+            enum CodingKeys: String, CodingKey {
+                case sourceSystem = "source_system"
+                case destinationSystem = "destination_system"
+                case distance
+                case totalJumps = "total_jumps"
+                case systemJumps = "system_jumps"
+            }
+
+            struct Jump: Decodable {
+                let system: String
+                let neutronStar: Bool?
+
+                enum CodingKeys: String, CodingKey {
+                    case system
+                    case neutronStar = "neutron_star"
+                }
+            }
+        }
+    }
+
     // MARK: - Result summaries
 
     struct EDSMSystemSummary: Encodable {
@@ -272,5 +492,29 @@ enum ExternalTools {
         let name: String
         let type: String?
         let distanceLs: Double?
+    }
+
+    struct ScoopableSummary: Encodable {
+        let system: String
+        let hasScoopableStar: Bool
+        let nearestScoopableLs: Double?
+        let stars: [StarSummary]
+    }
+
+    struct StarSummary: Encodable {
+        let name: String
+        let subType: String?
+        let scoopable: Bool
+        let mainStar: Bool
+        let distanceLs: Double?
+    }
+
+    struct RouteSummary: Encodable {
+        let from: String
+        let to: String
+        let totalJumps: Int
+        let distanceLy: Double
+        let neutronBoosts: Int
+        let waypoints: [String]
     }
 }

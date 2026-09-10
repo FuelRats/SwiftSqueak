@@ -139,6 +139,43 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertEqual(reply.text, "")
     }
 
+    func testRunCommandDispatchIsTerminalAndSilent() async throws {
+        // The model dispatches a command; the command answers the user in-channel. The pipeline must
+        // end the turn immediately (no second model call) and flag the reply as externally delivered,
+        // so the assistant cannot double-post or fabricate a parallel answer.
+        let script = Script([
+            .success(toolUseResponse(
+                name: "run_command", input: .object([("command", .string("gametime"))]), id: "c1"))
+        ])
+        let tools = [stubTool("run_command", returns: CommandDispatchTool.deliveredResult)]
+        let reply = try await pipeline(script, tools: tools).answer(question: "what is the game time?")
+
+        XCTAssertTrue(reply.deliveredExternally)
+        XCTAssertEqual(reply.text, "")
+        XCTAssertFalse(reply.refused)
+        XCTAssertEqual(reply.toolRounds, 1)
+        let calls = await script.callCount
+        XCTAssertEqual(calls, 1, "a successful run_command must end the turn without another model call")
+    }
+
+    func testRunCommandErrorDoesNotShortCircuit() async throws {
+        // A refused/failed command returns an error the model can see and must respond to, so the
+        // loop continues rather than ending silently.
+        let script = Script([
+            .success(toolUseResponse(
+                name: "run_command", input: .object([("command", .string("suspend"))]), id: "c1")),
+            .success(textResponse("You can't do that."))
+        ])
+        let tools = [stubTool(
+            "run_command", returns: #"{"error":"you do not have permission to use 'suspend'"}"#)]
+        let reply = try await pipeline(script, tools: tools).answer(question: "suspend someone")
+
+        XCTAssertFalse(reply.deliveredExternally)
+        XCTAssertEqual(reply.text, "You can't do that.")
+        let calls = await script.callCount
+        XCTAssertEqual(calls, 2, "a failed run_command must feed the error back for the model to answer")
+    }
+
     func testToolLoopIsCappedAndStillReturns() async throws {
         var responses = (0..<5).map {
             Result<LLMResponse, Error>.success(

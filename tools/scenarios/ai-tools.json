@@ -1,0 +1,39 @@
+{
+  "_comment": "Live coverage of the new AI tools (active_cases, case_detail, rat_lookup, find_command, scoopable_star, route_plot) plus the run_command-exposed sctime/gametime. Run against a dev bot built from this branch with AI_* env (docker-compose.dev.ai.override.yml) as MechaAITest in #test. The AI cooldown is 30s per (channel+user) so each real trigger carries delay_before 33. Wording varies between model runs, so expects are permissive; the point is that the tool fires (check the bot's 'rounds=' log line) and the answer is specific/grounded. route_plot hits Spansh's async job API so it gets a long timeout.",
+  "steps": [
+    {"note": "1 find_command: capability -> command discovery",
+     "send": "{bot}: what command do I use to file paperwork for a rescue?",
+     "expect": ["(?i)paperwork|unfiled|pwn|quote|!"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 30},
+
+    {"note": "2 active_cases: must consult live board, cannot be answered from training",
+     "send": "{bot}: how many rescue cases are currently open on the board, and what are their case numbers?",
+     "expect": ["(?i)case|open|board|none|no |\\d"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 30, "delay_before": 33},
+
+    {"note": "3 scoopable_star: Sirius primary is scoopable (EDSM bodies)",
+     "send": "{bot}: is there a star I can fuel scoop in Sirius?",
+     "expect": ["(?i)scoop|star|yes|sirius|main"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 35, "delay_before": 33},
+
+    {"note": "4 route_plot: Spansh neutron route, specific jump count the base model would not know",
+     "send": "{bot}: how many jumps is it from Sol to Colonia with a 50 light year jump range?",
+     "expect": ["(?i)jump|\\d"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 50, "delay_before": 33},
+
+    {"note": "5 sctime via run_command: supercruise travel time",
+     "send": "{bot}: how long does it take to supercruise 300000 Ls?",
+     "expect": ["(?i)minute|second|hour|\\d"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 35, "delay_before": 33},
+
+    {"note": "6 gametime via run_command: current game/UTC time",
+     "send": "{bot}: what is the current Elite Dangerous game time?",
+     "expect": ["(?i)utc|:|\\d"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 30, "delay_before": 33},
+
+    {"note": "7 (MANUAL) rat_lookup: a real dev CMDR; returns rats/platform or a graceful not-found",
+     "send": "{bot}: who is theunkn0wn1 and what platform do they rat on?",
+     "expect": ["(?i)pc|xbox|playstation|\\bps\\b|rat|cmdr|don't have|no .*account|not found|couldn't"],
+     "expect_absent": ["(?i)Something broke"], "timeout": 30, "delay_before": 33}
+  ]
+}

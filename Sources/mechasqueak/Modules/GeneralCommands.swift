@@ -154,7 +154,8 @@ class GeneralCommands: IRCBotModule {
         description: "Calculate supercruise travel time.",
         tags: ["super", "cruise", "time", "calc", "calculator", "calculate"],
         permission: nil,
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveTravelTimeCommand = { command in
         var params = command.parameters
@@ -274,7 +275,8 @@ class GeneralCommands: IRCBotModule {
         description: "See the current time in game time / UTC",
         tags: ["game", "GMT"],
         permission: nil,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var didReceiveGameTimeCommand = { command in
         let timeFormatter = DateFormatter()
@@ -365,7 +367,8 @@ class GeneralCommands: IRCBotModule {
         description: "Roll a dice",
         tags: ["D&D"],
         permission: nil,
-        cooldown: .seconds(90)
+        cooldown: .seconds(90),
+        allowTool: true
     )
     var didReceiveDiceRollCommand = { command in
         guard

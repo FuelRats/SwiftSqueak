@@ -7,13 +7,15 @@ final class CommandDispatchToolTests: XCTestCase {
         _ names: [String],
         category: HelpCategory?,
         permission: AccountPermission? = nil,
-        allowTool: Bool
+        allowTool: Bool,
+        parameters: [CommandBody] = [],
+        description: String = "test"
     ) -> IRCBotCommandDeclaration {
         IRCBotCommandDeclaration(
             commands: names,
-            parameters: [],
+            parameters: parameters,
             category: category,
-            description: "test",
+            description: description,
             permission: permission,
             cooldownOverride: nil,
             allowTool: allowTool)
@@ -79,6 +81,42 @@ final class CommandDispatchToolTests: XCTestCase {
     }
 
     // MARK: - Tool wiring
+
+    // MARK: - Discoverable allow-list
+
+    func testDispatchableListIncludesDescriptionAndArgSignature() {
+        let commands = [
+            declaration(
+                ["sctime", "sccalc"], category: .utility, allowTool: true,
+                parameters: [.param("distance", "2500ls", .continuous)],
+                description: "Calculate supercruise travel time."),
+            declaration(
+                ["gametime"], category: .utility, allowTool: true,
+                description: "See the current time in game time / UTC")
+        ]
+        let list = CommandDispatchTool.dispatchableList(from: commands)
+        // Sorted by name, primary name only, carries the human description plus a concrete argument
+        // example so the model is never guessing a command's purpose or its argument format.
+        XCTAssertEqual(
+            list,
+            "gametime: See the current time in game time / UTC; "
+                + "sctime 2500ls: Calculate supercruise travel time.")
+    }
+
+    func testDispatchableListExcludesUnflaggedCommands() {
+        let commands = [
+            declaration(["gametime"], category: .utility, allowTool: true, description: "game time"),
+            declaration(["suspend"], category: .management, allowTool: false, description: "suspend a user")
+        ]
+        let list = CommandDispatchTool.dispatchableList(from: commands)
+        XCTAssertTrue(list.contains("gametime: game time"))
+        XCTAssertFalse(list.contains("suspend"))
+    }
+
+    func testDispatchableListEmptyIsExplicit() {
+        XCTAssertEqual(
+            CommandDispatchTool.dispatchableList(from: []), "(none currently available)")
+    }
 
     func testRunCommandToolSchema() throws {
         let tool = CommandDispatchTool.tool
