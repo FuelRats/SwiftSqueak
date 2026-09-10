@@ -31,7 +31,7 @@ enum DataTools {
     static let nearestSystemLimit = 3
 
     static func all() -> [AITool] {
-        [searchSystem, systemInfo, nearestStation, factLookup]
+        [searchSystem, systemInfo, nearestStation, factLookup, listFacts]
     }
 
     // MARK: - search_system
@@ -146,17 +146,27 @@ enum DataTools {
     static let factLookup = AITool(
         name: "fact_lookup",
         description: """
-        Search MechaSqueak's fact database — canned answers dispatchers use for common questions \
-        (platform help, procedures, references). Returns matching facts and their text.
+        Look up a MechaSqueak fact — the canned "!name" replies dispatchers use for common questions \
+        (platform help, procedures, references, e.g. !changes, !pcfr). Pass an exact fact name to get \
+        that fact's text, or keywords to search fact contents. Use list_facts to see every fact name.
         """,
         inputSchema: .objectSchema(
-            properties: [("name", .stringSchema("The fact name or keywords to search for"))],
+            properties: [("name", .stringSchema("An exact fact name (e.g. \"changes\") or keywords to search"))],
             required: ["name"])
     ) { input, context in
         guard let query = input["name"]?.stringValue, query.isEmpty == false else {
             return ToolOutput.error("missing 'name'")
         }
+        let name = query.trimmingCharacters(in: .whitespaces)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "!"))
         do {
+            // Exact name/alias match first — this is how a user actually invokes a fact, and
+            // fact content search alone would miss a fact whose name isn't in its own text.
+            if let named = try await Fact.getWithFallback(name: name, forLocale: context.locale) {
+                return ToolOutput.json(FactSummaryList(
+                    query: query,
+                    facts: [FactSummary(name: named.fact, message: ToolOutput.truncate(named.message))]))
+            }
             let grouped = try await Fact.search(query, locale: context.locale)
             let facts = grouped.prefix(searchResultLimit).compactMap { fact -> FactSummary? in
                 let message = fact.messages[context.locale.short]?.message
@@ -171,6 +181,28 @@ enum DataTools {
         } catch {
             aiLogger.error("[tool:fact_lookup] \(error)")
             return ToolOutput.error("fact lookup failed")
+        }
+    }
+
+    // MARK: - list_facts
+
+    static let listFacts = AITool(
+        name: "list_facts",
+        description: """
+        List every fact MechaSqueak knows — the canned "!name" replies (e.g. !changes, !pcfr) — with \
+        each fact's name and aliases. Use this to see what facts exist or to confirm whether a \
+        "!something" is a real fact before answering. Retrieve a fact's text with fact_lookup.
+        """,
+        inputSchema: .objectSchema(properties: [], required: [])
+    ) { _, _ in
+        do {
+            let grouped = Array(try await Fact.getAllFacts().grouped.values)
+                .sorted { $0.canonicalName < $1.canonicalName }
+                .map { FactNameSummary(name: $0.canonicalName, aliases: $0.aliases.sorted()) }
+            return ToolOutput.json(FactNameList(count: grouped.count, facts: grouped))
+        } catch {
+            aiLogger.error("[tool:list_facts] \(error)")
+            return ToolOutput.error("fact list unavailable")
         }
     }
 
@@ -226,5 +258,15 @@ enum DataTools {
     struct FactSummary: Encodable {
         let name: String
         let message: String
+    }
+
+    struct FactNameList: Encodable {
+        let count: Int
+        let facts: [FactNameSummary]
+    }
+
+    struct FactNameSummary: Encodable {
+        let name: String
+        let aliases: [String]
     }
 }

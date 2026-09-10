@@ -11,7 +11,8 @@ final class AIToolTests: XCTestCase {
 
     func testTierOneToolsAreRegistered() {
         let names = DataTools.all().map(\.name).sorted()
-        XCTAssertEqual(names, ["fact_lookup", "nearest_station", "search_system", "system_info"])
+        XCTAssertEqual(
+            names, ["fact_lookup", "list_facts", "nearest_station", "search_system", "system_info"])
     }
 
     func testToolLookupByName() {
