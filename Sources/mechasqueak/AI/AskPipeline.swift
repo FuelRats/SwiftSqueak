@@ -44,19 +44,25 @@ struct AIReply: Sendable {
     let refused: Bool
     let toolRounds: Int
     let usage: LLMUsage
+    /// Set when a `run_command` dispatch already delivered the complete answer to the user in the
+    /// channel. The assistant must add nothing further — no restating, no commentary, and crucially
+    /// no fabricated figures — so the caller sends no additional message.
+    let deliveredExternally: Bool
 
     init(
         text: String,
         citations: [ReplyCitation],
         refused: Bool,
         toolRounds: Int,
-        usage: LLMUsage = LLMUsage()
+        usage: LLMUsage = LLMUsage(),
+        deliveredExternally: Bool = false
     ) {
         self.text = text
         self.citations = citations
         self.refused = refused
         self.toolRounds = toolRounds
         self.usage = usage
+        self.deliveredExternally = deliveredExternally
     }
 }
 
@@ -78,7 +84,7 @@ struct AskPipeline: Sendable {
     init(
         provider: LLMProvider,
         outline: OutlineAPI,
-        tools: [AITool] = DataTools.all() + ExternalTools.all()
+        tools: [AITool] = DataTools.all() + ExternalTools.all() + BoardTools.all()
             + [CommandDispatchTool.tool, ScrollbackTool.tool, KnowledgeBaseSearchTool.tool],
         model: String = Anthropic.answerModel,
         maxTokens: Int = 1024,
@@ -145,9 +151,20 @@ struct AskPipeline: Sendable {
             // Replay the assistant's tool-use turn, then feed back each tool result.
             messages.append(LLMMessage(role: .assistant, content: response.content))
             var results: [LLMContentBlock] = []
+            var commandDelivered = false
             for call in response.toolCalls {
                 let output = await execute(call: call, context: toolContext)
+                if call.name == CommandDispatchTool.tool.name, output == CommandDispatchTool.deliveredResult {
+                    commandDelivered = true
+                }
                 results.append(.toolResult(toolUseId: call.id, content: output, isError: false))
+            }
+            // A successful run_command has already delivered the full answer to the user in-channel.
+            // End the turn here so the assistant cannot double-post or invent a parallel answer.
+            if commandDelivered {
+                return AIReply(
+                    text: "", citations: [], refused: false, toolRounds: rounds + 1,
+                    usage: totalUsage, deliveredExternally: true)
             }
             messages.append(LLMMessage(role: .user, content: results))
             rounds += 1
@@ -294,7 +311,10 @@ struct AskPipeline: Sendable {
         (Fuel Rats systems data, EDSM). If neither covers it, say you don't have that information. \
         Never invent game facts, numbers, or mechanics.
         - Prefer a tool over guessing. For a specific system, station, route, or distance, use the \
-        systems/EDSM tools. If the provided documents don't fully cover a Fuel Rats or Elite \
+        systems/EDSM/route tools; for a system's fuel-scoopable stars use scoopable_star. For the \
+        live rescue board (open cases, a case's client/system/rats) use active_cases or \
+        case_detail; to look up a Fuel Rats member's CMDRs/platform/roles use rat_lookup; to answer \
+        "what command do I use to X" use find_command. If the provided documents don't fully cover a Fuel Rats or Elite \
         Dangerous question, call search_knowledge_base with focused KEYWORDS, not a sentence (e.g. \
         "out of fuel life support", "supercruise travel time"), and search again with different \
         terms if the first misses before saying you don't have it. Reach for read_channel_scrollback \

@@ -183,6 +183,9 @@ final class AIService: Sendable {
     static let maxTotalLength = 800
 
     private func send(_ reply: AIReply, to message: IRCPrivateMessage) {
+        // A run_command dispatch already answered the user in-channel; adding anything here would
+        // double-post or contradict it, so stay silent.
+        guard reply.deliveredExternally == false else { return }
         guard reply.refused == false, reply.text.isEmpty == false else {
             message.reply(message: reply.refused ? AIService.refusalMessage : AIService.emptyMessage)
             return
