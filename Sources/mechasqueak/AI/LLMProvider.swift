@@ -199,6 +199,10 @@ struct LLMUsage: Sendable, Equatable {
             cacheReadInputTokens: lhs.cacheReadInputTokens + rhs.cacheReadInputTokens,
             cacheCreationInputTokens: lhs.cacheCreationInputTokens + rhs.cacheCreationInputTokens)
     }
+
+    static func += (lhs: inout LLMUsage, rhs: LLMUsage) {
+        lhs = lhs + rhs
+    }
 }
 
 // MARK: - Errors

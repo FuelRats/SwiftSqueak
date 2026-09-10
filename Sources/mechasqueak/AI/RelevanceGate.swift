@@ -40,42 +40,27 @@ struct RelevanceGate: Sendable {
 
     static let minLength = 5
 
-    /// Pure lexical prefilter. Permissive by design — its only job is to cheaply reject obvious
-    /// non-questions before the paid stage; the Haiku call is the precise filter.
+    /// Pure lexical prefilter. Deliberately permissive: the user already addressed the bot by name,
+    /// so its only job is to cheaply drop bare greetings/reactions and too-short noise before the
+    /// paid stage. Everything else passes to the Haiku gate, which makes the final call.
     static func prefilterPasses(_ raw: String) -> Bool {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let lower = text.lowercased()
-        let collapsed = lower.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        let collapsed = text.lowercased().trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
 
-        // Pure greeting / thanks / reaction — silent.
+        // Pure greeting / thanks / reaction with nothing else — stay silent.
         if reactionWords.contains(collapsed) {
             return false
         }
-        // A question mark is a strong, sufficient signal.
+        // A question mark is always enough.
         if text.contains("?") {
             return true
         }
-        // Too short to be a real request (and no question mark).
+        // Too short to carry a real message (and no question mark).
         if text.count < minLength {
             return false
         }
-
-        let words = lower.split { $0 == " " || $0 == "," || $0 == "!" || $0 == "." }.map(String.init)
-        guard let firstWord = words.first else { return false }
-
-        // A yes/no or imperative lead ("is …", "does …", "tell …", "explain …").
-        if leadWords.contains(firstWord) {
-            return true
-        }
-        // An interrogative anywhere ("… how does … work").
-        if words.contains(where: { interrogatives.contains($0) }) {
-            return true
-        }
-        // Multi-word request phrases.
-        if signalPhrases.contains(where: { lower.hasPrefix($0) || lower.contains(" \($0)") }) {
-            return true
-        }
-        return false
+        // Addressed by name with actual content: engage. The Haiku gate filters borderline chatter.
+        return true
     }
 
     /// Full gate: prefilter, then a Haiku binary classification. Fails closed (silent) on error.
@@ -84,12 +69,13 @@ struct RelevanceGate: Sendable {
             return false
         }
         let system = """
-        You are a relevance filter for the Fuel Rats' Elite Dangerous assistant bot. The user already \
-        addressed the bot by name. Answer 'y' if their message is a genuine question or request — \
-        about Fuel Rats procedure, Elite Dangerous, a star system/station/route, the bot's data, or a \
-        direct question aimed at the bot itself (what it is or can do) — even if basic, silly, or \
-        sloppily phrased. Answer 'n' for greetings, thanks, reactions, statements, and idle chatter \
-        with no question or request. Answer with exactly one character: y or n.
+        You are a relevance filter for MechaSqueak, the Fuel Rats' Elite Dangerous bot. The user \
+        ADDRESSED the bot by name, so they almost always want a response. Be permissive: answer 'y' \
+        for anything with something to respond to, a question, request, statement, banter aimed at \
+        the bot, or a recall/follow-up about the channel conversation, even if basic, silly, \
+        off-topic, or sloppily phrased. Answer 'n' ONLY when there is genuinely nothing to respond \
+        to: a bare greeting, thanks, or reaction and nothing else (hi, thanks, lol, o7, nice, gg). \
+        When in doubt, answer 'y'. Answer with exactly one character: y or n.
         """
         let request = LLMRequest(
             model: model, maxTokens: 1, system: system, messages: [.text(.user, question)])
@@ -113,21 +99,5 @@ struct RelevanceGate: Sendable {
         "ok", "okay", "kk", "k", "nice", "cool", "neat", "sweet", "gg", "ggs", "o7", "wow",
         "oof", "rip", "yep", "yup", "nope", "nah", "yeah", "yes", "no", "true", "based", "same",
         "bye", "cya", "gn", "gm", "morning", "night", "welcome", "np"
-    ]
-
-    static let leadWords: Set<String> = [
-        "how", "what", "whats", "what's", "why", "when", "where", "who", "which", "whose", "whom",
-        "is", "are", "am", "was", "were", "do", "does", "did", "can", "could", "should", "would",
-        "will", "has", "have", "had", "may", "might", "tell", "explain", "help", "list", "find",
-        "show", "give", "describe", "define", "whats"
-    ]
-
-    static let interrogatives: Set<String> = [
-        "how", "what", "whats", "what's", "why", "when", "where", "who", "which", "whose", "whom"
-    ]
-
-    static let signalPhrases: [String] = [
-        "tell me", "how do", "how to", "how does", "what is", "what are", "help me",
-        "can you", "do you", "is there", "are there", "i need", "i want to know", "explain"
     ]
 }

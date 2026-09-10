@@ -87,4 +87,36 @@ final class OutlineAPITests: XCTestCase {
         XCTAssertEqual(api.parseSearchResults(Data("{}".utf8)).count, 0)
         XCTAssertEqual(api.parseSearchResults(Data("not json".utf8)).count, 0)
     }
+
+    private func hit(id: String) -> OutlineDoc {
+        OutlineDoc(
+            id: id, title: "Doc", url: "https://docs.fuelrats.com/doc/\(id)", snippet: "snippet",
+            source: .sop, collectionId: frkb)
+    }
+
+    func testFullTextReturnsBodyWhenInfoOmitsCollectionId() async throws {
+        // documents.info responses sometimes omit collectionId; the already-allowlisted hit's body
+        // must still be returned rather than silently degrading to the search snippet.
+        let body = """
+        {"data":{"id":"d1","title":"Dispatch SOP","url":"/doc/d1","text":"the full document body"}}
+        """
+        let api = OutlineAPI(
+            baseURL: base, frkbCollectionId: frkb, edKbCollectionId: edKb,
+            transport: { _, _ in Data(body.utf8) })
+        let text = try await api.fullText(for: hit(id: "d1"))
+        XCTAssertEqual(text, "the full document body")
+    }
+
+    func testFullTextRejectsDisallowedCollectionId() async throws {
+        // If info explicitly reports a non-allowlisted collection, refuse the body (defense-in-depth).
+        let body = """
+        {"data":{"id":"d3","title":"Operators","url":"/doc/d3",
+                 "collectionId":"collection-operators","text":"secret operator note"}}
+        """
+        let api = OutlineAPI(
+            baseURL: base, frkbCollectionId: frkb, edKbCollectionId: edKb,
+            transport: { _, _ in Data(body.utf8) })
+        let text = try await api.fullText(for: hit(id: "d3"))
+        XCTAssertNil(text, "an explicitly disallowed collection must not leak a body")
+    }
 }

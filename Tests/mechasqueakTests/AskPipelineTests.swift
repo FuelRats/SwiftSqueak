@@ -195,11 +195,41 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertEqual(reply.usage.cacheReadInputTokens, 90)
     }
 
-    func testSystemPromptCarriesGroundingAndPersona() {
+    func testSystemPromptCarriesGroundingStyleAndPersona() {
         let prompt = AskPipeline.systemPrompt(locale: Locale(identifier: "en"))
         XCTAssertTrue(prompt.contains("GROUNDING"))
-        XCTAssertTrue(prompt.contains("cite"))
+        XCTAssertTrue(prompt.contains("SINGLE IRC message"), "IRC single-line output rule must be present")
+        XCTAssertTrue(prompt.contains("NEVER share a link"), "internal-doc no-link rule must be present")
         XCTAssertTrue(prompt.contains("VOICE"), "persona must be appended")
         XCTAssertTrue(prompt.contains("untrusted"), "injection guard must be present")
+    }
+
+    func testProvenanceMakesSOPLinkableButNotEDKnowledge() {
+        let sop = AskPipeline.GroundingDoc(
+            title: "Dispatch SOP", url: "https://docs.fuelrats.com/doc/dispatch", source: .sop, text: "x")
+        let ed = AskPipeline.GroundingDoc(
+            title: "Fuel Scooping", url: "https://docs.fuelrats.com/doc/scoop", source: .edKnowledge, text: "x")
+        XCTAssertTrue(AskPipeline.provenance(for: sop).contains("https://docs.fuelrats.com/doc/dispatch"))
+        XCTAssertTrue(AskPipeline.provenance(for: sop).contains("linkable"))
+        XCTAssertTrue(AskPipeline.provenance(for: ed).contains("do not link"))
+        XCTAssertFalse(AskPipeline.provenance(for: ed).contains("https://"), "internal ED doc URL must not be offered")
+    }
+
+    func testSearchQueryStripsFillerAndKeepsContentWords() {
+        XCTAssertEqual(
+            AskPipeline.searchQuery(from: "what happens when a ship runs out of fuel"), "ship runs fuel")
+        XCTAssertEqual(AskPipeline.searchQuery(from: "how does supercruise work"), "supercruise")
+        XCTAssertEqual(AskPipeline.searchQuery(from: "neutron star boost"), "neutron star boost")
+        // An all-stopword query has nothing to strip to, so it falls back to the original.
+        XCTAssertEqual(AskPipeline.searchQuery(from: "what is it"), "what is it")
+    }
+
+    func testSearchToolSchemaExposesQuery() {
+        XCTAssertEqual(KnowledgeBaseSearchTool.tool.name, "search_knowledge_base")
+        guard case let .object(pairs) = KnowledgeBaseSearchTool.tool.inputSchema else {
+            return XCTFail("schema must be an object")
+        }
+        let keyed = Dictionary(pairs, uniquingKeysWith: { first, _ in first })
+        XCTAssertEqual(keyed["required"], .array([.string("query")]))
     }
 }
