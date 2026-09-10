@@ -196,4 +196,8 @@ extension JSONValue {
     static func integerSchema(_ description: String) -> JSONValue {
         .object([("type", .string("integer")), ("description", .string(description))])
     }
+
+    static func numberSchema(_ description: String) -> JSONValue {
+        .object([("type", .string("number")), ("description", .string(description))])
+    }
 }

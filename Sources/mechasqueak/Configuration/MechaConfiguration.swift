@@ -56,7 +56,9 @@ struct MechaConfiguration: Sendable {
     let chrono: ChronoConfiguration?
     let mastodon: MastodonConfiguration?
     let bluesky: BlueSkyConfiguration?
-    let openAIToken: String?
+    /// Anthropic API token, read independently of the full AI Q&A config so the translation
+    /// feature works even when Outline/FRKB aren't configured.
+    let anthropicToken: String?
     let ai: AIConfiguration?
     let webServer: WebServerConfiguration?
 
@@ -165,12 +167,12 @@ struct MechaConfiguration: Sendable {
             return BlueSkyConfiguration(handle: handle, appPassword: appPassword)
         }()
 
-        let openAIToken = env("OPENAI_TOKEN")
+        let anthropicToken = env("AI_ANTHROPIC_TOKEN")
 
         // AI Q&A feature. Inert unless the Anthropic + Outline tokens and the FRKB
         // collection id are all present; the private ED-Knowledge collection is optional.
         let ai: AIConfiguration? = {
-            guard let anthropicToken = env("AI_ANTHROPIC_TOKEN"),
+            guard let anthropicToken = anthropicToken,
                   let outlineToken = env("AI_OUTLINE_TOKEN"),
                   let frkbCollectionId = env("AI_FRKB_COLLECTION_ID") else { return nil }
             let base = env("AI_OUTLINE_BASE_URL") ?? "https://docs.fuelrats.com/api"
@@ -194,7 +196,8 @@ struct MechaConfiguration: Sendable {
             general: general, connections: connections, api: api, queue: queue,
             database: database, shortener: shortener, sourcePath: sourcePath,
             xbox: xbox, psn: psn, chrono: chrono, mastodon: mastodon,
-            bluesky: bluesky, openAIToken: openAIToken, ai: ai, webServer: webServer
+            bluesky: bluesky, anthropicToken: anthropicToken,
+            ai: ai, webServer: webServer
         )
     }
 }

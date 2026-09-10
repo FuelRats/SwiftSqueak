@@ -43,9 +43,35 @@ final class AnthropicTests: XCTestCase {
         XCTAssertTrue(json.contains("\"citations\":{\"enabled\":true}"))
         XCTAssertTrue(json.contains("\"cache_control\":{\"type\":\"ephemeral\"}"))
 
-        // max_tokens present; temperature never sent.
+        // max_tokens present; temperature + tool_choice omitted when unset.
         XCTAssertTrue(json.contains("\"max_tokens\":512"))
         XCTAssertFalse(json.contains("temperature"))
+        XCTAssertFalse(json.contains("tool_choice"))
+    }
+
+    func testForcedToolChoiceAndTemperatureEncode() throws {
+        let tool = LLMTool(
+            name: "emit_translation",
+            description: "Return the translation",
+            inputSchema: .objectSchema(
+                properties: [("translated_text", .stringSchema("The translation"))],
+                required: ["translated_text"]))
+
+        let request = LLMRequest(
+            model: Anthropic.gateModel,
+            maxTokens: 1024,
+            system: "Translate.",
+            messages: [.text(.user, "hi")],
+            tools: [tool],
+            toolChoice: .tool("emit_translation"),
+            temperature: 0.2)
+
+        let json = try encodedRequestString(request)
+        XCTAssertTrue(json.contains("\"tool_choice\""), "tool_choice must be present")
+        XCTAssertTrue(json.contains("\"type\":\"tool\""), "tool_choice type must be 'tool'")
+        XCTAssertTrue(
+            json.contains("\"name\":\"emit_translation\""), "forced tool name must serialize")
+        XCTAssertTrue(json.contains("\"temperature\":0.2"))
     }
 
     func testToolResultEncodesSnakeCaseKeys() throws {

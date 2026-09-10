@@ -38,25 +38,39 @@ protocol LLMProvider: Sendable {
 
 // MARK: - Request
 
+/// Constrains the model's tool selection. `.tool(name)` forces one specific tool (used to get
+/// structured output — the model must "call" it, and its arguments are the result); `.auto` lets
+/// the model choose. Nil omits the field entirely (provider default).
+enum LLMToolChoice: Sendable {
+    case auto
+    case tool(String)
+}
+
 struct LLMRequest: Sendable {
     let model: String
     let maxTokens: Int
     let system: String?
     var messages: [LLMMessage]
     var tools: [LLMTool]
+    var toolChoice: LLMToolChoice?
+    var temperature: Double?
 
     init(
         model: String,
         maxTokens: Int,
         system: String? = nil,
         messages: [LLMMessage],
-        tools: [LLMTool] = []
+        tools: [LLMTool] = [],
+        toolChoice: LLMToolChoice? = nil,
+        temperature: Double? = nil
     ) {
         self.model = model
         self.maxTokens = maxTokens
         self.system = system
         self.messages = messages
         self.tools = tools
+        self.toolChoice = toolChoice
+        self.temperature = temperature
     }
 }
 
