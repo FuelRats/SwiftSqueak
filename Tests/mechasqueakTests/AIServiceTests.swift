@@ -33,6 +33,13 @@ final class AIServiceTests: XCTestCase {
         XCTAssertNil(AIService.extractQuestion(from: "MechaSqueak   ", botNick: "MechaSqueak"))
     }
 
+    func testIsCommandInvocationDetectsCommands() {
+        XCTAssertTrue(AIService.isCommandInvocation("!tz 3pm in London"))
+        XCTAssertTrue(AIService.isCommandInvocation("  !sctime 2500ls"))
+        XCTAssertFalse(AIService.isCommandInvocation("what time is it in London"))
+        XCTAssertFalse(AIService.isCommandInvocation("is that a !command reference"))
+    }
+
     // MARK: - Relevance prefilter
 
     func testPrefilterPassesGenuineQuestions() {

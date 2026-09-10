@@ -88,9 +88,18 @@ final class AIService: Sendable {
     /// A private message: always addressed to the bot; strip a leading name if present.
     func handlePrivateMessage(_ message: IRCPrivateMessage) async {
         let raw = message.message.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A leading "!" is an IRC command handled by the command system; the assistant must not
+        // also answer it, or a PM'd command (e.g. "!tz 3pm in London") gets a duplicate reply.
+        guard AIService.isCommandInvocation(raw) == false else { return }
         let question = AIService.extractQuestion(from: raw, botNick: message.client.currentNick) ?? raw
         guard question.isEmpty == false else { return }
         await respond(to: message, question: question, isPM: true)
+    }
+
+    /// Whether a message is an IRC command invocation (starts with the "!" command prefix), which the
+    /// command system owns. The assistant stays out of these.
+    static func isCommandInvocation(_ message: String) -> Bool {
+        message.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("!")
     }
 
     // MARK: - Core flow
