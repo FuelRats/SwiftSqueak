@@ -61,6 +61,7 @@ struct Anthropic: LLMProvider {
     // Default model identifiers (callers pass the model via the request).
     static let answerModel = "claude-opus-4-8"
     static let gateModel = "claude-haiku-4-5"
+    static let translateModel = "claude-haiku-4-5"
 
     /// A decoder that keeps wire keys verbatim (the wire structs carry explicit `CodingKeys`).
     static let decoder = JSONDecoder()
@@ -173,6 +174,8 @@ private struct AnthropicRequest: Encodable {
     let system: String?
     let messages: [AnthropicMessage]
     let tools: [AnthropicTool]?
+    let toolChoice: AnthropicToolChoice?
+    let temperature: Double?
 
     enum CodingKeys: String, CodingKey {
         case model
@@ -180,6 +183,8 @@ private struct AnthropicRequest: Encodable {
         case system
         case messages
         case tools
+        case toolChoice = "tool_choice"
+        case temperature
     }
 
     init(from request: LLMRequest) {
@@ -196,6 +201,35 @@ private struct AnthropicRequest: Encodable {
             : request.tools.map {
                 AnthropicTool(name: $0.name, description: $0.description, inputSchema: $0.inputSchema)
             }
+        self.toolChoice = request.toolChoice.map(AnthropicToolChoice.init)
+        self.temperature = request.temperature
+    }
+}
+
+private struct AnthropicToolChoice: Encodable {
+    let type: String
+    let name: String?
+
+    init(_ choice: LLMToolChoice) {
+        switch choice {
+            case .auto:
+            self.type = "auto"
+            self.name = nil
+            case let .tool(name):
+            self.type = "tool"
+            self.name = name
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case type
+        case name
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encodeIfPresent(name, forKey: .name)
     }
 }
 
