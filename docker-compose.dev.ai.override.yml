@@ -1,0 +1,25 @@
+# AI Q&A live-test rig. Runs the dev bot as MechaAITest in #test with the
+# always-listening AI assistant enabled (AI_* creds come from .env.ai, which is
+# gitignored). Then drive it with the IRC harness:
+#
+#   cp .env.ai.example .env.ai        # fill AI_ANTHROPIC_TOKEN + AI_OUTLINE_TOKEN
+#   docker compose -f docker-compose.dev.yml -f docker-compose.dev.ai.override.yml up --build
+#   tools/.venv/bin/python tools/irc_e2e.py --scenario tools/scenarios/ai.json --bot MechaAITest
+#
+# NB: MechaAITest must be registered on the dev IRC (like MechaGSTest) if you
+# want it identified; set IRC_AUTH_PASSWORD in .env.ai. AI works either way.
+# Kill any previous dev-bot container first so two don't fight over the nick.
+services:
+  mechasqueak:
+    env_file:
+      - .env.dev
+      - .env.ai
+    environment:
+      IRC_NICKNAME: MechaAITest
+      IRC_USERNAME: MechaAITest
+      IRC_AUTH_USERNAME: MechaAITest
+      IRC_CHANNELS: "#test"
+      GENERAL_RESCUE_CHANNEL: "#test"
+      GENERAL_REPORTING_CHANNEL: "#test"
+      GENERAL_OPER_LOGIN: ""
+      GENERAL_DEBUG: "true"

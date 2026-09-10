@@ -1,0 +1,3 @@
+# Dependencies for the IRC end-to-end harness (tools/irc_e2e.py).
+# Install into a venv: python3 -m venv tools/.venv && tools/.venv/bin/pip install -r tools/requirements.txt
+irc>=20.0
