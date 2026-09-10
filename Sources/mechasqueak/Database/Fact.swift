@@ -151,9 +151,17 @@ struct Fact: Codable, Hashable {
         _ query: String,
         locale: Locale = Locale(identifier: "en")
     ) async throws -> [GroupedFact] {
-        let lhs = SQLFunction("to_tsvector", args: SQLLiteral.string("english"), SQLIdentifier("message"))
-        let rhs = SQLFunction("plainto_tsquery", args: SQLLiteral.string("english"), SQLBind(query))
-        let searchExpression = SQLBinaryExpression(left: lhs, op: SQLRaw(" @@ "), right: rhs)
+        // Match the message body (full-text) OR the fact's name/alias/category (substring), so a
+        // search by fact name like "prep" or "o2" resolves — full-text search over the message alone
+        // never matches the name, and English stemming drops short/numeric terms. The OR group is
+        // parenthesised so the language filter still ANDs across the whole predicate.
+        let like = "%\(query)%"
+        let predicate = """
+            (to_tsvector('english', \(ident: "message")) @@ plainto_tsquery('english', \(bind: query)) \
+            OR \(ident: "facts").\(ident: "alias") ILIKE \(bind: like) \
+            OR \(ident: "facts").\(ident: "id") ILIKE \(bind: like) \
+            OR \(ident: "facts").\(ident: "category") ILIKE \(bind: like))
+            """ as SQLQueryString
         let rows = try await sql.select().column("*")
             .from("facts")
             .join(
@@ -161,7 +169,7 @@ struct Fact: Codable, Hashable {
                 method: .left,
                 on: "\(ident: "facts").\(ident: "id")=\(ident: "factmessages").\(ident: "fact")" as SQLQueryString
             )
-            .where(searchExpression)
+            .where(predicate)
             .where("language", .equal, SQLBind(locale.short))
             .all()
         return rows.compactMap { try? $0.decode(model: Fact.self) }.groupedOrdered
