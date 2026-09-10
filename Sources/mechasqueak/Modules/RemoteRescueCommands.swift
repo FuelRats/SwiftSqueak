@@ -40,7 +40,8 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Shows recently closed cases.",
         tags: ["rescue"],
-        permission: .DispatchRead
+        permission: .DispatchRead,
+        allowTool: true
     )
     var didReceiveRecentlyClosedCommand = { command in
         var closeCount = 3
@@ -223,7 +224,8 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description:
             "Shows the most recent rescues in the trash list (default 10, max 100)",
-        permission: .DispatchRead
+        permission: .DispatchRead,
+        allowTool: true
     )
     var didReceiveListTrashcommand = { command in
         let limit = min(Int(command.parameters[safe: 0] ?? "10") ?? 10, 100)
@@ -323,7 +325,8 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Get a list of your rescues that have not had their paperwork completed.",
         permission: .DispatchRead,
-        allowedDestinations: .PrivateMessage
+        allowedDestinations: .PrivateMessage,
+        allowTool: true
     )
     var didReceiveUnfiledListCommand = { command in
         do {
@@ -392,7 +395,8 @@ class RemoteRescueCommands: IRCBotModule {
         category: .rescues,
         description: "Show all information about a case by UUID",
         tags: ["rescue", "info", "information", "quotes"],
-        permission: .DispatchRead
+        permission: .DispatchRead,
+        allowTool: true
     )
     var didReceiveQuoteRemoteCommand = { command in
         guard let id = UUID(uuidString: command.parameters[0]) else {

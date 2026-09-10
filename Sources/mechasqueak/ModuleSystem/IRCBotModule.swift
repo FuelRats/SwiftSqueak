@@ -49,6 +49,7 @@ typealias BotCommandFunction = @Sendable (IRCBotCommand) async -> Void
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: DispatchTimeInterval? = nil,
         cooldownOverride: AccountPermission? = .RescueWrite,
+        allowTool: Bool = false,
         helpExtra: (@Sendable () -> String)? = nil,
         helpView: (@Sendable () -> Content)? = nil,
     ) {
@@ -70,7 +71,8 @@ typealias BotCommandFunction = @Sendable (IRCBotCommand) async -> Void
             permission: permission,
             allowedDestinations: allowedDestinations,
             cooldown: TimeInterval(dispatchTimeInterval: cooldown),
-            cooldownOverride: cooldownOverride
+            cooldownOverride: cooldownOverride,
+            allowTool: allowTool
         )
 
         MechaSqueak.commands.append(declaration)
@@ -90,6 +92,9 @@ struct IRCBotCommandDeclaration: @unchecked Sendable {
     let description: String
     let tags: [String]
     let helpLocale: String?
+    /// Opts a command in to being invoked by the AI assistant on a user's behalf (`run_command`).
+    /// Set only on genuinely read-only, side-effect-free commands. Off by default.
+    let allowTool: Bool
     var parameters: [CommandBody]
     let helpExtra: (@Sendable () -> String)?
     let helpView: (@Sendable () -> Content)?
@@ -112,7 +117,8 @@ struct IRCBotCommandDeclaration: @unchecked Sendable {
         permission: AccountPermission? = nil,
         allowedDestinations: AllowedCommandDestination = .All,
         cooldown: TimeInterval? = nil,
-        cooldownOverride: AccountPermission?
+        cooldownOverride: AccountPermission?,
+        allowTool: Bool = false
     ) {
         self.commands = commands
         self.parameters = parameters
@@ -128,6 +134,7 @@ struct IRCBotCommandDeclaration: @unchecked Sendable {
         self.tags = tags
         self.cooldown = cooldown
         self.cooldownOverride = cooldownOverride
+        self.allowTool = allowTool
         self.helpExtra = helpExtra
         self.helpView = helpView
     }

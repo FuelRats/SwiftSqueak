@@ -37,7 +37,8 @@ class BoardQuoteCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Show all information about a specific case",
-        permission: .DispatchRead
+        permission: .DispatchRead,
+        allowTool: true
     )
     var didReceiveQuoteCommand = { command in
         guard let (caseId, rescue) = await BoardCommands.assertGetRescueId(command: command) else {

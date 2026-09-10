@@ -53,10 +53,12 @@ struct MechaConfiguration: Sendable {
     let sourcePath: URL
     var xbox: XboxLiveConfiguration?
     var psn: PlayStationNetworkConfiguration?
-    let chrono: ChronoConfiguration?
     let mastodon: MastodonConfiguration?
     let bluesky: BlueSkyConfiguration?
-    let openAIToken: String?
+    /// Anthropic API token, read independently of the full AI Q&A config so the translation
+    /// feature works even when Outline/FRKB aren't configured.
+    let anthropicToken: String?
+    let ai: AIConfiguration?
     let webServer: WebServerConfiguration?
 
     static func fromEnvironment() -> MechaConfiguration {
@@ -150,12 +152,6 @@ struct MechaConfiguration: Sendable {
             psn = tokens
         }
 
-        let chrono: ChronoConfiguration? = {
-            guard let nodePath = env("CHRONO_NODE_PATH"),
-                  let file = env("CHRONO_FILE") else { return nil }
-            return ChronoConfiguration(nodePath: nodePath, file: file)
-        }()
-
         let mastodon = env("MASTODON_TOKEN").map { MastodonConfiguration(token: $0) }
 
         let bluesky: BlueSkyConfiguration? = {
@@ -164,7 +160,24 @@ struct MechaConfiguration: Sendable {
             return BlueSkyConfiguration(handle: handle, appPassword: appPassword)
         }()
 
-        let openAIToken = env("OPENAI_TOKEN")
+        let anthropicToken = env("AI_ANTHROPIC_TOKEN")
+
+        // AI Q&A feature. Inert unless the Anthropic + Outline tokens and the FRKB
+        // collection id are all present; the private ED-Knowledge collection is optional.
+        let ai: AIConfiguration? = {
+            guard let anthropicToken = anthropicToken,
+                  let outlineToken = env("AI_OUTLINE_TOKEN"),
+                  let frkbCollectionId = env("AI_FRKB_COLLECTION_ID") else { return nil }
+            let base = env("AI_OUTLINE_BASE_URL") ?? "https://docs.fuelrats.com/api"
+            guard let outlineBaseURL = URL(string: base) else { return nil }
+            return AIConfiguration(
+                anthropicToken: anthropicToken,
+                outlineToken: outlineToken,
+                outlineBaseURL: outlineBaseURL,
+                frkbCollectionId: frkbCollectionId,
+                edKbCollectionId: env("AI_ED_KB_COLLECTION_ID")
+            )
+        }()
 
         let webServer: WebServerConfiguration? = {
             guard let host = env("WEB_HOST"), let portStr = env("WEB_PORT"),
@@ -175,8 +188,9 @@ struct MechaConfiguration: Sendable {
         return MechaConfiguration(
             general: general, connections: connections, api: api, queue: queue,
             database: database, shortener: shortener, sourcePath: sourcePath,
-            xbox: xbox, psn: psn, chrono: chrono, mastodon: mastodon,
-            bluesky: bluesky, openAIToken: openAIToken, webServer: webServer
+            xbox: xbox, psn: psn, mastodon: mastodon,
+            bluesky: bluesky, anthropicToken: anthropicToken,
+            ai: ai, webServer: webServer
         )
     }
 }
@@ -236,11 +250,6 @@ struct PlayStationNetworkConfiguration: Codable, Sendable {
     var basicAuth: String
 }
 
-struct ChronoConfiguration: Codable, Sendable {
-    let nodePath: String
-    let file: String
-}
-
 struct MastodonConfiguration: Codable, Sendable {
     let token: String
 }
@@ -253,4 +262,12 @@ struct BlueSkyConfiguration: Codable, Sendable {
 struct WebServerConfiguration: Codable, Sendable {
     let host: String
     let port: Int
+}
+
+struct AIConfiguration: Codable, Sendable {
+    let anthropicToken: String
+    let outlineToken: String
+    let outlineBaseURL: URL
+    let frkbCollectionId: String
+    let edKbCollectionId: String?
 }

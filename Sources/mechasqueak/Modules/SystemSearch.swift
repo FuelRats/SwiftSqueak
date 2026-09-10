@@ -40,7 +40,8 @@ class SystemSearch: IRCBotModule {
         category: .utility,
         description: "Search for a system in the galaxy database.",
         tags: ["edsm", "eddb", "systems"],
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveSystemSearchCommand = { command in
         let system = command.parameters.joined(separator: " ")
@@ -91,7 +92,8 @@ class SystemSearch: IRCBotModule {
         description:
             "Search for a star system's proximity to known landmarks such as Sol, Sagittarius A* or Colonia.",
         tags: ["edsm", "eddb", "systems", "spansh", "neutron"],
-        cooldown: .seconds(15)
+        cooldown: .seconds(15),
+        allowTool: true
     )
     var didReceiveLandmarkCommand = { command in
         var system = command.parameters.joined(separator: " ")
@@ -146,7 +148,8 @@ class SystemSearch: IRCBotModule {
         category: .utility,
         description: "Calculate the distance between two star systems",
         tags: ["edsm", "eddb", "systems", "spansh", "neutron"],
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveDistanceCommand = { command in
         guard var (depSystem, arrSystem) = command.param2 as? (String, String) else {
@@ -233,7 +236,8 @@ class SystemSearch: IRCBotModule {
         description:
             "Get the nearest station to a system, use a system name, case ID, or client name",
         tags: ["edsm", "eddb", "systems"],
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveStationCommand = { command in
         var systemName = command.param1!

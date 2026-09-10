@@ -1,0 +1,19 @@
+{
+  "_comment": "Verifies run_command tool discovery: with the allow-list (name <args>: description) now in the tool description, the model should dispatch gametime/sctime/roll instead of claiming it cannot. 30s AI cooldown -> delay_before 33.",
+  "steps": [
+    {"note": "1 gametime now dispatches (previously the model said it had no live clock)",
+     "send": "{bot}: what is the current game time right now?",
+     "expect": ["\\d{1,2}:\\d{2}|\\d{4}"], "expect_absent": ["(?i)don't have|no .*clock|can't|cannot"],
+     "timeout": 30},
+
+    {"note": "2 sctime dispatches with the distance arg",
+     "send": "{bot}: how long to supercruise 300000 Ls?",
+     "expect": ["(?i)minute|second|\\d"], "expect_absent": ["(?i)Something broke"],
+     "timeout": 35, "delay_before": 33},
+
+    {"note": "3 roll dispatches",
+     "send": "{bot}: roll 2d6 for me",
+     "expect": ["\\d"], "expect_absent": ["(?i)can't|cannot|don't have"],
+     "timeout": 30, "delay_before": 33}
+  ]
+}

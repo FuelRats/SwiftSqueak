@@ -42,11 +42,13 @@ services:
       - MASTODON_TOKEN=${MASTODON_TOKEN:-}
       - BLUESKY_HANDLE=${BLUESKY_HANDLE:-}
       - BLUESKY_APP_PASSWORD=${BLUESKY_APP_PASSWORD:-}
-      - OPENAI_TOKEN=${OPENAI_TOKEN:-}
+      - AI_ANTHROPIC_TOKEN=${AI_ANTHROPIC_TOKEN:-}
+      - AI_OUTLINE_TOKEN=${AI_OUTLINE_TOKEN:-}
+      - AI_OUTLINE_BASE_URL=${AI_OUTLINE_BASE_URL:-}
+      - AI_FRKB_COLLECTION_ID=${AI_FRKB_COLLECTION_ID:-}
+      - AI_ED_KB_COLLECTION_ID=${AI_ED_KB_COLLECTION_ID:-}
       - WEB_HOST=${WEB_HOST:-0.0.0.0}
       - WEB_PORT=${WEB_PORT:-8080}
-      - CHRONO_NODE_PATH=${CHRONO_NODE_PATH:-/usr/bin/node}
-      - CHRONO_FILE=${CHRONO_FILE:-/usr/lib/node_modules/chrono-node/dist/index.js}
     deploy:
       replicas: 1
       restart_policy:

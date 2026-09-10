@@ -139,7 +139,8 @@ class BoardCommands: IRCBotModule {
         description:
             "List all the rescues on the board. Use flags to filter results or change what is displayed",
         permission: .DispatchRead,
-        cooldown: .seconds(120)
+        cooldown: .seconds(120),
+        allowTool: true
     )
     var didReceiveListCommand = { command in
         var arguments: [ListCommandArgument] = command.options.compactMap({
@@ -562,7 +563,8 @@ class BoardCommands: IRCBotModule {
         [.param("case id/client", "4")],
         category: .board,
         description: "Retrieves the paperwork link for a case on the board.",
-        permission: .DispatchRead
+        permission: .DispatchRead,
+        allowTool: true
     )
     var didReceivePaperworkLinkCommand = { command in
         guard
@@ -593,7 +595,8 @@ class BoardCommands: IRCBotModule {
         category: .other,
         description: "Displays the amount of time since the last rescue",
         permission: .RescueReadOwn,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var didReceiveQuietCommand = { command in
         var arguments = command.arguments

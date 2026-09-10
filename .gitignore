@@ -146,3 +146,11 @@ secrets/
 data/
 .env.dev
 thoughts/
+
+# Python tooling (tools/irc_e2e.py and friends)
+tools/.venv/
+__pycache__/
+*.pyc
+
+# AI live-test credentials (never commit)
+.env.ai

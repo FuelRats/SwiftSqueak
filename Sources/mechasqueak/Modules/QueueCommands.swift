@@ -47,7 +47,8 @@ class QueueCommands: IRCBotModule {
         category: .queue,
         description: "Get current information on the queue",
         permission: .DispatchRead,
-        cooldown: .seconds(90)
+        cooldown: .seconds(90),
+        allowTool: true
     )
     var didReceiveQueueCommand = { command in
         guard let queue = try? await QueueAPI.fetchQueue() else {
@@ -75,7 +76,8 @@ class QueueCommands: IRCBotModule {
         category: .queue,
         description: "Get statistics from the queueing system",
         permission: .DispatchRead,
-        cooldown: .seconds(90)
+        cooldown: .seconds(90),
+        allowTool: true
     )
     var didReceiveQueueStatsCommand = { command in
         var date = Date()

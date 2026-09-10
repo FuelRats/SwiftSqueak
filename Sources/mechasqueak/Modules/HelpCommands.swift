@@ -38,6 +38,7 @@ class HelpCommands: IRCBotModule {
         category: nil,
         description: "View help for MechaSqueak.",
         tags: ["support", "commands"],
+        allowTool: true
     )
     var didReceiveHelpCommand = { command in
         let message = command.message

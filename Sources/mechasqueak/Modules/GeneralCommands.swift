@@ -70,7 +70,8 @@ class GeneralCommands: IRCBotModule {
         description: "Get a list of cases that currently require rats to call jumps",
         tags: ["needs", "needed", "unassigned"],
         permission: .DispatchRead,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var needsRatsCommand = { command in
         let needsRats = await board.getRescues().filter({ (_, rescue) in
@@ -120,7 +121,8 @@ class GeneralCommands: IRCBotModule {
         description: "See statistics about the systems API.",
         tags: ["stats", "system", "count"],
         permission: nil,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var didReceiveSystemStatisticsCommand = { command in
         do {
@@ -153,7 +155,8 @@ class GeneralCommands: IRCBotModule {
         description: "Calculate supercruise travel time.",
         tags: ["super", "cruise", "time", "calc", "calculator", "calculate"],
         permission: nil,
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveTravelTimeCommand = { command in
         var params = command.parameters
@@ -241,7 +244,8 @@ class GeneralCommands: IRCBotModule {
         description: "See version information about the bot.",
         tags: ["info"],
         permission: nil,
-        cooldown: .seconds(120)
+        cooldown: .seconds(120),
+        allowTool: true
     )
     var didReceiveVersionCommand = { command in
         let replyKey = configuration.general.drillMode ? "version.drillmode" : "version.message"
@@ -272,7 +276,8 @@ class GeneralCommands: IRCBotModule {
         description: "See the current time in game time / UTC",
         tags: ["game", "GMT"],
         permission: nil,
-        cooldown: .seconds(300)
+        cooldown: .seconds(300),
+        allowTool: true
     )
     var didReceiveGameTimeCommand = { command in
         let timeFormatter = DateFormatter()
@@ -292,68 +297,30 @@ class GeneralCommands: IRCBotModule {
 
     @BotCommand(
         ["timezone", "tz"],
-        [.param("time in timezone", "3pm EST in CET", .continuous)],
+        [.param("time in timezone", "3pm in London", .continuous)],
         category: .utility,
         description: "Convert a time to another timezone",
         tags: ["time", "zone", "zones", "calculate", "conversion"],
         permission: nil,
-        cooldown: .seconds(300)
+        cooldown: .seconds(10)
     )
     var didReceiveTimeZoneCommand = { command in
-        guard let chrono = configuration.chrono else {
-            return
-        }
-        var components = command.param1?.components(separatedBy: " ") ?? []
-        guard components.count > 2,
-            let index = components.firstIndex(of: "in") ?? components.firstIndex(of: "to")
-        else {
+        let text = command.param1?.trimmingCharacters(in: .whitespaces) ?? ""
+        guard text.isEmpty == false else {
             command.message.reply(
-                message:
-                    "Error: Could not understand the request, " +
-                    "usage: !timezone <time> in <timezone>. e.g !timezone 3pm EST in CET"
-            )
+                message: "Usage: !tz <time> in <place>, e.g. !tz 3pm in London or !tz 9am EST to CET")
             return
         }
-        let timeZoneIdentifier = components[components.index(after: index)..<components.endIndex]
-            .joined(separator: " ")
-        components = Array(components[components.startIndex..<index])
-        let timeInput = components.joined(separator: " ")
-        var offsetTimeZone: TimeZone?
-        if var tzOffset = Double(timeZoneIdentifier) {
-            offsetTimeZone = TimeZone(secondsFromGMT: Int(tzOffset * 60 * 60))
+        do {
+            if let result = try await TimeTools.interpret(text) {
+                command.message.reply(message: result)
+            } else {
+                command.message.reply(
+                    message: "Could not work that out. Try e.g. !tz 3pm in London or !tz 9am EST to CET")
+            }
+        } catch {
+            command.error(error)
         }
-        guard
-            let timeZone: TimeZone = offsetTimeZone ?? TimeZone(
-                abbreviation: timeZoneIdentifier.uppercased()) ?? TimeZone(
-                    identifier: timeZoneIdentifier)
-                ?? timeZoneAbbreviations[timeZoneIdentifier.uppercased()]
-        else {
-            command.message.reply(message: "Error: Could not interpret time zone")
-            return
-        }
-
-        let output = shell(
-            chrono.nodePath,
-            [
-                chrono.file,
-                timeInput
-            ])
-        guard
-            let interpretedDate = DateFormatter.iso8601Full.date(
-                from: output?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
-        else {
-            command.message.reply(message: "Error: Could not interpret date/time value")
-            return
-        }
-
-        let outputFormatter = DateFormatter()
-        outputFormatter.timeZone = timeZone
-        outputFormatter.dateFormat = "EEEE, MMMM d, yyyy 'at' HH:mm"
-
-        let tzName =
-            timeZone.localizedName(for: .standard, locale: Locale.current) ?? timeZone.description
-        command.message.reply(
-            message: "\(outputFormatter.string(from: interpretedDate)) in \(tzName)")
     }
 
     @BotCommand(
@@ -363,7 +330,8 @@ class GeneralCommands: IRCBotModule {
         description: "Roll a dice",
         tags: ["D&D"],
         permission: nil,
-        cooldown: .seconds(90)
+        cooldown: .seconds(90),
+        allowTool: true
     )
     var didReceiveDiceRollCommand = { command in
         guard
@@ -493,7 +461,8 @@ class GeneralCommands: IRCBotModule {
         description: "See information about an xbox gamertag",
         tags: ["xbox", "live", "gamer", "tag"],
         permission: nil,
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceiveXboxLiveCommand = { command in
         var gamertag = command.parameters[0]
@@ -545,7 +514,8 @@ class GeneralCommands: IRCBotModule {
         description: "See information about a playstation user",
         tags: ["playstation", "play", "station", "plus", "PS+"],
         permission: nil,
-        cooldown: .seconds(30)
+        cooldown: .seconds(30),
+        allowTool: true
     )
     var didReceivePSNCommand = { command in
         var username = command.parameters[0]

@@ -1,0 +1,20 @@
+{
+  "_comment": "Example scenario for the groupsync command rig. Drives the dev bot in #test. Adjust sends/expects to your dev data. Each step sends a line to the channel and asserts the bot's replies (all 'expect' regexes must match within 'timeout' seconds).",
+  "steps": [
+    {
+      "send": "!version",
+      "expect": ["(?i)mechasqueak|running|version"],
+      "timeout": 8
+    },
+    {
+      "send": "!addchan #test",
+      "expect": ["(?i)added|already|registered|channel"],
+      "timeout": 10
+    },
+    {
+      "send": "!search Sol",
+      "expect": ["(?i)sol"],
+      "timeout": 10
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "_comment": "Voice/persona check on answers the AI composes itself (tool-fed + KB-grounded), after the persona hardening. Manual read: replies should be first-person, dry/sarcastic, no third-person self-reference, no narrating tool use, no hedging ('if you can read it', 'in case you were'). 30s cooldown -> delay_before 33.",
+  "steps": [
+    {"note": "1 (MANUAL voice) tool-fed answer stays in-voice",
+     "send": "{bot}: is there a star I can fuel scoop in Sirius?",
+     "expect": ["(?i)scoop|star|yes|permit"], "expect_absent": ["(?i)I ran|I fired|I just|just posted|if you can read"],
+     "timeout": 35},
+
+    {"note": "2 (MANUAL voice) KB answer, sarcastic register",
+     "send": "{bot}: what should I do if I run out of fuel?",
+     "expect": ["(?i)fuel|rat|o2|oxygen|module|help"], "expect_absent": ["(?i)I ran|I fired|just posted|in case you were|if you can read"],
+     "timeout": 35, "delay_before": 33}
+  ]
+}

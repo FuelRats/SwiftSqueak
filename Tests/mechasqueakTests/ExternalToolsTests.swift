@@ -1,0 +1,126 @@
+import XCTest
+
+@testable import mechasqueak
+
+final class ExternalToolsTests: XCTestCase {
+    func testExternalToolsRegistered() {
+        XCTAssertEqual(
+            ExternalTools.all().map(\.name).sorted(),
+            ["edsm_nearest", "edsm_system", "route_plot", "scoopable_star"])
+    }
+
+    func testEdsmURLIncludesShowFlags() {
+        let url = ExternalTools.edsmURL(
+            path: "/en/api-v1/system",
+            query: ["systemName": "Sol", "showPrimaryStar": "1", "showPermit": "1"])
+        XCTAssertTrue(url.hasPrefix("https://www.edsm.net/en/api-v1/system?"))
+        XCTAssertTrue(url.contains("showPrimaryStar=1"))
+        XCTAssertTrue(url.contains("showPermit=1"))
+        XCTAssertTrue(url.contains("systemName=Sol"))
+    }
+
+    func testParseSystemWithScoopablePrimaryStar() {
+        let fixture = """
+        {"name":"Sol","requirePermit":true,"permitName":"Sol",
+         "primaryStar":{"type":"G (White-Yellow) Star","name":"Sol","isScoopable":true},
+         "coords":{"x":0,"y":0,"z":0}}
+        """
+        let summary = ExternalTools.parseSystem(Data(fixture.utf8))
+        XCTAssertNotNil(summary)
+        XCTAssertEqual(summary?.name, "Sol")
+        XCTAssertEqual(summary?.permitRequired, true)
+        XCTAssertEqual(summary?.permitName, "Sol")
+        XCTAssertEqual(summary?.primaryStar?.scoopable, true)
+        XCTAssertEqual(summary?.primaryStar?.type, "G (White-Yellow) Star")
+    }
+
+    func testParseSystemNotFoundReturnsNilForEmptyArray() {
+        // EDSM returns [] for an unknown system.
+        XCTAssertNil(ExternalTools.parseSystem(Data("[]".utf8)))
+        XCTAssertNil(ExternalTools.parseSystem(Data("{}".utf8)))
+    }
+
+    func testParseSphereSystemsSortsByDistance() {
+        let fixture = """
+        [{"name":"Far","distance":40.0},
+         {"name":"Near","distance":3.2},
+         {"name":"Mid","distance":12.0}]
+        """
+        let neighbours = ExternalTools.parseSphereSystems(Data(fixture.utf8), limit: 2)
+        XCTAssertEqual(neighbours.map(\.name), ["Near", "Mid"])
+        XCTAssertEqual(neighbours.first?.distanceLy, 3.2)
+    }
+
+    func testParseStations() {
+        let fixture = """
+        {"name":"Sol","stations":[
+          {"name":"Galileo","type":"Ocellus Starport","distanceToArrival":505.0},
+          {"name":"Daedalus","type":"Coriolis Starport","distanceToArrival":186.0}]}
+        """
+        let stations = ExternalTools.parseStations(Data(fixture.utf8))
+        XCTAssertEqual(stations.count, 2)
+        XCTAssertEqual(stations.first?.name, "Galileo")
+        XCTAssertEqual(stations.first?.distanceLs, 505.0)
+    }
+
+    func testParseBodiesFindsNearestScoopableStar() {
+        let fixture = """
+        {"name":"Sirius","bodies":[
+          {"name":"Sirius","type":"Star","subType":"A (Blue-White) Star",
+           "isMainStar":true,"isScoopable":true,"distanceToArrival":0},
+          {"name":"Sirius B","type":"Star","subType":"White Dwarf (DA) Star",
+           "isMainStar":false,"isScoopable":false,"distanceToArrival":4369},
+          {"name":"Sirius A 1","type":"Planet","subType":"Icy body","distanceToArrival":120}]}
+        """
+        let summary = ExternalTools.parseBodies(Data(fixture.utf8))
+        XCTAssertEqual(summary?.system, "Sirius")
+        XCTAssertEqual(summary?.hasScoopableStar, true)
+        XCTAssertEqual(summary?.nearestScoopableLs, 0)
+        XCTAssertEqual(summary?.stars.count, 2)
+        XCTAssertEqual(summary?.stars.first?.scoopable, true)
+    }
+
+    func testParseBodiesReturnsNilWhenNoStars() {
+        XCTAssertNil(ExternalTools.parseBodies(Data(#"{"name":"Empty","bodies":[]}"#.utf8)))
+        XCTAssertNil(ExternalTools.parseBodies(Data("[]".utf8)))
+    }
+
+    func testParseRouteSummarisesJumpsAndNeutronBoosts() {
+        let fixture = """
+        {"result":{"source_system":"Sol","destination_system":"Colonia",
+          "distance":22000.47,"total_jumps":137,"system_jumps":[
+            {"system":"Sol","jumps":0,"neutron_star":false},
+            {"system":"PSR J1752-2806","jumps":10,"neutron_star":true},
+            {"system":"Skaudai CH-B d14-34","jumps":6,"neutron_star":true}]}}
+        """
+        let summary = ExternalTools.parseRoute(Data(fixture.utf8))
+        XCTAssertEqual(summary?.from, "Sol")
+        XCTAssertEqual(summary?.to, "Colonia")
+        XCTAssertEqual(summary?.totalJumps, 137)
+        XCTAssertEqual(summary?.distanceLy, 22000.47)
+        XCTAssertEqual(summary?.neutronBoosts, 2)
+        XCTAssertEqual(summary?.waypoints, ["PSR J1752-2806", "Skaudai CH-B d14-34"])
+    }
+
+    func testParseRouteReturnsNilWhileQueued() {
+        let fixture = #"{"status":"queued","job":"abc","state":{}}"#
+        XCTAssertNil(ExternalTools.parseRoute(Data(fixture.utf8)))
+    }
+
+    func testFormEncodePercentEncodesSpaces() {
+        let encoded = ExternalTools.formEncode(["from": "Beagle Point", "range": "48.5"])
+        XCTAssertTrue(encoded.contains("from=Beagle%20Point"))
+        XCTAssertTrue(encoded.contains("range=48.5"))
+    }
+
+    func testCacheReturnsStoredValueThenRespectsMiss() async {
+        let cache = ResponseCache(ttl: 60)
+        let miss = await cache.value(for: "k")
+        XCTAssertNil(miss)
+        await cache.store(Data("v".utf8), for: "k")
+        let hit = await cache.value(for: "k")
+        XCTAssertEqual(hit, Data("v".utf8))
+        let otherMiss = await cache.value(for: "other")
+        XCTAssertNil(otherMiss)
+    }
+}
