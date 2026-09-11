@@ -27,7 +27,17 @@ import Foundation
 
 extension IRCUser {
     var associatedAPIData: NicknameSearchDocument? {
-        guard let account = self.account else {
+        // A private message forwarded by a server-side alias (e.g. the /ody, /hor and /leg
+        // aliases, which send "!mymode ..." to us) arrives without the IRCv3 account tag, so
+        // self.account is nil even when the sender is identified. Fall back to the account we
+        // already track for this nick via channel membership (WHOX / account-notify) so
+        // identity-dependent commands can still resolve the sender.
+        guard
+            let account = self.account
+                ?? self.client.channels.lazy
+                    .compactMap({ $0.member(named: self.nickname)?.account })
+                    .first
+        else {
             return nil
         }
         return MechaSqueak.accounts.mapping[account]
