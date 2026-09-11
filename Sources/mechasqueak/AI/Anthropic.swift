@@ -63,6 +63,7 @@ struct Anthropic: LLMProvider {
     static let gateModel = "claude-haiku-4-5"
     static let translateModel = "claude-haiku-4-5"
     static let timezoneModel = "claude-haiku-4-5"
+    static let caseModel = "claude-haiku-4-5"
 
     /// A decoder that keeps wire keys verbatim (the wire structs carry explicit `CodingKeys`).
     static let decoder = JSONDecoder()

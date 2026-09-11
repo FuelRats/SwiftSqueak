@@ -1,0 +1,57 @@
+{
+  "_comment": "AI-assisted add-case permutations. Run as a DispatchWrite nick: tools/.venv/bin/python tools/irc_e2e.py --scenario tools/scenarios/addcase.json --bot MechaAITest --nick <ratnick> --password <pw>. Distinct client nicks (board dedupes by client). inject uses -f to bypass the accidental-inject guard (test client nicks aren't in-channel). Expects match the ratsignal format: platform PC/Xbox/Playstation, expansion LEG/HOR/ODY, '(Code Red)', System \"NAME\".",
+  "steps": [
+    {"note": "1 inject free-text: xbox + system + code red",
+     "send": "!inject -f ZaraA he is in MATET on xbox and out of oxygen",
+     "expect": ["(?i)xbox", "(?i)matet", "(?i)code red"], "timeout": 15, "delay_before": 3},
+
+    {"note": "2 inject free-text: PC odyssey + system",
+     "send": "!inject -f NovaQ pc odyssey, stuck at Fuelum",
+     "expect": ["(?i)pc", "(?i)\\bODY\\b|odyssey", "(?i)fuelum"], "timeout": 15, "delay_before": 5},
+
+    {"note": "3 inject free-text: playstation + explicit system + code red",
+     "send": "!inject -f PaoliX playstation, system Sol, code red",
+     "expect": ["(?i)playstation", "(?i)\\bsol\\b", "(?i)code red"], "timeout": 15, "delay_before": 5},
+
+    {"note": "4 inject free-text: PC horizons, oxygen OK (no CR)",
+     "send": "!inject -f ReiV on PC horizons at NLTT 48288, oxygen is ok",
+     "expect": ["(?i)pc", "(?i)\\bHOR\\b|horizons", "(?i)nltt"], "expect_absent": ["(?i)code red"],
+     "timeout": 15, "delay_before": 5},
+
+    {"note": "5 inject free-text: distinct CMDR name vs nick",
+     "send": "!inject -f SamW cmdr is Space Dawg, pc, at Colonia",
+     "expect": ["(?i)dawg", "(?i)pc", "(?i)colonia"], "timeout": 15, "delay_before": 5},
+
+    {"note": "6 inject free-text: non-English client language",
+     "send": "!inject -f LucT client parle francais, pc, at Fuelum",
+     "expect": ["(?i)french|\\(fr\\)"], "timeout": 15, "delay_before": 5},
+
+    {"note": "7 addcase free-text: PC odyssey + system",
+     "send": "!addcase MikeH out of fuel at Fuelum on PC odyssey",
+     "expect": ["(?i)pc", "(?i)\\bODY\\b|odyssey", "(?i)fuelum"], "timeout": 15, "delay_before": 5},
+
+    {"note": "8 addcase terse shorthand (the case the prompt fix targets)",
+     "send": "!addcase TomJ xbox MATET cr",
+     "expect": ["(?i)xbox", "(?i)matet", "(?i)code red"], "timeout": 15, "delay_before": 5},
+
+    {"note": "9 addcase free-text: natural phrasing",
+     "send": "!addcase AnaK she is on playstation near Beagle Point",
+     "expect": ["(?i)playstation", "(?i)beagle"], "timeout": 15, "delay_before": 5},
+
+    {"note": "10 addcase CLI flags: deterministic path, no LLM",
+     "send": "!addcase DawgM --sys Sol --pc",
+     "expect": ["(?i)pc", "(?i)\\bsol\\b"], "timeout": 12, "delay_before": 5},
+
+    {"note": "11 addcase CLI flags: xbox + cr + system",
+     "send": "!addcase RedN --xb --cr --sys MATET",
+     "expect": ["(?i)xbox", "(?i)matet", "(?i)code red"], "timeout": 12, "delay_before": 5},
+
+    {"note": "12 addcase free-text minimal: platform only, no bogus system",
+     "send": "!addcase SoloP client is on pc",
+     "expect": ["(?i)pc"], "expect_absent": ["(?i)client is on"], "timeout": 15, "delay_before": 5},
+
+    {"note": "13 (MANUAL) garbage: CaseParser flags non-rescue -> SignalScanner fallback, still creates a case without crashing",
+     "send": "!addcase JunkR asdjkl qwerty zxcvb",
+     "expect": ["(?i)#\\d|junkr"], "timeout": 15, "delay_before": 5}
+  ]
+}

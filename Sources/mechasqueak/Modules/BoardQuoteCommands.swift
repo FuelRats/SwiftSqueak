@@ -212,7 +212,8 @@ class BoardQuoteCommands: IRCBotModule {
                 return
             }
 
-            rescue = Rescue(text: injectMessage, clientName: clientNick, fromCommand: command)
+            rescue = await BoardCommands.buildRescue(
+                nick: clientNick, text: injectMessage, command: command)
             if rescue != nil {
                 rescue?.quotes.append(
                     RescueQuote(
