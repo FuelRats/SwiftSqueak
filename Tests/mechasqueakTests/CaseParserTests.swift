@@ -119,6 +119,21 @@ final class CaseParserTests: XCTestCase {
         XCTAssertNil(fields?.cmdrName)
     }
 
+    func testValidatedLocaleRejectsMalformedIdentifiers() {
+        // Region-only / trailing-dash / empty-subtag inputs must not be reinterpreted as a language.
+        XCTAssertNil(CaseParser.validatedLocale(from: "-BR"), "region-only must not resolve to Breton")
+        XCTAssertNil(CaseParser.validatedLocale(from: "pt-"))
+        XCTAssertNil(CaseParser.validatedLocale(from: "en--US"))
+        XCTAssertNil(CaseParser.validatedLocale(from: "russian"))
+        XCTAssertNil(CaseParser.validatedLocale(from: "und"), "undetermined is not a real client language")
+        XCTAssertNil(CaseParser.validatedLocale(from: ""))
+    }
+
+    func testValidatedLocaleAcceptsWellFormedCodes() {
+        XCTAssertEqual(CaseParser.validatedLocale(from: "fr")?.identifier, "fr")
+        XCTAssertEqual(CaseParser.validatedLocale(from: "pt-BR")?.identifier, "pt-BR")
+    }
+
     func testExplicitCmdrLabelDetection() {
         XCTAssertTrue(BoardCommands.hasExplicitCmdrLabel("cmdr Space Dawg, pc, Colonia"))
         XCTAssertTrue(BoardCommands.hasExplicitCmdrLabel("client is Bob on xbox"))

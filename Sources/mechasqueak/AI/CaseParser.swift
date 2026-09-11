@@ -169,9 +169,19 @@ enum CaseParser {
     /// recognised language code (optionally region-qualified, e.g. "pt-BR"); drop anything else to nil.
     static func validatedLocale(from code: String) -> Locale? {
         let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.isEmpty == false else { return nil }
-        let language = (trimmed.split(separator: "-").first.map(String.init) ?? trimmed).lowercased()
-        guard Locale.LanguageCode.isoLanguageCodes.contains(Locale.LanguageCode(language)) else {
+        // Split keeping empty subtags so a malformed identifier is rejected rather than silently
+        // reinterpreted: "-BR" would otherwise become language "BR"->Breton, and "pt-" a bogus
+        // Locale("pt-"). Require the first subtag to be the language and every subtag non-empty.
+        let subtags = trimmed.split(separator: "-", omittingEmptySubsequences: false)
+        guard let languageSubtag = subtags.first, subtags.allSatisfy({ $0.isEmpty == false }) else {
+            return nil
+        }
+        let language = languageSubtag.lowercased()
+        // "und" (undetermined) and "zxx" (no linguistic content) are valid ISO codes but not a real
+        // client language — treat them as unspecified.
+        guard language != "und", language != "zxx",
+            Locale.LanguageCode.isoLanguageCodes.contains(Locale.LanguageCode(language))
+        else {
             return nil
         }
         return Locale(identifier: trimmed)
