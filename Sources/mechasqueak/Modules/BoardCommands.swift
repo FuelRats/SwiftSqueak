@@ -86,12 +86,10 @@ class BoardCommands: IRCBotModule {
         // are modifiers that coexist with free text (force, and an expansion override), so they do not
         // preclude this path; `-o`/`-h`/`-l` override the parsed expansion. Structured `--flag`
         // invocations keep the explicit path below unchanged.
-        if command.arguments.isEmpty, command.options.subtracting(["f", "o", "h", "l"]).isEmpty,
-            command.parameters.count > 1 {
-            let expansionOverride: GameMode? =
-                command.options.contains("o") ? .odyssey
-                : command.options.contains("h") ? .horizons
-                : command.options.contains("l") ? .legacy : nil
+        if BoardCommands.isFreeTextCreate(
+            arguments: command.arguments, options: command.options,
+            parameterCount: command.parameters.count) {
+            let expansionOverride = BoardCommands.expansionOption(from: command.options)
             guard let rescue = await BoardCommands.buildRescue(
                 nick: nickname, text: command.parameters[1], expansionOverride: expansionOverride,
                 command: command) else {
@@ -171,21 +169,47 @@ class BoardCommands: IRCBotModule {
         nick: String, text: String, expansionOverride: GameMode? = nil, command: IRCBotCommand
     ) async -> Rescue? {
         if let fields = await CaseParser.parse(text, clientNick: nick) {
-            var platform = fields.platform
-            let expansion = expansionOverride ?? fields.expansion
-            if let expansion = expansion, expansion != .legacy, platform != .PC {
-                platform = .PC
-            }
-            // The client identity is the dispatcher-supplied nick (always the command's first token).
-            // Only override it with a model-extracted CMDR name when the note *explicitly* labels one —
-            // a deterministic guard so a bare system token (e.g. "Lauma") can never become the client.
-            let client = hasExplicitCmdrLabel(text) ? (fields.cmdrName ?? nick) : nick
+            let resolved = resolvedCase(fields, nick: nick, text: text, expansionOverride: expansionOverride)
             return Rescue(
-                client: client, nick: nick, platform: platform,
+                client: resolved.client, nick: nick, platform: resolved.platform,
                 system: fields.system, locale: fields.language, codeRed: fields.codeRed,
-                expansion: expansion, fromCommand: command)
+                expansion: resolved.expansion, fromCommand: command)
         }
         return Rescue(text: text, clientName: nick, fromCommand: command)
+    }
+
+    /// A plain-English note routes through the AI parser when there are no `--argument` flags, only the
+    /// free-text-compatible options (`-f` force, `-o`/`-h`/`-l` expansion) are present, and a description
+    /// parameter follows the client nick. Structured `--flag` invocations take the explicit path instead.
+    static func isFreeTextCreate(
+        arguments: [String: String?], options: OrderedSet<Character>, parameterCount: Int
+    ) -> Bool {
+        arguments.isEmpty && options.subtracting(["f", "o", "h", "l"]).isEmpty && parameterCount > 1
+    }
+
+    /// The expansion selected by the `-o`/`-h`/`-l` options, or nil if none is set (first match wins).
+    static func expansionOption(from options: OrderedSet<Character>) -> GameMode? {
+        if options.contains("o") { return .odyssey }
+        if options.contains("h") { return .horizons }
+        if options.contains("l") { return .legacy }
+        return nil
+    }
+
+    /// Resolves the client name, platform, and expansion for a parsed case — the decision logic shared by
+    /// `buildRescue`, factored out of the IRC plumbing so it is unit-testable. `expansionOverride` (from
+    /// `-o`/`-h`/`-l`) wins over the parsed expansion; a non-legacy expansion implies PC (Xbox/PS are
+    /// legacy-only); the client is the dispatcher nick unless the note explicitly labels a CMDR — a
+    /// deterministic guard so a bare system token (e.g. "Lauma") can never become the client.
+    static func resolvedCase(
+        _ fields: CaseParser.CaseFields, nick: String, text: String, expansionOverride: GameMode?
+    ) -> (client: String, platform: GamePlatform?, expansion: GameMode?) {
+        var platform = fields.platform
+        let expansion = expansionOverride ?? fields.expansion
+        if let expansion = expansion, expansion != .legacy, platform != .PC {
+            platform = .PC
+        }
+        let client = hasExplicitCmdrLabel(text) ? (fields.cmdrName ?? nick) : nick
+        return (client, platform, expansion)
     }
 
     private static let cmdrLabel = try? NSRegularExpression(
