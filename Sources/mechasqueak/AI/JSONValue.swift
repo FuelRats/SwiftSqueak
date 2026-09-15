@@ -200,4 +200,8 @@ extension JSONValue {
     static func numberSchema(_ description: String) -> JSONValue {
         .object([("type", .string("number")), ("description", .string(description))])
     }
+
+    static func boolSchema(_ description: String) -> JSONValue {
+        .object([("type", .string("boolean")), ("description", .string(description))])
+    }
 }

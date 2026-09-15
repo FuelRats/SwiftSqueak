@@ -93,13 +93,16 @@ class Harness(irc.client.SimpleIRCClient):
     # -- irc event handlers -------------------------------------------------
     def on_welcome(self, connection, event):
         self.welcomed = True
-        if self.password:
-            connection.privmsg("NickServ", f"IDENTIFY {self.password}")
         connection.join(self.channel)
 
     def on_join(self, connection, event):
         if event.source.nick == connection.get_nickname():
             self.joined = True
+            # Identify only AFTER joining the channel: the bot learns our account from the
+            # resulting account-notify (it is already watching us in-channel), which triggers its
+            # permission lookup. Identifying before join gives the bot no change event to observe.
+            if self.password:
+                connection.privmsg("NickServ", f"IDENTIFY {self.password}")
 
     def on_nicknameinuse(self, connection, event):
         connection.nick(connection.get_nickname() + "_")
@@ -233,6 +236,10 @@ def main() -> int:
     if not args.no_join and not client.pump_until(lambda: client.joined, args.connect_timeout):
         print(f"[e2e] never confirmed JOIN to {args.channel}", file=sys.stderr)
         return 2
+
+    if args.password:
+        # Let the post-join identify + the bot's account lookup settle before the first command.
+        client.pump_until(lambda: False, 4)
 
     results = [client.run_step(step) for step in steps]
 

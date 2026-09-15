@@ -70,7 +70,8 @@ class BoardCommands: IRCBotModule {
             .argument("cr"),
             .argument("sys", "system", example: "NLTT 48288"),
             .argument("cmdr", "CMDR name", example: "Space Dawg"),
-            .argument("lang", "language code", example: "ru")
+            .argument("lang", "language code", example: "ru"),
+            .param("description", "he is in MATET on xbox, out of oxygen", .continuous, .optional)
         ],
         category: .board,
         description: "Create a new rescue case and add it to the board",
@@ -79,6 +80,36 @@ class BoardCommands: IRCBotModule {
     )
     var didReceiveCreateCommand = { command in
         let nickname = command.parameters[0]
+
+        // Free-text mode: a client nick followed by a plain-English note, with no `--argument` flags.
+        // Route it through the AI parser (falling back to SignalScanner). The `-f`/`-o`/`-h`/`-l` options
+        // are modifiers that coexist with free text (force, and an expansion override), so they do not
+        // preclude this path; `-o`/`-h`/`-l` override the parsed expansion. Structured `--flag`
+        // invocations keep the explicit path below unchanged.
+        if BoardCommands.isFreeTextCreate(
+            arguments: command.arguments, options: command.options,
+            parameterCount: command.parameters.count) {
+            let expansionOverride = BoardCommands.expansionOption(from: command.options)
+            guard let rescue = await BoardCommands.buildRescue(
+                nick: nickname, text: command.parameters[1], expansionOverride: expansionOverride,
+                command: command) else {
+                command.message.error(
+                    key: "board.grab.notcreated", fromCommand: command, map: ["client": nickname])
+                return
+            }
+            rescue.quotes.append(
+                RescueQuote(
+                    author: command.message.client.currentNick,
+                    message: "<\(command.message.user.nickname)> \(command.message.message)",
+                    createdAt: Date(),
+                    updatedAt: Date(),
+                    lastAuthor: command.message.client.currentNick
+                ))
+            try? await board.insert(
+                rescue: rescue, fromMessage: command.message, initiated: .insertion,
+                force: command.options.contains("f"))
+            return
+        }
 
         var platform = command.arguments.keys.compactMap({ GamePlatform(rawValue: $0) }).first
         let codeRed = command.has(argument: "cr")
@@ -127,6 +158,68 @@ class BoardCommands: IRCBotModule {
             ))
         try? await board.insert(
             rescue: rescue, fromMessage: command.message, initiated: .insertion, force: force)
+    }
+
+    /// Builds a rescue from a plain-English note shared by `!addcase` (free-text mode) and `!inject`
+    /// (create path): the AI `CaseParser` first, falling back to the deterministic `SignalScanner` when
+    /// the AI is unavailable. `expansionOverride` (from the `-o`/`-h`/`-l` options) wins over the parsed
+    /// expansion; a non-legacy expansion implies PC (same rule as the structured path). The system name is
+    /// only *proposed* here; `board.insert` validates/corrects it via `validateSystem()`.
+    static func buildRescue(
+        nick: String, text: String, expansionOverride: GameMode? = nil, command: IRCBotCommand
+    ) async -> Rescue? {
+        if let fields = await CaseParser.parse(text, clientNick: nick) {
+            let resolved = resolvedCase(fields, nick: nick, text: text, expansionOverride: expansionOverride)
+            return Rescue(
+                client: resolved.client, nick: nick, platform: resolved.platform,
+                system: fields.system, locale: fields.language, codeRed: fields.codeRed,
+                expansion: resolved.expansion, fromCommand: command)
+        }
+        return Rescue(text: text, clientName: nick, fromCommand: command)
+    }
+
+    /// A plain-English note routes through the AI parser when there are no `--argument` flags, only the
+    /// free-text-compatible options (`-f` force, `-o`/`-h`/`-l` expansion) are present, and a description
+    /// parameter follows the client nick. Structured `--flag` invocations take the explicit path instead.
+    static func isFreeTextCreate(
+        arguments: [String: String?], options: OrderedSet<Character>, parameterCount: Int
+    ) -> Bool {
+        arguments.isEmpty && options.subtracting(["f", "o", "h", "l"]).isEmpty && parameterCount > 1
+    }
+
+    /// The expansion selected by the `-o`/`-h`/`-l` options, or nil if none is set (first match wins).
+    static func expansionOption(from options: OrderedSet<Character>) -> GameMode? {
+        if options.contains("o") { return .odyssey }
+        if options.contains("h") { return .horizons }
+        if options.contains("l") { return .legacy }
+        return nil
+    }
+
+    /// Resolves the client name, platform, and expansion for a parsed case — the decision logic shared by
+    /// `buildRescue`, factored out of the IRC plumbing so it is unit-testable. `expansionOverride` (from
+    /// `-o`/`-h`/`-l`) wins over the parsed expansion; a non-legacy expansion implies PC (Xbox/PS are
+    /// legacy-only); the client is the dispatcher nick unless the note explicitly labels a CMDR — a
+    /// deterministic guard so a bare system token (e.g. "Lauma") can never become the client.
+    static func resolvedCase(
+        _ fields: CaseParser.CaseFields, nick: String, text: String, expansionOverride: GameMode?
+    ) -> (client: String, platform: GamePlatform?, expansion: GameMode?) {
+        var platform = fields.platform
+        let expansion = expansionOverride ?? fields.expansion
+        if let expansion = expansion, expansion != .legacy, platform != .PC {
+            platform = .PC
+        }
+        let client = hasExplicitCmdrLabel(text) ? (fields.cmdrName ?? nick) : nick
+        return (client, platform, expansion)
+    }
+
+    private static let cmdrLabel = try? NSRegularExpression(
+        pattern: "\\b(cmdr|commander|client is|client's name|name is)\\b", options: .caseInsensitive)
+
+    /// Whether the note explicitly introduces an in-game commander name (mirrors the `CaseParser` prompt
+    /// rule). Used to gate honouring the model's `cmdr_name` so it cannot silently overwrite the client.
+    static func hasExplicitCmdrLabel(_ text: String) -> Bool {
+        guard let cmdrLabel else { return false }
+        return cmdrLabel.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
     }
 
     @BotCommand(
