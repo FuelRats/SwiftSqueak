@@ -50,6 +50,9 @@ actor AIState {
     private let perUserWindow: TimeInterval
 
     private var cooldownUntil: [String: Date] = [:]
+    /// Users already given a one-shot cooldown notice in the current window for a key, so a real asker is
+    /// told once without the bot replying to every subsequent mention. Reset when a new window opens.
+    private var cooldownNotified: [String: Set<String>] = [:]
     private var inFlight = 0
     private var tokensInWindow = 0
     private var windowStart: Date?
@@ -102,10 +105,23 @@ actor AIState {
         }
 
         cooldownUntil[key] = now.addingTimeInterval(cooldown ?? self.cooldown)
+        cooldownNotified[key] = []  // new window: everyone may be notified again
         inFlight += 1
         userBudget.count += 1
         perUser[user] = userBudget
         return .reserved
+    }
+
+    /// After a `.cooldown` result, returns the remaining cooldown the FIRST time `user` is blocked in the
+    /// current window on `key` (recording them), or nil on later blocks — so a real asker gets one private
+    /// heads-up per window without the bot answering every mention. nil if the key is no longer on cooldown.
+    func cooldownNoticeRemaining(key: String, user: String, now: Date = Date()) -> TimeInterval? {
+        guard let until = cooldownUntil[key], until > now else { return nil }
+        var notified = cooldownNotified[key] ?? []
+        guard notified.contains(user) == false else { return nil }
+        notified.insert(user)
+        cooldownNotified[key] = notified
+        return until.timeIntervalSince(now)
     }
 
     /// Releases one in-flight slot. Idempotent-safe against underflow. When the reservation produced
@@ -138,6 +154,7 @@ actor AIState {
     /// unbounded over the bot's uptime (entries are otherwise created per distinct nick forever).
     private func sweepExpired(now: Date) {
         cooldownUntil = cooldownUntil.filter { $0.value > now }
+        cooldownNotified = cooldownNotified.filter { cooldownUntil[$0.key] != nil }
         perUser = perUser.filter { now.timeIntervalSince($0.value.start) <= perUserWindow }
     }
 

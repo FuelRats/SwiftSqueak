@@ -5,6 +5,17 @@ import XCTest
 final class AIServiceTests: XCTestCase {
     // MARK: - Name-trigger extraction
 
+    func testCooldownMessageVariesByCooldownType() {
+        let channel = AIService.cooldownMessage(remaining: 240, sharedChannel: true)
+        XCTAssertTrue(channel.contains("channel"))
+        XCTAssertTrue(channel.contains("private message"), "shared channel notice points the user to PM")
+        // The per-user cooldown (PMs, and bypass users in-channel) must not mention the channel limit.
+        let perUser = AIService.cooldownMessage(remaining: 20, sharedChannel: false)
+        XCTAssertFalse(perUser.contains("channel"))
+        XCTAssertFalse(perUser.contains("private message"))
+        XCTAssertTrue(perUser.contains("answer again"))
+    }
+
     func testExtractQuestionStripsNameAndSeparators() {
         XCTAssertEqual(
             AIService.extractQuestion(from: "MechaSqueak: how do I file a case?", botNick: "MechaSqueak"),
