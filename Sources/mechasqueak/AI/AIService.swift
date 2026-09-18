@@ -120,8 +120,18 @@ final class AIService: Sendable {
         switch await state.reserve(key: key, user: user, cooldown: cooldown) {
             case .reserved:
             break
-            case .cooldown, .overCapacity:
-            return  // silent in-channel and in PM
+            case .cooldown:
+            // One private heads-up per asker per cooldown window; silent on later mentions so the bot
+            // doesn't nag. Applies to both the shared 5-minute channel cooldown and the per-user PM one.
+            if let remaining = await state.cooldownNoticeRemaining(key: key, user: user) {
+                // `cooldown != nil` means the shared 5-minute channel cooldown; otherwise the per-user one
+                // (PMs, and bypass users in-channel), whose wording shouldn't mention the channel limit.
+                message.replyPrivate(
+                    message: AIService.cooldownMessage(remaining: remaining, sharedChannel: cooldown != nil))
+            }
+            return
+            case .overCapacity:
+            return  // transient in-flight cap, clears in seconds — stay silent
             case .overBudget:
             if isPM { message.reply(message: AIService.busyMessage) }
             return
@@ -295,5 +305,13 @@ final class AIService: Sendable {
         "I don't have that. Take it to Ops, a trainer, or an overseer before you invent policy."
     static let emptyMessage = "Nothing useful to say to that."
     static let busyMessage = "Busy. Try again shortly."
+    static func cooldownMessage(remaining: TimeInterval, sharedChannel: Bool) -> String {
+        let left = remaining.timeSpan(maximumUnits: 1)
+        if sharedChannel {
+            return "I answer at most once every few minutes per channel (\(left) left). "
+                + "Ask me in a private message for a faster reply."
+        }
+        return "One moment — I can answer again in \(left)."
+    }
     static let errorMessage = "Something broke on my end. Try again shortly."
 }

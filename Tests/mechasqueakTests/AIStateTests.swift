@@ -150,6 +150,41 @@ final class AIStateTests: XCTestCase {
         XCTAssertEqual(trackedAfter, 1, "stale per-user buckets must be swept, not retained forever")
     }
 
+    func testCooldownNoticeIsOneShotPerUserPerWindow() async {
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        _ = await state.reserve(key: "chan", cooldown: 300, now: base)  // opens the window
+        await state.release()
+        let now = base.addingTimeInterval(60)  // still on cooldown
+        // First block for alice -> she is told, with the remaining time.
+        let first = await state.cooldownNoticeRemaining(key: "chan", user: "alice", now: now)
+        XCTAssertEqual(first, 240, "the first block reports the remaining cooldown")
+        // Second block for alice in the same window -> silent.
+        let second = await state.cooldownNoticeRemaining(key: "chan", user: "alice", now: now)
+        XCTAssertNil(second, "the same user is only notified once per window")
+        // A different user still gets their own one-shot notice.
+        let other = await state.cooldownNoticeRemaining(key: "chan", user: "bob", now: now)
+        XCTAssertEqual(other, 240)
+    }
+
+    func testCooldownNoticeNilWhenNotOnCooldown() async {
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        let result = await state.cooldownNoticeRemaining(key: "chan", user: "alice", now: base)
+        XCTAssertNil(result, "no notice when the key is not on cooldown")
+    }
+
+    func testCooldownNoticeResetsForNewWindow() async {
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        _ = await state.reserve(key: "chan", cooldown: 300, now: base)
+        await state.release()
+        _ = await state.cooldownNoticeRemaining(key: "chan", user: "alice", now: base.addingTimeInterval(60))
+        // A new window opens after the cooldown expires and a fresh reserve succeeds.
+        _ = await state.reserve(key: "chan", cooldown: 300, now: base.addingTimeInterval(301))
+        await state.release()
+        let afterNewWindow = await state.cooldownNoticeRemaining(
+            key: "chan", user: "alice", now: base.addingTimeInterval(360))
+        XCTAssertNotNil(afterNewWindow, "a new cooldown window lets the user be notified again")
+    }
+
     func testBudgetWindowDoesNotDriftForward() async {
         // After a long quiet gap the window must realign to a whole-window boundary, not snap to now.
         let state = AIState(cooldown: 0, maxInFlight: 10, dailyTokenCap: 100)
