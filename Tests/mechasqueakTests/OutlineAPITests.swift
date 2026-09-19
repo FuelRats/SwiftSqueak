@@ -56,6 +56,22 @@ final class OutlineAPITests: XCTestCase {
         XCTAssertEqual(docs.first?.source, .edKnowledge)
     }
 
+    func testSearchAppliesRankingFloorDroppingWeakTail() async throws {
+        let body = """
+        {"data":[
+          {"context":"strong","ranking":0.9,
+           "document":{"id":"s","title":"S","url":"/doc/s","collectionId":"collection-frkb"}},
+          {"context":"weak","ranking":0.2,
+           "document":{"id":"w","title":"W","url":"/doc/w","collectionId":"collection-frkb"}}
+        ]}
+        """
+        let api = OutlineAPI(
+            baseURL: base, frkbCollectionId: frkb, edKbCollectionId: nil,
+            transport: { _, _ in Data(body.utf8) })
+        let docs = try await api.search("q", limit: 10)
+        XCTAssertEqual(docs.map(\.id), ["s"], "a hit far below the top score is dropped as grounding")
+    }
+
     func testParseTagsSourcesAndDropsNonAllowlisted() {
         let api = makeAPI(edKb: edKb)
         let payload = """

@@ -119,7 +119,7 @@ struct AskPipeline: Sendable {
         var content: [LLMContentBlock] = docs.map { doc in
             .document(LLMDocument(
                 title: "\(doc.title) [\(Self.provenance(for: doc))]",
-                text: ToolOutput.truncate(doc.text, limit: documentCharLimit),
+                text: Self.windowedExcerpt(doc.text, around: doc.snippet, limit: documentCharLimit),
                 enableCitations: true,
                 cacheControl: true))
         }
@@ -217,6 +217,16 @@ struct AskPipeline: Sendable {
         let url: String
         let source: OutlineSource
         let text: String
+        /// The search excerpt that matched, used to center truncation on the relevant section.
+        let snippet: String
+
+        init(title: String, url: String, source: OutlineSource, text: String, snippet: String = "") {
+            self.title = title
+            self.url = url
+            self.source = source
+            self.text = text
+            self.snippet = snippet
+        }
     }
 
     private func retrieveGroundingDocuments(_ question: String) async -> [GroundingDoc] {
@@ -248,7 +258,8 @@ struct AskPipeline: Sendable {
                 title: hit.title,
                 url: hit.url,
                 source: hit.source,
-                text: bodies[index].flatMap { $0.isEmpty ? nil : $0 } ?? hit.snippet)
+                text: bodies[index].flatMap { $0.isEmpty ? nil : $0 } ?? hit.snippet,
+                snippet: hit.snippet)
         }
     }
 
@@ -378,6 +389,31 @@ struct AskPipeline: Sendable {
 
         \(MechaPersona.voice)
         """
+    }
+
+    /// Truncates a grounding document to `limit` characters, centering the window on the section that
+    /// matched (`snippet`) rather than always keeping the head — so a long SOP page's relevant part
+    /// survives instead of being cut off. Falls back to a head truncation when the snippet can't be
+    /// located in the body (or the body already fits).
+    static func windowedExcerpt(_ body: String, around snippet: String, limit: Int) -> String {
+        guard body.count > limit else { return body }
+        let anchor = snippet
+            .replacingOccurrences(of: "…", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        // Use a distinctive core slice of the snippet as the anchor (snippets can carry leading/trailing
+        // context or markup that won't match verbatim).
+        let core = anchor.count > 24 ? String(anchor.dropFirst((anchor.count - 24) / 2).prefix(24)) : anchor
+        guard core.count >= 6, let match = body.range(of: core, options: .caseInsensitive) else {
+            return ToolOutput.truncate(body, limit: limit)
+        }
+        let half = limit / 2
+        let start = body.index(match.lowerBound, offsetBy: -half, limitedBy: body.startIndex)
+            ?? body.startIndex
+        let end = body.index(match.upperBound, offsetBy: half, limitedBy: body.endIndex) ?? body.endIndex
+        var excerpt = String(body[start..<end])
+        if start > body.startIndex { excerpt = "…" + excerpt }
+        if end < body.endIndex { excerpt += "…" }
+        return excerpt
     }
 
     /// The current UTC time in a compact, unambiguous form for the answer turn.

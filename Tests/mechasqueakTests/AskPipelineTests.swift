@@ -262,6 +262,26 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertEqual(reply.usage.cacheReadInputTokens, 90)
     }
 
+    func testWindowedExcerptCentersOnMatchedSnippet() {
+        let body = String(repeating: "A", count: 3000)
+            + " TARGET_SECTION_MARKER the relevant passage lives here "
+            + String(repeating: "B", count: 3000)
+        let excerpt = AskPipeline.windowedExcerpt(body, around: "TARGET_SECTION_MARKER the relevant", limit: 1000)
+        XCTAssertTrue(excerpt.contains("TARGET_SECTION_MARKER"), "the relevant section survives truncation")
+        XCTAssertTrue(excerpt.hasPrefix("…"), "the window is centered on the match, not taken from the head")
+        XCTAssertLessThan(excerpt.count, body.count)
+    }
+
+    func testWindowedExcerptFallsBackToHeadWhenSnippetNotFound() {
+        let body = String(repeating: "X", count: 3000)
+        let excerpt = AskPipeline.windowedExcerpt(body, around: "nowhere in the body", limit: 500)
+        XCTAssertTrue(excerpt.hasPrefix("XXX"), "with no locatable snippet it falls back to a head truncation")
+    }
+
+    func testWindowedExcerptLeavesShortBodyUnchanged() {
+        XCTAssertEqual(AskPipeline.windowedExcerpt("short body", around: "x", limit: 4000), "short body")
+    }
+
     func testSystemPromptCarriesGroundingStyleAndPersona() {
         let prompt = AskPipeline.systemPrompt(locale: Locale(identifier: "en"))
         XCTAssertTrue(prompt.contains("GROUNDING"))

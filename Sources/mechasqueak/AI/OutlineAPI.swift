@@ -105,14 +105,34 @@ struct OutlineAPI: Sendable {
     /// only honours the singular `collectionId` param for scoping (the `filters` array is ignored on
     /// this instance), so multi-collection retrieval means one query per collection.
     func search(_ query: String, limit: Int = OutlineAPI.defaultLimit) async throws -> [OutlineDoc] {
-        var ranked: [(ranking: Double, doc: OutlineDoc)] = []
+        var ranked: [(ranking: Double, order: Int, doc: OutlineDoc)] = []
+        var order = 0
         for collectionId in allowedCollectionIds {
             let request = buildSearchRequest(query: query, limit: limit, collectionId: collectionId)
             let data = try await transport("documents.search", try OutlineAPI.encoder.encode(request))
-            ranked.append(contentsOf: rankedResults(data))
+            for result in rankedResults(data) {
+                ranked.append((ranking: result.ranking, order: order, doc: result.doc))
+                order += 1
+            }
         }
-        return ranked.sorted { $0.ranking > $1.ranking }.prefix(limit).map { $0.doc }
+        // Drop the weak tail relative to the best hit for this query (a ranking floor), so marginally
+        // relevant documents don't get injected as grounding and spuriously cited, then take the
+        // strongest few. Merge by raw ranking (Outline scores the same query comparably across
+        // collections), with insertion order breaking ties so the result is deterministic.
+        guard let top = ranked.map(\.ranking).max(), top > 0 else {
+            return ranked.prefix(limit).map { $0.doc }
+        }
+        let floor = top * OutlineAPI.rankingFloor
+        return ranked
+            .filter { $0.ranking >= floor }
+            .sorted { $0.ranking != $1.ranking ? $0.ranking > $1.ranking : $0.order < $1.order }
+            .prefix(limit)
+            .map { $0.doc }
     }
+
+    /// A hit must score at least this fraction of the query's best hit to be used as grounding — keeps
+    /// the strong matches and drops the long weak tail.
+    static let rankingFloor = 0.4
 
     /// Fetches the full body for an already-allowlisted search hit. The hit passed the collection
     /// allowlist at search time, so its body is trusted; we only re-reject if `documents.info`

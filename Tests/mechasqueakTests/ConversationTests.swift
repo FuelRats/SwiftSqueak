@@ -9,11 +9,11 @@ final class ConversationTests: XCTestCase {
 
     func testIdentifiedUserAccumulatesBoundedHistory() async {
         let manager = ConversationManager(maxTurns: 4, ttl: 300)
-        await manager.record(account: "alice", question: "q1", answer: "a1", now: base)
-        await manager.record(account: "alice", question: "q2", answer: "a2", now: base)
-        await manager.record(account: "alice", question: "q3", answer: "a3", now: base)
+        await manager.record(account: "alice", scope: "#test", question: "q1", answer: "a1", now: base)
+        await manager.record(account: "alice", scope: "#test", question: "q2", answer: "a2", now: base)
+        await manager.record(account: "alice", scope: "#test", question: "q3", answer: "a3", now: base)
 
-        let history = await manager.history(account: "alice", now: base)
+        let history = await manager.history(account: "alice", scope: "#test", now: base)
         // maxTurns 4 keeps the last two exchanges (q2/a2, q3/a3).
         XCTAssertEqual(history.count, 4)
         XCTAssertEqual(history.map(\.text), ["q2", "a2", "q3", "a3"])
@@ -22,8 +22,8 @@ final class ConversationTests: XCTestCase {
 
     func testUnidentifiedUserIsStateless() async {
         let manager = ConversationManager()
-        await manager.record(account: nil, question: "q", answer: "a", now: base)
-        let history = await manager.history(account: nil, now: base)
+        await manager.record(account: nil, scope: "#test", question: "q", answer: "a", now: base)
+        let history = await manager.history(account: nil, scope: "#test", now: base)
         XCTAssertTrue(history.isEmpty)
         let count = await manager.sessionCount
         XCTAssertEqual(count, 0, "unidentified users create no session")
@@ -31,19 +31,29 @@ final class ConversationTests: XCTestCase {
 
     func testSessionExpiresAfterTTL() async {
         let manager = ConversationManager(maxTurns: 6, ttl: 300)
-        await manager.record(account: "bob", question: "q", answer: "a", now: base)
-        let stillThere = await manager.history(account: "bob", now: base.addingTimeInterval(299))
+        await manager.record(account: "bob", scope: "#test", question: "q", answer: "a", now: base)
+        let stillThere = await manager.history(account: "bob", scope: "#test", now: base.addingTimeInterval(299))
         XCTAssertEqual(stillThere.count, 2)
-        let expired = await manager.history(account: "bob", now: base.addingTimeInterval(301))
+        let expired = await manager.history(account: "bob", scope: "#test", now: base.addingTimeInterval(301))
         XCTAssertTrue(expired.isEmpty, "history expires after the idle TTL")
     }
 
     func testSessionsAreIsolatedPerAccount() async {
         let manager = ConversationManager()
-        await manager.record(account: "alice", question: "qa", answer: "aa", now: base)
-        await manager.record(account: "bob", question: "qb", answer: "ab", now: base)
-        let alice = await manager.history(account: "alice", now: base)
+        await manager.record(account: "alice", scope: "#test", question: "qa", answer: "aa", now: base)
+        await manager.record(account: "bob", scope: "#test", question: "qb", answer: "ab", now: base)
+        let alice = await manager.history(account: "alice", scope: "#test", now: base)
         XCTAssertEqual(alice.map(\.text), ["qa", "aa"])
+    }
+
+    func testSessionsAreIsolatedPerScope() async {
+        let manager = ConversationManager()
+        await manager.record(account: "alice", scope: "#a", question: "qa", answer: "aa", now: base)
+        await manager.record(account: "alice", scope: "pm", question: "qp", answer: "ap", now: base)
+        let channel = await manager.history(account: "alice", scope: "#a", now: base)
+        let pm = await manager.history(account: "alice", scope: "pm", now: base)
+        XCTAssertEqual(channel.map(\.text), ["qa", "aa"], "a user's channel and PM threads don't bleed")
+        XCTAssertEqual(pm.map(\.text), ["qp", "ap"])
     }
 
     // MARK: - ScrollbackBuffer

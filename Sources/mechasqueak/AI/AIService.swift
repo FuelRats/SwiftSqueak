@@ -171,9 +171,11 @@ final class AIService: Sendable {
                 return
             }
 
-            // Multi-turn memory for identified users only (nicks are spoofable).
+            // Multi-turn memory for identified users only (nicks are spoofable), scoped per channel/PM
+            // so unrelated conversations don't bleed into each other.
             let account = message.user.account
-            let history = await conversations.history(account: account)
+            let scope = isPM ? "pm" : message.destination.name.lowercased()
+            let history = await conversations.history(account: account, scope: scope)
 
             // Pass the invoking message so run_command can dispatch a read-only command as this user with
             // native permission/cooldown/destination enforcement. `onUsage` bills each completed round as
@@ -200,7 +202,8 @@ final class AIService: Sendable {
                 citations=\(reply.citations.count)
                 """)
             if reply.refused == false, reply.text.isEmpty == false {
-                await conversations.record(account: account, question: question, answer: reply.text)
+                await conversations.record(
+                    account: account, scope: scope, question: question, answer: reply.text)
             }
             await state.release()
         } catch {
