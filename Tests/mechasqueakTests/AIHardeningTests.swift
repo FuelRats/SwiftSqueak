@@ -49,6 +49,21 @@ final class AIHardeningTests: XCTestCase {
         XCTAssertEqual(snapshot, AIMetrics.Snapshot(), "reset zeroes the window")
     }
 
+    func testCommandCatalogueListsCommandsWithAliasesSorted() {
+        let saved = MechaSqueak.commands
+        defer { MechaSqueak.commands = saved }
+        MechaSqueak.commands = [
+            declaration(["rename", "renameid"], category: .rescues, allowTool: false),
+            declaration(["cmdr", "client"], category: .board, allowTool: false)
+        ]
+        let catalogue = AskPipeline.commandCatalogue()
+        XCTAssertTrue(catalogue.contains("!rename (aka renameid): d"))
+        XCTAssertTrue(catalogue.contains("!cmdr (aka client): d"))
+        XCTAssertLessThan(
+            catalogue.range(of: "!cmdr")!.lowerBound, catalogue.range(of: "!rename")!.lowerBound,
+            "catalogue is sorted so the model sees a stable, cache-friendly ordering")
+    }
+
     // MARK: - 9.3 Injection / safety audit
 
     private func declaration(
