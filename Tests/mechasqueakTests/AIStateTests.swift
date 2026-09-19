@@ -185,6 +185,43 @@ final class AIStateTests: XCTestCase {
         XCTAssertNotNil(afterNewWindow, "a new cooldown window lets the user be notified again")
     }
 
+    func testRejectedAttemptOnlyHoldsShortCooldownNotTheFullWindow() async {
+        // Reserve applies only the short (30s default) attempt cooldown; if the attempt is refunded
+        // (gate reject / error) without setCooldown, the channel frees at 30s — it is NOT locked 5 min.
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        _ = await state.reserve(key: "chan", now: base)
+        await state.release(refundingUser: "alice")
+        let stillCooling = await state.reserve(key: "chan", now: base.addingTimeInterval(10))
+        XCTAssertEqual(stillCooling, .cooldown)
+        let freed = await state.reserve(key: "chan", now: base.addingTimeInterval(31))
+        XCTAssertEqual(freed, .reserved, "a rejected attempt must not lock the channel beyond the attempt cooldown")
+    }
+
+    func testSetCooldownAppliesFullWindow() async {
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        _ = await state.reserve(key: "chan", now: base)
+        await state.setCooldown(key: "chan", seconds: 300, now: base)  // applied after a real answer
+        await state.release()
+        let blocked = await state.reserve(key: "chan", now: base.addingTimeInterval(120))
+        XCTAssertEqual(blocked, .cooldown, "the full window blocks past the short attempt cooldown")
+        let remaining = await state.cooldownNoticeRemaining(
+            key: "chan", user: "bob", now: base.addingTimeInterval(120))
+        XCTAssertEqual(remaining, 180)
+    }
+
+    func testShouldAnnounceErrorIsOneShotPerWindow() async {
+        let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
+        _ = await state.reserve(key: "chan", now: base)
+        let first = await state.shouldAnnounceError(key: "chan")
+        let second = await state.shouldAnnounceError(key: "chan")
+        XCTAssertTrue(first, "first error in the window announces")
+        XCTAssertFalse(second, "further errors stay silent")
+        // A fresh reserve opens a new window and re-enables one announcement.
+        _ = await state.reserve(key: "chan", now: base.addingTimeInterval(31))
+        let afterNewWindow = await state.shouldAnnounceError(key: "chan")
+        XCTAssertTrue(afterNewWindow)
+    }
+
     func testBudgetWindowDoesNotDriftForward() async {
         // After a long quiet gap the window must realign to a whole-window boundary, not snap to now.
         let state = AIState(cooldown: 0, maxInFlight: 10, dailyTokenCap: 100)

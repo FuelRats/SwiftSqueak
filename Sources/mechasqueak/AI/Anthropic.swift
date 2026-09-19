@@ -58,6 +58,13 @@ struct Anthropic: LLMProvider {
     /// hostile or misconfigured header from pinning one of the scarce in-flight slots for minutes.
     static let maxRetryDelay: Double = 30
 
+    /// Per-attempt HTTP deadline. Kept well under `AIService.answerDeadline` (240s) so that, across
+    /// `maxRetries` attempts plus backoff, a hung upstream connection can't hold one of the few
+    /// in-flight answer slots past the answer deadline (worst case ~3×60s + backoff < 240s). NIO's
+    /// request deadline is what actually unblocks an in-flight call, since `checkCancellation` only
+    /// runs between attempts.
+    static let requestDeadlineSeconds: Int64 = 60
+
     // Default model identifiers (callers pass the model via the request).
     static let answerModel = "claude-opus-4-8"
     static let gateModel = "claude-haiku-4-5"
@@ -84,7 +91,7 @@ struct Anthropic: LLMProvider {
             httpRequest.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
             httpRequest.body = .data(body)
             let response = try await httpClient.execute(
-                request: httpRequest, deadline: .now() + .seconds(180)).get()
+                request: httpRequest, deadline: .now() + .seconds(Anthropic.requestDeadlineSeconds)).get()
             return HTTPParts(
                 status: response.status.code,
                 retryAfter: response.headers.first(name: "retry-after").flatMap(Double.init),
@@ -174,6 +181,7 @@ private struct AnthropicRequest: Encodable {
     let model: String
     let maxTokens: Int
     let system: String?
+    let cacheSystem: Bool
     let messages: [AnthropicMessage]
     let tools: [AnthropicTool]?
     let toolChoice: AnthropicToolChoice?
@@ -189,10 +197,44 @@ private struct AnthropicRequest: Encodable {
         case temperature
     }
 
+    /// A single system text block carrying a cache breakpoint. Marking the end of `system` caches the
+    /// whole stable prefix before it — the tools and the system prompt — so the up-to-5 tool-loop
+    /// re-sends bill those tokens at the cache-read rate instead of full price.
+    private struct CachedSystemBlock: Encodable {
+        var type = "text"
+        let text: String
+        var cacheControl = DocumentBlock.CacheControl()
+        enum CodingKeys: String, CodingKey {
+            case type
+            case text
+            case cacheControl = "cache_control"
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(model, forKey: .model)
+        try container.encode(maxTokens, forKey: .maxTokens)
+        if let system {
+            // Anthropic accepts `system` as a plain string or an array of blocks; the array form lets a
+            // block carry cache_control. Only emit the array (and breakpoint) when caching is requested.
+            if cacheSystem {
+                try container.encode([CachedSystemBlock(text: system)], forKey: .system)
+            } else {
+                try container.encode(system, forKey: .system)
+            }
+        }
+        try container.encode(messages, forKey: .messages)
+        try container.encodeIfPresent(tools, forKey: .tools)
+        try container.encodeIfPresent(toolChoice, forKey: .toolChoice)
+        try container.encodeIfPresent(temperature, forKey: .temperature)
+    }
+
     init(from request: LLMRequest) {
         self.model = request.model
         self.maxTokens = request.maxTokens
         self.system = request.system
+        self.cacheSystem = request.cacheSystem
         self.messages = request.messages.map { message in
             AnthropicMessage(
                 role: message.role.rawValue,
@@ -259,6 +301,10 @@ private enum AnthropicBlock: Codable {
     case document(DocumentBlock)
     case toolUse(ToolUseBlock)
     case toolResult(ToolResultBlock)
+    /// A block type this client doesn't model (e.g. one the API adds later, like server tool use or
+    /// extended thinking). Decoded rather than thrown so a new block type can't fail every answer;
+    /// dropped when mapping to the provider-neutral response.
+    case unknown
 
     private enum TypeKey: String, CodingKey {
         case type
@@ -276,8 +322,8 @@ private enum AnthropicBlock: Codable {
             case "tool_result":
             self = .toolResult(try ToolResultBlock(from: decoder))
             default:
-            throw DecodingError.dataCorrupted(
-                .init(codingPath: decoder.codingPath, debugDescription: "Unknown content block type '\(type)'"))
+            // Forward-compat: don't fail the whole response on a block type we don't model yet.
+            self = .unknown
         }
     }
 
@@ -287,6 +333,9 @@ private enum AnthropicBlock: Codable {
             case let .document(block): try block.encode(to: encoder)
             case let .toolUse(block): try block.encode(to: encoder)
             case let .toolResult(block): try block.encode(to: encoder)
+            // Never sent back (unknown blocks are dropped when mapping to the neutral response); encode a
+            // harmless empty text block only so the type stays a valid Encodable.
+            case .unknown: try TextBlock(text: "", citations: nil).encode(to: encoder)
         }
     }
 
@@ -309,8 +358,10 @@ private enum AnthropicBlock: Codable {
         }
     }
 
-    func toLLMBlock() -> LLMContentBlock {
+    func toLLMBlock() -> LLMContentBlock? {
         switch self {
+            case .unknown:
+            return nil
             case let .text(block):
             let citations = (block.citations ?? []).map {
                 LLMCitation(
@@ -457,7 +508,7 @@ private struct AnthropicResponse: Decodable {
 
     func toLLMResponse() -> LLMResponse {
         LLMResponse(
-            content: content.map { $0.toLLMBlock() },
+            content: content.compactMap { $0.toLLMBlock() },
             stopReason: LLMStopReason(apiValue: stopReason),
             usage: LLMUsage(
                 inputTokens: usage?.inputTokens ?? 0,

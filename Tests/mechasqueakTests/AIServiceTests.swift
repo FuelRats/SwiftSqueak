@@ -16,6 +16,38 @@ final class AIServiceTests: XCTestCase {
         XCTAssertTrue(perUser.contains("answer again"))
     }
 
+    func testSourceLinkAppendedForCitedSopAnswer() {
+        let citations = [ReplyCitation(
+            title: "Fueling SOP", url: "https://docs.fuelrats.com/fueling", source: .sop)]
+        let out = AIService.withSourceLink(
+            "Use the fueling procedure.", citations: citations, maxLength: 800)
+        XCTAssertTrue(out.contains("https://docs.fuelrats.com/fueling"), "a cited SOP answer gets its link")
+    }
+
+    func testSourceLinkNotDuplicatedIfModelAlreadyInlinedIt() {
+        let url = "https://docs.fuelrats.com/fueling"
+        let citations = [ReplyCitation(title: "SOP", url: url, source: .sop)]
+        let out = AIService.withSourceLink("See \(url) for details.", citations: citations, maxLength: 800)
+        XCTAssertEqual(out.components(separatedBy: url).count - 1, 1, "link appears exactly once")
+    }
+
+    func testNoSourceLinkForInternalOrUncitedAnswers() {
+        let internalDoc = [ReplyCitation(title: "ED", url: "https://internal/ed", source: .edKnowledge)]
+        XCTAssertFalse(
+            AIService.withSourceLink("Neutron stars boost range.", citations: internalDoc, maxLength: 800)
+                .contains("http"),
+            "internal ED-Knowledge documents are never linked")
+        XCTAssertEqual(
+            AIService.withSourceLink("Plain answer.", citations: [], maxLength: 800), "Plain answer.")
+    }
+
+    func testCurrentUTCHasCompactFormat() {
+        let now = AskPipeline.currentUTC()
+        XCTAssertNotNil(
+            now.range(of: #"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$"#, options: .regularExpression),
+            "current UTC must be a compact, unambiguous 'yyyy-MM-dd HH:mm'")
+    }
+
     func testExtractQuestionStripsNameAndSeparators() {
         XCTAssertEqual(
             AIService.extractQuestion(from: "MechaSqueak: how do I file a case?", botNick: "MechaSqueak"),

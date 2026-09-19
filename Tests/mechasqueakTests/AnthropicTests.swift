@@ -49,6 +49,25 @@ final class AnthropicTests: XCTestCase {
         XCTAssertFalse(json.contains("tool_choice"))
     }
 
+    func testCacheSystemEmitsCachedSystemBlock() throws {
+        let request = LLMRequest(
+            model: Anthropic.answerModel, maxTokens: 512, system: "You are MechaSqueak.",
+            messages: [.text(.user, "hi")], cacheSystem: true)
+        let json = try encodedRequestString(request)
+        // system becomes an array of blocks so it can carry a cache breakpoint (caching tools+system).
+        XCTAssertTrue(json.contains("\"system\":[{"), "cached system must serialize as a block array")
+        XCTAssertTrue(json.contains("\"cache_control\":{\"type\":\"ephemeral\"}"))
+        XCTAssertFalse(json.contains("\"system\":\"You are MechaSqueak.\""), "not the plain-string form")
+    }
+
+    func testPlainSystemWhenNotCaching() throws {
+        let request = LLMRequest(
+            model: Anthropic.answerModel, maxTokens: 512, system: "You are MechaSqueak.",
+            messages: [.text(.user, "hi")])
+        let json = try encodedRequestString(request)
+        XCTAssertTrue(json.contains("\"system\":\"You are MechaSqueak.\""), "uncached system stays a string")
+    }
+
     func testForcedToolChoiceAndTemperatureEncode() throws {
         let tool = LLMTool(
             name: "emit_translation",
@@ -127,6 +146,22 @@ final class AnthropicTests: XCTestCase {
         XCTAssertEqual(citation.endCharIndex, 26)
         // Cache hit observed on the follow-up (the load-bearing 0.1 assertion).
         XCTAssertEqual(response.usage.cacheReadInputTokens, 1000)
+    }
+
+    func testUnknownContentBlockIsDroppedNotFatal() throws {
+        // A block type this client doesn't model (e.g. extended thinking) must not fail the whole
+        // response — it is decoded as opaque and dropped, leaving the usable blocks intact.
+        let fixture = """
+        {"id":"msg_x","type":"message","role":"assistant","model":"claude-opus-4-8",
+         "content":[{"type":"thinking","thinking":"hmm let me think"},
+          {"type":"text","text":"The answer is 42.","citations":null}],
+         "stop_reason":"end_turn",
+         "usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}
+        """
+        let response = try Anthropic.parseSuccess(Data(fixture.utf8))
+        XCTAssertEqual(response.stopReason, .endTurn)
+        XCTAssertEqual(response.text, "The answer is 42.", "known blocks survive; the unknown block is dropped")
+        XCTAssertEqual(response.content.count, 1, "the unmodeled block is not carried into the response")
     }
 
     func testDecodesToolUseTurn() throws {

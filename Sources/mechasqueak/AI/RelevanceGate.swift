@@ -63,10 +63,20 @@ struct RelevanceGate: Sendable {
         return true
     }
 
-    /// Full gate: prefilter, then a Haiku binary classification. Fails closed (silent) on error.
-    func isRelevant(_ question: String) async -> Bool {
+    /// The gate's verdict: whether to answer, whether the paid classification *failed* (an outage,
+    /// distinct from a confident "no" — so the caller can surface it rather than silently drop), and the
+    /// Haiku token usage to charge against the budget.
+    struct Decision: Sendable {
+        let relevant: Bool
+        let failed: Bool
+        let usage: LLMUsage
+    }
+
+    /// Full gate: prefilter, then a Haiku binary classification. On error returns `failed` (fails closed
+    /// on `relevant`, but the caller can tell an outage apart from a real "no").
+    func classify(_ question: String) async -> Decision {
         guard RelevanceGate.prefilterPasses(question) else {
-            return false
+            return Decision(relevant: false, failed: false, usage: LLMUsage())
         }
         let system = """
         You are a relevance filter for MechaSqueak, the Fuel Rats' Elite Dangerous bot. The user \
@@ -81,12 +91,14 @@ struct RelevanceGate: Sendable {
             model: model, maxTokens: 1, system: system, messages: [.text(.user, question)])
         do {
             let response = try await provider.complete(request)
-            return response.text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().hasPrefix("y")
+            let yes = response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased().hasPrefix("y")
+            return Decision(relevant: yes, failed: false, usage: response.usage)
         } catch {
-            // Fail closed: stay silent in-channel, but surface a log so a dead gate is detectable.
-            // Log rate-limiting / ops-channel mirroring is a planned hardening step.
-            aiLogger.error("[gate] classification failed, defaulting to silent: \(error)")
-            return false
+            // Fail closed on relevance, but report `failed` so the caller can surface an outage (and
+            // count it) instead of silently swallowing every question during an upstream failure.
+            aiLogger.error("[gate] classification failed: \(error)")
+            return Decision(relevant: false, failed: true, usage: LLMUsage())
         }
     }
 

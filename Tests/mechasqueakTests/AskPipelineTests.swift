@@ -213,6 +213,36 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertTrue(carriesError)
     }
 
+    func testPauseTurnResumesInsteadOfEndingTheAnswer() async throws {
+        let paused = LLMResponse(
+            content: [.text("working on it", citations: [])], stopReason: .pauseTurn, usage: LLMUsage())
+        let script = Script([.success(paused), .success(textResponse("final answer"))])
+        let reply = try await pipeline(script).answer(question: "q")
+
+        XCTAssertEqual(reply.text, "final answer", "a pause_turn must resume, not end the answer")
+        let calls = await script.callCount
+        XCTAssertEqual(calls, 2, "the paused turn is replayed and the model continues")
+    }
+
+    func testFailedToolResultIsFlaggedAsError() async throws {
+        let script = Script([
+            .success(toolUseResponse(
+                name: "system_info", input: .object([("system", .string("Nowhere"))]), id: "t1")),
+            .success(textResponse("recovered"))
+        ])
+        let tools = [stubTool("system_info", returns: ToolOutput.error("not found"))]
+        _ = try await pipeline(script, tools: tools).answer(question: "q")
+
+        let second = await script.request(1)
+        let flaggedError = second.messages.contains { message in
+            message.content.contains { block in
+                if case let .toolResult(_, _, isError) = block { return isError }
+                return false
+            }
+        }
+        XCTAssertTrue(flaggedError, "an error tool result must be fed back with isError:true")
+    }
+
     func testPipelineAccumulatesTokenUsageAcrossRounds() async throws {
         let toolResponse = LLMResponse(
             content: [.toolUse(id: "t1", name: "system_info", input: .object([("system", .string("Sol"))]))],
@@ -230,6 +260,26 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertEqual(reply.usage.inputTokens, 220)
         XCTAssertEqual(reply.usage.outputTokens, 25)
         XCTAssertEqual(reply.usage.cacheReadInputTokens, 90)
+    }
+
+    func testWindowedExcerptCentersOnMatchedSnippet() {
+        let body = String(repeating: "A", count: 3000)
+            + " TARGET_SECTION_MARKER the relevant passage lives here "
+            + String(repeating: "B", count: 3000)
+        let excerpt = AskPipeline.windowedExcerpt(body, around: "TARGET_SECTION_MARKER the relevant", limit: 1000)
+        XCTAssertTrue(excerpt.contains("TARGET_SECTION_MARKER"), "the relevant section survives truncation")
+        XCTAssertTrue(excerpt.hasPrefix("…"), "the window is centered on the match, not taken from the head")
+        XCTAssertLessThan(excerpt.count, body.count)
+    }
+
+    func testWindowedExcerptFallsBackToHeadWhenSnippetNotFound() {
+        let body = String(repeating: "X", count: 3000)
+        let excerpt = AskPipeline.windowedExcerpt(body, around: "nowhere in the body", limit: 500)
+        XCTAssertTrue(excerpt.hasPrefix("XXX"), "with no locatable snippet it falls back to a head truncation")
+    }
+
+    func testWindowedExcerptLeavesShortBodyUnchanged() {
+        XCTAssertEqual(AskPipeline.windowedExcerpt("short body", around: "x", limit: 4000), "short body")
     }
 
     func testSystemPromptCarriesGroundingStyleAndPersona() {

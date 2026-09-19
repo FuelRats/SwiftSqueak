@@ -30,12 +30,18 @@ actor AIMetrics {
     struct Snapshot: Sendable, Equatable {
         var gatePassed = 0
         var gateRejected = 0
+        var gateFailures = 0
         var answers = 0
         var refusals = 0
         var toolRounds = 0
+        var timeouts = 0
+        var pipelineErrors = 0
+        var overBudget = 0
+        var overCapacity = 0
         var inputTokens = 0
         var outputTokens = 0
         var cacheReadTokens = 0
+        var cacheWriteTokens = 0
     }
 
     private var snapshot = Snapshot()
@@ -48,6 +54,14 @@ actor AIMetrics {
         }
     }
 
+    /// The paid gate classification itself failed (upstream outage) — the signal that the bot is
+    /// silently dropping questions, not that people stopped asking.
+    func recordGateFailure() { snapshot.gateFailures += 1 }
+    func recordTimeout() { snapshot.timeouts += 1 }
+    func recordPipelineError() { snapshot.pipelineErrors += 1 }
+    func recordOverBudget() { snapshot.overBudget += 1 }
+    func recordOverCapacity() { snapshot.overCapacity += 1 }
+
     func recordAnswer(_ reply: AIReply) {
         if reply.refused {
             snapshot.refusals += 1
@@ -55,10 +69,30 @@ actor AIMetrics {
             snapshot.answers += 1
         }
         snapshot.toolRounds += reply.toolRounds
-        snapshot.inputTokens += reply.usage.inputTokens
-        snapshot.outputTokens += reply.usage.outputTokens
-        snapshot.cacheReadTokens += reply.usage.cacheReadInputTokens
+    }
+
+    /// Records token spend from any paid call (the gate as well as each answer round), so the summary
+    /// reflects total cost, not just the answer pipeline.
+    func recordUsage(_ usage: LLMUsage) {
+        snapshot.inputTokens += usage.inputTokens
+        snapshot.outputTokens += usage.outputTokens
+        snapshot.cacheReadTokens += usage.cacheReadInputTokens
+        snapshot.cacheWriteTokens += usage.cacheCreationInputTokens
     }
 
     var current: Snapshot { snapshot }
+
+    /// One-line summary for periodic ops logging; `reset()` zeroes the window afterward so each line
+    /// reads as "since the last report" and a spike or outage stands out.
+    func summary() -> String {
+        let snap = snapshot
+        return "gate=\(snap.gatePassed)/\(snap.gatePassed + snap.gateRejected) gateFail=\(snap.gateFailures) "
+            + "answers=\(snap.answers) refusals=\(snap.refusals) rounds=\(snap.toolRounds) "
+            + "timeouts=\(snap.timeouts) errors=\(snap.pipelineErrors) "
+            + "overBudget=\(snap.overBudget) overCapacity=\(snap.overCapacity) "
+            + "in=\(snap.inputTokens) out=\(snap.outputTokens) "
+            + "cacheR=\(snap.cacheReadTokens) cacheW=\(snap.cacheWriteTokens)"
+    }
+
+    func reset() { snapshot = Snapshot() }
 }

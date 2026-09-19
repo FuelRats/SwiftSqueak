@@ -9,6 +9,12 @@ final class AIToolTests: XCTestCase {
         return String(data: data, encoding: .utf8) ?? ""
     }
 
+    func testIsErrorPayloadDistinguishesErrorsFromResults() {
+        XCTAssertTrue(ToolOutput.isErrorPayload(ToolOutput.error("not found")))
+        XCTAssertFalse(ToolOutput.isErrorPayload(ToolOutput.json(["scoopable": true])))
+        XCTAssertFalse(ToolOutput.isErrorPayload("No documents matched. Try different keywords."))
+    }
+
     func testTierOneToolsAreRegistered() {
         let names = DataTools.all().map(\.name).sorted()
         XCTAssertEqual(

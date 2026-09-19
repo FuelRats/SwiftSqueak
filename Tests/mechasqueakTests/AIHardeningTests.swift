@@ -11,11 +11,12 @@ final class AIHardeningTests: XCTestCase {
         await metrics.recordGate(passed: true)
         await metrics.recordGate(passed: false)
         await metrics.recordAnswer(
-            AIReply(
-                text: "ok", citations: [], refused: false, toolRounds: 2,
-                usage: LLMUsage(inputTokens: 100, outputTokens: 20, cacheReadInputTokens: 80)))
+            AIReply(text: "ok", citations: [], refused: false, toolRounds: 2, usage: LLMUsage()))
         await metrics.recordAnswer(
             AIReply(text: "", citations: [], refused: true, toolRounds: 0))
+        // Token spend is recorded per paid call (gate + each answer round), separate from recordAnswer.
+        await metrics.recordUsage(
+            LLMUsage(inputTokens: 100, outputTokens: 20, cacheReadInputTokens: 80, cacheCreationInputTokens: 10))
 
         let snapshot = await metrics.current
         XCTAssertEqual(snapshot.gatePassed, 2)
@@ -26,6 +27,41 @@ final class AIHardeningTests: XCTestCase {
         XCTAssertEqual(snapshot.inputTokens, 100)
         XCTAssertEqual(snapshot.outputTokens, 20)
         XCTAssertEqual(snapshot.cacheReadTokens, 80)
+        XCTAssertEqual(snapshot.cacheWriteTokens, 10)
+    }
+
+    func testMetricsFailureCountersAndReset() async {
+        let metrics = AIMetrics()
+        await metrics.recordGateFailure()
+        await metrics.recordTimeout()
+        await metrics.recordPipelineError()
+        await metrics.recordOverBudget()
+        await metrics.recordOverCapacity()
+        var snapshot = await metrics.current
+        XCTAssertEqual(snapshot.gateFailures, 1)
+        XCTAssertEqual(snapshot.timeouts, 1)
+        XCTAssertEqual(snapshot.pipelineErrors, 1)
+        XCTAssertEqual(snapshot.overBudget, 1)
+        XCTAssertEqual(snapshot.overCapacity, 1)
+
+        await metrics.reset()
+        snapshot = await metrics.current
+        XCTAssertEqual(snapshot, AIMetrics.Snapshot(), "reset zeroes the window")
+    }
+
+    func testCommandCatalogueListsCommandsWithAliasesSorted() {
+        let saved = MechaSqueak.commands
+        defer { MechaSqueak.commands = saved }
+        MechaSqueak.commands = [
+            declaration(["rename", "renameid"], category: .rescues, allowTool: false),
+            declaration(["cmdr", "client"], category: .board, allowTool: false)
+        ]
+        let catalogue = AskPipeline.commandCatalogue()
+        XCTAssertTrue(catalogue.contains("!rename (aka renameid): d"))
+        XCTAssertTrue(catalogue.contains("!cmdr (aka client): d"))
+        XCTAssertLessThan(
+            catalogue.range(of: "!cmdr")!.lowerBound, catalogue.range(of: "!rename")!.lowerBound,
+            "catalogue is sorted so the model sees a stable, cache-friendly ordering")
     }
 
     // MARK: - 9.3 Injection / safety audit

@@ -24,10 +24,11 @@
 
 import Foundation
 
-/// Multi-turn memory for the AI assistant. Sessions are keyed by the authenticated account only —
-/// nicks are spoofable, so unidentified users get no cross-message memory (each request is
-/// stateless). Each session holds a bounded, recent window of turns and expires after an idle TTL;
-/// expired sessions are swept lazily on access.
+/// Multi-turn memory for the AI assistant. Sessions are keyed by the authenticated account AND the
+/// conversation scope (a channel, or PMs) — nicks are spoofable, so unidentified users get no
+/// cross-message memory, and separate scopes don't bleed into each other (a user's PM thread and their
+/// talk in different channels are distinct conversations). Each session holds a bounded, recent window
+/// of turns and expires after an idle TTL; expired sessions are swept lazily on access.
 actor ConversationManager {
     private struct Session {
         var turns: [AITurn]
@@ -38,29 +39,34 @@ actor ConversationManager {
     private let maxTurns: Int
     private let ttl: TimeInterval
 
-    init(maxTurns: Int = 6, ttl: TimeInterval = 300) {
+    /// TTL is comfortably longer than the public-channel answer cooldown (5 min) so an in-channel
+    /// follow-up, which can't arrive until the cooldown clears, still lands within the memory window.
+    init(maxTurns: Int = 6, ttl: TimeInterval = 900) {
         self.maxTurns = maxTurns
         self.ttl = ttl
     }
 
-    /// Prior turns to replay for this account, or an empty history for an unidentified user.
-    func history(account: String?, now: Date = Date()) -> [AITurn] {
+    private func key(account: String, scope: String) -> String { "\(account)|\(scope)" }
+
+    /// Prior turns to replay for this account in this scope, or an empty history for an unidentified user.
+    func history(account: String?, scope: String, now: Date = Date()) -> [AITurn] {
         sweep(now: now)
-        guard let account, let session = sessions[account] else { return [] }
+        guard let account, let session = sessions[key(account: account, scope: scope)] else { return [] }
         return session.turns
     }
 
     /// Appends a completed exchange. No-op for unidentified users (stateless).
-    func record(account: String?, question: String, answer: String, now: Date = Date()) {
+    func record(account: String?, scope: String, question: String, answer: String, now: Date = Date()) {
         guard let account else { return }
-        var session = sessions[account] ?? Session(turns: [], lastActivity: now)
+        let sessionKey = key(account: account, scope: scope)
+        var session = sessions[sessionKey] ?? Session(turns: [], lastActivity: now)
         session.turns.append(AITurn(role: .user, text: question))
         session.turns.append(AITurn(role: .assistant, text: answer))
         if session.turns.count > maxTurns {
             session.turns.removeFirst(session.turns.count - maxTurns)
         }
         session.lastActivity = now
-        sessions[account] = session
+        sessions[sessionKey] = session
     }
 
     /// Number of live sessions (test/diagnostic).
