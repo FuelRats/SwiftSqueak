@@ -74,6 +74,20 @@ final class AIService: Sendable {
             metrics: AIMetrics())
     }
 
+    /// Emits a one-line metrics summary to the log on an interval and resets the window, so an outage
+    /// (gateFail/timeouts/errors climbing), a cost spike (token totals), or a degradation surfaces in the
+    /// logs on its own instead of looking like the bot quietly ignoring people. Runs for process life.
+    func startMetricsReporting(interval: TimeInterval = 3600) {
+        Task { [metrics] in
+            while Task.isCancelled == false {
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                let line = await metrics.summary()
+                aiLogger.info("[ai] metrics (last \(Int(interval / 60))m): \(line)")
+                await metrics.reset()
+            }
+        }
+    }
+
     // MARK: - Entry points
 
     /// A channel message: only acts if it is addressed to the bot by name.
@@ -108,73 +122,108 @@ final class AIService: Sendable {
         // Cheap prefilter before touching any paid path.
         guard RelevanceGate.prefilterPasses(question) else { return }
 
-        // Atomic cooldown + in-flight + per-user + global budget reservation.
+        // Atomic reservation. Reserve applies only a short *attempt* cooldown (the default); the full
+        // public-channel cooldown is applied below, only after a real answer — so a gate-rejected or
+        // failed message can't lock the channel for everyone. Public channels are gated like commands
+        // (rescues.write bypasses); PMs and bypassing users use the lighter per-user bucket.
         let user = message.user.account ?? message.user.nickname.lowercased()
-        // Public channels get one overall answer per 5 minutes (channel-wide, not per-user), gated the
-        // same way command cooldowns are (rescues.write bypasses, i.e. drilled rats and above). PMs and
-        // bypassing users keep the light per-user cooldown instead.
         let bypasses = message.user.hasPermission(permission: .RescueWrite)
-        let (key, cooldown): (String, TimeInterval?) = (isPM || bypasses)
-            ? (cooldownKey(message), nil)
-            : (channelCooldownKey(message), AIService.publicChannelCooldown)
-        switch await state.reserve(key: key, user: user, cooldown: cooldown) {
+        let sharedChannel = (isPM == false && bypasses == false)
+        let key = sharedChannel ? channelCooldownKey(message) : cooldownKey(message)
+        switch await state.reserve(key: key, user: user) {
             case .reserved:
             break
             case .cooldown:
             // One private heads-up per asker per cooldown window; silent on later mentions so the bot
-            // doesn't nag. Applies to both the shared 5-minute channel cooldown and the per-user PM one.
+            // doesn't nag.
             if let remaining = await state.cooldownNoticeRemaining(key: key, user: user) {
-                // `cooldown != nil` means the shared 5-minute channel cooldown; otherwise the per-user one
-                // (PMs, and bypass users in-channel), whose wording shouldn't mention the channel limit.
                 message.replyPrivate(
-                    message: AIService.cooldownMessage(remaining: remaining, sharedChannel: cooldown != nil))
+                    message: AIService.cooldownMessage(remaining: remaining, sharedChannel: sharedChannel))
             }
             return
             case .overCapacity:
+            await metrics.recordOverCapacity()
             return  // transient in-flight cap, clears in seconds — stay silent
             case .overBudget:
+            await metrics.recordOverBudget()
             if isPM { message.reply(message: AIService.busyMessage) }
             return
         }
 
-        // Paid Haiku relevance gate.
-        let relevant = await gate.isRelevant(question)
-        await metrics.recordGate(passed: relevant)
-        guard relevant else {
-            // No billable answer produced — refund the user's attempt so chatter doesn't lock them out.
-            await state.release(refundingUser: user)
-            return
-        }
-
-        // Multi-turn memory for identified users only (nicks are spoofable).
-        let account = message.user.account
-        let history = await conversations.history(account: account)
-
+        // Everything past the reservation runs inside this do/catch so the in-flight slot is released on
+        // every exit — including a cancellation at an await, which would otherwise leak a scarce slot.
         do {
-            // Pass the invoking message so the run_command tool can dispatch a read-only command
-            // as this user, with native permission/cooldown/destination enforcement. A deadline
-            // bounds how long a stuck upstream call can pin one of the scarce in-flight slots.
+            // Paid Haiku relevance gate. Count its spend against the budget; if the gate itself *failed*
+            // (an outage), tell the asker rather than silently dropping them.
+            let decision = await gate.classify(question)
+            await metrics.recordUsage(decision.usage)
+            await state.recordUsage(tokens: decision.usage.billedTokens)
+            if decision.failed {
+                await metrics.recordGateFailure()
+                await surfaceTrouble(to: message, key: key, isPM: isPM)
+                await state.release(refundingUser: user)
+                return
+            }
+            await metrics.recordGate(passed: decision.relevant)
+            guard decision.relevant else {
+                // No billable answer — refund the attempt so chatter doesn't lock a user out.
+                await state.release(refundingUser: user)
+                return
+            }
+
+            // Multi-turn memory for identified users only (nicks are spoofable).
+            let account = message.user.account
+            let history = await conversations.history(account: account)
+
+            // Pass the invoking message so run_command can dispatch a read-only command as this user with
+            // native permission/cooldown/destination enforcement. `onUsage` bills each completed round as
+            // it lands, so partial spend is still counted if a later round times out or errors.
             let reply = try await AIService.withTimeout(seconds: AIService.answerDeadline) {
                 try await self.pipeline.answer(
-                    question: question, history: history, context: ToolContext(message: message))
+                    question: question, history: history, context: ToolContext(message: message),
+                    onUsage: { usage in
+                        await self.metrics.recordUsage(usage)
+                        await self.state.recordUsage(tokens: usage.billedTokens)
+                    })
             }
             send(reply, to: message)
             await metrics.recordAnswer(reply)
-            await state.recordUsage(tokens: reply.usage.inputTokens + reply.usage.outputTokens)
-            let logLine =
-                "[ai] answered refused=\(reply.refused) rounds=\(reply.toolRounds) "
-                + "in=\(reply.usage.inputTokens) out=\(reply.usage.outputTokens) "
-                + "cacheRead=\(reply.usage.cacheReadInputTokens) citations=\(reply.citations.count)"
-            aiLogger.info("\(logLine)")
+            // A real answer landed: apply the full public-channel cooldown now (reserve set only a short
+            // attempt cooldown).
+            if sharedChannel {
+                await state.setCooldown(key: key, seconds: AIService.publicChannelCooldown)
+            }
+            aiLogger.info("""
+                [ai] answered refused=\(reply.refused) rounds=\(reply.toolRounds) \
+                in=\(reply.usage.inputTokens) out=\(reply.usage.outputTokens) \
+                cacheR=\(reply.usage.cacheReadInputTokens) cacheW=\(reply.usage.cacheCreationInputTokens) \
+                citations=\(reply.citations.count)
+                """)
             if reply.refused == false, reply.text.isEmpty == false {
                 await conversations.record(account: account, question: question, answer: reply.text)
             }
             await state.release()
         } catch {
+            if error is AITimeoutError {
+                await metrics.recordTimeout()
+            } else {
+                await metrics.recordPipelineError()
+            }
             aiLogger.error("[ai] pipeline error: \(error)")
-            if isPM { message.reply(message: AIService.errorMessage) }
+            await surfaceTrouble(to: message, key: key, isPM: isPM)
             // No answer reached the user — refund the attempt.
             await state.release(refundingUser: user)
+        }
+    }
+
+    /// Tells a user the assistant is having trouble reaching upstream. In a channel this fires at most
+    /// once per cooldown window (an outage yields one notice, not one per dropped question); in a PM,
+    /// which is a direct 1:1 conversation, it always replies.
+    private func surfaceTrouble(to message: IRCPrivateMessage, key: String, isPM: Bool) async {
+        if isPM {
+            message.reply(message: AIService.errorMessage)
+        } else if await state.shouldAnnounceError(key: key) {
+            message.reply(message: AIService.errorMessage)
         }
     }
 

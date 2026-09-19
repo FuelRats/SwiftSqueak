@@ -54,6 +54,10 @@ struct LLMRequest: Sendable {
     var tools: [LLMTool]
     var toolChoice: LLMToolChoice?
     var temperature: Double?
+    /// When true, mark a cache breakpoint at the end of the system prompt so the (large, stable)
+    /// system prompt and the tool definitions before it are billed at the cache rate on tool-loop
+    /// re-sends. Only worth setting when the prefix is large and reused (the answer pipeline).
+    var cacheSystem: Bool
 
     init(
         model: String,
@@ -62,7 +66,8 @@ struct LLMRequest: Sendable {
         messages: [LLMMessage],
         tools: [LLMTool] = [],
         toolChoice: LLMToolChoice? = nil,
-        temperature: Double? = nil
+        temperature: Double? = nil,
+        cacheSystem: Bool = false
     ) {
         self.model = model
         self.maxTokens = maxTokens
@@ -71,6 +76,7 @@ struct LLMRequest: Sendable {
         self.tools = tools
         self.toolChoice = toolChoice
         self.temperature = temperature
+        self.cacheSystem = cacheSystem
     }
 }
 
@@ -204,6 +210,10 @@ struct LLMUsage: Sendable, Equatable {
         self.cacheReadInputTokens = cacheReadInputTokens
         self.cacheCreationInputTokens = cacheCreationInputTokens
     }
+
+    /// Tokens to charge against the daily cost budget: fresh input + output + cache *writes* (billed at
+    /// a premium). Cache *reads* are excluded — they are the cheap payoff of caching, not new cost.
+    var billedTokens: Int { inputTokens + outputTokens + cacheCreationInputTokens }
 
     /// Accumulates usage across the rounds of a tool loop.
     static func + (lhs: LLMUsage, rhs: LLMUsage) -> LLMUsage {

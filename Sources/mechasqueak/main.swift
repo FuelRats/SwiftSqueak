@@ -125,6 +125,7 @@ class MechaSqueak: @unchecked Sendable {
         // Always-listening AI assistant. Inert unless the Anthropic + Outline tokens are configured.
         if let aiConfig = configuration.ai {
             aiService = AIService.make(from: aiConfig)
+            aiService?.startMetricsReporting()
             commands.append(AIListener(moduleManager))
         }
 

@@ -108,7 +108,8 @@ struct AskPipeline: Sendable {
         question: String,
         locale: Locale = Locale(identifier: "en"),
         history: [AITurn] = [],
-        context: ToolContext? = nil
+        context: ToolContext? = nil,
+        onUsage: (@Sendable (LLMUsage) async -> Void)? = nil
     ) async throws -> AIReply {
         let toolContext = context ?? ToolContext(locale: locale)
         let docs = await retrieveGroundingDocuments(question)
@@ -134,7 +135,8 @@ struct AskPipeline: Sendable {
         var totalUsage = LLMUsage()
         while rounds < maxToolRounds {
             let request = LLMRequest(
-                model: model, maxTokens: maxTokens, system: system, messages: messages, tools: llmTools)
+                model: model, maxTokens: maxTokens, system: system, messages: messages, tools: llmTools,
+                cacheSystem: true)
 
             let response: LLMResponse
             do {
@@ -143,6 +145,7 @@ struct AskPipeline: Sendable {
                 return AIReply(text: "", citations: [], refused: true, toolRounds: rounds, usage: totalUsage)
             }
             totalUsage += response.usage
+            await onUsage?(response.usage)
 
             guard response.stopReason == .toolUse, response.toolCalls.isEmpty == false else {
                 return buildReply(response, docs: docs, rounds: rounds, usage: totalUsage)
@@ -172,10 +175,12 @@ struct AskPipeline: Sendable {
 
         // Ran out of tool rounds — make one final call with the accumulated results, no tools.
         let finalRequest = LLMRequest(
-            model: model, maxTokens: maxTokens, system: system, messages: messages, tools: [])
+            model: model, maxTokens: maxTokens, system: system, messages: messages, tools: [],
+            cacheSystem: true)
         do {
             let response = try await provider.complete(finalRequest)
             totalUsage += response.usage
+            await onUsage?(response.usage)
             return buildReply(response, docs: docs, rounds: rounds, usage: totalUsage)
         } catch LLMError.refused {
             return AIReply(text: "", citations: [], refused: true, toolRounds: rounds, usage: totalUsage)

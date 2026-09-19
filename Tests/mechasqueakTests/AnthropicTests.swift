@@ -49,6 +49,25 @@ final class AnthropicTests: XCTestCase {
         XCTAssertFalse(json.contains("tool_choice"))
     }
 
+    func testCacheSystemEmitsCachedSystemBlock() throws {
+        let request = LLMRequest(
+            model: Anthropic.answerModel, maxTokens: 512, system: "You are MechaSqueak.",
+            messages: [.text(.user, "hi")], cacheSystem: true)
+        let json = try encodedRequestString(request)
+        // system becomes an array of blocks so it can carry a cache breakpoint (caching tools+system).
+        XCTAssertTrue(json.contains("\"system\":[{"), "cached system must serialize as a block array")
+        XCTAssertTrue(json.contains("\"cache_control\":{\"type\":\"ephemeral\"}"))
+        XCTAssertFalse(json.contains("\"system\":\"You are MechaSqueak.\""), "not the plain-string form")
+    }
+
+    func testPlainSystemWhenNotCaching() throws {
+        let request = LLMRequest(
+            model: Anthropic.answerModel, maxTokens: 512, system: "You are MechaSqueak.",
+            messages: [.text(.user, "hi")])
+        let json = try encodedRequestString(request)
+        XCTAssertTrue(json.contains("\"system\":\"You are MechaSqueak.\""), "uncached system stays a string")
+    }
+
     func testForcedToolChoiceAndTemperatureEncode() throws {
         let tool = LLMTool(
             name: "emit_translation",

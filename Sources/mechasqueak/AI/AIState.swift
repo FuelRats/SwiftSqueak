@@ -53,6 +53,9 @@ actor AIState {
     /// Users already given a one-shot cooldown notice in the current window for a key, so a real asker is
     /// told once without the bot replying to every subsequent mention. Reset when a new window opens.
     private var cooldownNotified: [String: Set<String>] = [:]
+    /// Keys that have already emitted a one-shot "having trouble" notice this window, so an upstream
+    /// outage produces one channel notice rather than one per dropped question. Reset with the window.
+    private var errorAnnounced: Set<String> = []
     private var inFlight = 0
     private var tokensInWindow = 0
     private var windowStart: Date?
@@ -106,10 +109,28 @@ actor AIState {
 
         cooldownUntil[key] = now.addingTimeInterval(cooldown ?? self.cooldown)
         cooldownNotified[key] = []  // new window: everyone may be notified again
+        errorAnnounced.remove(key)
         inFlight += 1
         userBudget.count += 1
         perUser[user] = userBudget
         return .reserved
+    }
+
+    /// Extends `key`'s cooldown to a full window, opening a fresh notice window. Reserve applies only a
+    /// short *attempt* cooldown so a rejected or failed message can't lock a channel; this is called on
+    /// the success path to apply the real (e.g. 5-minute) public-channel cooldown once an answer landed.
+    func setCooldown(key: String, seconds: TimeInterval, now: Date = Date()) {
+        cooldownUntil[key] = now.addingTimeInterval(seconds)
+        cooldownNotified[key] = []
+        errorAnnounced.remove(key)
+    }
+
+    /// True at most once per cooldown window for `key`, so an upstream outage yields one "having trouble"
+    /// channel notice instead of one per dropped question.
+    func shouldAnnounceError(key: String) -> Bool {
+        guard errorAnnounced.contains(key) == false else { return false }
+        errorAnnounced.insert(key)
+        return true
     }
 
     /// After a `.cooldown` result, returns the remaining cooldown the FIRST time `user` is blocked in the
@@ -155,6 +176,7 @@ actor AIState {
     private func sweepExpired(now: Date) {
         cooldownUntil = cooldownUntil.filter { $0.value > now }
         cooldownNotified = cooldownNotified.filter { cooldownUntil[$0.key] != nil }
+        errorAnnounced = errorAnnounced.filter { cooldownUntil[$0] != nil }
         perUser = perUser.filter { now.timeIntervalSince($0.value.start) <= perUserWindow }
     }
 
