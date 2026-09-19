@@ -265,8 +265,22 @@ final class AIService: Sendable {
             message.reply(message: reply.refused ? AIService.refusalMessage : AIService.emptyMessage)
             return
         }
-        let full = AIService.clamp(AIService.formatForIRC(reply.text), to: AIService.maxTotalLength)
+        let full = AIService.withSourceLink(
+            AIService.formatForIRC(reply.text), citations: reply.citations, maxLength: AIService.maxTotalLength)
         message.reply(message: full.isEmpty ? AIService.emptyMessage : full)
+    }
+
+    /// "Every SOP answer carries its source link" shouldn't depend on the model remembering to inline the
+    /// URL. When the answer cited a public SOP document, append its link deterministically (unless the
+    /// model already included it), reserving room so the length clamp doesn't truncate the URL itself.
+    static func withSourceLink(_ text: String, citations: [ReplyCitation], maxLength: Int) -> String {
+        guard let link = citations.first(where: { $0.source == .sop })?.url,
+            text.contains(link) == false else {
+            return clamp(text, to: maxLength)
+        }
+        let suffix = " \(link)"
+        let body = clamp(text, to: max(0, maxLength - suffix.count))
+        return body.isEmpty ? "" : body + suffix
     }
 
     /// Collapses an LLM answer into a single IRC-safe line: converts `**bold**` to the IRC bold

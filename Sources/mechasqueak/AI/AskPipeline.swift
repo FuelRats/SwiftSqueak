@@ -123,6 +123,10 @@ struct AskPipeline: Sendable {
                 enableCitations: true,
                 cacheControl: true))
         }
+        // The current time rides the (uncached) question turn, not the cached system prompt, so the
+        // system cache stays valid across answers. Gives the model a reference "now" for elapsed-time
+        // questions (e.g. how long a case has been open) instead of reasoning about ISO timestamps blind.
+        content.append(.text("Current date and time (UTC): \(Self.currentUTC()).", citations: []))
         content.append(.text(question, citations: []))
 
         var messages = history.map { LLMMessage.text($0.role, $0.text) }
@@ -315,10 +319,14 @@ struct AskPipeline: Sendable {
         - Elite Dangerous game facts: answer from the provided ED-Knowledge documents and the tools \
         (Fuel Rats systems data, EDSM). If neither covers it, say you don't have that information. \
         Never invent game facts, numbers, or mechanics.
-        - Prefer a tool over guessing. For a specific system, station, route, or distance, use the \
-        systems/EDSM/route tools; for a system's fuel-scoopable stars use scoopable_star. For the \
-        live rescue board (open cases, a case's client/system/rats) use active_cases or \
-        case_detail; to look up a Fuel Rats member's CMDRs/platform/roles use rat_lookup. If the provided documents don't fully cover a Fuel Rats or Elite \
+        - Prefer a tool over guessing. For whether a system exists, its permit status, or its nearest \
+        landmark, use system_info; for the nearest station to a system use nearest_station. Fall back to \
+        edsm_system / edsm_nearest only when the Fuel Rats tools come up empty or you need neighbouring \
+        systems. For a system's fuel-scoopable stars use scoopable_star, and for a neutron-boosted \
+        multi-jump route use route_plot. For the live rescue board (open cases, a case's \
+        client/system/rats) use active_cases or case_detail; to look up a Fuel Rats member's \
+        CMDRs/platform/roles use rat_lookup. The current UTC time is provided with the question; use it \
+        for elapsed-time questions (e.g. how long a case has been open). If the provided documents don't fully cover a Fuel Rats or Elite \
         Dangerous question, call search_knowledge_base with focused KEYWORDS, not a sentence (e.g. \
         "out of fuel life support", "supercruise travel time"), and search again with different \
         terms if the first misses before saying you don't have it. Reach for read_channel_scrollback \
@@ -362,6 +370,15 @@ struct AskPipeline: Sendable {
 
         \(MechaPersona.voice)
         """
+    }
+
+    /// The current UTC time in a compact, unambiguous form for the answer turn.
+    static func currentUTC() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.string(from: Date())
     }
 
     /// A compact one-line-per-command catalogue of every registered command (primary name, aliases, and
