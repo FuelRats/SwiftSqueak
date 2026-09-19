@@ -301,6 +301,10 @@ private enum AnthropicBlock: Codable {
     case document(DocumentBlock)
     case toolUse(ToolUseBlock)
     case toolResult(ToolResultBlock)
+    /// A block type this client doesn't model (e.g. one the API adds later, like server tool use or
+    /// extended thinking). Decoded rather than thrown so a new block type can't fail every answer;
+    /// dropped when mapping to the provider-neutral response.
+    case unknown
 
     private enum TypeKey: String, CodingKey {
         case type
@@ -318,8 +322,8 @@ private enum AnthropicBlock: Codable {
             case "tool_result":
             self = .toolResult(try ToolResultBlock(from: decoder))
             default:
-            throw DecodingError.dataCorrupted(
-                .init(codingPath: decoder.codingPath, debugDescription: "Unknown content block type '\(type)'"))
+            // Forward-compat: don't fail the whole response on a block type we don't model yet.
+            self = .unknown
         }
     }
 
@@ -329,6 +333,9 @@ private enum AnthropicBlock: Codable {
             case let .document(block): try block.encode(to: encoder)
             case let .toolUse(block): try block.encode(to: encoder)
             case let .toolResult(block): try block.encode(to: encoder)
+            // Never sent back (unknown blocks are dropped when mapping to the neutral response); encode a
+            // harmless empty text block only so the type stays a valid Encodable.
+            case .unknown: try TextBlock(text: "", citations: nil).encode(to: encoder)
         }
     }
 
@@ -351,8 +358,10 @@ private enum AnthropicBlock: Codable {
         }
     }
 
-    func toLLMBlock() -> LLMContentBlock {
+    func toLLMBlock() -> LLMContentBlock? {
         switch self {
+            case .unknown:
+            return nil
             case let .text(block):
             let citations = (block.citations ?? []).map {
                 LLMCitation(
@@ -499,7 +508,7 @@ private struct AnthropicResponse: Decodable {
 
     func toLLMResponse() -> LLMResponse {
         LLMResponse(
-            content: content.map { $0.toLLMBlock() },
+            content: content.compactMap { $0.toLLMBlock() },
             stopReason: LLMStopReason(apiValue: stopReason),
             usage: LLMUsage(
                 inputTokens: usage?.inputTokens ?? 0,

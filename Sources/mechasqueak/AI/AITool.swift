@@ -87,6 +87,13 @@ enum ToolOutput {
         json(["error": message])
     }
 
+    /// Whether a tool result string is an error payload produced by `error(_:)`. Lets the tool loop flag
+    /// the `tool_result` block as an error so the model can tell a genuine failure from an empty result.
+    /// No domain tool result serializes with a leading "error" key, so the shape is an unambiguous marker.
+    static func isErrorPayload(_ output: String) -> Bool {
+        output.hasPrefix("{\"error\":")
+    }
+
     /// Truncates a long field so tool results stay within a sane token budget.
     static func truncate(_ text: String, limit: Int = 500) -> String {
         guard text.count > limit else { return text }

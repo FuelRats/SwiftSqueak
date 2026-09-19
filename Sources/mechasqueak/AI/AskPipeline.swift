@@ -151,6 +151,13 @@ struct AskPipeline: Sendable {
             totalUsage += response.usage
             await onUsage?(response.usage)
 
+            // The model paused mid-turn (e.g. a long server-side operation): replay its partial content
+            // and re-request so it continues, rather than mistaking the pause for a finished answer.
+            if response.stopReason == .pauseTurn {
+                messages.append(LLMMessage(role: .assistant, content: response.content))
+                rounds += 1
+                continue
+            }
             guard response.stopReason == .toolUse, response.toolCalls.isEmpty == false else {
                 return buildReply(response, docs: docs, rounds: rounds, usage: totalUsage)
             }
@@ -164,7 +171,8 @@ struct AskPipeline: Sendable {
                 if call.name == CommandDispatchTool.tool.name, output == CommandDispatchTool.deliveredResult {
                     commandDelivered = true
                 }
-                results.append(.toolResult(toolUseId: call.id, content: output, isError: false))
+                results.append(.toolResult(
+                    toolUseId: call.id, content: output, isError: ToolOutput.isErrorPayload(output)))
             }
             // A successful run_command has already delivered the full answer to the user in-channel.
             // End the turn here so the assistant cannot double-post or invent a parallel answer.
