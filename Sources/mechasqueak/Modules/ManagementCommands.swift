@@ -125,7 +125,7 @@ class ManagementCommands: IRCBotModule {
         category: .management,
         description: "Lists the permissions of a specific person",
         tags: ["group", "permission", "role"],
-        permission: .UserRead,
+        permission: .UserReadOwn,
         allowTool: true
     )
     var didReceivePermissionsCommand = { command in
