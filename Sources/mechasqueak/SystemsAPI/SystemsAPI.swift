@@ -68,6 +68,10 @@ class SystemsAPI {
         "KI": "Ki"
     ]
     
+    /// Ceiling for the fast system lookup done on case creation. A healthy `/mecha?fast=true`
+    /// answers well under this; the cap stops a stalled Systems API from holding up a new case.
+    static let quickSearchDeadline: TimeAmount = .seconds(5)
+
     static func isUnobtainablePermitSystem(_ systemName: String) -> Bool {
         return unobtainablePermitSystems.contains(systemName.lowercased())
     }
@@ -84,7 +88,7 @@ class SystemsAPI {
         let request = try HTTPClient.Request(
             systemApiPath: "/mecha", method: .GET, query: queryItems)
 
-        let deadline: NIODeadline? = .now() + (quickSearch ? .seconds(15) : .seconds(180))
+        let deadline: NIODeadline? = .now() + (quickSearch ? quickSearchDeadline : .seconds(180))
         return try await httpClient.execute(
             request: request, forDecodable: SearchDocument.self, deadline: deadline)
     }
