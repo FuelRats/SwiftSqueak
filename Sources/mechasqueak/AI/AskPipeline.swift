@@ -116,12 +116,19 @@ struct AskPipeline: Sendable {
 
         // The grounding documents ride on the current question turn so they are re-sent (from
         // cache) on every tool-loop round. History precedes them.
-        var content: [LLMContentBlock] = docs.map { doc in
+        //
+        // Anthropic allows at most 4 cache_control breakpoints per request, and the cached system
+        // block already consumes one. A breakpoint caches the whole prefix before it, so marking
+        // only the final document caches tools+system+history+all documents as one prefix for the
+        // tool-loop rounds — the same reuse as marking every document, but with a fixed 1 breakpoint
+        // instead of one per document (which overflowed the cap once 4 documents were retrieved).
+        let lastDocIndex = docs.count - 1
+        var content: [LLMContentBlock] = docs.enumerated().map { index, doc in
             .document(LLMDocument(
                 title: "\(doc.title) [\(Self.provenance(for: doc))]",
                 text: Self.windowedExcerpt(doc.text, around: doc.snippet, limit: documentCharLimit),
                 enableCitations: true,
-                cacheControl: true))
+                cacheControl: index == lastDocIndex))
         }
         // The current time rides the (uncached) question turn, not the cached system prompt, so the
         // system cache stays valid across answers. Gives the model a reference "now" for elapsed-time

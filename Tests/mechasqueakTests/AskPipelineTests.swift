@@ -262,6 +262,39 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertEqual(reply.usage.cacheReadInputTokens, 90)
     }
 
+    func testCacheBreakpointsStayWithinAnthropicLimitWithManyDocs() async throws {
+        // Anthropic rejects a request with more than 4 cache_control breakpoints. With the full
+        // grounding-doc limit retrieved plus the cached system block, marking every document would
+        // emit 5 and 400 the request; only the system block and the final document may be marked.
+        let fourHits = """
+        {"data":[
+          {"context":"a","ranking":0.90,"document":{"id":"d1","title":"SOP One","url":"/doc/1","collectionId":"c-frkb","text":"body one"}},
+          {"context":"b","ranking":0.88,"document":{"id":"d2","title":"SOP Two","url":"/doc/2","collectionId":"c-frkb","text":"body two"}},
+          {"context":"c","ranking":0.86,"document":{"id":"d3","title":"SOP Three","url":"/doc/3","collectionId":"c-frkb","text":"body three"}},
+          {"context":"d","ranking":0.84,"document":{"id":"d4","title":"SOP Four","url":"/doc/4","collectionId":"c-frkb","text":"body four"}}
+        ]}
+        """
+        let info = #"{"data":{"id":"d","title":"t","url":"/doc/d","collectionId":"c-frkb","text":"full body"}}"#
+        let outline = OutlineAPI(
+            baseURL: URL(string: "https://docs.fuelrats.com/api")!,
+            frkbCollectionId: "c-frkb",
+            edKbCollectionId: nil,
+            transport: { path, _ in
+                Data((path == "documents.search" ? fourHits : info).utf8)
+            })
+        let script = Script([.success(textResponse("answer", citeDocIndex: 0))])
+        let pipeline = AskPipeline(
+            provider: ScriptedProvider(script: script), outline: outline, tools: [], maxToolRounds: 5)
+
+        _ = try await pipeline.answer(question: "how do I file a case?")
+
+        let request = await script.request(0)
+        let json = try String(data: Anthropic.encodeRequestBody(request), encoding: .utf8) ?? ""
+        let breakpoints = json.components(separatedBy: "\"cache_control\"").count - 1
+        XCTAssertLessThanOrEqual(breakpoints, 4, "must not exceed Anthropic's cache_control cap")
+        XCTAssertEqual(breakpoints, 2, "exactly the cached system block and the final document")
+    }
+
     func testWindowedExcerptCentersOnMatchedSnippet() {
         let body = String(repeating: "A", count: 3000)
             + " TARGET_SECTION_MARKER the relevant passage lives here "
