@@ -191,7 +191,7 @@ struct StarSystem: CustomStringConvertible, Codable, Equatable {
                 [:],
                 { (acc: [SystemsAPI.Economy: Int], current) in
                     var acc = acc
-                    guard let currentEcon = current.economy else {
+                    guard let currentEcon = current.economy, currentEcon != .unknown else {
                         return acc
                     }
                     if let value = acc[currentEcon] {

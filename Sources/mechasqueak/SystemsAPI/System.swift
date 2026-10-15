@@ -94,15 +94,8 @@ extension SystemsAPI {
 
         init(from decoder: Decoder) throws {
             let rawValue = try decoder.singleValueContainer().decode(String.self)
-            if let value = Allegiance.parseAllegience(rawValue: rawValue) {
-                self = value
-            } else {
-                throw DecodingError.dataCorrupted(
-                    DecodingError.Context.init(
-                        codingPath: decoder.codingPath,
-                        debugDescription: "Invalid Enum Raw Value"
-                    ))
-            }
+            // An allegiance this client doesn't know must not fail the whole system document.
+            self = Allegiance.parseAllegience(rawValue: rawValue) ?? .Unknown
         }
 
         public static func parseAllegience(rawValue: String) -> Allegiance? {

@@ -51,9 +51,12 @@ enum StationDescription: ResourceObjectDescription {
                 try decoder.container(keyedBy: StationDescription.Attributes.CodingKeys.self)
             self.marketId = try container.decode(
                 Attribute<Int64?>.self, forKey: StationDescription.Attributes.CodingKeys.marketId)
-            var stationType = try container.decode(
-                SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType?.self,
-                forKey: StationDescription.Attributes.CodingKeys.type)
+            // A station type this client doesn't know must not fail the whole system document;
+            // treat it like a missing type and let the fallback chain below classify it.
+            var stationType =
+                (try? container.decode(
+                    SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.StationType?.self,
+                    forKey: StationDescription.Attributes.CodingKeys.type)) ?? nil
             var name = try container.decode(
                 String.self, forKey: StationDescription.Attributes.CodingKeys.name)
             self.distanceToArrival = try container.decode(
@@ -80,9 +83,11 @@ enum StationDescription: ResourceObjectDescription {
                 forKey: StationDescription.Attributes.CodingKeys.otherServices)
             self.systemName = try container.decode(
                 Attribute<String>.self, forKey: StationDescription.Attributes.CodingKeys.systemName)
-            var stationState = try container.decodeIfPresent(
-                SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.State.self,
-                forKey: StationDescription.Attributes.CodingKeys.stationState)
+            // Same leniency for station state: an unknown value reads as "no state".
+            var stationState =
+                (try? container.decodeIfPresent(
+                    SystemsAPI.NearestPopulatedDocument.PopulatedSystem.Station.State.self,
+                    forKey: StationDescription.Attributes.CodingKeys.stationState)) ?? nil
 
             if stationType == nil && name.hasPrefix("Orbital Construction Site: ") {
                 name = String(name.dropFirst("Orbital Construction Site: ".count))
@@ -187,6 +192,10 @@ extension SystemsAPI {
         case Damaged
         case Repair
         case PrivateEnterprise = "Private Enterprise"
+        case Carrier
+        case Prison
+        case Engineer
+        case unknown
 
         static var brokenNameMapping: [String: String] {
             [
@@ -205,15 +214,9 @@ extension SystemsAPI {
                     rawValue = nameMapping
                 }
             }
-            if let value = Economy(rawValue: rawValue) {
-                self = value
-            } else {
-                throw DecodingError.dataCorrupted(
-                    DecodingError.Context.init(
-                        codingPath: decoder.codingPath,
-                        debugDescription: "Invalid Enum Raw Value"
-                    ))
-            }
+            // A value this client doesn't know (Frontier adds economies over time) must not fail
+            // the whole system document — fall back to `.unknown`, matching Government's decoding.
+            self = Economy(rawValue: rawValue) ?? .unknown
         }
     }
 }
