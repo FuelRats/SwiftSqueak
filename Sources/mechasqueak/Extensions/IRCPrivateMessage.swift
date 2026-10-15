@@ -119,6 +119,9 @@ private let retaliationPicker = ShuffledPicker([
     "dumps %@ on Tatooine with no sunscreen",
     "uploads %@ into the Matrix but it's running on Windows ME",
     "resets all of %@'s keybinds",
+    "puts Kehperagwean fish filets in %@'s microwave oven and sets the timer to 15 minutes",
+    "covers %@'s flight controls with copious amounts of industrial grease",
+    "applies a star class filter to %@'s route plotter with only white dwarves selected",
     "places %@ in front of an activating Stargate",
     "signs %@ up for a mandatory 12-part webinar on proper fuel management",
     "permanently wires %@'s boost button to their screenshot key"
