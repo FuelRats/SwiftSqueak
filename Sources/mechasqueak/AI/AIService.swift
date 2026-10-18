@@ -300,6 +300,15 @@ final class AIService: Sendable {
             result = bold.stringByReplacingMatches(
                 in: result, range: range, withTemplate: "\u{02}$1\u{02}")
         }
+        // "ratsignal", "opsignal" and "techsignal" are highlight words rats/ops/techs ping on; a
+        // zero-width space inside them keeps the text readable while preventing clients' ping
+        // matchers from firing.
+        if let signal = try? NSRegularExpression(
+            pattern: "(rat|op|tech)(signal)", options: [.caseInsensitive]) {
+            let range = NSRange(result.startIndex..., in: result)
+            result = signal.stringByReplacingMatches(
+                in: result, range: range, withTemplate: "$1\u{200B}$2")
+        }
         let flattened = result
             .split(whereSeparator: \.isNewline)
             .map { $0.trimmingCharacters(in: .whitespaces) }
