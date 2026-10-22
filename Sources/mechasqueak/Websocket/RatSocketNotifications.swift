@@ -24,6 +24,8 @@
 
 import Foundation
 import IRCKit
+import JSONAPI
+import Poly
 
 struct RatSocketConnectedNotification: NotificationDescriptor {
     init() {}

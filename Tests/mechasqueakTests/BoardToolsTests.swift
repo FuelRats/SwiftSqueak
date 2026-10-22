@@ -25,8 +25,8 @@ final class BoardToolsTests: XCTestCase {
     }
 
     func testCommandMatchesRespectsResultLimit() {
-        let commands = (0..<10).map {
-            Command(id: $0, name: "cmd\($0)", aliases: "", description: "d", tags: "t")
+        let commands = (0..<10).map { (index: Int) in
+            Command(id: index, name: "cmd\(index)", aliases: "", description: "d", tags: "t")
         }
         XCTAssertEqual(BoardTools.commandMatches(commands).count, DataTools.searchResultLimit)
     }

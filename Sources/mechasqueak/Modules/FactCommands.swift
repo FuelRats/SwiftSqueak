@@ -627,51 +627,59 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
 
     func factLocales(command: IRCBotCommand) {
         Task {
-            let fact = try await GroupedFact.get(name: command.command)
+            do {
+                let fact = try await GroupedFact.get(name: command.command)
 
-            guard let fact = fact else {
-                command.message.error(
-                    key: "anyfact.notafact", fromCommand: command,
+                guard let fact = fact else {
+                    command.message.error(
+                        key: "anyfact.notafact", fromCommand: command,
+                        map: [
+                            "command": command.command
+                        ])
+                    return
+                }
+
+                let locales = fact.messages.keys.map({
+                    "\($0) (\(Locale(identifier: $0).englishDescription))"
+                }).joined(separator: ", ")
+                command.message.replyPrivate(
+                    key: "anyfact.locales", fromCommand: command,
                     map: [
-                        "command": command.command
+                        "fact": fact.canonicalName,
+                        "locales": locales
                     ])
-                return
+            } catch {
+                command.error(error)
             }
-
-            let locales = fact.messages.keys.map({
-                "\($0) (\(Locale(identifier: $0).englishDescription))"
-            }).joined(separator: ", ")
-            command.message.replyPrivate(
-                key: "anyfact.locales", fromCommand: command,
-                map: [
-                    "fact": fact.canonicalName,
-                    "locales": locales
-                ])
         }
     }
 
     func factInfo(command: IRCBotCommand) {
         Task {
-            let fact = try await Fact.get(name: command.command, forLocale: command.locale)
+            do {
+                let fact = try await Fact.get(name: command.command, forLocale: command.locale)
 
-            guard let fact = fact else {
-                command.message.error(
-                    key: "anyfact.notafact", fromCommand: command,
+                guard let fact = fact else {
+                    command.message.error(
+                        key: "anyfact.notafact", fromCommand: command,
+                        map: [
+                            "command": "\(command.command)-\(command.locale.short)"
+                        ])
+                    return
+                }
+
+                command.message.replyPrivate(
+                    key: "anyfact.info", fromCommand: command,
                     map: [
-                        "command": "\(command.command)-\(command.locale.short)"
+                        "fact": fact.id,
+                        "language": Locale(identifier: fact.language).englishDescription,
+                        "created": fact.createdAt.eliteFormattedString,
+                        "updated": fact.updatedAt.eliteFormattedString,
+                        "author": fact.author
                     ])
-                return
+            } catch {
+                command.error(error)
             }
-
-            command.message.replyPrivate(
-                key: "anyfact.info", fromCommand: command,
-                map: [
-                    "fact": fact.id,
-                    "language": Locale(identifier: fact.language).englishDescription,
-                    "created": fact.createdAt.eliteFormattedString,
-                    "updated": fact.updatedAt.eliteFormattedString,
-                    "author": fact.author
-                ])
         }
     }
 
@@ -692,27 +700,31 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         }
 
         Task {
-            let fact = try await Fact.get(name: command.command, forLocale: command.locale)
+            do {
+                let fact = try await Fact.get(name: command.command, forLocale: command.locale)
 
-            guard let fact = fact else {
-                let fallbackFact = try await Fact.get(
-                    name: command.command, forLocale: Locale(identifier: "en"))
-                guard let fallbackFact = fallbackFact else {
+                guard let fact = fact else {
+                    let fallbackFact = try await Fact.get(
+                        name: command.command, forLocale: Locale(identifier: "en"))
+                    guard let fallbackFact = fallbackFact else {
+                        return
+                    }
+
+                    command.message.replyPrivate(
+                        key: "fact.fallback", fromCommand: command,
+                        map: [
+                            "fact": command.command,
+                            "identifier": command.locale.identifier,
+                            "language": command.locale.englishDescription
+                        ])
+                    self.messageFact(command: command, fact: fallbackFact)
                     return
                 }
 
-                command.message.replyPrivate(
-                    key: "fact.fallback", fromCommand: command,
-                    map: [
-                        "fact": command.command,
-                        "identifier": command.locale.identifier,
-                        "language": command.locale.englishDescription
-                    ])
-                self.messageFact(command: command, fact: fallbackFact)
-                return
+                self.messageFact(command: command, fact: fact)
+            } catch {
+                command.error(error)
             }
-
-            self.messageFact(command: command, fact: fact)
         }
     }
 

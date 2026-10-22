@@ -585,8 +585,13 @@ func shell(_ command: String, arguments: [String] = []) -> String? {
     task.standardOutput = pipe
     task.standardError = pipe
     task.arguments = arguments
-    task.launchPath = command
-    task.launch()
+    task.executableURL = URL(fileURLWithPath: command)
+    do {
+        try task.run()
+    } catch {
+        logger.error("Failed to run \(command): \(error)")
+        return nil
+    }
 
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
     return String(data: data, encoding: .utf8)

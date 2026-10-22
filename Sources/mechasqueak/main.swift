@@ -140,14 +140,18 @@ class MechaSqueak: @unchecked Sendable {
                     logger.error("Failed to start web server: \(error)")
                 }
             }
-            self.landmarks = try await SystemsAPI.fetchLandmarkList()
-            self.sectors = try await SystemsAPI.fetchSectorList()
-            self.groups = try await Group.getList().body.data?.primary.values ?? []
-            if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
-                self.sqliteDatabase = database
-                for command in MechaSqueak.commands {
-                    try await insertCommand(command, on: database)
+            do {
+                self.landmarks = try await SystemsAPI.fetchLandmarkList()
+                self.sectors = try await SystemsAPI.fetchSectorList()
+                self.groups = try await Group.getList().body.data?.primary.values ?? []
+                if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
+                    self.sqliteDatabase = database
+                    for command in MechaSqueak.commands {
+                        try await insertCommand(command, on: database)
+                    }
                 }
+            } catch {
+                logger.error("Failed to load startup data: \(error)")
             }
         }
     }

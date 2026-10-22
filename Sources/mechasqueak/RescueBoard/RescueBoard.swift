@@ -750,107 +750,111 @@ actor RescueBoard {
 
     nonisolated func checkElapsedPaperwork(task: RepeatedTask) {
         Task {
-            let results = try await FuelRatsAPI.getUnfiledRescues()
+            do {
+                let results = try await FuelRatsAPI.getUnfiledRescues()
 
-            let cases =
-                results.body.data?.primary.values.filter({
-                    $0.attributes.status.value == .Closed
-                        && Date().timeIntervalSince($0.attributes.updatedAt.value) > 7200.0
-                }) ?? []
-
-            let casesPerUser = cases.reduce(
-                [UUID: [RemoteRescue]](),
-                { caseMap, rescue -> [UUID: [RemoteRescue]] in
-                    var caseMap = caseMap
-                    var firstLimpet = results.body.includes![Rat.self].first(where: {
-                        $0.id.rawValue == rescue.relationships.firstLimpet?.id.rawValue
-                    })
-                    if firstLimpet == nil {
-                        firstLimpet = results.assignedRatsFor(rescue: rescue).first
-                    }
-
-                    if let userId = firstLimpet?.relationships.user?.id.rawValue {
-                        if caseMap[userId] == nil {
-                            caseMap[userId] = []
-                        }
-                        caseMap[userId]?.append(rescue)
-                    }
-                    return caseMap
-                })
-
-            for (userId, rescues) in casesPerUser {
-                if let lastReminder = await self.lastPaperworkReminder[userId],
-                    Date().timeIntervalSince(lastReminder) < 21600 {
-                    continue
-                }
-
-                var presentNicks =
-                    mecha.reportingChannel?.members.filter({
-                        return $0.associatedAPIData?.user?.id.rawValue == userId
-                            && $0.lastMessage != nil
+                let cases =
+                    results.body.data?.primary.values.filter({
+                        $0.attributes.status.value == .Closed
+                            && Date().timeIntervalSince($0.attributes.updatedAt.value) > 7200.0
                     }) ?? []
 
-                presentNicks.sort(by: { $0.lastMessage!.raw.time > $1.lastMessage!.raw.time })
-                guard let latestNick = presentNicks.first else {
-                    continue
-                }
-                if await latestNick.getAssignedRescue() != nil {
-                    continue
-                }
-                await self.setLastPaperworkReminder(forUser: userId, toDate: Date())
+                let casesPerUser = cases.reduce(
+                    [UUID: [RemoteRescue]](),
+                    { caseMap, rescue -> [UUID: [RemoteRescue]] in
+                        var caseMap = caseMap
+                        var firstLimpet = results.body.includes![Rat.self].first(where: {
+                            $0.id.rawValue == rescue.relationships.firstLimpet?.id.rawValue
+                        })
+                        if firstLimpet == nil {
+                            firstLimpet = results.assignedRatsFor(rescue: rescue).first
+                        }
 
-                var rescueLinks: [UUID: URL] = [:]
-                try await withThrowingTaskGroup(of: (UUID, URL).self) { group in
-                    for rescue in rescues {
-                        group.addTask {
-                            return (
-                                rescue.id.rawValue,
-                                await URLShortener.attemptShorten(url: rescue.editLink)
-                            )
+                        if let userId = firstLimpet?.relationships.user?.id.rawValue {
+                            if caseMap[userId] == nil {
+                                caseMap[userId] = []
+                            }
+                            caseMap[userId]?.append(rescue)
+                        }
+                        return caseMap
+                    })
+
+                for (userId, rescues) in casesPerUser {
+                    if let lastReminder = await self.lastPaperworkReminder[userId],
+                        Date().timeIntervalSince(lastReminder) < 21600 {
+                        continue
+                    }
+
+                    var presentNicks =
+                        mecha.reportingChannel?.members.filter({
+                            return $0.associatedAPIData?.user?.id.rawValue == userId
+                                && $0.lastMessage != nil
+                        }) ?? []
+
+                    presentNicks.sort(by: { $0.lastMessage!.raw.time > $1.lastMessage!.raw.time })
+                    guard let latestNick = presentNicks.first else {
+                        continue
+                    }
+                    if await latestNick.getAssignedRescue() != nil {
+                        continue
+                    }
+                    await self.setLastPaperworkReminder(forUser: userId, toDate: Date())
+
+                    var rescueLinks: [UUID: URL] = [:]
+                    try await withThrowingTaskGroup(of: (UUID, URL).self) { group in
+                        for rescue in rescues {
+                            group.addTask {
+                                return (
+                                    rescue.id.rawValue,
+                                    await URLShortener.attemptShorten(url: rescue.editLink)
+                                )
+                            }
+                        }
+
+                        for try await (id, url) in group {
+                            rescueLinks[id] = url
                         }
                     }
 
-                    for try await (id, url) in group {
-                        rescueLinks[id] = url
+                    let rescueStrings = rescues.map({ rescue -> String in
+                        return lingo.localize(
+                            "rescue.pwreminder.rescue", locale: "en-GB",
+                            interpolations: [
+                                "client": rescue.attributes.client.value ?? "unknown client",
+                                "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
+                                "link": rescueLinks[rescue.id.rawValue] ?? "Link Unavailable"
+                            ])
+                    })
+
+                    let key = "rescue.pwreminder.meme"
+
+                    mecha.reportingChannel?.client.sendMessage(
+                        toTarget: latestNick.nickname,
+                        contents: lingo.localize(
+                            key, locale: "en-GB",
+                            interpolations: [
+                                "nick": latestNick.nickname,
+                                "rescues": rescueStrings.joined(separator: ", ")
+                            ]))
+                    if rescues.count > 0 {
+                        let snickersCalculation = ceil(
+                            rescues.reduce(
+                                0,
+                                { acc, rescue in
+                                    return
+                                        (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
+                                }) * 10)
+                        let snickersCount = Swift.max(Int(snickersCalculation), 1)
+                        let destination = snickersDestinations.next()
+                        let message = String(
+                            format: "%@ has failed to do their paperwork, %d of their snickers have been %@",
+                            latestNick.nickname, snickersCount, destination)
+                        mecha.reportingChannel?.send(message: message)
+                        return
                     }
                 }
-
-                let rescueStrings = rescues.map({ rescue -> String in
-                    return lingo.localize(
-                        "rescue.pwreminder.rescue", locale: "en-GB",
-                        interpolations: [
-                            "client": rescue.attributes.client.value ?? "unknown client",
-                            "timeAgo": rescue.attributes.updatedAt.value.timeAgo(maximumUnits: 1),
-                            "link": rescueLinks[rescue.id.rawValue] ?? "Link Unavailable"
-                        ])
-                })
-
-                let key = "rescue.pwreminder.meme"
-
-                mecha.reportingChannel?.client.sendMessage(
-                    toTarget: latestNick.nickname,
-                    contents: lingo.localize(
-                        key, locale: "en-GB",
-                        interpolations: [
-                            "nick": latestNick.nickname,
-                            "rescues": rescueStrings.joined(separator: ", ")
-                        ]))
-                if rescues.count > 0 {
-                    let snickersCalculation = ceil(
-                        rescues.reduce(
-                            0,
-                            { acc, rescue in
-                                return
-                                    (acc + (abs(Date().timeIntervalSince(rescue.createdAt)) / 3600))
-                            }) * 10)
-                    let snickersCount = Swift.max(Int(snickersCalculation), 1)
-                    let destination = snickersDestinations.next()
-                    let message = String(
-                        format: "%@ has failed to do their paperwork, %d of their snickers have been %@",
-                        latestNick.nickname, snickersCount, destination)
-                    mecha.reportingChannel?.send(message: message)
-                    return
-                }
+            } catch {
+                logger.error("Elapsed paperwork check failed: \(error)")
             }
         }
     }

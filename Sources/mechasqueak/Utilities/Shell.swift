@@ -26,7 +26,7 @@ import Foundation
 
 func shell(_ launchPath: String, _ arguments: [String], currentDirectory: URL? = nil) -> String? {
     let task = Process()
-    task.launchPath = launchPath
+    task.executableURL = URL(fileURLWithPath: launchPath)
     if let curDir = currentDirectory {
         task.currentDirectoryURL = curDir
     }
@@ -34,7 +34,12 @@ func shell(_ launchPath: String, _ arguments: [String], currentDirectory: URL? =
 
     let pipe = Pipe()
     task.standardOutput = pipe
-    task.launch()
+    do {
+        try task.run()
+    } catch {
+        logger.error("Failed to run \(launchPath): \(error)")
+        return nil
+    }
 
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
     let output = String(data: data, encoding: String.Encoding.utf8)
