@@ -31,6 +31,8 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
+    static let maximumFactTargets = 5
+
     nonisolated(unsafe) public static var prepFacts = [
         "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit"
     ]
@@ -733,7 +735,7 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
             command.message.retaliate()
             return
         }
-        if command.parameters.count > 5 {
+        if command.parameters.count > FactCommands.maximumFactTargets {
             return
         } else if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
@@ -776,7 +778,11 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
 }
 
 private func resolveTargets(for command: IRCBotCommand) async -> [(String, Rescue?)] {
+    // Prep timers drive safety reminders, so only a prep fact actually delivered in a channel by a rat cancels them.
     let isPrepFact = FactCommands.prepFacts.contains(command.command)
+        && command.message.destination.isPrivateMessage == false
+        && command.parameters.count <= FactCommands.maximumFactTargets
+        && command.message.user.hasPermission(permission: .DispatchRead)
     return await command.parameters.asyncMap { target in
         var target = target
         let (_, rescue) = await board.findRescue(
