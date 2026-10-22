@@ -43,6 +43,7 @@ class TweetCommands: IRCBotModule {
         tags: ["twitter", "bluesky", "blue sky", "mastodon", "notification", "notify"],
         permission: .TwitterWrite,
         allowedDestinations: .Channel,
+        cooldown: .seconds(300),
         helpExtra: {
             return
                 "The mastodon is at @fuelratsalerts@mastodon.localecho.net and BlueSky at https://alerts.fuelrats.com/"
@@ -82,19 +83,35 @@ class TweetCommands: IRCBotModule {
             return
         }
 
+        // Posts are public and permanent, so who posted what is recorded where staff will see it.
+        mecha.reportingChannel?.send(
+            key: "tweet.audit", map: ["nick": command.message.user.nickname, "message": contents])
+
+        var failed: [String] = []
         do {
             try await Mastodon.post(message: contents)
+        } catch {
+            logger.error("Mastodon alert failed: \(error)")
+            failed.append("Mastodon")
+        }
+        do {
             try await BlueSky.post(message: contents)
         } catch {
-            logger.error("Social media alert failed: \(error)")
+            logger.error("BlueSky alert failed: \(error)")
+            failed.append("BlueSky")
         }
-
         do {
             try await FuelRatsAPI.postAlert(title: "Fuel Rats Alert", body: contents, command: command)
         } catch {
             logger.error("API alert failed: \(error)")
+            failed.append("web push")
         }
 
+        guard failed.isEmpty else {
+            command.message.error(
+                key: "tweet.partialfailure", fromCommand: command, map: ["failed": failed.joined(separator: ", ")])
+            return
+        }
         command.message.reply(key: "tweet.success", fromCommand: command)
     }
 

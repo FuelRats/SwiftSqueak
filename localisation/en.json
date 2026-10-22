@@ -253,6 +253,8 @@
     "shorten.error": "Was unable to shorten URL due to a request error.",
     "shorten.shortened": "URL has been shortened to: %{url} - Title: %{title}",
     "tweet.success": "Successfully broadcast alert",
+    "tweet.audit": "%{nick} posted a public alert: %{message}",
+    "tweet.partialfailure": "The alert could not be posted to: %{failed}",
     "tweet.minlength": "!alert message must be at least 20 characters, did you mean to use !alertcase/!alertc?",
     "tweet.error": "Encountered an error in posting to Mastodon",
     "tweet.confidential": "ERROR: Seems like you attempted to include confidential case information in a post, do not EVER broadcast client name or system on Mastodon",
