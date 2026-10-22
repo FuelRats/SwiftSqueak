@@ -9,6 +9,13 @@ import Vapor
 import HTMLKitVapor
 
 struct Routes: RouteCollection {
+    /// Search runs on every keystroke, so queries are capped to keep each one cheap.
+    static let maxSearchLength = 100
+
+    static func searchQuery(_ req: Request) -> String {
+        return String(((try? req.query.get(String.self, at: "query")) ?? "").prefix(maxSearchLength))
+    }
+
     func boot(routes: RoutesBuilder) throws {
         routes.get { req in
             let releases = (try? await GithubRelease.get()) ?? []
@@ -33,7 +40,7 @@ struct Routes: RouteCollection {
         }
         
         routes.get("command-search") { req in
-            let search = (try? req.query.get(String.self, at: "query")) ?? ""
+            let search = Routes.searchQuery(req)
             if search.isEmpty {
                 return try await req.htmlkit.render(CommandsListView())
             }
@@ -78,8 +85,7 @@ struct Routes: RouteCollection {
         }
         
         routes.get("fact-search") { req in
-            let search = (try? req.query.get(String.self, at: "query")) ?? ""
-            let facts = (try? await Fact.search(search)) ?? []
+            let search = Routes.searchQuery(req)
             if search.isEmpty {
                 let facts = (try? await Fact.getFactsGroupedByCategory()) ?? []
                 let allFacts = Array((try? await Fact.getAllFacts()) ?? []).grouped.values.sorted(by: {
@@ -90,6 +96,7 @@ struct Routes: RouteCollection {
                 return try await req.htmlkit.render(FactListView(factCategories: facts, platformFacts: platformFacts))
             }
             
+            let facts = (try? await Fact.search(search)) ?? []
             return try await req.htmlkit.render(FactSearchView(facts: facts))
         }
         
