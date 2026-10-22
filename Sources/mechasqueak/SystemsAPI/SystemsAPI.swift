@@ -406,16 +406,16 @@ class SystemsAPI {
                 ($0, sectordata.coords.distance(from: $0.coordinates))
             })
             landmarkDistances = landmarkDistances.filter({ $0.0.soi == nil || $0.1 < $0.0.soi! })
-            landmarkDistances.sort(by: { $0.1 < $1.1 })
+            // Empty when the landmark list failed to load at startup or no landmark's sphere covers this system.
+            guard let (landmark, distance) = landmarkDistances.min(by: { $0.1 < $1.1 }) else {
+                return nil
+            }
 
             let formatter = NumberFormatter.englishFormatter()
             formatter.usesSignificantDigits = true
             formatter.maximumSignificantDigits = sectordata.uncertainty.significandWidth
 
-            return (
-                landmarkDistances[0].0, formatter.string(from: landmarkDistances[0].1)!,
-                ceil(landmarkDistances[0].1)
-            )
+            return (landmark, formatter.string(from: distance) ?? String(Int(ceil(distance))), ceil(distance))
         }
 
         var estimatedSolDistance: (LandmarkListDocument.LandmarkListEntry, String, Double)? {
