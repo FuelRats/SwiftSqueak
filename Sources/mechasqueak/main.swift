@@ -207,7 +207,10 @@ class MechaSqueak: @unchecked Sendable {
             accounts.lookup(user: userJoin.user)
             if let (caseId, rescue) = await board.findRescue(
                 withCaseIdentifier: userJoin.user.nickname) {
-                rescue.clientLastHostName = userJoin.user.hostmask
+                // Only the client's own nick may set the host that quit/kill handling and re-signals trust.
+                if rescue.clientNick?.lowercased() == userJoin.user.nickname.lowercased() {
+                    rescue.clientLastHostName = userJoin.user.hostmask
+                }
 
                 var quotes = rescue.quotes
                 quotes.removeAll(where: {
@@ -287,9 +290,13 @@ class MechaSqueak: @unchecked Sendable {
             Translate.setTranslationSubscription(nil, forNick: nickname)
         }
 
-        try? await Task.sleep(nanoseconds: 2 * 10 ^ 8)  // 200ms
+        try? await Task.sleep(for: .milliseconds(200))
+        // findRescue also matches the CMDR name, which anyone can use as a nick; only the case's own IRC client
+        // quitting (or being banned) may change the case.
         if let sender = userQuit.raw.sender,
-            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
+            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname),
+            rescue.clientNick?.lowercased() == sender.nickname.lowercased(),
+            rescue.clientLastHostName == nil || rescue.clientLastHostName == sender.hostmask {
             await board.cancelPrepTimer(forRescue: rescue)
             var quotes = rescue.quotes
             quotes.removeAll(where: {
@@ -313,7 +320,7 @@ class MechaSqueak: @unchecked Sendable {
                                 "link": url,
                                 "client": rescue.clientDescription
                             ])
-                        await board.remove(id: caseId)
+                        await board.remove(rescue: rescue)
                     } catch {
 
                     }
@@ -328,7 +335,7 @@ class MechaSqueak: @unchecked Sendable {
                                 "caseId": caseId,
                                 "client": rescue.clientDescription
                             ])
-                        await board.remove(id: caseId)
+                        await board.remove(rescue: rescue)
                     } catch {
 
                     }
@@ -440,6 +447,15 @@ class MechaSqueak: @unchecked Sendable {
             return
         }
         accounts.lookup(user: user)
+
+        if let newHost = hostChange.parameters[safe: 1] {
+            Task {
+                if let (_, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname),
+                    rescue.clientNick?.lowercased() == sender.nickname.lowercased() {
+                    rescue.clientLastHostName = newHost
+                }
+            }
+        }
     }
 
     @EventListener<IRCPrivateNoticeNotification>

@@ -499,7 +499,7 @@ class BoardCommands: IRCBotModule {
             try await rescue.close(
                 firstLimpet: firstLimpet, paperworkOnly: pwOnly, command: command)
 
-            await board.remove(id: caseId)
+            await board.remove(rescue: rescue)
 
             command.message.reply(
                 key: "board.close.success", fromCommand: command,
@@ -632,7 +632,7 @@ class BoardCommands: IRCBotModule {
         do {
             try await rescue.trash(reason: reason, command: command)
 
-            await board.remove(id: caseId)
+            await board.remove(rescue: rescue)
 
             command.message.reply(
                 key: "board.trash.success", fromCommand: command,

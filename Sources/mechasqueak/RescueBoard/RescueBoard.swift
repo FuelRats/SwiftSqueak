@@ -482,10 +482,13 @@ actor RescueBoard {
         let recentlyClosed = Array(self.recentlyClosed)
 
         if let (_, recentRescue) = recentlyClosed.first(where: {
-            let currentClient = $0.value.client
+            let currentClient = $0.value.client?.lowercased()
             let updatedAt = $0.value.updatedAt
+            // Purged and banned cases were closed on purpose; a fresh signal must not bring them back.
+            let closedDeliberately = $0.value.outcome == .Purge || $0.value.banned
 
-            return currentClient == clientName && Date().timeIntervalSince(updatedAt) < 900
+            return currentClient == clientName && closedDeliberately == false
+                && Date().timeIntervalSince(updatedAt) < 900
         }), configuration.general.drillMode == false, initiated != .insertion {
             if recentRescue.quotes.contains(where: { $0.message.lowercased().contains("fuel+") })
                 == false {
@@ -634,14 +637,17 @@ actor RescueBoard {
         return caseId
     }
 
+    /// Removes the case by its UUID rather than its board number: callers reach this after awaiting the API, by which
+    /// time the number may have been freed and handed to a new client's case.
     @discardableResult
-    func remove(id: Int) async -> Bool {
-        if let rescue = self.rescues.removeValue(forKey: id) {
-            await self.cancelPrepTimer(forRescue: rescue)
-            self.recentlyClosed[id] = rescue
-            return true
+    func remove(rescue: Rescue) async -> Bool {
+        guard let (id, _) = self.rescues.first(where: { $0.value.id == rescue.id }) else {
+            return false
         }
-        return false
+        self.rescues.removeValue(forKey: id)
+        await self.cancelPrepTimer(forRescue: rescue)
+        self.recentlyClosed[id] = rescue
+        return true
     }
     
     func schedulePrepTimer(rescue: Rescue) {
@@ -1119,9 +1125,12 @@ actor RescueBoard {
         }
 
         let rescueId = remoteRescue.id.rawValue
+        let isRemoteClose = remoteRescue.attributes.status.value == .Closed
 
-        // Ignore if we just sent an update for this rescue (our own echo)
-        if await board.hasRecentOutgoingUpdate(rescueId: rescueId) {
+        // Ignore if we just sent an update for this rescue (our own echo). A close is never dropped this way: when
+        // the bot closes a case it marks it closed locally before uploading, so a close arriving for a case that is
+        // still open here came from someone else, and dropping it would let the next save reopen the case.
+        if isRemoteClose == false, await board.hasRecentOutgoingUpdate(rescueId: rescueId) {
             return
         }
 
@@ -1136,8 +1145,11 @@ actor RescueBoard {
                 return
             }
 
-            if remoteRescue.attributes.status.value == .Closed {
-                await board.remove(id: caseId)
+            if isRemoteClose {
+                guard localRescue.status != .Closed else {
+                    return
+                }
+                await board.remove(rescue: localRescue)
                 mecha.reportingChannel?.send(
                     key: "board.remoteclose",
                     map: [
@@ -1167,7 +1179,7 @@ actor RescueBoard {
         }
 
         if let (caseId, rescue) = await board.getRescues().first(where: { $0.1.id == rescueId }) {
-            await board.remove(id: caseId)
+            await board.remove(rescue: rescue)
             mecha.reportingChannel?.send(
                 key: "board.remotedeletion",
                 map: [
