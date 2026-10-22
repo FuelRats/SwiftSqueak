@@ -131,6 +131,7 @@ class Translate: IRCBotModule {
         description:
             "Translates a message to the client's language and replies in the rescue channel as you",
         tags: ["google", "deepl", "client", "rescue"],
+        permission: .DispatchRead,
         helpExtra: {
             return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
         },
@@ -225,6 +226,7 @@ class Translate: IRCBotModule {
         description:
             "Translate a message to another language and sends the message to a channel as you",
         tags: ["google", "deepl"],
+        permission: .DispatchRead,
         allowedDestinations: .PrivateMessage,
         cooldown: .seconds(5),
         helpExtra: {
@@ -507,9 +509,16 @@ class Translate: IRCBotModule {
             // Do not interpret commands from playback of old messages
             return
         }
+        // Every translation is an LLM call, so skip it when nobody will receive it.
+        guard Translate.clientTranslationSubscribers.isEmpty == false else {
+            return
+        }
+        // findRescue also matches the CMDR name, which anyone can take as a nick; only the client's own messages
+        // are relayed.
         guard
             let (caseId, rescue) = await board.findRescue(
-                withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true)
+                withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true),
+            rescue.clientNick?.lowercased() == channelMessage.user.nickname.lowercased()
         else {
             return
         }
