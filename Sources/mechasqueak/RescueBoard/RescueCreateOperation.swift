@@ -116,9 +116,6 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
                                 self.rescue.synced = false
                                 continuation.resume(throwing: response)
                             }
-
-                            self.isFinished = true
-                            self.isExecuting = false
                         case .failure(let error):
                             continuation.resume(throwing: error)
                             logger.error("\(error)")
@@ -193,6 +190,8 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
         guard isCancelled == false else {
             logger.debug("Create operation was cancelled")
             self.isFinished = true
+            // The caller is suspended on this operation's completion; it has to be told either way.
+            self.onError?(CancellationError())
             return
         }
         if configuration.general.drillMode {
@@ -212,9 +211,9 @@ class RescueCreateOperation: Operation, @unchecked Sendable {
             } catch {
                 self.rescue.synced = false
                 self.onError?(error)
-                self.isFinished = true
-                self.isExecuting = false
             }
+            self.isExecuting = false
+            self.isFinished = true
         }
     }
 }
