@@ -167,7 +167,8 @@ struct IRCBotCommandDeclaration: @unchecked Sendable {
 
     var isDispatchingCommand: Bool {
         return self.category == .board
-            && (self.permission == .RescueWrite || self.permission == .RescueWriteOwn)
+            && (self.permission == .DispatchWrite || self.permission == .RescueWrite
+                || self.permission == .RescueWriteOwn)
     }
 
     var example: String {
