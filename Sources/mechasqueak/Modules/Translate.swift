@@ -499,8 +499,9 @@ class Translate: IRCBotModule {
 
     /// Strips a stray backslash the model may insert before a forward slash (over-escaping IRC
     /// commands like "/ns identify"), without touching valid escapes such as \\n, \\t, or \\".
+    /// The result is relayed to IRC, so it is also made safe to relay (no line breaks, controls or highlight words).
     static func sanitizeTranslation(_ text: String) -> String {
-        text.replacingOccurrences(of: "\\/", with: "/")
+        text.replacingOccurrences(of: "\\/", with: "/").sanitizedForRelay()
     }
 
     @AsyncEventListener<IRCChannelMessageNotification>

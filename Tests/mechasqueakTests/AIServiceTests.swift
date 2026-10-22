@@ -131,6 +131,29 @@ final class AIServiceTests: XCTestCase {
         XCTAssertEqual(AIService.formatForIRC("use `!clear` to close"), "use !clear to close")
     }
 
+    func testFormatForIRCDePingsSignalWords() {
+        // Saying "ratsignal"/"opsignal"/"techsignal" verbatim highlights everyone subscribed to
+        // those words; a zero-width space must break them in any casing while leaving the text
+        // visually unchanged.
+        XCTAssertEqual(
+            AIService.formatForIRC("A RATSIGNAL is sent when a case opens."),
+            "A RAT\u{200B}SIGNAL is sent when a case opens.")
+        XCTAssertEqual(
+            AIService.formatForIRC("the Ratsignal pings all rats, and ratsignals do too"),
+            "the Rat\u{200B}signal pings all rats, and rat\u{200B}signals do too")
+        XCTAssertEqual(
+            AIService.formatForIRC("use opsignal or TechSignal to summon help"),
+            "use op\u{200B}signal or Tech\u{200B}Signal to summon help")
+        for word in ["RATSIGNAL", "opsignal", "techsignal"] {
+            XCTAssertFalse(AIService.formatForIRC(word).lowercased().contains(word.lowercased()))
+        }
+    }
+
+    func testFormatForIRCKeepsBoldButStripsOtherControlCodes() {
+        let out = AIService.formatForIRC("**Sol** is \u{03}04red\u{03} and \u{01}VERSION\u{01}")
+        XCTAssertEqual(out, "\u{02}Sol\u{02} is 04red and VERSION")
+    }
+
     func testClampTruncatesLongTextWithEllipsis() {
         let long = String(repeating: "word ", count: 200)
         let out = AIService.clamp(long, to: 50)

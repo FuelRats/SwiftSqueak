@@ -309,7 +309,7 @@ final class AIService: Sendable {
         while collapsed.contains("  ") {
             collapsed = collapsed.replacingOccurrences(of: "  ", with: " ")
         }
-        return collapsed.trimmingCharacters(in: .whitespaces)
+        return collapsed.trimmingCharacters(in: .whitespaces).sanitizedForRelay()
     }
 
     /// Truncates over-long text without ever stopping mid-sentence: prefer ending at the last

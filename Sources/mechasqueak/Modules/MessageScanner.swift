@@ -104,7 +104,8 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased())
+        if channelMessage.message.lowercased().replacingOccurrences(of: "\u{200B}", with: "")
+            .contains(configuration.general.signal.lowercased())
             && channelMessage.message.trimmingCharacters(in: .whitespaces).starts(with: "!")
                 == false {
             guard let rescue = Rescue(fromRatsignal: channelMessage) else {
