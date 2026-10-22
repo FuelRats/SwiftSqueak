@@ -4,6 +4,7 @@
 //
 //  Created by Alex Sørlie on 25/05/2025.
 //
+import Foundation
 import HTMLKit
 import Markdown
 
@@ -86,16 +87,26 @@ struct HTMLVisitor: MarkupVisitor {
                 }
                 
             case let image as Markdown.Image:
+                guard let source = safeURL(image.source) else {
+                    return image.title ?? ""
+                }
                 return HTMLKit.Image()
-                    .source(image.source ?? "")
+                    .source(source)
                     .alternate(image.title ?? "")
                 
             case let link as Markdown.Link:
+                guard let destination = safeURL(link.destination) else {
+                    return HTMLKit.Span {
+                        for child in link.children {
+                            defaultVisit(child)
+                        }
+                    }
+                }
                 return HTMLKit.Anchor {
                     for child in link.children {
                         defaultVisit(child)
                     }
-                }.target(.blank).reference(link.destination ?? "")
+                }.target(.blank).reference(destination)
                 
             case let strikethrough as Markdown.Strikethrough:
                 return HTMLKit.Span {
@@ -165,6 +176,20 @@ struct HTMLVisitor: MarkupVisitor {
         }
     }
     
+    /// Only web and mail links are rendered, so markdown can't produce `javascript:` or `data:` URLs.
+    static let allowedURLSchemes: Set<String> = ["http", "https", "mailto"]
+
+    func safeURL(_ destination: String?) -> String? {
+        guard let destination = destination, let components = URLComponents(string: destination) else {
+            return nil
+        }
+        guard let scheme = components.scheme?.lowercased() else {
+            // Same-site paths and anchors are fine; "//host" would leave the site without a scheme.
+            return destination.hasPrefix("//") ? nil : destination
+        }
+        return HTMLVisitor.allowedURLSchemes.contains(scheme) ? destination : nil
+    }
+
     mutating func visitListItem(_ listItem: Markdown.ListItem) -> HTMLKit.ListElement {
         return HTMLKit.ListItem {
             for child in listItem.children {
