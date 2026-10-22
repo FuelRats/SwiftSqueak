@@ -43,7 +43,7 @@ let httpClient = HTTPClient(
     ))
 
 nonisolated(unsafe) var configuration = MechaConfiguration.fromEnvironment()
-nonisolated(unsafe) let lingo = try Lingo(
+let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 private let clientJoinLeaveMessages: Set<String> = [

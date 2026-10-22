@@ -23,7 +23,7 @@ import NIO
 @preconcurrency import PostgresKit
 @preconcurrency import SQLKit
 
-nonisolated(unsafe) let sqlConfiguration = SQLPostgresConfiguration(
+let sqlConfiguration = SQLPostgresConfiguration(
     hostname: configuration.database.host,
     port: Int(configuration.database.port),
     username: configuration.database.username,
