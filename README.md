@@ -1,7 +1,7 @@
 # mechasqueak
 
 ## Install and Configure
-Ensure Swift 5.3 or above is installed and linked.
+Ensure Swift 6.1 or above is installed and linked.
 
 Compile by running the build script
 ```bash
