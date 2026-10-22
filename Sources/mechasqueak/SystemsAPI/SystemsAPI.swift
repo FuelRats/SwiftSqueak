@@ -604,11 +604,9 @@ class SystemsAPI {
             func preferableStations(requireLargePad: Bool, requireSpace: Bool, legacyStations: Bool)
                 -> [Station] {
                 let stations = self.stations.filter {
-                    (requireLargePad == false || $0.hasLargePad)
-                    && (legacyStations == false || $0.type?.isPlayerStation == false)
-                        && (requireSpace == false || $0.type?.isPlanetary == false)
-                        && $0.isFunctional
-                        && $0.services.contains(where: { $0.caseInsensitiveCompare("Refuel") == .orderedSame })
+                    $0.isPreferable(
+                        requireLargePad: requireLargePad, requireSpace: requireSpace,
+                        legacyStations: legacyStations)
                 }
                 let maxDistance = stations.map { $0.distance ?? defaultMaxDistance }.max() ?? maxUsefulDistance
                 let weightDistance = maxUsefulDistance / maxDistance
@@ -718,6 +716,18 @@ class SystemsAPI {
                     return self.type?.isPlayerStation == true
                         || self.services.contains("registeringcolonisation")
                         || self.services.contains("colonisationcontribution")
+                }
+
+                var hasRefuel: Bool {
+                    return self.services.contains(where: { $0.caseInsensitiveCompare("Refuel") == .orderedSame })
+                }
+
+                func isPreferable(requireLargePad: Bool, requireSpace: Bool, legacyStations: Bool) -> Bool {
+                    return (requireLargePad == false || self.hasLargePad)
+                        && (legacyStations == false || self.type?.isPlayerStation == false)
+                        && (requireSpace == false || self.type?.isPlanetary == false)
+                        && self.isFunctional
+                        && self.hasRefuel
                 }
 
                 func score(weightDistance: Double = 1.0, weightRanking: Double = 0.1) -> Double {

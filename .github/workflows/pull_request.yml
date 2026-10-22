@@ -27,7 +27,7 @@ jobs:
           done
           exit $status
 
-      - name: Install Swift 6.1
+      - name: Install Swift 6.4.1
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -46,9 +46,9 @@ jobs:
             unzip \
             zlib1g-dev
 
-          curl -fSsL https://download.swift.org/swift-6.1-release/ubuntu2204/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu22.04.tar.gz -o swift.tar.gz
+          curl -fSsL https://download.swift.org/swift-6.4.1-release/ubuntu2204/swift-6.4.1-RELEASE/swift-6.4.1-RELEASE-ubuntu22.04.tar.gz -o swift.tar.gz
           tar -xzf swift.tar.gz
-          sudo mv swift-6.1-RELEASE-ubuntu22.04 /opt/swift
+          sudo mv swift-6.4.1-RELEASE-ubuntu22.04 /opt/swift
           echo "export PATH=/opt/swift/usr/bin:\$PATH" >> $GITHUB_ENV
 
       - name: Confirm Swift version
