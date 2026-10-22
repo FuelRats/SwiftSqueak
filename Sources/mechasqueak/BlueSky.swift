@@ -35,7 +35,8 @@ struct BlueSky {
         let body = BlueSkyAuthRequest(identifier: config.handle, password: config.appPassword)
         request.body = try .encodable(body)
 
-        return try await httpClient.execute(request: request, forDecodable: BlueSkyAuthResponse.self)
+        return try await httpClient.execute(
+            request: request, forDecodable: BlueSkyAuthResponse.self, logsResponseBody: false)
     }
 
     @discardableResult
@@ -89,7 +90,7 @@ struct BlueSkyAuthRequest: Codable {
 struct BlueSkyAuthResponse: Codable {
     let did: String
     let handle: String
-    let email: String
+    let email: String?
     let accessJwt: String
     let refreshJwt: String
 }

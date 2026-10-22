@@ -58,26 +58,29 @@ extension HTTPClient {
         })
     }
     
+    /// Executes `request` and decodes the response. Failures are logged without the URL's query string (which can
+    /// carry signatures) and, when `logsResponseBody` is false, without the body, for responses that hold credentials.
     func execute<D>(
         request: Request,
         forDecodable decodable: D.Type,
         deadline: NIODeadline? = .now() + .seconds(5),
-        withDecoder decoder: JSONDecoder = defaultJsonDecoder
+        withDecoder decoder: JSONDecoder = defaultJsonDecoder,
+        logsResponseBody: Bool = true
     ) async throws -> D where D: Decodable {
         let response = try await self.execute(request: request, deadline: deadline, expecting: 200...202)
+        let loggableURL = "\(request.url.host ?? "")\(request.url.path)"
         do {
             guard let body = response.body else {
-                logger.error("\(request.url.absoluteString)")
-                logger.error("\(response)")
-                if let body = response.body {
-                    logger.error("\(String(data: Data(buffer: body), encoding: .utf8) ?? "")")
-                }
+                logger.error("Empty response from \(loggableURL): \(response.status)")
                 throw response
             }
             return try decoder.decode(D.self, from: Data(buffer: body))
         } catch {
             if let body = response.body {
-                logger.error("\(String(data: Data(buffer: body), encoding: .utf8) ?? "")")
+                let contents = logsResponseBody
+                    ? String(data: Data(buffer: body), encoding: .utf8) ?? ""
+                    : "<\(body.readableBytes) bytes withheld>"
+                logger.error("Undecodable response from \(loggableURL): \(contents)")
             }
             logger.error("\(error)")
             throw error
