@@ -62,6 +62,9 @@ actor RescueBoard {
     private var recentIdentifiers: [Int] = []
     private var recentlyClosed = [Int: Rescue]()
     private var pendingClientJoins: [String: (EventLoopPromise<Void>, Rescue)] = [:]
+    /// Lowercased client names, nicks and hosts whose case is being created. Insertion suspends several times before
+    /// the case lands on the board, and a second signal for the same client in that window must not create another.
+    private var pendingClientInserts: Set<String> = []
 
     private var lastPaperworkReminder: [UUID: Date] = [:]
     private var pendingOutgoingUpdates: [UUID: Date] = [:]
@@ -412,6 +415,9 @@ actor RescueBoard {
         preferringIdentifier preferredIdentifier: Int? = nil,
         preferringEvenness: Bool? = nil
     ) async -> Int {
+        if let existing = self.rescues.first(where: { $0.value.id == rescue.id }) {
+            return existing.key
+        }
         var identifier = preferredIdentifier ?? getNewIdentifier(even: preferringEvenness)
         if self.rescues[identifier] != nil {
             identifier = getNewIdentifier()
@@ -434,14 +440,17 @@ actor RescueBoard {
         let clientName = rescue.client?.lowercased()
         let clientNick = rescue.clientNick?.lowercased()
 
-        if let (_, existingRescue) = await self.first(where: {
-            rescueMatchesClient(
-                $0.value, clientName: clientName, clientNick: clientNick)
-        }) {
-            try? await announceExistingRescue(
-                existingRescue, conflictingWith: rescue, initiated: initiated, inMessage: message)
+        let reservation = Set([clientName, clientNick, rescue.clientLastHostName?.lowercased()].compactMap({ $0 }))
+        guard reservation.isDisjoint(with: self.pendingClientInserts) else {
+            reportPendingInsert(rescue, initiated: initiated, inMessage: message)
             return
         }
+        var similarRescue: Rescue?
+        if await handledByExistingRescue(rescue, initiated: initiated, message: message, similar: &similarRescue) {
+            return
+        }
+        self.pendingClientInserts.formUnion(reservation)
+        defer { self.pendingClientInserts.subtract(reservation) }
 
         if force == false {
             do {
@@ -453,15 +462,8 @@ actor RescueBoard {
             }
 
         }
-        if let lastHostname = rescue.clientLastHostName {
-            if let (_, existingRescue) = await self.first(where: {
-                $0.value.clientLastHostName == lastHostname
-            }) {
-                try? await announceExistingRescue(
-                    existingRescue, conflictingWith: rescue, initiated: initiated,
-                    inMessage: message)
-                return
-            }
+        if await handledByExistingRescue(rescue, initiated: initiated, message: message, similar: &similarRescue) {
+            return
         }
 
         if initiated == .announcer && configuration.queue != nil {
@@ -511,6 +513,11 @@ actor RescueBoard {
             }
         }
 
+        // Other paths (restores, unclose, remote creates) don't take a reservation, so check once more right before
+        // the case is placed, with no suspension point in between.
+        if await handledByExistingRescue(rescue, initiated: initiated, message: message, similar: &similarRescue) {
+            return
+        }
         let identifier = await self.insert(rescue: rescue, preferringEvenness: even)
         self.recentIdentifiers.removeAll(where: { $0 == identifier })
         self.recentIdentifiers.append(identifier)
@@ -541,6 +548,7 @@ actor RescueBoard {
         try? rescue.save(nil)
         let signal = try generateSignal(caseId: identifier, rescue: rescue, initiated: initiated)
         message.reply(message: signal)
+        warnIfSimilar(caseId: identifier, rescue: rescue, similarTo: similarRescue, inMessage: message)
 
         await rescue.prep(message: message, initiated: initiated)
 
@@ -915,6 +923,11 @@ actor RescueBoard {
         _ existingRescue: Rescue, conflictingWith rescue: Rescue, initiated: RescueInitiationType,
         inMessage message: IRCPrivateMessage
     ) async throws {
+        // A plain signal can come from anyone using the client's nick, so it only changes the case when it comes
+        // from the client's own host; otherwise its differences are reported for dispatch to apply.
+        let fromClientsHost = existingRescue.clientLastHostName != nil
+            && existingRescue.clientLastHostName == rescue.clientLastHostName
+        let appliesChanges = initiated != .signal || fromClientsHost
         let caseId = await board.getId(forRescue: existingRescue) ?? 0
         let crStatus = existingRescue.codeRed ? "(\(IRCFormat.color(.LightRed, "CR")))" : ""
         if initiated == .signal {
@@ -946,8 +959,10 @@ actor RescueBoard {
             changes.append(
                 "\(IRCFormat.bold("IRC Nick:")) \(existingRescue.clientNick ?? "?") -> \(rescue.clientNick ?? "?")"
             )
-            existingRescue.clientNick = rescue.clientNick
-            try? existingRescue.save(nil)
+            if appliesChanges {
+                existingRescue.clientNick = rescue.clientNick
+                try? existingRescue.save(nil)
+            }
         }
 
         let platform = rescue.platform
@@ -970,7 +985,7 @@ actor RescueBoard {
             changes.append(
                 "\(IRCFormat.bold("System:")) \(existingRescue.system.name) -> \(rescue.system.name)"
             )
-            if let system = rescue.system, rescue.system?.isConfirmed == false {
+            if appliesChanges, let system = rescue.system, rescue.system?.isConfirmed == false {
                 let result = try await SystemsAPI.performSystemCheck(forSystem: system.name)
                 guard result.isConfirmed else {
                     return
@@ -1163,31 +1178,133 @@ actor RescueBoard {
     }
 }
 
-private func rescueMatchesClient(
-    _ rescue: Rescue, clientName: String?, clientNick: String?
-) -> Bool {
-    let currentClientName = rescue.client?.lowercased()
-    let currentClientNick = rescue.clientNick?.lowercased()
+// MARK: - Matching a new signal against open cases
 
-    // Exact match
-    if currentClientName == clientName
-        || (currentClientNick != nil && currentClientNick == clientNick) {
+extension RescueBoard {
+    /// Announces the signal against an existing case and returns true when `rescue` is an open case's client. A case
+    /// whose client only has a similar name is returned in `similar` instead, because it may be a different client.
+    private func handledByExistingRescue(
+        _ rescue: Rescue, initiated: RescueInitiationType, message: IRCPrivateMessage, similar: inout Rescue?
+    ) async -> Bool {
+        guard let (existingRescue, match) = existingRescue(matching: rescue) else {
+            return false
+        }
+        guard match == .exact else {
+            // A plain signal from a near-miss nick ("Jameson_" for "Jameson") is usually the same client reconnecting
+            // under a taken nick, so it joins the existing case rather than creating another and re-pinging every
+            // rat; dispatch is told it may be someone else. Announcer and dispatcher inserts create a separate case.
+            guard initiated == .signal else {
+                similar = existingRescue
+                return false
+            }
+            try? await announceExistingRescue(
+                existingRescue, conflictingWith: rescue, initiated: initiated, inMessage: message)
+            if let caseId = self.rescues.first(where: { $0.value === existingRescue })?.key {
+                message.reply(message: lingo.localize(
+                    "board.signal.similarsignal", locale: "en-GB",
+                    interpolations: [
+                        "caseId": caseId,
+                        "client": rescue.clientDescription,
+                        "existingClient": existingRescue.clientDescription
+                    ]))
+            }
+            return true
+        }
+        try? await announceExistingRescue(
+            existingRescue, conflictingWith: rescue, initiated: initiated, inMessage: message)
         return true
     }
 
-    // Fuzzy match — edit distance <= 2 for names 4+ characters
+    /// An open case for the same client as `rescue`, matched synchronously so no other insert can interleave.
+    private func existingRescue(matching rescue: Rescue) -> (Rescue, ClientMatch)? {
+        let clientName = rescue.client?.lowercased()
+        let clientNick = rescue.clientNick?.lowercased()
+        var similar: Rescue?
+        for (_, candidate) in self.rescues {
+            if let host = rescue.clientLastHostName, candidate.clientLastHostName == host {
+                return (candidate, .exact)
+            }
+            switch clientMatch(candidate, clientName: clientName, clientNick: clientNick) {
+                case .exact:
+                    return (candidate, .exact)
+                case .similar:
+                    similar = similar ?? candidate
+                case nil:
+                    break
+            }
+        }
+        return similar.map({ ($0, .similar) })
+    }
+
+    /// A second signal while the client's case is still being created is dropped; a dispatcher is told why.
+    private func reportPendingInsert(
+        _ rescue: Rescue, initiated: RescueInitiationType, inMessage message: IRCPrivateMessage
+    ) {
+        logger.info("Ignoring signal for \(rescue.clientDescription): their case is already being created")
+        guard initiated == .insertion else {
+            return
+        }
+        message.reply(message: lingo.localize(
+            "board.signal.creating", locale: "en-GB", interpolations: ["client": rescue.clientDescription]))
+    }
+
+    private func warnIfSimilar(
+        caseId: Int, rescue: Rescue, similarTo similarRescue: Rescue?, inMessage message: IRCPrivateMessage
+    ) {
+        // The similar case may have closed while this one was being created.
+        guard
+            let similarRescue = similarRescue,
+            let existingCaseId = self.rescues.first(where: { $0.value === similarRescue })?.key
+        else {
+            return
+        }
+        message.reply(
+            message: lingo.localize(
+                "board.signal.similar", locale: "en-GB",
+                interpolations: [
+                    "caseId": caseId,
+                    "client": rescue.clientDescription,
+                    "existingCaseId": existingCaseId,
+                    "existingClient": similarRescue.clientDescription
+                ]))
+    }
+}
+
+enum ClientMatch {
+    case exact
+    case similar
+}
+
+func clientMatch(_ rescue: Rescue, clientName: String?, clientNick: String?) -> ClientMatch? {
+    return clientMatch(
+        existingName: rescue.client?.lowercased(), existingNick: rescue.clientNick?.lowercased(),
+        clientName: clientName, clientNick: clientNick)
+}
+
+/// How a new signal's lowercased client name and nick relate to an existing case's.
+func clientMatch(
+    existingName currentClientName: String?, existingNick currentClientNick: String?,
+    clientName: String?, clientNick: String?
+) -> ClientMatch? {
+
+    if (currentClientName != nil && currentClientName == clientName)
+        || (currentClientNick != nil && currentClientNick == clientNick) {
+        return .exact
+    }
+
+    // Edit distance <= 2 for names of 4+ characters catches typos, but also different clients with similar names.
     if let name = clientName, let existing = currentClientName,
        name.count >= 4 && existing.count >= 4,
        name.levenshtein(existing) <= 2 {
-        return true
+        return .similar
     }
     if let nick = clientNick, let existing = currentClientNick,
        nick.count >= 4 && existing.count >= 4,
        nick.levenshtein(existing) <= 2 {
-        return true
+        return .similar
     }
 
-    return false
+    return nil
 }
 
 enum RescueInitiationType {
