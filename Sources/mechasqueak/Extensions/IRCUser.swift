@@ -154,10 +154,16 @@ extension IRCUser {
         return await isAssignedTo(rescue: rescue) || clientNick == self.nickname
     }
 
+    /// Whether the hostmask is `domain` itself or a host under it, so "pirat.fuelrats.com" is not a rat vhost.
+    func hasVirtualHost(under domain: String) -> Bool {
+        let host = self.hostmask.lowercased()
+        return host == domain || host.hasSuffix(".\(domain)")
+    }
+
     func hostPermissions() -> [AccountPermission] {
-        if self.hostmask.hasSuffix("i.see.all")
-            || self.hostmask.hasSuffix("netadmin.fuelrats.com")
-            || self.hostmask.hasSuffix("admin.fuelrats.com") {
+        if self.hasVirtualHost(under: "i.see.all")
+            || self.hasVirtualHost(under: "netadmin.fuelrats.com")
+            || self.hasVirtualHost(under: "admin.fuelrats.com") {
             return [
                 .UserRead,
                 .UserReadOwn,
@@ -178,8 +184,8 @@ extension IRCUser {
             ]
         }
 
-        if self.hostmask.hasSuffix("overseer.fuelrats.com")
-            || self.hostmask.hasSuffix("techrat.fuelrats.com") {
+        if self.hasVirtualHost(under: "overseer.fuelrats.com")
+            || self.hasVirtualHost(under: "techrat.fuelrats.com") {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
@@ -198,7 +204,7 @@ extension IRCUser {
             ]
         }
 
-        if self.hostmask.hasSuffix("trainer.fuelrats.com") {
+        if self.hasVirtualHost(under: "trainer.fuelrats.com") {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
@@ -214,7 +220,7 @@ extension IRCUser {
             ]
         }
 
-        if self.hostmask.hasSuffix("rat.fuelrats.com") {
+        if self.hasVirtualHost(under: "rat.fuelrats.com") {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
@@ -229,7 +235,7 @@ extension IRCUser {
             ]
         }
 
-        if self.hostmask.hasSuffix("recruit.fuelrats.com") {
+        if self.hasVirtualHost(under: "recruit.fuelrats.com") {
             return [
                 .UserReadOwn,
                 .UserWriteOwn,
