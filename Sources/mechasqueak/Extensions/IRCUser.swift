@@ -40,7 +40,7 @@ extension IRCUser {
         else {
             return nil
         }
-        return MechaSqueak.accounts.mapping[account]
+        return MechaSqueak.accounts.apiData(forAccount: account)
     }
 
     var settings: UserDataObject? {
@@ -101,10 +101,8 @@ extension IRCUser {
     }
 
     func flush() {
-        if let mapping = MechaSqueak.accounts.mapping.first(where: {
-            $0.key == self.account
-        }) {
-            MechaSqueak.accounts.mapping.removeValue(forKey: mapping.key)
+        if let account = self.account {
+            MechaSqueak.accounts.setAPIData(nil, forAccount: account)
         }
         MechaSqueak.accounts.lookupIfNotExists(user: self)
     }

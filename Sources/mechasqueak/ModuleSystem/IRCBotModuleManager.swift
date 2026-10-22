@@ -33,7 +33,11 @@ protocol IRCBotModule {
 
 class IRCBotModuleManager {
     private var registeredModules: [IRCBotModule] = []
-    nonisolated(unsafe) public private(set) static var commandHistory = Queue<IRCBotCommand>(maxSize: 250)
+    // Every command runs in its own Task, so the history is pushed and searched concurrently.
+    private static let commandHistoryStorage = Locked(Queue<IRCBotCommand>(maxSize: 250))
+    public static var commandHistory: Queue<IRCBotCommand> {
+        return commandHistoryStorage.current
+    }
     nonisolated(unsafe) static var denylist = configuration.general.dispatchDenylist
 
     func register(module: IRCBotModule) {
@@ -155,7 +159,6 @@ class IRCBotModuleManager {
             }
         }
 
-        commandHistory.push(value: ircBotCommand)
         if let permission = command.permission {
             guard message.user.hasPermission(permission: permission) else {
                 message.reply(
@@ -166,6 +169,8 @@ class IRCBotModuleManager {
                 return
             }
         }
+        // Recorded only once authorised, so a refused attempt can't start a cooldown for everyone else.
+        commandHistoryStorage.withValue({ $0.push(value: ircBotCommand) })
         if command.isDispatchingCommand
             && denylist.contains(where: {
                 message.user.nickname.lowercased().contains($0.lowercased())

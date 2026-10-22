@@ -29,7 +29,24 @@ import Logging
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
-    nonisolated(unsafe) static var clientTranslationSubscribers: [String: ClientTranslateSubscription] = [:]
+    // Changed by lookups, quits and nick changes while translated messages iterate it.
+    private static let subscriptions = Locked([String: ClientTranslateSubscription]())
+    static var clientTranslationSubscribers: [String: ClientTranslateSubscription] {
+        return subscriptions.current
+    }
+
+    static func setTranslationSubscription(_ subscription: ClientTranslateSubscription?, forNick nick: String) {
+        subscriptions.withValue({ $0[nick] = subscription })
+    }
+
+    static func moveTranslationSubscription(fromNick oldNick: String, toNick newNick: String) {
+        subscriptions.withValue({ subscribers in
+            guard let subscription = subscribers.removeValue(forKey: oldNick) else {
+                return
+            }
+            subscribers[newNick] = subscription
+        })
+    }
 
     /// Forced tool used to get structured output from Claude: its input schema IS the result
     /// envelope, so the model "calls" it with the translation fields, which we read back from the
@@ -327,7 +344,7 @@ class Translate: IRCBotModule {
             var data = user.attributes.data.value
             data.clientTranslateSubscription = subscriptionType
             _ = try await user.updateUserData(dataObject: data)
-            Translate.clientTranslationSubscribers[command.message.user.nickname] = subscriptionType
+            Translate.setTranslationSubscription(subscriptionType, forNick: command.message.user.nickname)
             command.message.reply(key: "transsub.subbed", fromCommand: command)
         } catch {
             logger.error("\(error)")
@@ -364,7 +381,7 @@ class Translate: IRCBotModule {
         var data = user.attributes.data.value
         data.clientTranslateSubscription = nil
         _ = try? await user.updateUserData(dataObject: data)
-        Translate.clientTranslationSubscribers[command.message.user.nickname] = nil
+        Translate.setTranslationSubscription(nil, forNick: command.message.user.nickname)
         command.message.reply(key: "transsub.unsubbed", fromCommand: command)
     }
 

@@ -171,7 +171,7 @@ class MechaSqueak: @unchecked Sendable {
 
         guard let account = user.account else {
             if let oldValue = accountChange.oldValue {
-                accounts.mapping[oldValue] = nil
+                accounts.setAPIData(nil, forAccount: oldValue)
             }
             return
         }
@@ -283,9 +283,8 @@ class MechaSqueak: @unchecked Sendable {
 
     @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
-        if let subscription = Translate.clientTranslationSubscribers[
-            userQuit.raw.sender?.nickname ?? ""] {
-            Translate.clientTranslationSubscribers[userQuit.raw.sender?.nickname ?? ""] = nil
+        if let nickname = userQuit.raw.sender?.nickname {
+            Translate.setTranslationSubscription(nil, forNick: nickname)
         }
 
         try? await Task.sleep(nanoseconds: 2 * 10 ^ 8)  // 200ms
@@ -414,10 +413,7 @@ class MechaSqueak: @unchecked Sendable {
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
-        if let subscription = Translate.clientTranslationSubscribers[sender.nickname] {
-            Translate.clientTranslationSubscribers[sender.nickname] = nil
-            Translate.clientTranslationSubscribers[nickChange.newNick] = subscription
-        }
+        Translate.moveTranslationSubscription(fromNick: sender.nickname, toNick: nickChange.newNick)
 
         if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
             rescue.clientNick = nickChange.newNick

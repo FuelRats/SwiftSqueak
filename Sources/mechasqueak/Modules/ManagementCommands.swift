@@ -44,7 +44,7 @@ class ManagementCommands: IRCBotModule {
     )
     var didReceiveFlushAllCommand = { command in
         MechaSqueak.accounts.queue.cancelAllOperations()
-        MechaSqueak.accounts.mapping.removeAll()
+        MechaSqueak.accounts.removeAllAPIData()
 
         let signedInUsers = mecha.connections.flatMap({
             return $0.channels.flatMap({
@@ -109,7 +109,7 @@ class ManagementCommands: IRCBotModule {
         }
 
         if let account = user.account {
-            MechaSqueak.accounts.mapping.removeValue(forKey: account)
+            MechaSqueak.accounts.setAPIData(nil, forAccount: account)
         }
         MechaSqueak.accounts.lookupIfNotExists(user: user)
         command.message.reply(
