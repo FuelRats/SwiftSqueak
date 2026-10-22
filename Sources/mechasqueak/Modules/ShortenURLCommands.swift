@@ -28,7 +28,10 @@ import Logging
 
 class ShortenURLCommands: IRCBotModule {
     var name: String = "Shorten URL Commands"
-    nonisolated(unsafe) static var ongoingShortenUrls: [String: String] = [:]
+    /// URLs too long for one IRC line arrive as several private messages; the command collects them for a second.
+    /// Written by the private message listener while the command reads it.
+    static let ongoingShortenUrls = Locked([String: String]())
+    static let allowedURLSchemes: Set<String> = ["http", "https"]
 
     @BotCommand(
         ["shorten", "short", "shortener"],
@@ -45,23 +48,29 @@ class ShortenURLCommands: IRCBotModule {
     var didReceiveShortenURLCommand = { (command: IRCBotCommand) in
         var keyword: String?
         if command.parameters.count > 1 {
+            // A custom keyword makes an official-looking t.fuelr.at link, so only overseers may choose one.
+            guard command.message.user.hasPermission(permission: .RescueWrite) else {
+                command.message.error(key: "shorten.keywordpermission", fromCommand: command)
+                return
+            }
             keyword = command.parameters[1].lowercased()
         }
 
         var longUrl = command.parameters[0]
 
         if command.message.destination.isPrivateMessage {
-            ongoingShortenUrls[command.message.user.nickname] = longUrl
+            let nickname = command.message.user.nickname
+            ongoingShortenUrls.withValue({ $0[nickname] = longUrl })
 
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-            longUrl = ongoingShortenUrls[command.message.user.nickname] ?? longUrl
-            ongoingShortenUrls.removeValue(forKey: command.message.user.nickname)
+            longUrl = ongoingShortenUrls.withValue({ $0.removeValue(forKey: nickname) }) ?? longUrl
         }
 
         guard
             let url = URL(
                 string: longUrl.addingPercentEncoding(
-                    withAllowedCharacters: CharacterSet.urlQueryAllowed)!)
+                    withAllowedCharacters: CharacterSet.urlQueryAllowed)!),
+            let scheme = url.scheme?.lowercased(), allowedURLSchemes.contains(scheme)
         else {
             command.message.error(key: "shorten.invalidurl", fromCommand: command)
             return
@@ -83,11 +92,13 @@ class ShortenURLCommands: IRCBotModule {
 
     @EventListener<IRCPrivateMessageNotification>
     var onPrivateMessage = { privateMessage in
-        if var url = ongoingShortenUrls[privateMessage.user.nickname] {
+        ShortenURLCommands.ongoingShortenUrls.withValue({ urls in
+            guard let url = urls[privateMessage.user.nickname] else {
+                return
+            }
             logger.debug("appending url")
-            url += privateMessage.message
-            ongoingShortenUrls[privateMessage.user.nickname] = url
-        }
+            urls[privateMessage.user.nickname] = url + privateMessage.message
+        })
     }
 
     required init(_ moduleManager: IRCBotModuleManager) {

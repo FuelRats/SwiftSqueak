@@ -329,10 +329,14 @@ class Rescue: @unchecked Sendable {
         self.lastEditUser = lastEditUser
 
         Task {
-            if var system = self.system {
-                let newSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
-                system.merge(newSystem)
-                self.system = system
+            do {
+                if var system = self.system {
+                    let newSystem = try await SystemsAPI.performSystemCheck(forSystem: system.name)
+                    system.merge(newSystem)
+                    self.system = system
+                }
+            } catch {
+                logger.error("System check failed for synced rescue: \(error)")
             }
         }
     }
@@ -765,66 +769,74 @@ class Rescue: @unchecked Sendable {
             }
         }
         Task {
-            guard starSystem.isConfirmed == false && starSystem.isIncomplete == false else {
-                return
-            }
+            do {
+                guard starSystem.isConfirmed == false && starSystem.isIncomplete == false else {
+                    return
+                }
 
-            guard var results = try await SystemsAPI.performSearch(forSystem: system.name).data,
-                results.count > 0
-            else {
-                return
-            }
+                guard var results = try await SystemsAPI.performSearch(forSystem: system.name).data,
+                    results.count > 0
+                else {
+                    return
+                }
 
-            guard self.system?.isConfirmed != true else {
-                return
-            }
-            let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
-            var approvedCorrections = ratedCorrections.filter({ $1 != nil })
-            approvedCorrections.sort(by: { $0.1! < $1.1! })
+                guard self.system?.isConfirmed != true else {
+                    return
+                }
+                let ratedCorrections = results.map({ ($0, $0.rateCorrectionFor(system: system.name)) })
+                var approvedCorrections = ratedCorrections.filter({ $1 != nil })
+                approvedCorrections.sort(by: { $0.1! < $1.1! })
 
-            let caseId = await board.getId(forRescue: self) ?? 0
-            if let autoCorrectableResult = approvedCorrections.first?.0 {
-                let starSystem = try await SystemsAPI.getSystemInfo(
-                    forSystem: autoCorrectableResult)
+                let caseId = await board.getId(forRescue: self) ?? 0
+                if let autoCorrectableResult = approvedCorrections.first?.0 {
+                    let starSystem = try await SystemsAPI.getSystemInfo(
+                        forSystem: autoCorrectableResult)
 
-                self.system?.merge(starSystem)
-                try? self.save(nil)
+                    self.system?.merge(starSystem)
+                    try? self.save(nil)
+
+                    self.channel?.send(
+                        key: "sysc.autocorrect",
+                        map: [
+                            "caseId": caseId,
+                            "client": self.clientDescription,
+                            "system": self.system.description
+                        ]
+                    )
+                    return
+                }
+
+                if results.count > 9 {
+                    results.removeSubrange(9...)
+                }
+
+                self.system?.availableCorrections = results
+
+                let resultString = results.enumerated().map({
+                    $0.element.correctionRepresentation(index: $0.offset + 1)
+                }).joined(separator: ", ")
 
                 self.channel?.send(
-                    key: "sysc.autocorrect",
+                    key: "sysc.nearestmatches",
                     map: [
                         "caseId": caseId,
                         "client": self.clientDescription,
-                        "system": self.system.description
-                    ]
-                )
-                return
+                        "systems": resultString
+                    ])
+            } catch {
+                logger.error("System autocorrect failed for \(system.name): \(error)")
             }
-
-            if results.count > 9 {
-                results.removeSubrange(9...)
-            }
-
-            self.system?.availableCorrections = results
-
-            let resultString = results.enumerated().map({
-                $0.element.correctionRepresentation(index: $0.offset + 1)
-            }).joined(separator: ", ")
-
-            self.channel?.send(
-                key: "sysc.nearestmatches",
-                map: [
-                    "caseId": caseId,
-                    "client": self.clientDescription,
-                    "systems": resultString
-                ])
         }
         return
     }
 
     func save(_ command: IRCBotCommand?) throws {
         Task {
-            try await saveAndWait(command)
+            do {
+                try await saveAndWait(command)
+            } catch {
+                logger.error("Rescue save failed: \(error)")
+            }
         }
     }
 

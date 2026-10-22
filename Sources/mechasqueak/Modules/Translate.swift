@@ -29,7 +29,24 @@ import Logging
 
 class Translate: IRCBotModule {
     var name: String = "Translation Commands"
-    nonisolated(unsafe) static var clientTranslationSubscribers: [String: ClientTranslateSubscription] = [:]
+    // Changed by lookups, quits and nick changes while translated messages iterate it.
+    private static let subscriptions = Locked([String: ClientTranslateSubscription]())
+    static var clientTranslationSubscribers: [String: ClientTranslateSubscription] {
+        return subscriptions.current
+    }
+
+    static func setTranslationSubscription(_ subscription: ClientTranslateSubscription?, forNick nick: String) {
+        subscriptions.withValue({ $0[nick] = subscription })
+    }
+
+    static func moveTranslationSubscription(fromNick oldNick: String, toNick newNick: String) {
+        subscriptions.withValue({ subscribers in
+            guard let subscription = subscribers.removeValue(forKey: oldNick) else {
+                return
+            }
+            subscribers[newNick] = subscription
+        })
+    }
 
     /// Forced tool used to get structured output from Claude: its input schema IS the result
     /// envelope, so the model "calls" it with the translation fields, which we read back from the
@@ -114,6 +131,7 @@ class Translate: IRCBotModule {
         description:
             "Translates a message to the client's language and replies in the rescue channel as you",
         tags: ["google", "deepl", "client", "rescue"],
+        permission: .DispatchRead,
         helpExtra: {
             return "Consult https://t.fuelr.at/3vtd for a guide on how to use Mecha translation"
         },
@@ -208,6 +226,7 @@ class Translate: IRCBotModule {
         description:
             "Translate a message to another language and sends the message to a channel as you",
         tags: ["google", "deepl"],
+        permission: .DispatchRead,
         allowedDestinations: .PrivateMessage,
         cooldown: .seconds(5),
         helpExtra: {
@@ -327,7 +346,7 @@ class Translate: IRCBotModule {
             var data = user.attributes.data.value
             data.clientTranslateSubscription = subscriptionType
             _ = try await user.updateUserData(dataObject: data)
-            Translate.clientTranslationSubscribers[command.message.user.nickname] = subscriptionType
+            Translate.setTranslationSubscription(subscriptionType, forNick: command.message.user.nickname)
             command.message.reply(key: "transsub.subbed", fromCommand: command)
         } catch {
             logger.error("\(error)")
@@ -364,7 +383,7 @@ class Translate: IRCBotModule {
         var data = user.attributes.data.value
         data.clientTranslateSubscription = nil
         _ = try? await user.updateUserData(dataObject: data)
-        Translate.clientTranslationSubscribers[command.message.user.nickname] = nil
+        Translate.setTranslationSubscription(nil, forNick: command.message.user.nickname)
         command.message.reply(key: "transsub.unsubbed", fromCommand: command)
     }
 
@@ -480,8 +499,9 @@ class Translate: IRCBotModule {
 
     /// Strips a stray backslash the model may insert before a forward slash (over-escaping IRC
     /// commands like "/ns identify"), without touching valid escapes such as \\n, \\t, or \\".
+    /// The result is relayed to IRC, so it is also made safe to relay (no line breaks, controls or highlight words).
     static func sanitizeTranslation(_ text: String) -> String {
-        text.replacingOccurrences(of: "\\/", with: "/")
+        text.replacingOccurrences(of: "\\/", with: "/").sanitizedForRelay()
     }
 
     @AsyncEventListener<IRCChannelMessageNotification>
@@ -490,9 +510,16 @@ class Translate: IRCBotModule {
             // Do not interpret commands from playback of old messages
             return
         }
+        // Every translation is an LLM call, so skip it when nobody will receive it.
+        guard Translate.clientTranslationSubscribers.isEmpty == false else {
+            return
+        }
+        // findRescue also matches the CMDR name, which anyone can take as a nick; only the client's own messages
+        // are relayed.
         guard
             let (caseId, rescue) = await board.findRescue(
-                withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true)
+                withCaseIdentifier: channelMessage.user.nickname, includingRecentlyClosed: true),
+            rescue.clientNick?.lowercased() == channelMessage.user.nickname.lowercased()
         else {
             return
         }

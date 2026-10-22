@@ -143,6 +143,8 @@ struct AskPipeline: Sendable {
         let llmTools = tools.llmTools
 
         var rounds = 0
+        // Each run_command posts in the channel as the asker, so one question gets at most one.
+        var commandRun = false
         var totalUsage = LLMUsage()
         while rounds < maxToolRounds {
             let request = LLMRequest(
@@ -174,8 +176,15 @@ struct AskPipeline: Sendable {
             var results: [LLMContentBlock] = []
             var commandDelivered = false
             for call in response.toolCalls {
-                let output = await execute(call: call, context: toolContext)
-                if call.name == CommandDispatchTool.tool.name, output == CommandDispatchTool.deliveredResult {
+                let isCommand = call.name == CommandDispatchTool.tool.name
+                let output: String
+                if isCommand && commandRun {
+                    output = ToolOutput.error("only one command can be run per answer")
+                } else {
+                    output = await execute(call: call, context: toolContext)
+                    commandRun = commandRun || isCommand
+                }
+                if isCommand, output == CommandDispatchTool.deliveredResult {
                     commandDelivered = true
                 }
                 results.append(.toolResult(

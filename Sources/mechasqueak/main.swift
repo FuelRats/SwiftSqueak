@@ -43,7 +43,7 @@ let httpClient = HTTPClient(
     ))
 
 nonisolated(unsafe) var configuration = MechaConfiguration.fromEnvironment()
-nonisolated(unsafe) let lingo = try Lingo(
+let lingo = try Lingo(
     rootPath: "\(configuration.sourcePath.path)/localisation", defaultLocale: "en")
 
 private let clientJoinLeaveMessages: Set<String> = [
@@ -75,7 +75,11 @@ class MechaSqueak: @unchecked Sendable {
     nonisolated(unsafe) static var lastDeltaMessageTime: Date?
     let ratSocket: RatSocket?
     var webServer: WebServer?
-    var sqliteDatabase: SQLDatabase?
+    private let sqliteDatabaseStorage = Locked<SQLDatabase?>(nil)
+    var sqliteDatabase: SQLDatabase? {
+        get { self.sqliteDatabaseStorage.current }
+        set { self.sqliteDatabaseStorage.withValue({ $0 = newValue }) }
+    }
 
     init() {
         self.startupTime = Date()
@@ -132,6 +136,17 @@ class MechaSqueak: @unchecked Sendable {
         ratSocket = RatSocket()
 
         Task { @MainActor in
+            // The command search index is built first and on its own, so the web server and help commands have it
+            // even when the remote startup fetches below fail.
+            do {
+                let database = try await makeSQLiteDatabase(eventLoopGroup: loop)
+                for command in MechaSqueak.commands {
+                    try await insertCommand(command, on: database)
+                }
+                self.sqliteDatabase = database
+            } catch {
+                logger.error("Failed to build the command search index: \(error)")
+            }
             if let webServerConfiguration = configuration.webServer {
                 do {
                     self.webServer = try await WebServer(configuration: webServerConfiguration)
@@ -140,14 +155,12 @@ class MechaSqueak: @unchecked Sendable {
                     logger.error("Failed to start web server: \(error)")
                 }
             }
-            self.landmarks = try await SystemsAPI.fetchLandmarkList()
-            self.sectors = try await SystemsAPI.fetchSectorList()
-            self.groups = try await Group.getList().body.data?.primary.values ?? []
-            if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
-                self.sqliteDatabase = database
-                for command in MechaSqueak.commands {
-                    try await insertCommand(command, on: database)
-                }
+            do {
+                self.landmarks = try await SystemsAPI.fetchLandmarkList()
+                self.sectors = try await SystemsAPI.fetchSectorList()
+                self.groups = try await Group.getList().body.data?.primary.values ?? []
+            } catch {
+                logger.error("Failed to load startup data: \(error)")
             }
         }
     }
@@ -158,7 +171,7 @@ class MechaSqueak: @unchecked Sendable {
 
         guard let account = user.account else {
             if let oldValue = accountChange.oldValue {
-                accounts.mapping[oldValue] = nil
+                accounts.setAPIData(nil, forAccount: oldValue)
             }
             return
         }
@@ -194,7 +207,10 @@ class MechaSqueak: @unchecked Sendable {
             accounts.lookup(user: userJoin.user)
             if let (caseId, rescue) = await board.findRescue(
                 withCaseIdentifier: userJoin.user.nickname) {
-                rescue.clientLastHostName = userJoin.user.hostmask
+                // Only the client's own nick may set the host that quit/kill handling and re-signals trust.
+                if rescue.clientNick?.lowercased() == userJoin.user.nickname.lowercased() {
+                    rescue.clientLastHostName = userJoin.user.hostmask
+                }
 
                 var quotes = rescue.quotes
                 quotes.removeAll(where: {
@@ -270,14 +286,17 @@ class MechaSqueak: @unchecked Sendable {
 
     @AsyncEventListener<IRCUserQuitNotification>
     var onUserQuit = { userQuit in
-        if let subscription = Translate.clientTranslationSubscribers[
-            userQuit.raw.sender?.nickname ?? ""] {
-            Translate.clientTranslationSubscribers[userQuit.raw.sender?.nickname ?? ""] = nil
+        if let nickname = userQuit.raw.sender?.nickname {
+            Translate.setTranslationSubscription(nil, forNick: nickname)
         }
 
-        try? await Task.sleep(nanoseconds: 2 * 10 ^ 8)  // 200ms
+        try? await Task.sleep(for: .milliseconds(200))
+        // findRescue also matches the CMDR name, which anyone can use as a nick; only the case's own IRC client
+        // quitting (or being banned) may change the case.
         if let sender = userQuit.raw.sender,
-            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
+            let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname),
+            rescue.clientNick?.lowercased() == sender.nickname.lowercased(),
+            rescue.clientLastHostName == nil || rescue.clientLastHostName == sender.hostmask {
             await board.cancelPrepTimer(forRescue: rescue)
             var quotes = rescue.quotes
             quotes.removeAll(where: {
@@ -301,7 +320,7 @@ class MechaSqueak: @unchecked Sendable {
                                 "link": url,
                                 "client": rescue.clientDescription
                             ])
-                        await board.remove(id: caseId)
+                        await board.remove(rescue: rescue)
                     } catch {
 
                     }
@@ -316,7 +335,7 @@ class MechaSqueak: @unchecked Sendable {
                                 "caseId": caseId,
                                 "client": rescue.clientDescription
                             ])
-                        await board.remove(id: caseId)
+                        await board.remove(rescue: rescue)
                     } catch {
 
                     }
@@ -401,10 +420,7 @@ class MechaSqueak: @unchecked Sendable {
     var onUserNickChange = { nickChange in
         let sender = nickChange.raw.sender!
 
-        if let subscription = Translate.clientTranslationSubscribers[sender.nickname] {
-            Translate.clientTranslationSubscribers[sender.nickname] = nil
-            Translate.clientTranslationSubscribers[nickChange.newNick] = subscription
-        }
+        Translate.moveTranslationSubscription(fromNick: sender.nickname, toNick: nickChange.newNick)
 
         if let (caseId, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname) {
             rescue.clientNick = nickChange.newNick
@@ -431,6 +447,15 @@ class MechaSqueak: @unchecked Sendable {
             return
         }
         accounts.lookup(user: user)
+
+        if let newHost = hostChange.parameters[safe: 1] {
+            Task {
+                if let (_, rescue) = await board.findRescue(withCaseIdentifier: sender.nickname),
+                    rescue.clientNick?.lowercased() == sender.nickname.lowercased() {
+                    rescue.clientLastHostName = newHost
+                }
+            }
+        }
     }
 
     @EventListener<IRCPrivateNoticeNotification>
@@ -444,9 +469,9 @@ class MechaSqueak: @unchecked Sendable {
             return
         }
         logger.info("NickServ prompted for identification, re-identifying")
-        notice.client.sendMessage(
-            toTarget: "NickServ",
-            contents: "IDENTIFY \(password)")
+        // The NICKSERV services alias is only delivered to NickServ on the U-lined services server, unlike a
+        // PRIVMSG to the nick "NickServ", which anyone holding that nick while services are down would receive.
+        notice.client.send("NICKSERV", parameters: ["IDENTIFY \(password)"])
     }
 }
 

@@ -49,7 +49,10 @@ struct SignalScanner {
     }
 
     init?(message: String, requireSignal: Bool = false) {
-        var message = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Relayed text breaks "ratsignal" with a zero-width space so it doesn't ping; a client who copies it must
+        // still be able to signal.
+        var message = message.replacingOccurrences(of: "\u{200B}", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
         let signalIndex = message.range(
             of: configuration.general.signal, options: .caseInsensitive)?.upperBound

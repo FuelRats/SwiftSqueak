@@ -104,7 +104,13 @@ class MessageScanner: IRCBotModule {
             return
         }
 
-        if channelMessage.message.lowercased().contains(configuration.general.signal.lowercased())
+        // A signal mass-pings every rat, so only the rescue channel (and drill channels for training) accept one.
+        let channelName = channelMessage.destination.name.lowercased()
+        let acceptsSignals = channelName == configuration.general.rescueChannel.lowercased()
+            || configuration.general.drillChannels.contains(channelName)
+        if acceptsSignals
+            && channelMessage.message.lowercased().replacingOccurrences(of: "\u{200B}", with: "")
+                .contains(configuration.general.signal.lowercased())
             && channelMessage.message.trimmingCharacters(in: .whitespaces).starts(with: "!")
                 == false {
             guard let rescue = Rescue(fromRatsignal: channelMessage) else {

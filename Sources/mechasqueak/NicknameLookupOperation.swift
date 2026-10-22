@@ -29,7 +29,20 @@ import Logging
 
 class NicknameLookupManager {
     let queue = OperationQueue()
-    var mapping: [String: NicknameSearchDocument] = [:]
+    // Written by lookup completions on the operation queue and read by every permission check.
+    private let mapping = Locked([String: NicknameSearchDocument]())
+
+    func apiData(forAccount account: String) -> NicknameSearchDocument? {
+        return self.mapping.withValue({ $0[account] })
+    }
+
+    func setAPIData(_ data: NicknameSearchDocument?, forAccount account: String) {
+        self.mapping.withValue({ $0[account] = data })
+    }
+
+    func removeAllAPIData() {
+        self.mapping.withValue({ $0.removeAll() })
+    }
 
     init() {
         self.queue.maxConcurrentOperationCount = 5
@@ -42,7 +55,7 @@ class NicknameLookupManager {
     }
 
     func lookup(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
-        guard user.account != nil else {
+        guard let account = user.account else {
             return
         }
 
@@ -53,14 +66,19 @@ class NicknameLookupManager {
 
         let operation = NicknameLookupOperation(user: user)
 
+        // Stored under the account that was looked up, not whatever account the user holds when the lookup ends.
         operation.onCompletion = { apiNick in
-            if let result = apiNick, let account = user.account {
-                self.mapping[account] = result
-                if let subscription = result.user?.data.clientTranslateSubscription {
-                    Translate.clientTranslationSubscribers[user.nickname] = subscription
-                }
-                completed?(result)
+            guard let result = apiNick else {
+                // The API no longer has this account, so permissions cached from an earlier lookup must go.
+                // A failed lookup (onError) keeps them, so an API outage doesn't lock every rat out.
+                self.setAPIData(nil, forAccount: account)
+                return
             }
+            self.setAPIData(result, forAccount: account)
+            if let subscription = result.user?.data.clientTranslateSubscription {
+                Translate.setTranslationSubscription(subscription, forNick: user.nickname)
+            }
+            completed?(result)
         }
 
         operation.onError = { _ in
@@ -71,7 +89,7 @@ class NicknameLookupManager {
     }
 
     func lookupIfNotExists(user: IRCUser, completed: ((NicknameSearchDocument) -> Void)? = nil) {
-        guard let account = user.account, self.mapping[account] == nil else {
+        guard let account = user.account, self.apiData(forAccount: account) == nil else {
             return
         }
 

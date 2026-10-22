@@ -25,7 +25,6 @@ final class WebServer: @unchecked Sendable {
 
         self.app.http.server.configuration.hostname = configuration.host
         self.app.http.server.configuration.port = configuration.port
-        self.app.htmlkit.features = [.markdown]
         try app.register(collection: Routes())
     }
 

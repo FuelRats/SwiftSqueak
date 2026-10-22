@@ -29,6 +29,19 @@ final class AIStateTests: XCTestCase {
         XCTAssertEqual(third, .overCapacity, "over the in-flight cap must fail fast")
     }
 
+    func testOneUserCannotHoldEverySlot() async {
+        let state = AIState(cooldown: 0, maxInFlight: 3, dailyTokenCap: 1000, maxInFlightPerUser: 1)
+        let first = await state.reserve(key: "pm|alice", user: "alice", now: base)
+        let second = await state.reserve(key: "chan|alice", user: "alice", now: base)
+        let other = await state.reserve(key: "pm|bob", user: "bob", now: base)
+        XCTAssertEqual(first, .reserved)
+        XCTAssertEqual(second, .overCapacity, "a second concurrent question from the same user waits")
+        XCTAssertEqual(other, .reserved, "other users still get a slot")
+        await state.release(user: "alice")
+        let afterRelease = await state.reserve(key: "chan|alice", user: "alice", now: base)
+        XCTAssertEqual(afterRelease, .reserved)
+    }
+
     func testReleaseFreesASlot() async {
         let state = AIState(cooldown: 30, maxInFlight: 1, dailyTokenCap: 1000)
         _ = await state.reserve(key: "k1", now: base)
@@ -106,7 +119,7 @@ final class AIStateTests: XCTestCase {
         let state = AIState(cooldown: 0, maxInFlight: 10, dailyTokenCap: 100)
         for index in 0..<50 {
             _ = await state.reserve(key: "k\(index)", user: "u\(index)", now: base)
-            await state.release(refundingUser: "u\(index)")  // no recordUsage: not a billable answer
+            await state.release(user: "u\(index)", refundingAttempt: true)  // no recordUsage: not a billable answer
         }
         let stillAvailable = await state.reserve(key: "kfinal", now: base)
         XCTAssertEqual(stillAvailable, .reserved, "non-answers must not exhaust the token budget")
@@ -117,9 +130,9 @@ final class AIStateTests: XCTestCase {
             cooldown: 0, maxInFlight: 10, dailyTokenCap: 1000, perUserCap: 2, perUserWindow: 3600)
         // Two gate-rejected attempts, each refunded — must not count toward the per-user cap.
         _ = await state.reserve(key: "k1", user: "alice", now: base)
-        await state.release(refundingUser: "alice")
+        await state.release(user: "alice", refundingAttempt: true)
         _ = await state.reserve(key: "k2", user: "alice", now: base)
-        await state.release(refundingUser: "alice")
+        await state.release(user: "alice", refundingAttempt: true)
         // A third attempt still succeeds because the refunded two didn't accumulate.
         let third = await state.reserve(key: "k3", user: "alice", now: base)
         XCTAssertEqual(third, .reserved, "refunded attempts must not lock the user out")
@@ -190,7 +203,7 @@ final class AIStateTests: XCTestCase {
         // (gate reject / error) without setCooldown, the channel frees at 30s — it is NOT locked 5 min.
         let state = AIState(cooldown: 30, maxInFlight: 10, dailyTokenCap: 1000)
         _ = await state.reserve(key: "chan", now: base)
-        await state.release(refundingUser: "alice")
+        await state.release(user: "alice", refundingAttempt: true)
         let stillCooling = await state.reserve(key: "chan", now: base.addingTimeInterval(10))
         XCTAssertEqual(stillCooling, .cooldown)
         let freed = await state.reserve(key: "chan", now: base.addingTimeInterval(31))

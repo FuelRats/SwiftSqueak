@@ -30,25 +30,25 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/supermanifolds/Lingo.git", from: Version(4, 0, 0)),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 33, 1)),
-        .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 97, 1)),
-        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version(2, 36, 1)),
-        .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 33, 0)),
+        .package(url: "https://github.com/supermanifolds/Lingo.git", from: Version(5, 0, 0)),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: Version(1, 36, 2)),
+        .package(url: "https://github.com/apple/swift-nio.git", from: Version(2, 104, 0)),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: Version(2, 37, 5)),
+        .package(url: "https://github.com/apple/swift-nio-extras.git", from: Version(1, 35, 1)),
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: Version(1, 2, 0)),
         .package(url: "https://github.com/mattpolzin/JSONAPI.git", from: Version(6, 0, 0)),
-        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 9, 0)),
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: Version(1, 10, 0)),
         .package(url: "https://github.com/vapor/sql-kit.git", from: Version(3, 35, 0)),
-        .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 15, 1)),
+        .package(url: "https://github.com/vapor/postgres-kit.git", from: Version(2, 17, 0)),
         .package(url: "https://github.com/vapor/sqlite-kit.git", from: Version(4, 5, 2)),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: Version(0, 15, 1)),
         .package(url: "https://github.com/swift-server/swift-backtrace.git", from: Version(1, 3, 5)),
         .package(url: "https://github.com/vapor/websocket-kit.git", from: Version(2, 16, 2)),
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.121.4"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.122.3"),
         .package(url: "https://github.com/vapor-community/HTMLKit.git", branch: "main"),
-        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: Version(0, 63, 2)),
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: Version(0, 65, 1)),
         .package(url: "https://github.com/swiftlang/swift-markdown.git", branch: "main"),
-        .package(url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 19, 0))
+        .package(url: "https://github.com/FuelRats/IRCKit.git", from: Version(0, 20, 0))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

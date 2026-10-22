@@ -273,6 +273,30 @@ extension Group {
             request: request, deadline: FuelRatsAPI.deadline, expecting: 204)
     }
 
+    enum PathSegmentError: Error {
+        case invalid(String)
+    }
+
+    /// Command arguments become API path segments, so anything that could change the path ("..", "/", "?", "#", or
+    /// a percent escape) is refused before a request is built.
+    static func pathSegment(_ value: String) throws -> String {
+        guard
+            value.isEmpty == false, value != ".", value != "..",
+            value.contains(where: { "/\\?#%".contains($0) }) == false
+        else {
+            throw PathSegmentError.invalid(value)
+        }
+        return value
+    }
+
+    /// Scopes look like "rescues.write.me": lowercase words separated by single dots.
+    static func permissionSegment(_ scope: String) throws -> String {
+        guard scope.range(of: #"^[a-z]+(\.[a-z]+)*$"#, options: .regularExpression) != nil else {
+            throw PathSegmentError.invalid(scope)
+        }
+        return scope
+    }
+
     /// The bare channel key the group-channel endpoints expect (no leading `#`/`&`).
     static func bareChannel(_ channel: String) -> String {
         if let first = channel.first, first == "#" || first == "&" {
@@ -285,7 +309,7 @@ extension Group {
     /// caller (`command`) so the API authorises the write against their `groups.write`.
     func setChannel(_ channel: String, flags: String, command: IRCBotCommand) async throws -> Group {
         var request = try HTTPClient.Request(
-            apiPath: "/groups/\(self.id.rawValue.uuidString)/channels/\(Group.bareChannel(channel))",
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/channels/\(try Group.pathSegment(Group.bareChannel(channel)))",
             method: .PUT, command: command)
         request.body = try .encodable(GroupWriteBody(["flags": flags]))
 
@@ -296,7 +320,7 @@ extension Group {
     /// Remove a channel from this group (idempotent). Acts on behalf of `command`'s caller.
     func removeChannel(_ channel: String, command: IRCBotCommand) async throws -> Group {
         let request = try HTTPClient.Request(
-            apiPath: "/groups/\(self.id.rawValue.uuidString)/channels/\(Group.bareChannel(channel))",
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/channels/\(try Group.pathSegment(Group.bareChannel(channel)))",
             method: .DELETE, command: command)
 
         let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
@@ -306,7 +330,7 @@ extension Group {
     /// Grant an OAuth permission scope to this group (idempotent). Acts on behalf of `command`'s caller.
     func setPermission(_ scope: String, command: IRCBotCommand) async throws -> Group {
         let request = try HTTPClient.Request(
-            apiPath: "/groups/\(self.id.rawValue.uuidString)/permissions/\(scope)",
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/permissions/\(try Group.permissionSegment(scope))",
             method: .PUT, command: command)
 
         let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)
@@ -316,7 +340,7 @@ extension Group {
     /// Revoke an OAuth permission scope from this group (idempotent). Acts on behalf of `command`'s caller.
     func removePermission(_ scope: String, command: IRCBotCommand) async throws -> Group {
         let request = try HTTPClient.Request(
-            apiPath: "/groups/\(self.id.rawValue.uuidString)/permissions/\(scope)",
+            apiPath: "/groups/\(self.id.rawValue.uuidString)/permissions/\(try Group.permissionSegment(scope))",
             method: .DELETE, command: command)
 
         let document = try await httpClient.execute(request: request, forDecodable: GroupDocument.self)

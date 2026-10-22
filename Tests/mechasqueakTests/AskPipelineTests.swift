@@ -158,6 +158,32 @@ final class AskPipelineTests: XCTestCase {
         XCTAssertEqual(calls, 1, "a successful run_command must end the turn without another model call")
     }
 
+    func testOnlyOneRunCommandExecutesPerAnswer() async throws {
+        // Each run_command posts in the channel as the asker, so a single answer may trigger at most one.
+        actor Counter {
+            private(set) var count = 0
+            func increment() { count += 1 }
+        }
+        let counter = Counter()
+        let twoCommands = LLMResponse(
+            content: [
+                .toolUse(id: "c1", name: "run_command", input: .object([("command", .string("version"))])),
+                .toolUse(id: "c2", name: "run_command", input: .object([("command", .string("gametime"))]))
+            ],
+            stopReason: .toolUse, usage: LLMUsage())
+        let script = Script([.success(twoCommands), .success(textResponse("Done."))])
+        let tool = AITool(
+            name: "run_command", description: "test", inputSchema: .objectSchema(properties: [], required: []),
+            run: { _, _ in
+                await counter.increment()
+                return #"{"error":"not delivered"}"#
+            })
+        _ = try await pipeline(script, tools: [tool]).answer(question: "run version and gametime")
+
+        let executed = await counter.count
+        XCTAssertEqual(executed, 1)
+    }
+
     func testRunCommandErrorDoesNotShortCircuit() async throws {
         // A refused/failed command returns an error the model can see and must respond to, so the
         // loop continues rather than ending silently.

@@ -24,20 +24,12 @@
 
 @preconcurrency import AsyncHTTPClient
 import Foundation
-@preconcurrency import NIOSSL
 
 #if canImport(FoundationNetworking)
     import FoundationNetworking
 #endif
 
 struct XboxLive {
-    private static var tlsConfiguration: TLSConfiguration {
-        var tlsConfiguration = TLSConfiguration.clientDefault
-        tlsConfiguration.certificateVerification = .none
-        tlsConfiguration.renegotiationSupport = .none
-        return tlsConfiguration
-    }
-
     static func performXuidLookup(gamertag: String, retried: Bool = false) async -> XuidLookup {
         guard let xlConfig = configuration.xbox else {
             return .failure
@@ -49,7 +41,6 @@ struct XboxLive {
             string: "https://profile.xboxlive.com/users/gt(\(urlEncodedGamerTag))/profile/settings")!
         do {
             var request = try HTTPClient.Request(url: url.url!, method: .GET)
-            request.tlsConfiguration = XboxLive.tlsConfiguration
             request.headers.add(name: "User-Agent", value: MechaSqueak.userAgent)
             request.headers.add(name: "xuid", value: xlConfig.xuid)
             request.headers.add(
@@ -98,7 +89,7 @@ struct XboxLive {
             refreshToken: configuration.xbox!.refreshToken
         )
         let data = try JSONEncoder().encode(tokens)
-        try data.write(to: URL(fileURLWithPath: "/data/xbox_tokens.json"))
+        try writeSecretFile(data, toPath: "/data/xbox_tokens.json")
     }
 
     static func getUserPresence(xuid: String) async throws -> UserPresenceRequest? {

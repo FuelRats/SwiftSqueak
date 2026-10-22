@@ -1,5 +1,5 @@
 # Dev Dockerfile with BuildKit cache for fast rebuilds
-FROM swift:6.1 AS build
+FROM swift:6.4 AS build
 
 WORKDIR /build
 
@@ -15,12 +15,7 @@ RUN --mount=type=cache,id=spm-build,target=/build/.build,sharing=locked \
 RUN mkdir -p Public/css && \
     find Sources/mechasqueak/WebServer/Views/ -name '*.css' | sort | xargs cat > Public/css/styles.css
 
-FROM swift:6.1-slim
-
-RUN apt-get update && \
-    apt-get install -y nodejs npm && \
-    npm install -g chrono-node && \
-    rm -rf /var/lib/apt/lists/*
+FROM swift:6.4-slim
 
 WORKDIR /app
 

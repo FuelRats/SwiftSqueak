@@ -65,7 +65,8 @@ extension JSONValue {
     var intValue: Int? {
         switch self {
             case let .int(value): return value
-            case let .double(value): return Int(value)
+            // Model-supplied numbers can be huge or non-finite; Int(_:) would trap on those.
+            case let .double(value): return Int(exactly: value.rounded(.towardZero))
             default: return nil
         }
     }

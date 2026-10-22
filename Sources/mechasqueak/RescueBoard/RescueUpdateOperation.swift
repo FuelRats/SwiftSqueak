@@ -229,6 +229,8 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
         guard isCancelled == false else {
             logger.debug("Update operation was cancelled")
             self.isFinished = true
+            // The caller is suspended on this operation's completion; it has to be told either way.
+            self.onError?(CancellationError())
             return
         }
 
@@ -250,6 +252,8 @@ class RescueUpdateOperation: Operation, @unchecked Sendable {
             } catch {
                 self.onError?(error)
             }
+            self.isExecuting = false
+            self.isFinished = true
         }
     }
 }

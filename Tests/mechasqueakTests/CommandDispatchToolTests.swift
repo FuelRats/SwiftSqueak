@@ -23,6 +23,21 @@ final class CommandDispatchToolTests: XCTestCase {
 
     // MARK: - Gate
 
+    func testBoardWriteCommandsAreDispatching() {
+        // Board write commands use DispatchWrite; the dispatch denylist and this tool's gate both rely on it.
+        XCTAssertTrue(declaration(["assign"], category: .board, permission: .DispatchWrite, allowTool: false)
+            .isDispatchingCommand)
+        XCTAssertFalse(declaration(["list"], category: .board, permission: .DispatchRead, allowTool: true)
+            .isDispatchingCommand)
+        XCTAssertFalse(declaration(["sync"], category: .rescues, permission: .RescueWrite, allowTool: false)
+            .isDispatchingCommand)
+    }
+
+    func testDispatchWriteBoardCommandIsNotDispatchable() {
+        let commands = [declaration(["assign", "go"], category: .board, permission: .DispatchWrite, allowTool: true)]
+        XCTAssertFalse(CommandDispatchTool.isDispatchable("assign", in: commands))
+    }
+
     func testAllowToolReadOnlyCommandIsDispatchable() {
         let commands = [declaration(["unfiled", "npw"], category: .rescues, allowTool: true)]
         XCTAssertTrue(CommandDispatchTool.isDispatchable("unfiled", in: commands))

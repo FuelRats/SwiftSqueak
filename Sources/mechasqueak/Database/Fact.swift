@@ -23,7 +23,7 @@ import NIO
 @preconcurrency import PostgresKit
 @preconcurrency import SQLKit
 
-nonisolated(unsafe) let sqlConfiguration = SQLPostgresConfiguration(
+let sqlConfiguration = SQLPostgresConfiguration(
     hostname: configuration.database.host,
     port: Int(configuration.database.port),
     username: configuration.database.username,
@@ -42,7 +42,27 @@ struct Fact: Codable, Hashable {
     static let platformFacts = [
         "wing", "beacon", "fr", "quit", "frcr", "modules", "trouble", "relog", "restart", "team", "open"
     ]
-    nonisolated(unsafe) private static var cache = [String: Fact]()
+    // Read and written from IRC command Tasks, Postgres event loops and web requests concurrently.
+    private static let factCache = Locked([String: Fact]())
+
+    private static func cachedFact(forKey key: String) -> Fact? {
+        return factCache.withValue({ $0[key] })
+    }
+
+    private static func cache(fact: Fact, forKey key: String) {
+        factCache.withValue({ $0[key] = fact })
+    }
+
+    private static func evictCachedFact(forKey key: String) {
+        factCache.withValue({ $0[key] = nil })
+    }
+
+    private static func evictCachedFacts(named name: String) {
+        let prefix = "\(name)-"
+        factCache.withValue({ entries in
+            entries = entries.filter({ $0.key.hasPrefix(prefix) == false })
+        })
+    }
 
     var id: String
     var fact: String
@@ -62,7 +82,7 @@ struct Fact: Codable, Hashable {
         let factName = name.lowercased()
         let localeString = locale.short
 
-        if let cachedFact = cache["\(factName)-\(localeString)"] {
+        if let cachedFact = cachedFact(forKey: "\(factName)-\(localeString)") {
             return cachedFact
         } else {
             return try await withCheckedThrowingContinuation({ continuation in
@@ -91,7 +111,7 @@ struct Fact: Codable, Hashable {
 
                                 let fact = try? row.decode(model: Fact.self)
                                 if let cacheFact = fact {
-                                    cache["\(factName)-\(localeString)"] = cacheFact
+                                    cache(fact: cacheFact, forKey: "\(factName)-\(localeString)")
                                 }
                                 continuation.resume(returning: fact)
                         }
@@ -127,7 +147,7 @@ struct Fact: Codable, Hashable {
                         case .success(let rows):
                             let facts = rows.compactMap({ try? $0.decode(model: Fact.self) })
                             for fact in facts {
-                                cache[fact.cacheIdentifier] = fact
+                                cache(fact: fact, forKey: fact.cacheIdentifier)
                             }
                             continuation.resume(returning: facts)
                     }
@@ -268,7 +288,7 @@ struct Fact: Codable, Hashable {
 
         let aliases = try await GroupedFact.get(name: fact)
         for alias in aliases?.aliases ?? [] {
-            cache.removeValue(forKey: "\(alias)-\(locale.short)")
+            evictCachedFact(forKey: "\(alias)-\(locale.short)")
         }
         return try await sql.update("factmessages")
             .set("message", to: message)
@@ -280,7 +300,7 @@ struct Fact: Codable, Hashable {
     }
 
     public static func delete(locale: Locale, forFact fact: String) async throws {
-        cache.removeValue(forKey: "\(fact)-\(locale.short)")
+        evictCachedFact(forKey: "\(fact)-\(locale.short)")
         return try await sql.delete(from: "factmessages")
             .where("fact", .equal, SQLBind(fact))
             .where("language", .equal, SQLBind(locale.short))
@@ -288,9 +308,7 @@ struct Fact: Codable, Hashable {
     }
 
     public static func drop(name: String) async throws {
-        for item in cache.filter({ $0.key.starts(with: "\(name)-") }) {
-            cache.removeValue(forKey: item.key)
-        }
+        evictCachedFacts(named: name)
         return try await sql.delete(from: "facts")
             .where("id", .equal, SQLBind(name))
             .run().asContinuation()
@@ -300,9 +318,7 @@ struct Fact: Codable, Hashable {
         // Clear cache for all aliases of this fact
         let aliases = try await GroupedFact.get(name: fact)
         for alias in aliases?.aliases ?? [] {
-            for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {
-                cache.removeValue(forKey: item.key)
-            }
+            evictCachedFacts(named: alias)
         }
         
         return try await sql.update("facts")
@@ -313,9 +329,7 @@ struct Fact: Codable, Hashable {
     }
 
     public static func delete(alias: String) async throws {
-        for item in cache.filter({ $0.key.starts(with: "\(alias)-") }) {
-            cache.removeValue(forKey: item.key)
-        }
+        evictCachedFacts(named: alias)
         return try await sql.delete(from: "facts")
             .where("alias", .equal, SQLBind(alias))
             .run().asContinuation()

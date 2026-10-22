@@ -1,5 +1,5 @@
 # Stage 1 - Build
-FROM swift:6.1 AS build
+FROM swift:6.4 AS build
 
 WORKDIR /build
 
@@ -18,13 +18,7 @@ RUN mkdir -p Public/css && \
     find Sources/mechasqueak/WebServer/Views/ -name '*.css' | sort | xargs cat > Public/css/styles.css
 
 # Stage 2 - Runtime
-FROM swift:6.1-slim
-
-# Install Node.js and chrono-node
-RUN apt-get update && \
-    apt-get install -y nodejs npm && \
-    npm install -g chrono-node && \
-    rm -rf /var/lib/apt/lists/*
+FROM swift:6.4-slim
 
 WORKDIR /app
 

@@ -41,37 +41,65 @@ enum RatSocketEventType: String {
 struct WebSocket {}
 
 class RatSocket: @unchecked Sendable {
+    /// Rescue documents with many quotes and rats exceed websocket-kit's 16 KB default frame size.
+    static let maxFrameSize = 1 << 20
+    static let pingInterval: TimeAmount = .seconds(30)
+    static let maxReconnectDelay: Int64 = 60
+
     var connectedAndAuthenticated = false
-    var socket: WebSocketKit.WebSocket?
+    private let socketStorage = Locked<WebSocketKit.WebSocket?>(nil)
+    var socket: WebSocketKit.WebSocket? {
+        return socketStorage.current
+    }
+    private let reconnectAttempts = Locked(0)
 
     init() {
         self.connect()
     }
 
     func connect() {
-        guard configuration.api.websocket != nil else {
+        guard let url = configuration.api.websocket else {
+            return
+        }
+        // The API token is sent as a header on connect, so it must not travel unencrypted outside development.
+        guard url.scheme == "wss" || configuration.general.debug || configuration.general.drillMode else {
+            logger.error("Refusing to connect to the API websocket over \(url.scheme ?? "an unknown scheme"); use wss")
             return
         }
 
-        _ = WebSocketKit.WebSocket.connect(
-            to: URL(string: "\(configuration.api.websocket!)")!,
+        WebSocketKit.WebSocket.connect(
+            to: url,
             headers: HTTPHeaders([
                 ("Sec-Websocket-Protocol", "FR-JSONAPI-WS"),
                 ("x-bearer", configuration.api.token)
-            ]), on: loop
+            ]),
+            configuration: WebSocketClient.Configuration(maxFrameSize: RatSocket.maxFrameSize),
+            on: loop
         ) { ws in
-            self.socket = ws
-
+            self.socketStorage.withValue({ $0 = ws })
+            ws.pingInterval = RatSocket.pingInterval
             ws.onText(self.websocketDidReceiveMessage)
-            ws.onClose.whenComplete { result in
-                switch result {
-                    case .failure(let error):
-                        self.websocketDidDisconnect(error: error)
-
-                    case .success:
-                        self.websocketDidConnect()
-                }
+            // closeFuture succeeds on every close, clean or not, so any completion means the connection is gone.
+            ws.onClose.whenComplete { _ in
+                self.websocketDidDisconnect()
             }
+            self.websocketDidConnect()
+        }.whenFailure { error in
+            logger.error("Failed to connect to Websocket: \(error)")
+            self.scheduleReconnect()
+        }
+    }
+
+    private func scheduleReconnect() {
+        let attempt = reconnectAttempts.withValue({ attempts -> Int64 in
+            attempts += 1
+            return Int64(attempts)
+        })
+        let backoff = min(Int64(1) << min(attempt, 6), RatSocket.maxReconnectDelay)
+        let delay = TimeAmount.milliseconds(backoff * 1000 + Int64.random(in: 0..<1000))
+        logger.info("Reconnecting to Websocket in \(delay.nanoseconds / 1_000_000_000) seconds")
+        _ = loop.next().scheduleTask(in: delay) {
+            self.connect()
         }
     }
 
@@ -98,11 +126,11 @@ class RatSocket: @unchecked Sendable {
         logger.info("Connected to Websocket connection")
     }
 
-    func websocketDidDisconnect(error: Error?) {
-        self.socket = nil
+    func websocketDidDisconnect() {
+        self.socketStorage.withValue({ $0 = nil })
         logger.warning("Disconnected from Websocket connection")
         connectedAndAuthenticated = false
-        self.connect()
+        self.scheduleReconnect()
     }
 
     func websocketDidReceiveMessage(socket: WebSocketKit.WebSocket, text: String) {
@@ -117,6 +145,7 @@ class RatSocket: @unchecked Sendable {
             switch ratSocketEvent {
                 case .connection:
                     connectedAndAuthenticated = true
+                    reconnectAttempts.withValue({ $0 = 0 })
                     logger.info("Received welcome from Websocket connection")
 
                 case .rescueCreated:

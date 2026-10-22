@@ -31,6 +31,8 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
     private var channelMessageObserver: NotificationToken?
     private var privateMessageObserver: NotificationToken?
     private var factsDelimitingCache = Set<String>()
+    static let maximumFactTargets = 5
+
     nonisolated(unsafe) public static var prepFacts = [
         "prep", "psquit", "pcquit", "xquit", "prepcr", "pqueue", "oreo", "quit"
     ]
@@ -494,6 +496,9 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         if command.command == "fact" || command.command == "facts" {
             return
         }
+        guard CommandRateLimiter.shared.allows(message, fromCommand: command) else {
+            return
+        }
         
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
@@ -627,51 +632,59 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
 
     func factLocales(command: IRCBotCommand) {
         Task {
-            let fact = try await GroupedFact.get(name: command.command)
+            do {
+                let fact = try await GroupedFact.get(name: command.command)
 
-            guard let fact = fact else {
-                command.message.error(
-                    key: "anyfact.notafact", fromCommand: command,
+                guard let fact = fact else {
+                    command.message.error(
+                        key: "anyfact.notafact", fromCommand: command,
+                        map: [
+                            "command": command.command
+                        ])
+                    return
+                }
+
+                let locales = fact.messages.keys.map({
+                    "\($0) (\(Locale(identifier: $0).englishDescription))"
+                }).joined(separator: ", ")
+                command.message.replyPrivate(
+                    key: "anyfact.locales", fromCommand: command,
                     map: [
-                        "command": command.command
+                        "fact": fact.canonicalName,
+                        "locales": locales
                     ])
-                return
+            } catch {
+                command.error(error)
             }
-
-            let locales = fact.messages.keys.map({
-                "\($0) (\(Locale(identifier: $0).englishDescription))"
-            }).joined(separator: ", ")
-            command.message.replyPrivate(
-                key: "anyfact.locales", fromCommand: command,
-                map: [
-                    "fact": fact.canonicalName,
-                    "locales": locales
-                ])
         }
     }
 
     func factInfo(command: IRCBotCommand) {
         Task {
-            let fact = try await Fact.get(name: command.command, forLocale: command.locale)
+            do {
+                let fact = try await Fact.get(name: command.command, forLocale: command.locale)
 
-            guard let fact = fact else {
-                command.message.error(
-                    key: "anyfact.notafact", fromCommand: command,
+                guard let fact = fact else {
+                    command.message.error(
+                        key: "anyfact.notafact", fromCommand: command,
+                        map: [
+                            "command": "\(command.command)-\(command.locale.short)"
+                        ])
+                    return
+                }
+
+                command.message.replyPrivate(
+                    key: "anyfact.info", fromCommand: command,
                     map: [
-                        "command": "\(command.command)-\(command.locale.short)"
+                        "fact": fact.id,
+                        "language": Locale(identifier: fact.language).englishDescription,
+                        "created": fact.createdAt.eliteFormattedString,
+                        "updated": fact.updatedAt.eliteFormattedString,
+                        "author": fact.author
                     ])
-                return
+            } catch {
+                command.error(error)
             }
-
-            command.message.replyPrivate(
-                key: "anyfact.info", fromCommand: command,
-                map: [
-                    "fact": fact.id,
-                    "language": Locale(identifier: fact.language).englishDescription,
-                    "created": fact.createdAt.eliteFormattedString,
-                    "updated": fact.updatedAt.eliteFormattedString,
-                    "author": fact.author
-                ])
         }
     }
 
@@ -692,27 +705,31 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         }
 
         Task {
-            let fact = try await Fact.get(name: command.command, forLocale: command.locale)
+            do {
+                let fact = try await Fact.get(name: command.command, forLocale: command.locale)
 
-            guard let fact = fact else {
-                let fallbackFact = try await Fact.get(
-                    name: command.command, forLocale: Locale(identifier: "en"))
-                guard let fallbackFact = fallbackFact else {
+                guard let fact = fact else {
+                    let fallbackFact = try await Fact.get(
+                        name: command.command, forLocale: Locale(identifier: "en"))
+                    guard let fallbackFact = fallbackFact else {
+                        return
+                    }
+
+                    command.message.replyPrivate(
+                        key: "fact.fallback", fromCommand: command,
+                        map: [
+                            "fact": command.command,
+                            "identifier": command.locale.identifier,
+                            "language": command.locale.englishDescription
+                        ])
+                    self.messageFact(command: command, fact: fallbackFact)
                     return
                 }
 
-                command.message.replyPrivate(
-                    key: "fact.fallback", fromCommand: command,
-                    map: [
-                        "fact": command.command,
-                        "identifier": command.locale.identifier,
-                        "language": command.locale.englishDescription
-                    ])
-                self.messageFact(command: command, fact: fallbackFact)
-                return
+                self.messageFact(command: command, fact: fact)
+            } catch {
+                command.error(error)
             }
-
-            self.messageFact(command: command, fact: fact)
         }
     }
 
@@ -721,7 +738,7 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
             command.message.retaliate()
             return
         }
-        if command.parameters.count > 5 {
+        if command.parameters.count > FactCommands.maximumFactTargets {
             return
         } else if command.parameters.count > 0 {
             let firstTarget = command.param1?.lowercased()
@@ -764,7 +781,11 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
 }
 
 private func resolveTargets(for command: IRCBotCommand) async -> [(String, Rescue?)] {
+    // Prep timers drive safety reminders, so only a prep fact actually delivered in a channel by a rat cancels them.
     let isPrepFact = FactCommands.prepFacts.contains(command.command)
+        && command.message.destination.isPrivateMessage == false
+        && command.parameters.count <= FactCommands.maximumFactTargets
+        && command.message.user.hasPermission(permission: .DispatchRead)
     return await command.parameters.asyncMap { target in
         var target = target
         let (_, rescue) = await board.findRescue(
