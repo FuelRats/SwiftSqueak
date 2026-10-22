@@ -78,6 +78,9 @@ class IRCBotModuleManager {
         var ircBotCommand = ircBotCommand
         let message = ircBotCommand.message
 
+        guard CommandRateLimiter.shared.allows(message, fromCommand: ircBotCommand) else {
+            return
+        }
         guard let command = await findAndMaybeHandleHelp(for: ircBotCommand) else {
             return
         }

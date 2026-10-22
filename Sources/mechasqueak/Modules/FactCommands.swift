@@ -496,6 +496,9 @@ class FactCommands: IRCBotModule, @unchecked Sendable {
         if command.command == "fact" || command.command == "facts" {
             return
         }
+        guard CommandRateLimiter.shared.allows(message, fromCommand: command) else {
+            return
+        }
         
         if command.locale.identifier == "cn" {
             command.locale = Locale(identifier: "zh")
