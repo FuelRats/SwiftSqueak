@@ -89,7 +89,7 @@ struct XboxLive {
             refreshToken: configuration.xbox!.refreshToken
         )
         let data = try JSONEncoder().encode(tokens)
-        try data.write(to: URL(fileURLWithPath: "/data/xbox_tokens.json"))
+        try writeSecretFile(data, toPath: "/data/xbox_tokens.json")
     }
 
     static func getUserPresence(xuid: String) async throws -> UserPresenceRequest? {
