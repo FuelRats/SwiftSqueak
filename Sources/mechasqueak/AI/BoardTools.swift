@@ -34,6 +34,15 @@ enum BoardTools {
         [activeCases, caseDetail, ratLookup, findCommand]
     }
 
+    /// Board and member data is only shown to askers who could see it through the equivalent command (!list and
+    /// !quote need DispatchRead, !whois needs RatReadOwn), so the assistant can't be used to read around them.
+    static func denial(unless permission: AccountPermission, in context: ToolContext) -> String? {
+        guard context.message?.user.hasPermission(permission: permission) == true else {
+            return ToolOutput.error("the asker does not have permission to view this")
+        }
+        return nil
+    }
+
     // MARK: - active_cases
 
     static let activeCases = AITool(
@@ -44,7 +53,10 @@ enum BoardTools {
         or "is anyone on <client>" style questions about the live board.
         """,
         inputSchema: .objectSchema(properties: [], required: [])
-    ) { _, _ in
+    ) { _, context in
+        if let denied = denial(unless: .DispatchRead, in: context) {
+            return denied
+        }
         let rescues = await board.getRescues()
         let cases = rescues
             .sorted { $0.key < $1.key }
@@ -63,7 +75,10 @@ enum BoardTools {
         inputSchema: .objectSchema(
             properties: [("case", .stringSchema("The case number or client name"))],
             required: ["case"])
-    ) { input, _ in
+    ) { input, context in
+        if let denied = denial(unless: .DispatchRead, in: context) {
+            return denied
+        }
         guard let query = input["case"]?.stringValue, query.isEmpty == false else {
             return ToolOutput.error("missing 'case'")
         }
@@ -86,7 +101,10 @@ enum BoardTools {
         inputSchema: .objectSchema(
             properties: [("name", .stringSchema("The IRC nickname or account name"))],
             required: ["name"])
-    ) { input, _ in
+    ) { input, context in
+        if let denied = denial(unless: .RatReadOwn, in: context) {
+            return denied
+        }
         guard let name = input["name"]?.stringValue, name.isEmpty == false else {
             return ToolOutput.error("missing 'name'")
         }

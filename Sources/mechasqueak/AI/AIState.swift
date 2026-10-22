@@ -60,6 +60,8 @@ actor AIState {
     private var tokensInWindow = 0
     private var windowStart: Date?
     private var perUser: [String: (start: Date, count: Int)] = [:]
+    private let maxInFlightPerUser: Int?
+    private var inFlightByUser: [String: Int] = [:]
 
     static let windowLength: TimeInterval = 24 * 60 * 60
 
@@ -68,19 +70,21 @@ actor AIState {
         maxInFlight: Int = 3,
         dailyTokenCap: Int = 2_000_000,
         perUserCap: Int = 60,
-        perUserWindow: TimeInterval = 3600
+        perUserWindow: TimeInterval = 3600,
+        maxInFlightPerUser: Int? = nil
     ) {
         self.cooldown = cooldown
         self.maxInFlight = maxInFlight
         self.dailyTokenCap = dailyTokenCap
         self.perUserCap = perUserCap
         self.perUserWindow = perUserWindow
+        self.maxInFlightPerUser = maxInFlightPerUser
     }
 
     /// Atomically reserves a slot for `key`/`user` if it is off cooldown, under the in-flight cap,
     /// within the per-user attempt budget, and within the global daily token budget. On `.reserved`
     /// the caller owns one in-flight slot and must `release()` it exactly once — passing the `user`
-    /// and `refundingUser: true` if the reservation produced no billable answer. `user` is the
+    /// and `refundingAttempt: true` if the reservation produced no billable answer. `user` is the
     /// identity budget bucket (across channels); `key` is the per-channel cooldown bucket.
     func reserve(
         key: String, user: String = "global", cooldown: TimeInterval? = nil, now: Date = Date()
@@ -106,11 +110,16 @@ actor AIState {
         if inFlight >= maxInFlight {
             return .overCapacity
         }
+        // One identity must not be able to hold every slot and starve everyone else.
+        if let maxInFlightPerUser, inFlightByUser[user, default: 0] >= maxInFlightPerUser {
+            return .overCapacity
+        }
 
         cooldownUntil[key] = now.addingTimeInterval(cooldown ?? self.cooldown)
         cooldownNotified[key] = []  // new window: everyone may be notified again
         errorAnnounced.remove(key)
         inFlight += 1
+        inFlightByUser[user, default: 0] += 1
         userBudget.count += 1
         perUser[user] = userBudget
         return .reserved
@@ -145,13 +154,15 @@ actor AIState {
         return until.timeIntervalSince(now)
     }
 
-    /// Releases one in-flight slot. Idempotent-safe against underflow. When the reservation produced
-    /// no billable answer (relevance gate rejected it, or the pipeline threw), pass the `user` as
-    /// `refundingUser` to roll back that user's attempt count so idle chatter can't lock a real
+    /// Releases the in-flight slot `user` reserved. Idempotent-safe against underflow. When the reservation produced
+    /// no billable answer (relevance gate rejected it, or the pipeline failed before spending), pass
+    /// `refundingAttempt: true` to roll back that user's attempt count so idle chatter can't lock a real
     /// questioner out of their per-user budget.
-    func release(refundingUser user: String? = nil) {
+    func release(user: String = "global", refundingAttempt: Bool = false) {
         inFlight = max(0, inFlight - 1)
-        if let user, var budget = perUser[user] {
+        let remaining = max(0, inFlightByUser[user, default: 0] - 1)
+        inFlightByUser[user] = remaining > 0 ? remaining : nil
+        if refundingAttempt, var budget = perUser[user] {
             budget.count = max(0, budget.count - 1)
             perUser[user] = budget
         }

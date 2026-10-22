@@ -68,7 +68,7 @@ final class AIService: Sendable {
         return AIService(
             pipeline: AskPipeline(provider: anthropic, outline: outline),
             gate: RelevanceGate(provider: anthropic),
-            state: AIState(),
+            state: AIState(maxInFlightPerUser: 1),
             conversations: ConversationManager(),
             scrollback: ScrollbackBuffer(),
             metrics: AIMetrics())
@@ -161,13 +161,13 @@ final class AIService: Sendable {
             if decision.failed {
                 await metrics.recordGateFailure()
                 await surfaceTrouble(to: message, key: key, isPM: isPM)
-                await state.release(refundingUser: user)
+                await state.release(user: user, refundingAttempt: true)
                 return
             }
             await metrics.recordGate(passed: decision.relevant)
             guard decision.relevant else {
                 // No billable answer — refund the attempt so chatter doesn't lock a user out.
-                await state.release(refundingUser: user)
+                await state.release(user: user, refundingAttempt: true)
                 return
             }
 
@@ -205,7 +205,7 @@ final class AIService: Sendable {
                 await conversations.record(
                     account: account, scope: scope, question: question, answer: reply.text)
             }
-            await state.release()
+            await state.release(user: user)
         } catch {
             if error is AITimeoutError {
                 await metrics.recordTimeout()
@@ -214,8 +214,9 @@ final class AIService: Sendable {
             }
             aiLogger.error("[ai] pipeline error: \(error)")
             await surfaceTrouble(to: message, key: key, isPM: isPM)
-            // No answer reached the user — refund the attempt.
-            await state.release(refundingUser: user)
+            // No answer reached the user. A timeout has already spent tokens on the rounds it completed, so only
+            // other failures refund the attempt; otherwise slow questions could be repeated without limit.
+            await state.release(user: user, refundingAttempt: (error is AITimeoutError) == false)
         }
     }
 

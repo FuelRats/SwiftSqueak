@@ -9,6 +9,19 @@ final class BoardToolsTests: XCTestCase {
             ["active_cases", "case_detail", "rat_lookup", "find_command"])
     }
 
+    func testBoardAndMemberToolsRefuseAnAskerWithoutPermission() async {
+        // With no identified asker there is no permission to check, so nothing from the board or the API is shown.
+        let context = ToolContext()
+        for (tool, input) in [
+            (BoardTools.activeCases, JSONValue.object([])),
+            (BoardTools.caseDetail, JSONValue.object([("case", .string("1"))])),
+            (BoardTools.ratLookup, JSONValue.object([("name", .string("SpaceDawg"))]))
+        ] {
+            let output = await tool.run(input, context)
+            XCTAssertTrue(output.contains("permission"), "\(tool.name) must refuse: \(output)")
+        }
+    }
+
     func testCommandMatchesMapsFieldsAndDropsEmptyAliases() {
         let commands = [
             Command(
