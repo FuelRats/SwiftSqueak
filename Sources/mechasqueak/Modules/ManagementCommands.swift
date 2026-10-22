@@ -364,6 +364,17 @@ class ManagementCommands: IRCBotModule {
         }
     }
 
+    /// The bot is identified to services and is an IRC operator, so messaging services as the bot is reserved for
+    /// !sendraw, which needs a higher permission than !say and !me.
+    static let servicesNicks: Set<String> = [
+        "nickserv", "chanserv", "operserv", "hostserv", "memoserv", "botserv", "helpserv", "global", "statserv"
+    ]
+
+    static func isServicesTarget(_ target: String) -> Bool {
+        let nick = target.split(separator: "@").first.map({ String($0).lowercased() }) ?? ""
+        return target.contains("@") || servicesNicks.contains(nick)
+    }
+
     @BotCommand(
         ["msg", "say"],
         [.param("destination", "#ratchat"), .param("message", "squeak!", .continuous)],
@@ -373,6 +384,10 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveSayCommand = { command in
+        guard ManagementCommands.isServicesTarget(command.parameters[0]) == false else {
+            command.message.error(key: "say.services", fromCommand: command)
+            return
+        }
         command.message.reply(
             key: "say.sending", fromCommand: command,
             map: [
@@ -395,6 +410,10 @@ class ManagementCommands: IRCBotModule {
         permission: .UserWrite
     )
     var didReceiveMeCommand = { command in
+        guard ManagementCommands.isServicesTarget(command.parameters[0]) == false else {
+            command.message.error(key: "say.services", fromCommand: command)
+            return
+        }
         command.message.reply(
             key: "me.sending", fromCommand: command,
             map: [
@@ -428,6 +447,16 @@ class ManagementCommands: IRCBotModule {
             ])
 
         command.message.client.send(
-            command: ircCommand, parameters: Array(command.parameters.dropFirst()))
+            command: ircCommand, parameters: ManagementCommands.rawParameters(Array(command.parameters.dropFirst())))
+    }
+
+    /// Rebuilds IRC parameters from space-split words: everything from the first word starting with ":" is the
+    /// trailing parameter, as the IRC protocol reads it, so "PRIVMSG #chan :hello there" is sent intact.
+    static func rawParameters(_ words: [String]) -> [String] {
+        guard let trailingIndex = words.firstIndex(where: { $0.hasPrefix(":") }) else {
+            return words
+        }
+        let trailing = words[trailingIndex...].joined(separator: " ").dropFirst()
+        return Array(words[..<trailingIndex]) + [String(trailing)]
     }
 }
