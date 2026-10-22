@@ -453,9 +453,9 @@ class MechaSqueak: @unchecked Sendable {
             return
         }
         logger.info("NickServ prompted for identification, re-identifying")
-        notice.client.sendMessage(
-            toTarget: "NickServ",
-            contents: "IDENTIFY \(password)")
+        // The NICKSERV services alias is only delivered to NickServ on the U-lined services server, unlike a
+        // PRIVMSG to the nick "NickServ", which anyone holding that nick while services are down would receive.
+        notice.client.send("NICKSERV", parameters: ["IDENTIFY \(password)"])
     }
 }
 
