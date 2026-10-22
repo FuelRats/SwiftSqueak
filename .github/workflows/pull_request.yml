@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout SwiftSqueak
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate localisation JSON
         run: |
