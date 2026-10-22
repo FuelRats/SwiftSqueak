@@ -255,7 +255,11 @@ class HelpCommands: IRCBotModule {
     )
     var didReceiveSearchHelpCommand = { command in
         let search = command.parameters[0]
-        let results = try? await searchCommands(query: search, on: mecha.sqliteDatabase!)
+        guard let database = mecha.sqliteDatabase else {
+            command.message.error(key: "genericerror", fromCommand: command)
+            return
+        }
+        let results = try? await searchCommands(query: search, on: database)
         if results == nil || results?.isEmpty == true {
             command.message.replyPrivate(
                 key: "help.notfound", fromCommand: command)

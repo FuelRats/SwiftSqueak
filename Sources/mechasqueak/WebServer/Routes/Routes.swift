@@ -37,7 +37,10 @@ struct Routes: RouteCollection {
             if search.isEmpty {
                 return try await req.htmlkit.render(CommandsListView())
             }
-            let results = (try? await searchCommands(query: search, on: mecha.sqliteDatabase!)) ?? []
+            guard let database = mecha.sqliteDatabase else {
+                throw Abort(.serviceUnavailable, reason: "Command search is not available yet")
+            }
+            let results = (try? await searchCommands(query: search, on: database)) ?? []
             let commands = results.compactMap({ result -> IRCBotCommandDeclaration? in
                 return MechaSqueak.commands.first(where: {
                     $0.commands[0].lowercased() == result.name

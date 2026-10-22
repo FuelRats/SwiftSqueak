@@ -75,7 +75,11 @@ class MechaSqueak: @unchecked Sendable {
     nonisolated(unsafe) static var lastDeltaMessageTime: Date?
     let ratSocket: RatSocket?
     var webServer: WebServer?
-    var sqliteDatabase: SQLDatabase?
+    private let sqliteDatabaseStorage = Locked<SQLDatabase?>(nil)
+    var sqliteDatabase: SQLDatabase? {
+        get { self.sqliteDatabaseStorage.current }
+        set { self.sqliteDatabaseStorage.withValue({ $0 = newValue }) }
+    }
 
     init() {
         self.startupTime = Date()
@@ -132,6 +136,17 @@ class MechaSqueak: @unchecked Sendable {
         ratSocket = RatSocket()
 
         Task { @MainActor in
+            // The command search index is built first and on its own, so the web server and help commands have it
+            // even when the remote startup fetches below fail.
+            do {
+                let database = try await makeSQLiteDatabase(eventLoopGroup: loop)
+                for command in MechaSqueak.commands {
+                    try await insertCommand(command, on: database)
+                }
+                self.sqliteDatabase = database
+            } catch {
+                logger.error("Failed to build the command search index: \(error)")
+            }
             if let webServerConfiguration = configuration.webServer {
                 do {
                     self.webServer = try await WebServer(configuration: webServerConfiguration)
@@ -144,12 +159,6 @@ class MechaSqueak: @unchecked Sendable {
                 self.landmarks = try await SystemsAPI.fetchLandmarkList()
                 self.sectors = try await SystemsAPI.fetchSectorList()
                 self.groups = try await Group.getList().body.data?.primary.values ?? []
-                if let database = try? await makeSQLiteDatabase(eventLoopGroup: loop) {
-                    self.sqliteDatabase = database
-                    for command in MechaSqueak.commands {
-                        try await insertCommand(command, on: database)
-                    }
-                }
             } catch {
                 logger.error("Failed to load startup data: \(error)")
             }
