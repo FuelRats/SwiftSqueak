@@ -87,7 +87,11 @@ extension NicknameSearchDocument {
     }
 
     var permissions: [AccountPermission] {
-        self.groups.flatMap({
+        // A suspended account keeps its groups in the API but must not be able to act through the bot.
+        if let suspendedUntil = self.user?.attributes.suspended?.value, suspendedUntil > Date() {
+            return []
+        }
+        return self.groups.flatMap({
             $0.attributes.permissions.value
         })
     }
