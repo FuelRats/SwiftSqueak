@@ -78,7 +78,7 @@ class SessionLogger: IRCBotModule {
             command.message.reply(
                 key: "savelogs.saved", fromCommand: command,
                 map: [
-                    "url": "https://paste.fuelrats.com/\(result.key).md"
+                    "url": "https://paste.fuelrats.com/\(result.key).txt"
                 ])
         } catch {
             command.error(error)
