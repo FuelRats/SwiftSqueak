@@ -621,7 +621,7 @@ class Rescue: @unchecked Sendable {
 
         if configuration.queue != nil {
             _ = try? await QueueAPI.fetchQueue().first(where: {
-                $0.client.name == self.client?.lowercased()
+                $0.client.name.lowercased() == self.client?.lowercased()
             })?.delete()
             let activeCases = await board.activeCases
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
@@ -738,7 +738,7 @@ class Rescue: @unchecked Sendable {
 
         if configuration.queue != nil {
             _ = try? await QueueAPI.fetchQueue().first(where: {
-                $0.client.name == self.client?.lowercased()
+                $0.client.name.lowercased() == self.client?.lowercased()
             })?.delete()
             let activeCases = await board.activeCases
             if wasInactive == false && activeCases <= QueueCommands.maxClientsCount {
