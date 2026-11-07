@@ -49,7 +49,8 @@ private let snickersDestinations = ShuffledPicker([
     "donated to the Hull Seals as a gift",
     "shredded and used as packing material for Guardian relics",
     "airdropped over a random planetary settlement",
-    "converted into a commemorative NFT"
+    "converted into a commemorative NFT",
+    "donated to help fund a new coffee machine for the break room"
 ])
 
 actor RescueBoard {
