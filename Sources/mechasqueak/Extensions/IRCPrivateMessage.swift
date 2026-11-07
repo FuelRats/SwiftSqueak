@@ -124,5 +124,15 @@ private let retaliationPicker = ShuffledPicker([
     "applies a star class filter to %@'s route plotter with only white dwarves selected",
     "places %@ in front of an activating Stargate",
     "signs %@ up for a mandatory 12-part webinar on proper fuel management",
-    "permanently wires %@'s boost button to their screenshot key"
+    "permanently wires %@'s boost button to their screenshot key",
+    "breaks %@'s flight assist module",
+    "forces %@ to watch The Rise of Skywalker on repeat",
+    "fines %@ 30 snickers for excessive existence",
+    "sends %@ an invoice for breathing station air",
+    "replaces %@'s ship controls with a Wii remote",
+    "replaces %@'s galaxy map with Apple Maps",
+    "cancels %@'s next three jumps because they forgot to say please",
+    "unscrews %@'s fuel tank",
+    "sends %@ to Raxxla and back",
+    "removes the coffee machine from %@'s rat ship"
 ])
