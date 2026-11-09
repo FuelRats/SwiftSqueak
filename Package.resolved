@@ -1,5 +1,5 @@
 {
-  "originHash" : "e0fce4082a0d4e6c48a75bba7e07086ba26492a7bef7fe566ac4dd9c55887ec2",
+  "originHash" : "5290d78303d7544eee65a99af5788fad9c440466041fc5fb5b306916bed66dc2",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/FuelRats/IRCKit.git",
       "state" : {
-        "revision" : "77d207c00b47db8281ebe7492b38f64198406668",
-        "version" : "0.20.1"
+        "revision" : "01d236a15e093950035bba9c811a050adadc077d",
+        "version" : "0.20.2"
       }
     },
     {

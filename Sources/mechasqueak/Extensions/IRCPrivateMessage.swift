@@ -51,11 +51,8 @@ extension IRCPrivateMessage {
         if self.destination.isPrivateMessage == false {
             tags["+draft/channel-context"] = self.destination.name
         }
-        self.client.send("CNOTICE", parameters: [
-            self.user.nickname,
-            self.destination.name,
-            message
-        ], tags: tags)
+        self.client.sendChannelNotice(
+            to: self.user.nickname, inChannel: self.destination.name, contents: message, tags: tags)
     }
 
     func replyPrivate(key: String, fromCommand command: IRCBotCommand, map: [String: Any]? = [:]) {
