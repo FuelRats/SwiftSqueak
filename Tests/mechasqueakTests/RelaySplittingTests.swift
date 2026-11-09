@@ -39,23 +39,23 @@ final class RelaySplittingTests: XCTestCase {
     func testLongCyrillicTranslationIsSplitIntoWholeLinesWithinTheLimit() {
         let lines = IRCClient.relayLines(
             translation, command: "MSGAS", nick: "arckoor", channel: "#fuelrats", source: source,
-            relayedCommand: "PRIVMSG", linePrefix: "Guser102: ")
+            relayedCommand: "PRIVMSG", linePrefix: "Jameson: ")
 
         XCTAssertGreaterThan(lines.count, 1, "the 2026-11-09 translation does not fit one delivered line")
         for line in lines {
-            XCTAssertTrue(line.hasPrefix("Guser102: "), "every line highlights the client")
+            XCTAssertTrue(line.hasPrefix("Jameson: "), "every line highlights the client")
             XCTAssertLessThanOrEqual(deliveredLine(line).utf8.count, 512)
             XCTAssertLessThanOrEqual("MSGAS arckoor #fuelrats :\(line)\r\n".utf8.count, 512)
         }
-        let rejoined = lines.map({ String($0.dropFirst("Guser102: ".count)) }).joined(separator: " ")
+        let rejoined = lines.map({ String($0.dropFirst("Jameson: ".count)) }).joined(separator: " ")
         XCTAssertEqual(rejoined, translation, "no text is lost at split points")
     }
 
     func testShortTranslationIsSentAsOneLine() {
         let lines = IRCClient.relayLines(
             "Вибачте, наш перекладач знову дає збої", command: "MSGAS", nick: "arckoor", channel: "#fuelrats",
-            source: source, relayedCommand: "PRIVMSG", linePrefix: "Guser102: ")
-        XCTAssertEqual(lines, ["Guser102: Вибачте, наш перекладач знову дає збої"])
+            source: source, relayedCommand: "PRIVMSG", linePrefix: "Jameson: ")
+        XCTAssertEqual(lines, ["Jameson: Вибачте, наш перекладач знову дає збої"])
     }
 
     func testUnknownSourceAssumesTheLongestPossibleSource() {
