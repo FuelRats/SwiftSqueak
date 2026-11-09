@@ -176,33 +176,20 @@ class Translate: IRCBotModule {
                 command.parameters[1], locale: locale) {
                 let destination = rescue.channel ?? mecha.rescueChannel
                 if let noticeChannel = command.argumentValue(for: "notice") {
-                    command.message.client.send(
-                        "CNOTICE",
-                        parameters: [
-                            command.message.user.nickname,
-                            noticeChannel,
-                            "\(target): \(translation)"
-                        ])
+                    command.message.client.sendChannelNotice(
+                        to: command.message.user.nickname, inChannel: noticeChannel, contents: translation,
+                        linePrefix: "\(target): ")
                 } else {
-                    command.message.client.send(
-                        "MSGAS",
-                        parameters: [
-                            command.message.raw.sender?.nickname ?? "",
-                            destination?.name ?? "",
-                            "\(target): \(translation)"
-                        ])
+                    command.message.client.sendMessage(
+                        as: command.message.raw.sender?.nickname ?? "", source: command.message.raw.sender,
+                        toChannel: destination?.name ?? "", contents: translation, linePrefix: "\(target): ")
                 }
                 let contents = "<\(command.message.user.nickname)> \(command.parameters[1])"
                 for (subscriber, subType) in Translate.clientTranslationSubscribers {
                     switch subType {
                         case .Notice:
-                        command.message.client.send(
-                            "CNOTICE",
-                            parameters: [
-                                subscriber,
-                                destination?.name ?? "",
-                                contents
-                            ])
+                        command.message.client.sendChannelNotice(
+                            to: subscriber, inChannel: destination?.name ?? "", contents: contents)
 
                         case .PrivateMessage:
                             command.message.client.sendMessage(toTarget: subscriber, contents: contents)
@@ -281,21 +268,12 @@ class Translate: IRCBotModule {
             if let translation = try await Translate.translate(
                 message, locale: locale) {
                 if command.has(argument: "notice") {
-                    command.message.client.send(
-                        "CNOTICE",
-                        parameters: [
-                            command.message.user.nickname,
-                            channel.name,
-                            translation
-                        ])
+                    command.message.client.sendChannelNotice(
+                        to: command.message.user.nickname, inChannel: channel.name, contents: translation)
                 } else {
-                    command.message.client.send(
-                        "MSGAS",
-                        parameters: [
-                            command.message.raw.sender?.nickname ?? "",
-                            channel.name,
-                            translation
-                        ])
+                    command.message.client.sendMessage(
+                        as: command.message.raw.sender?.nickname ?? "", source: command.message.raw.sender,
+                        toChannel: channel.name, contents: translation)
                 }
                 let contents = "<\(command.message.user.nickname)> \(message)"
                 notifyTranslateSubscribers(
@@ -541,13 +519,7 @@ func notifyTranslateSubscribers(client: IRCClient, channel: String, contents: St
     for (subscriber, subType) in Translate.clientTranslationSubscribers {
         switch subType {
             case .Notice:
-            client.send(
-                "CNOTICE",
-                parameters: [
-                    subscriber,
-                    channel,
-                    contents
-                ])
+            client.sendChannelNotice(to: subscriber, inChannel: channel, contents: contents)
 
             case .PrivateMessage:
                 client.sendMessage(toTarget: subscriber, contents: contents)
