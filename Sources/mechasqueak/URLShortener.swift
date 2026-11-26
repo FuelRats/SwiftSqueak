@@ -44,7 +44,23 @@ class URLShortener {
         request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
         request.body = .string(formEncoded(fields))
 
-        return try await httpClient.execute(request: request, forDecodable: ShortURLResponse.self)
+        let response = try await httpClient.execute(request: request, expecting: 200...409)
+        return try decode(status: Int(response.status.code), body: response.body.map({ Data(buffer: $0) }))
+    }
+
+    /// YOURLS answers 409 when the long URL is already stored, with the existing short URL in the body.
+    static let acceptedStatusCodes: Set<Int> = [200, 201, 202, 409]
+
+    static func decode(status: Int, body: Data?) throws -> ShortURLResponse {
+        guard acceptedStatusCodes.contains(status), let body = body else {
+            throw URLShortenerError.unexpectedResponse(status: status)
+        }
+        do {
+            return try JSONDecoder().decode(ShortURLResponse.self, from: body)
+        } catch {
+            logger.error("Undecodable response from the URL shortener (HTTP \(status)): \(error)")
+            throw error
+        }
     }
 
     /// Characters that never need escaping in a form body. Notably excludes "+", which a form decoder reads as space.
@@ -80,5 +96,8 @@ struct ShortURLResponse: Codable {
     let message: String
     let title: String
     let shorturl: URL
-    let statusCode: Int
+}
+
+enum URLShortenerError: Error {
+    case unexpectedResponse(status: Int)
 }
